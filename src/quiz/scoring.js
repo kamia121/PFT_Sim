@@ -5,8 +5,10 @@
  * other spirometry equation also scores 1 and is labeled, as on the learner page (src/app/answers.js).
  * Partial credit is a convention of this tool and not taken from a statement: a severity band or an
  * A-to-E quality grade one step from the key scores 0.5.
- * Multi-select (limitations): F1 of precision and weighted recall, with a major statement weighing 2 and a
- * minor one 1; "none of these" is an ordinary option that is correct only when no statement applies.
+ * Multi-select (limitations): chance-corrected. The score is the weighted share of the applicable statements that were selected (a major
+ * statement weighing 2, a minor one 1) minus the share of the non-applicable statements that were selected, and not below 0. Selecting
+ * every option, or any fraction of the options at random, has an expected value of 0 before the floor, so guessing does not earn credit.
+ * "None of these" is an ordinary option that is correct only when no statement applies.
  */
 import { SKILLS } from './codes.js';
 import { GRADE_ORDER, SEVERITY_ORDER } from './items.js';
@@ -30,14 +32,18 @@ export function scoreItem(item, response) {
     if (!sel.length) return { ...base, score: 0, status: 'unanswered', expected: k.correct };
     const truth = new Set(k.correct);
     const hit = sel.filter((x) => truth.has(x));
-    const precision = hit.length / sel.length;
+    const false_ = sel.filter((x) => !truth.has(x));
     const total = k.correct.reduce((s, x) => s + (k.weights[x] ?? 1), 0);
-    const recall = hit.reduce((s, x) => s + (k.weights[x] ?? 1), 0) / total;
-    const score = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
+    // Weighted share of the applicable statements that were selected, minus the share of the non-applicable ones that were selected.
+    const recall = total ? hit.reduce((s, x) => s + (k.weights[x] ?? 1), 0) / total : 0;
+    const wrong = k.wrong ?? item.options?.map((o) => o.id).filter((id) => !truth.has(id)) ?? [];
+    const universe = wrong.length ? wrong.length : false_.length;
+    const falseRate = universe ? Math.min(1, false_.length / universe) : 0;
+    const score = Math.max(0, recall - falseRate);
     const rounded = Math.round(score * 1000) / 1000;
     return {
       ...base, score: rounded, status: rounded === 1 ? 'correct' : rounded > 0 ? 'partial' : 'incorrect', expected: k.correct,
-      detail: { precision, recall, missed: k.correct.filter((x) => !sel.includes(x)), extra: sel.filter((x) => !truth.has(x)) },
+      detail: { recall, falseRate, missed: k.correct.filter((x) => !sel.includes(x)), extra: false_ },
     };
   }
   if (response === undefined || response === null || response === '') return { ...base, score: 0, status: 'unanswered', expected: k.correct };

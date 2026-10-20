@@ -40,14 +40,14 @@ export function keySheetHtml(def, code, cases) {
       const keys = [].concat(it.key.correct);
       const letters = keys.map((k) => opts.find((o) => o.id === k)?.letter).filter(Boolean).sort().join(', ');
       const text = keys.map((k) => opts.find((o) => o.id === k)?.label).filter(Boolean).join(' / ');
-      const alt = it.key.alt ? `${opts.find((o) => o.id === it.key.alt)?.letter ?? ''}: ${opts.find((o) => o.id === it.key.alt)?.label ?? ''}` : '';
+      const alt = it.key.alt ? `${opts.find((o) => o.id === it.key.alt)?.letter ?? ''}: ${opts.find((o) => o.id === it.key.alt)?.label ?? ''} (${EQUATION_NAMES[it.key.altEquation] ?? 'other equation'})` : '';
       return `<tr><th scope="row" class="l">${esc(ITEM_NAMES[it.id])}</th><td class="l"><strong>${esc(letters)}</strong></td><td class="l">${esc(text)}</td><td class="l">${esc(alt)}</td></tr>`;
     }).join('');
     const d = c.descriptor;
     return `<section class="sheet-case"><h2>Case ${i + 1}</h2><p class="muted">Archetype ${esc(d.archetype)}; technique ${esc(d.technique)}; panel ${esc(d.panel)}; severity ${d.severity}.</p>
       <div class="scroll"><table class="data"><thead><tr><th class="l">Item</th><th class="l">Letter</th><th class="l">Key</th><th class="l">Also accepted (other equation)</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   }).join('');
-  return `<div class="sheet">${sheetHead('Pulmonary function interpretation: answer key', def, code, '<p class="note"><strong>Instructor copy.</strong> Do not distribute with the question sheet. Partial credit: a severity band or an A to E grade one step from the key earns half a point; the limitations question earns the harmonic mean of precision and weighted recall.</p>')}${body}</div>`;
+  return `<div class="sheet">${sheetHead('Pulmonary function interpretation: answer key', def, code, '<p class="note"><strong>Instructor copy.</strong> Do not distribute with the question sheet. Partial credit: a severity band or an A to E grade one step from the key earns half a point; the limitations question is chance-corrected (weighted share of applicable statements selected minus share of non-applicable statements selected, not below 0).</p>')}${body}</div>`;
 }
 
 export function rubricRows(bySkill) {

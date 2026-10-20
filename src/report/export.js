@@ -6,7 +6,7 @@
  * spreadsheets read the values as numbers; the on-screen report uses a true minus sign.
  */
 import { formatCell, columnUnit, headerLabel, tableMatrix, esc } from './table.js';
-import { allTables } from './model.js';
+import { allTables, SIMULATION_MARKER } from './model.js';
 import { renderReportDocument } from './html.js';
 
 export const CSV_COLUMNS = ['section', 'table', 'row', 'column', 'value', 'unit'];
@@ -21,12 +21,17 @@ const EOL = '\r\n';
 /** Filename that carries the case code: pft-report-<code>[-suffix].<ext> */
 export const reportFilename = (model, ext, suffix = '') => `pft-report-${String(model.meta.caseCode).toLowerCase()}${suffix ? `-${suffix}` : ''}.${ext}`;
 
+/** First line of a TSV and the heading of a pasted table. A leading # lets common readers skip it as a comment. */
+export const TSV_NOTICE = `# ${SIMULATION_MARKER}`;
+
 /**
  * Long (tidy) rows: one row per value, with the columns section, table, row, column, value, unit.
+ * The first row is an ordinary row (section header, table report, row notice) that carries the simulation marker, so the
+ * file stays a rectangular table and a reader that filters on section loses nothing but the notice.
  * @returns {string[][]} without the header row
  */
 export function longRows(model) {
-  const out = [];
+  const out = [['header', 'report', 'notice', 'value', SIMULATION_MARKER, '']];
   for (const f of model.header.fields) out.push(['header', 'patient', f.label, 'value', f.value, '']);
   for (const s of model.sections) {
     for (const t of s.tables) {
@@ -44,6 +49,7 @@ export function longRows(model) {
   model.technologistComments.forEach((c, i) => out.push(['comments', 'technologist', String(i + 1), 'comment', c, '']));
   model.referenceNote.forEach((c, i) => out.push(['comments', 'reference-equation-note', String(i + 1), 'note', c, '']));
   if (model.interpretation) out.push(['comments', 'interpretation', '1', 'text', model.interpretation, '']);
+  (model.interpretationNotes ?? []).forEach((c, i) => out.push(['comments', 'notes-on-simulation', String(i + 1), 'note', c, '']));
   out.push(['footer', 'report', 'case code', 'value', model.meta.caseCode, '']);
   out.push(['footer', 'report', 'generator version', 'value', String(model.meta.generatorVersion), '']);
   return out;
@@ -61,7 +67,7 @@ export function toCsvWide(table) {
  */
 export function toCsv(model, { layout = 'long' } = {}) {
   if (layout === 'wide') {
-    const blocks = [];
+    const blocks = [csvLine([SIMULATION_MARKER])];
     for (const f of [['Case code', model.meta.caseCode], ...model.header.fields.map((x) => [x.label, x.value])]) blocks.push(csvLine(f));
     for (const t of allTables(model)) blocks.push('', csvLine([t.caption]), toCsvWide(t).trimEnd(), csvLine([t.footnote]));
     return blocks.join(EOL) + EOL;
@@ -69,11 +75,11 @@ export function toCsv(model, { layout = 'long' } = {}) {
   return [csvLine(CSV_COLUMNS), ...longRows(model).map(csvLine)].join(EOL) + EOL;
 }
 
-/** Tab-separated text of one table: the flat header, then the rows. */
+/** Tab-separated text of one table: a notice line, the flat header, then the rows. */
 export function toTsv(table) {
   const mx = tableMatrix(table);
   const clean = (s) => String(s).replace(/[\t\r\n]+/g, ' ');
-  return [mx.flatHead, ...mx.body].map((r) => r.map(clean).join('\t')).join('\n') + '\n';
+  return [TSV_NOTICE, ...[mx.flatHead, ...mx.body].map((r) => r.map(clean).join('\t'))].join('\n') + '\n';
 }
 
 const TD = 'border:1px solid #000;padding:2px 6px;';
@@ -86,7 +92,7 @@ export function toClipboardHtml(table) {
   const head = `<tr>${mx.head.map((h, i) => `<th style="${TD}text-align:${align(cols[i], i)}">${esc(h)}</th>`).join('')}</tr>`;
   const body = mx.body.map((r) => `<tr>${r.map((v, i) => (i === 0 ? `<th style="${TD}text-align:left">${esc(v)}</th>` : `<td style="${TD}text-align:${align(cols[i], i)}">${esc(v)}</td>`)).join('')}</tr>`).join('');
   const foot = table.footnote ? `<tfoot><tr><td colspan="${cols.length}" style="border:0;padding:3px 0;font-size:9pt">${esc(table.footnote)}</td></tr></tfoot>` : '';
-  return `<table style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:10pt"><caption style="text-align:left;font-weight:bold">${esc(table.caption)}</caption><thead>${groupRow}${head}</thead><tbody>${body}</tbody>${foot}</table>`;
+  return `<table style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:10pt"><caption style="text-align:left;font-weight:bold">${esc(table.caption)}<div style="font-weight:normal;font-size:8pt">${esc(SIMULATION_MARKER)}</div></caption><thead>${groupRow}${head}</thead><tbody>${body}</tbody>${foot}</table>`;
 }
 
 // ---------------------------------------------------------------- browser delivery

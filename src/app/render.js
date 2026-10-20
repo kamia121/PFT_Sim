@@ -1,11 +1,12 @@
-import { esc, num, signed, MEASURES, EQUATION_NAMES } from './format.js';
-import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT } from './explain.js';
-import { QUESTIONS, hasData, label as answerLabel } from './answers.js';
+import { esc, num, signed, MEASURES, EQUATION_NAMES, hbKnown, hbLow, coHbMeasured, sexUndisclosed, showBirthSex } from './format.js';
+import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT, bdArtifactText, ARCHETYPE_NOTE_OVERRIDES } from './explain.js';
+import { QUESTIONS, hasData, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
 import { FIGURES } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
 import { archetypeNote } from '../core/physiology.js';
+import { faultWording } from '../core/quality.js';
 
 const bmi = (p) => p.weightKg / (p.heightCm / 100) ** 2;
 
@@ -16,11 +17,11 @@ export function renderPatient(c) {
   return `<section class="card" aria-labelledby="h-patient"><h2 id="h-patient">Patient and requisition</h2>
   <dl class="demo">
     <div><dt>Age</dt><dd>${p.age} years</dd></div>
-    <div><dt>Sex used for the reference</dt><dd>${p.sex === 'M' ? 'Male' : 'Female'}${sc.referenceSex && sc.referenceSex.birth !== sc.referenceSex.used ? ` <span class="muted">(assigned at birth: ${sc.referenceSex.birth === 'M' ? 'male' : 'female'})</span>` : ''}</dd></div>
+    <div><dt>Sex used for the reference</dt><dd>${p.sex === 'M' ? 'Male' : 'Female'}${sexUndisclosed(sc) ? ' <span class="muted">(laboratory default; sex not disclosed)</span>' : showBirthSex(sc) ? ` <span class="muted">(assigned at birth: ${sc.referenceSex.birth === 'M' ? 'male' : 'female'})</span>` : ''}</dd></div>
     <div><dt>Height</dt><dd>${p.heightCm} cm${sc.height && sc.height.source !== 'measured' ? ` <span class="muted">(${esc({ 'arm-span': 'estimated from arm span', ulna: 'estimated from ulna length', reported: 'self-reported' }[sc.height.source] ?? sc.height.source)})</span>` : ''}</dd></div>
     <div><dt>Weight</dt><dd>${p.weightKg} kg (BMI ${num(bmi(p), 1)})</dd></div>
     <div><dt>Group on requisition</dt><dd>${esc(p.group)}</dd></div>
-    <div><dt>Hemoglobin</dt><dd>${num(p.hbGdl, 1)} g/dL</dd></div>
+    <div><dt>Hemoglobin</dt><dd>${Number.isFinite(p.hbGdl) ? `${num(p.hbGdl, 1)} g/dL` : 'not available'}</dd></div>
     <div><dt>Tests performed</dt><dd>${d.panel === 'full' ? 'Spirometry' + (c.spirometry.post ? ' with bronchodilator' : '') + ', lung volumes, DLCO' : 'Spirometry' + (c.spirometry.post ? ' with bronchodilator' : '')}</dd></div>
   </dl>
   <p class="note">The group on the requisition selects the GLI-2012 reference when that equation is chosen. It is an administrative field, not a measurement.</p>${notes}</section>`;
@@ -35,7 +36,7 @@ export function renderManeuvers(set, title, { revealed, id }) {
   const best = (key) => summary[key];
   const rows = maneuvers.map((m, i) => {
     const ev = summary.evaluations[i];
-    const comments = m.faults.map((f) => ({ 'slow-start': 'slow start', 'early-termination': 'early termination', 'variable-effort': 'variable effort', cough: 'cough in first second', 'glottic-closure': 'glottic closure' }[f])).join(', ');
+    const comments = m.faults.map((f) => faultWording(f, 'label')).join(', ');
     const verdict = (k) => (ev[k].acceptable ? 'acceptable' : ev[k].usable ? 'usable' : 'not usable');
     return `<tr><th scope="row">${i + 1}</th><td>${num(m.fvc)}</td><td>${num(m.fev1)}</td><td>${num(m.fev1 / m.fvc, 3)}</td><td>${num(m.pef, 1)}</td><td>${num(m.fef2575, 2)}</td><td>${num(m.fet, 1)}</td><td>${num(m.bev, 3)}</td><td>${num(m.plateau, 3)}</td><td class="l">${esc(comments || '—')}</td>${revealed ? `<td class="l" title="${esc(reasonText(ev, 'fev1'))}">${verdict('fev1')}</td><td class="l" title="${esc(reasonText(ev, 'fvc'))}">${verdict('fvc')}</td>` : ''}</tr>`;
   }).join('');
@@ -84,14 +85,14 @@ function flagCell(mr) {
 
 function equationCell(mr) {
   const name = EQUATION_NAMES[mr.equationId] ?? mr.equationId;
-  return mr.matched ? esc(name) : `${esc(name)} <span class="flag" title="This equation was derived in people of European ancestry; it is applied here because no equation exists for this group.">European equation applied</span>`;
+  return mr.matched ? esc(name) : `${esc(name)} <span class="flag" title="This equation was derived in people of European ancestry, so its reference population may represent this patient less well; this limits the result, and no ancestry adjustment is applied.">European reference population</span>`;
 }
 
-export function renderReport(interp, names, title, id) {
+export function renderReport(interp, names, title, id, { labels = {} } = {}) {
   const rows = names.map((n) => {
     const mr = interp.measures[n];
     if (!mr) return '';
-    const meta = MEASURES[n];
+    const meta = { ...MEASURES[n], ...(labels[n] ? { label: labels[n] } : {}) };
     if (mr.available === false) return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td colspan="5" class="l muted">No reference value: ${esc(mr.reason ?? 'unavailable')}</td></tr>`;
     return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td>${num(mr.predicted, meta.dp)}</td><td>${num(mr.lln, meta.dp)}</td><td>${num(mr.z, 2)}</td><td>${num(mr.percentPredicted, 0)}%</td><td class="l">${flagCell(mr)}</td><td class="l">${equationCell(mr)}</td></tr>`;
   }).join('');
@@ -119,17 +120,25 @@ export function renderVolumes(c, interp) {
 export function renderDlco(c, interp) {
   if (!c.dlco) return '';
   const d = c.dlco;
+  const hbOk = hbKnown(d);
+  const coHb = coHbMeasured(c.scenario) ? `<div><dt>Carboxyhemoglobin</dt><dd>${num(c.scenario.coHbPercent, 1)}%</dd></div>` : '';
+  const tr = c.dlcoTrace;
+  const vi = Number.isFinite(tr?.inspired?.viOverVc) ? `<div><dt>Inspired volume, % of VC</dt><dd>${num(100 * tr.inspired.viOverVc, 0)}%</dd></div>` : '';
+  const bh = Number.isFinite(tr?.breathHold?.seconds) ? `<div><dt>Breath-hold time</dt><dd>${num(tr.breathHold.seconds, 1)} s</dd></div>` : '';
+  const head = hbOk
+    ? `<div><dt>Measured DLCO</dt><dd>${num(d.raw, 1)} mL/min/mmHg</dd></div><div><dt>Hemoglobin</dt><dd>${num(d.hbGdl, 1)} g/dL</dd></div><div><dt>Hemoglobin factor</dt><dd>${num(d.hbFactor, 3)}</dd></div><div><dt>Adjusted DLCO</dt><dd>${num(d.adjusted, 1)} mL/min/mmHg</dd></div>`
+    : `<div><dt>Measured DLCO</dt><dd>${num(d.raw, 1)} mL/min/mmHg</dd></div><div><dt>Hemoglobin</dt><dd>not available</dd></div><div><dt>Hemoglobin adjustment</dt><dd>not applied</dd></div>`;
   return `<section class="card" aria-labelledby="h-dlco"><h2 id="h-dlco">Diffusing capacity</h2>
-  <dl class="demo"><div><dt>Measured DLCO</dt><dd>${num(d.raw, 1)} mL/min/mmHg</dd></div><div><dt>Hemoglobin</dt><dd>${num(d.hbGdl, 1)} g/dL</dd></div><div><dt>Hemoglobin factor</dt><dd>${num(d.hbFactor, 3)}</dd></div><div><dt>Adjusted DLCO</dt><dd>${num(d.adjusted, 1)} mL/min/mmHg</dd></div></dl>
-  ${renderReport(interp, ['dlco', 'va', 'kco'], 'Single-breath diffusing capacity, compared on the hemoglobin-adjusted value', 'dlco-table')}
-  <p class="muted">The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard. One test is simulated, so no replicate-test rule applies.</p></section>`;
+  <dl class="demo">${head}${coHb}${vi}${bh}</dl>
+  ${renderReport(interp, ['dlco', 'va', 'kco'], hbOk ? 'Single-breath diffusing capacity, compared on the hemoglobin-adjusted value' : 'Single-breath diffusing capacity, compared without hemoglobin adjustment (hemoglobin not available)', 'dlco-table', { labels: hbOk ? {} : { dlco: 'DLCO, unadjusted' } })}
+  <p class="muted">${hbOk ? 'The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard. ' : ''}The inspired volume and the breath-hold time are simulated in the single-breath tracing. One test is simulated, so no replicate-test rule applies.</p></section>`;
 }
 
 export function renderAnswerForm(c, answers, locked) {
   const fields = QUESTIONS.map((q) => {
     const na = !hasData(c, q.id);
     const opts = q.options.map(([v, l]) => `<label><input type="radio" name="${q.id}" value="${esc(v)}" ${answers[q.id] === v ? 'checked' : ''} ${locked ? 'disabled' : ''}> ${esc(l)}</label>`).join('');
-    return `<fieldset><legend>${esc(q.label)}</legend>${na ? '<p class="muted">Not performed in this case.</p>' : ''}${opts}</fieldset>`;
+    return `<fieldset><legend>${esc(questionLabel(c, q))}</legend>${na ? '<p class="muted">Not performed in this case.</p>' : ''}${opts}</fieldset>`;
   }).join('');
   return `<section class="card" aria-labelledby="h-answers"><h2 id="h-answers">Your interpretation</h2>
   <p class="muted">Answer from the report above, then check. Results are scored against the stored key for the displayed reference equation, and an answer that matches the other equation is accepted for borderline values. Answers stay in this page and are not saved or sent anywhere.</p>
@@ -137,13 +146,21 @@ export function renderAnswerForm(c, answers, locked) {
   <div class="toolbar"><button type="button" class="primary" id="check-answers" ${locked ? 'disabled' : ''}>Check answers</button><button type="button" class="secondary" id="show-key" ${locked ? 'disabled' : ''}>Show the key without scoring</button></div></section>`;
 }
 
-const STATUS_TEXT = { correct: ['ok', 'Correct'], 'other-equation': ['ok', 'Correct for the other reference equation'], incorrect: ['miss', 'Differs from the key'], unanswered: ['miss', 'Not answered'] };
+const STATUS_TEXT = { correct: ['ok', 'Correct'], 'other-equation': ['ok', 'Accepted: matches the other reference equation'], incorrect: ['miss', 'Differs from the key'], unanswered: ['miss', 'Not answered'] };
+
+/** Archetype description for the reveal; a few are reworded where the stored wording goes beyond the sources or contradicts the case. */
+function groundTruthNote(c, truth) {
+  if (truth.archetype === 'anemia' && c.dlco && !hbKnown(c.dlco)) return 'Low measured DLCO with anemia; no hemoglobin was available to the laboratory, so the DLCO is reported without adjustment.';
+  return ARCHETYPE_NOTE_OVERRIDES[truth.archetype] ?? archetypeNote(truth.archetype);
+}
 
 export function renderReveal(c, interp, cmp, scores, scored) {
   const k = interp.key;
   const tally = scored ? scores.filter((s) => s.status === 'correct' || s.status === 'other-equation').length : null;
   const rows = scores.map((s) => {
-    const [cls, text] = STATUS_TEXT[s.status];
+    const [cls, base] = STATUS_TEXT[s.status];
+    s = { ...s, label: questionLabel(c, QUESTIONS.find((q) => q.id === s.id)) };
+    const text = s.status === 'other-equation' ? s.otherLabel : base;
     return `<div class="result-row"><div class="head">${esc(s.label)}</div><div>${scored ? `You: ${esc(answerLabel(s.id, s.answer))}` : ''}</div><div>Key: <strong>${esc(answerLabel(s.id, s.expected))}</strong>${s.other !== s.expected ? ` <span class="muted">(other equation: ${esc(answerLabel(s.id, s.other))})</span>` : ''}${scored ? ` <span class="${cls}">${text}</span>` : ''}</div></div>`;
   }).join('');
   const paras = (arr) => arr.map((t) => `<p>${esc(t)}</p>`).join('');
@@ -152,15 +169,15 @@ export function renderReveal(c, interp, cmp, scores, scored) {
   if (interp.severity) parts.push(interp.severity.scored ? `<p>Severity by the FEV₁ z-score (${num(interp.severity.z, 2)}) is <strong>${interp.severity.id}</strong>${interp.severity.fev1WithinLimits ? '; the FEV₁ is within its reference range, so the severity band reflects the obstruction by ratio alone' : ''}. The band edges (z of −2.5 and −4.0) are taken from secondary summaries of the 2022 statement and have not been checked against it.</p>` : `<p class="note">Severity is not scored for this pattern because the rule has not been checked against the statement. By z-score: ${Object.entries(interp.severity.perMeasure).map(([m, v]) => `${MEASURES[m].label} ${v}`).join('; ')}.</p>`);
   for (const f of interp.flags) parts.push(f.id === 'low-erv' ? `<p>${esc(LOW_ERV_TEXT)}</p>` : `<p><strong>${esc(f.text)}</strong> The definition used here has not been checked against the statement.</p>`);
   if (interp.dlco) {
-    parts.push(`<h3>Diffusing capacity</h3><p>${esc(DLCO_TEXT[interp.dlco.category])}</p>`);
+    parts.push(`<h3>Diffusing capacity</h3><p>${esc(hbKnown(c.dlco) ? DLCO_TEXT[interp.dlco.category] : DLCO_TEXT.unadjusted)}</p>`);
     if (interp.dlco.subtype) parts.push(`<p>${esc(DLCO_TEXT.subtype[interp.dlco.subtype])}</p>`);
-    if (c.dlco.hbGdl < 11) parts.push(`<p>${esc(DLCO_TEXT.hb)}</p>`);
+    if (hbLow(c.dlco.hbGdl)) parts.push(`<p>${esc(DLCO_TEXT.hb)}</p>`);
   }
   if (interp.bd) {
     const b = interp.bd;
     parts.push(`<h3>Bronchodilator response</h3><p>Under the 2022 rule the response is <strong>${b.rule2022.significant ? 'significant' : 'not significant'}</strong>${b.rule2022.which.length ? ` (${b.rule2022.which.map((w) => (w === 'FEV1' ? 'FEV₁' : w)).join(' and ')} above 10% of predicted)` : ''}. Under the earlier rule it is <strong>${b.rule2005.significant ? 'significant' : 'not significant'}</strong>${b.rulesAgree ? '' : ', so the two rules disagree for this patient'}.</p><p>${esc(BD_TEXT.rules)}</p>`);
     if (c.groundTruth.bdVariant === 'volume') parts.push(`<p>${esc(BD_TEXT.volume)}</p>`);
-    if (c.groundTruth.bdVariant === 'artifact') parts.push(`<p>${esc(BD_TEXT.artifact)}</p>`);
+    if (c.groundTruth.bdVariant === 'artifact') parts.push(`<p>${esc(bdArtifactText(b))}</p>`);
   }
   const sc = c.scenario ?? {};
   if ((sc.caveats ?? []).length) {
@@ -185,7 +202,7 @@ export function renderReveal(c, interp, cmp, scores, scored) {
   <div class="scroll"><table class="data"><caption>Spirometry under GLI-2012 (group on requisition: ${esc(c.report.patient.group)}) and GLI Global 2022</caption><thead><tr><th class="l">Measure</th><th>Value</th><th>z, GLI-2012</th><th class="l">Label</th><th>z, GLI Global</th><th class="l">Label</th><th class="l">Reclassified</th></tr></thead><tbody>${cmpRows}</tbody></table></div>
   <p>${cmp.patternChanged ? `<span class="flag">The pattern changes:</span> ${esc(PATTERNS[cmp.a.pattern])} under GLI-2012 and ${esc(PATTERNS[cmp.b.pattern])} under GLI Global.` : `The pattern is the same under both equations (${esc(PATTERNS[cmp.b.pattern])}).`}${cmp.bronchodilatorChanged ? ' The 2022 bronchodilator result also changes, because it uses the predicted value.' : ''} Volumes and diffusing capacity use the same equations in both columns, so every change shown comes from the spirometry equation.</p>
   <h3>How this case was built</h3>
-  <p><strong>Ground truth:</strong> ${truth.bdVariant ? `Obstruction with air trapping and a discordant bronchodilator response; this case is the ${truth.bdVariant === 'volume' ? 'volume-response' : 'post-bronchodilator technique-artifact'} variant.` : esc(archetypeNote(truth.archetype))}${truth.phenotype && !truth.bdVariant ? ` Phenotype: ${esc(truth.phenotype)}.` : ''} Technique: ${esc(c.descriptor.technique)}.</p>
+  <p><strong>Ground truth:</strong> ${truth.bdVariant ? `Obstruction with air trapping and a discordant bronchodilator response; this case is the ${truth.bdVariant === 'volume' ? 'volume-response' : 'post-bronchodilator technique-artifact'} variant.` : esc(groundTruthNote(c, truth))}${truth.phenotype && !truth.bdVariant ? ` Phenotype: ${esc(truth.phenotype)}.` : ''} Technique: ${esc(c.descriptor.technique)}.</p>
   <p>${esc(ANCHOR_TEXT)}</p></section>`;
 }
 
@@ -196,7 +213,7 @@ export function renderMethod(version) {
   <p>The generator draws a lung from a stated archetype, converts standardized deviations to liters with the GLI Global (spirometry), GLI-2021 (volumes) and GLI-2017 (diffusing capacity) equations, and derives the remaining quantities so that physical constraints hold exactly: FEV₁ does not exceed FVC, TLC equals RV plus VC, FRC equals RV plus ERV, IC equals TLC minus FRC, VA does not exceed TLC, and DLCO equals KCO times VA. Forced maneuvers are produced from one volume–time curve per attempt, so the tabulated FEV₁, FVC and PEF come from the plotted trace. Three to eight maneuvers are recorded, with technical faults whose frequency depends on the technique level.</p>
   <p>The key is computed from the values that appear on the report, after maneuver variability and technique faults, so a poor session can change the key. The archetype is shown as ground truth after the answers are checked.</p>
   <h3>Limits that matter when reading a case</h3>
-  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled. The predicted and lower-limit curves, when shown, are schematic. FEF₂₅₋₇₅ is displayed without a reference value. The inspiratory limb, the tidal breathing before a maneuver, the plethysmograph tracings and the single-breath DLCO tracing are generated from the case values with fixed models and are not calibrated against patient data. Replicate DLCO tests and the criteria for children are not simulated. TLC is by plethysmography.</p>
+  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled, and the limit is the reference population, not a call for a race-specific equation: the 2023 ATS statement advises against race adjustment for volumes and DLCO. The predicted and lower-limit curves, when shown, are schematic. FEF₂₅₋₇₅ is displayed without a reference value. The inspiratory limb, the tidal breathing before a maneuver, the plethysmograph tracings and the single-breath DLCO tracing are generated from the case values with fixed models and are not calibrated against patient data. The inspired volume and the breath-hold time of the single-breath DLCO are simulated in its tracing; replicate DLCO tests and the criteria for children are not simulated. TLC is by plethysmography.</p>
   <h3>Technologist and intake notes</h3>
   <p>Some cases carry notes of the kind a technologist or an intake form records: estimated height, a reference sex that differs from the patient’s gender identity (the 2019 standard names sex assigned at birth as the determinant of predicted lung size), recent smoking or inhaler use, and technical problems. Each note has a stated effect on the data and a stated effect on the interpretation, and some notes change nothing, so that irrelevant information is not mistaken for a finding. The effect sizes are teaching values and are not verified against primary sources.</p>
   <h3>Rules that have not been checked against their primary source</h3>

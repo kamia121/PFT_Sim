@@ -4,6 +4,8 @@
  * the answer that matches the other equation is accepted and labeled as such.
  */
 
+import { hbKnown } from './format.js';
+
 export const QUESTIONS = [
   { id: 'pattern', label: 'Pattern', options: [
     ['normal', 'Normal'],
@@ -27,6 +29,12 @@ export const QUESTIONS = [
   ] },
 ];
 
+/** Question label for a case: the diffusing capacity question drops "hemoglobin-adjusted" when no hemoglobin was available. */
+export function questionLabel(caseData, q) {
+  if (q.id === 'dlco' && caseData?.dlco && !hbKnown(caseData.dlco)) return 'Diffusing capacity (no hemoglobin adjustment: hemoglobin not available)';
+  return q.label;
+}
+
 /** Whether the case contains the data a question asks about. */
 export function hasData(caseData, questionId) {
   if (questionId === 'bronchodilator') return Boolean(caseData.report.spirometry.post);
@@ -41,13 +49,21 @@ const norm = (k, id) => {
   return k[id] ?? null;
 };
 
+/** Name of the convention an answer matches when it matches only the key under the other spirometry equation. */
+export const OTHER_EQUATION_LABEL = {
+  GLI2012: 'Matches the GLI-2012 key (the earlier, race-specific convention)',
+  GLIglobal: 'Matches the GLI Global (2022) key',
+};
+
 /**
  * @param {Record<string, string>} answers
  * @param {object} keyA key under the displayed equation
  * @param {object} keyB key under the other equation, for borderline tolerance
- * @returns {{ id: string, label: string, answer: string|null, expected: string, status: 'correct'|'other-equation'|'incorrect'|'unanswered', other: string }[]}
+ * @param {'GLIglobal'|'GLI2012'} [equationA] the equation of keyA; the default key is GLI Global
+ * @returns {{ id: string, label: string, answer: string|null, expected: string, status: 'correct'|'other-equation'|'incorrect'|'unanswered', other: string, otherLabel: string }[]}
  */
-export function scoreAnswers(answers, keyA, keyB) {
+export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal') {
+  const otherLabel = OTHER_EQUATION_LABEL[equationA === 'GLI2012' ? 'GLIglobal' : 'GLI2012'];
   return QUESTIONS.map((q) => {
     const expected = norm(keyA, q.id);
     const other = norm(keyB, q.id);
@@ -57,7 +73,7 @@ export function scoreAnswers(answers, keyA, keyB) {
     else if (answer === expected) status = 'correct';
     else if (answer === other) status = 'other-equation';
     else status = 'incorrect';
-    return { id: q.id, label: q.label, answer, expected, status, other };
+    return { id: q.id, label: q.label, answer, expected, status, other, otherLabel };
   });
 }
 

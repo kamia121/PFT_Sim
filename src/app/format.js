@@ -24,3 +24,26 @@ export const EQUATION_NAMES = {
   GLI2021vol: 'GLI-2021 volumes',
   GLI2017tlco: 'GLI-2017 TLCO',
 };
+
+/**
+ * Case facts that several renderers read. They are kept here so that the learner page, the report,
+ * the narrative and the quiz agree on what was and was not recorded.
+ */
+
+/** Hemoglobin was entered for the DLCO adjustment. A missing value is null, and null is not a low value. */
+export const hbKnown = (dlco) => Boolean(dlco) && Number.isFinite(dlco.hbGdl);
+
+/** Hemoglobin below 11 g/dL. False when the hemoglobin is missing. */
+export const hbLow = (hb) => Number.isFinite(hb) && hb < 11;
+
+/** Carboxyhemoglobin was measured by co-oximetry. Only then may its value appear anywhere. */
+export const coHbMeasured = (scenario) => scenario?.coHbMeasured === true && Number.isFinite(scenario?.coHbPercent);
+
+/** A raised carboxyhemoglobin exists in the case but was not measured (recent smoking, no co-oximetry). */
+export const coHbUnmeasured = (scenario) => scenario?.coHbMeasured !== true && Number.isFinite(scenario?.coHbPercent) && scenario.coHbPercent > 0;
+
+/** The patient declined to give sex, so the birth sex is not shown before the answers are checked. */
+export const sexUndisclosed = (scenario) => scenario?.referenceSex?.birthDisclosed === false || (Array.isArray(scenario?.ids) && scenario.ids.includes('sex-not-recorded'));
+
+/** The reference sex differs from the birth sex and the birth sex may be shown. */
+export const showBirthSex = (scenario) => Boolean(scenario?.referenceSex) && scenario.referenceSex.birth !== scenario.referenceSex.used && !sexUndisclosed(scenario);

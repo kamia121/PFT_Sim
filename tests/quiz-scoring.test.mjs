@@ -6,7 +6,7 @@ import { feedbackHtml } from '../src/quiz/explain.js';
 import { build, sweep } from './quiz-helpers.mjs';
 
 const single = (id, correct, alt = null) => ({ id, skill: 'pattern', type: 'single', key: { correct, alt }, options: [] });
-const multi = (correct, weights) => ({ id: 'limitations', skill: 'limitations', type: 'multi', key: { correct, weights }, options: [] });
+const multi = (correct, weights, wrong) => ({ id: 'limitations', skill: 'limitations', type: 'multi', key: { correct, weights, wrong }, options: [...correct, ...wrong].map((id) => ({ id, label: id })) });
 
 test('single answers: correct, other equation, incorrect, unanswered', () => {
   const it = single('pattern', 'obstruction', 'normal');
@@ -33,30 +33,54 @@ test('partial credit: one band or one grade from the key earns half a point, not
   assert.equal(scoreItem(single('pattern', 'mixed'), 'restriction').score, 0, 'no partial credit for pattern');
 });
 
-test('limitations: harmonic mean of precision and weighted recall', () => {
-  const it = multi(['o1', 'o2'], { o1: 2, o2: 1 });
+test('limitations: weighted share of applicable statements selected minus the share of non-applicable ones selected', () => {
+  const it = multi(['o1', 'o2'], { o1: 2, o2: 1 }, ['o3', 'o4', 'o5', 'o6']);
   assert.equal(scoreItem(it, ['o1', 'o2']).score, 1);
   const r = scoreItem(it, ['o1']);
-  assert.equal(r.detail.precision, 1);
+  assert.equal(r.detail.falseRate, 0);
   assert.ok(Math.abs(r.detail.recall - 2 / 3) < 1e-9);
-  assert.ok(Math.abs(r.score - 0.8) < 1e-9);
+  assert.ok(Math.abs(r.score - 2 / 3) < 1e-3);
   assert.deepEqual(r.detail.missed, ['o2']);
-  const w = scoreItem(it, ['o2']);
-  assert.ok(Math.abs(w.score - (2 * 1 * (1 / 3)) / (1 + 1 / 3)) < 1e-3);
-  const x = scoreItem(it, ['o1', 'o2', 'o3', 'o4']);
-  assert.equal(x.detail.precision, 0.5);
-  assert.ok(Math.abs(x.score - 2 / 3) < 1e-3);
+  assert.ok(Math.abs(scoreItem(it, ['o2']).score - 1 / 3) < 1e-3);
+  // one false selection out of four costs a quarter
+  const x = scoreItem(it, ['o1', 'o2', 'o3']);
+  assert.equal(x.detail.falseRate, 0.25);
+  assert.ok(Math.abs(x.score - 0.75) < 1e-3);
+  assert.deepEqual(x.detail.extra, ['o3']);
   assert.deepEqual([scoreItem(it, ['o3']).score, scoreItem(it, ['o3']).status], [0, 'incorrect']);
   assert.equal(scoreItem(it, []).status, 'unanswered');
   assert.equal(scoreItem(it, ['o1', 'o1', 'o2']).score, 1, 'a repeated id counts once');
 });
 
+test('limitations: selecting every option scores 0 and random selection is not rewarded', () => {
+  const it = multi(['o1', 'o2', 'o3'], { o1: 2, o2: 1, o3: 1 }, ['o4', 'o5', 'o6', 'o7', 'o8']);
+  assert.equal(scoreItem(it, [...it.options.map((o) => o.id)]).score, 0);
+  // The unclipped expectation of a random subset is 0: recall minus false-positive rate has the same mean for any inclusion probability.
+  let seed = 12345;
+  const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 4294967296; };
+  for (const p of [0.2, 0.5, 0.8]) {
+    let sum = 0;
+    const N = 4000;
+    for (let i = 0; i < N; i++) {
+      const sel = it.options.map((o) => o.id).filter(() => rnd() < p);
+      if (!sel.length) continue;
+      const t = new Set(it.key.correct);
+      const w = it.key.weights;
+      const rec = sel.filter((s) => t.has(s)).reduce((a, s) => a + w[s], 0) / 4;
+      const fp = sel.filter((s) => !t.has(s)).length / 5;
+      sum += rec - fp;
+    }
+    assert.ok(Math.abs(sum / N) < 0.05, `p=${p}: mean ${sum / N}`);
+  }
+});
+
 test('"none of these" is correct only when the key is none', () => {
-  const none = multi(['none'], { none: 1 });
+  const none = multi(['none'], { none: 1 }, ['o1', 'o2', 'o3']);
   assert.equal(scoreItem(none, ['none']).score, 1);
   assert.ok(Math.abs(scoreItem(none, ['none', 'o1']).score - 2 / 3) < 1e-3);
   assert.equal(scoreItem(none, ['o1']).score, 0);
-  const some = multi(['o1'], { o1: 1 });
+  assert.equal(scoreItem(none, ['none', 'o1', 'o2', 'o3']).score, 0);
+  const some = multi(['o1'], { o1: 1 }, ['none', 'o2']);
   assert.equal(scoreItem(some, ['none']).score, 0);
 });
 

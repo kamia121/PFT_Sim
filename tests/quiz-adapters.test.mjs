@@ -77,20 +77,22 @@ test('with the narrative module absent the rule-based statement is exactly one c
   }
 });
 
-test('scenario caveats and decoys from the case are used alongside the built-in ones', () => {
+test('scenario caveats from the case are used alongside the built-in ones; scenario decoys are not', () => {
   const { prep, ctx } = build({ seed: 11, archetype: 'normal', technique: 'good' });
   prep.caseData.scenario = {
     level: 'moderate', ids: [], statements: [{ id: 's1', category: 'medication', text: 'Albuterol taken two hours before arrival.' }], technologistComments: ['Patient coughed on the third effort.'],
     caveats: [{ id: 'cv1', text: 'SCENARIO CAVEAT: bronchodilator was not withheld.', weight: 'major' }],
     decoyCaveats: [{ id: 'dc1', text: 'SCENARIO DECOY: the patient wore a restrictive garment.' }],
-    preTest: { lastSabaHours: 2 }, height: { statedCm: 170, trueCm: 168, source: 'reported', note: 'Stated, not measured.' }, referenceSex: { used: 'M', birth: 'F', note: 'Laboratory policy.' }, coHbPercent: 4.2,
+    preTest: { lastSabaHours: 2 }, height: { statedCm: 170, trueCm: 168, source: 'reported', note: 'Stated, not measured.' }, referenceSex: { used: 'M', birth: 'F', birthDisclosed: true, note: 'Laboratory policy.' }, coHbPercent: 4.2, coHbMeasured: true,
   };
   const items = buildItems(prep, ctx);
   const lim = items.find((i) => i.id === 'limitations');
   const text = (id) => lim.options.find((o) => o.id === id)?.label;
   const correct = lim.key.correct.map(text);
   assert.ok(correct.includes('SCENARIO CAVEAT: bronchodilator was not withheld.'));
-  assert.ok(lim.explain.options.some((o) => o.text.startsWith('SCENARIO DECOY') && !o.truth));
+  // Scenario decoys are assertions about the case that are false; the built-in true-but-irrelevant statements replace them.
+  assert.ok(!lim.explain.options.some((o) => o.text.startsWith('SCENARIO DECOY')));
+  assert.ok(lim.explain.options.filter((o) => !o.truth && o.id !== 'none').length >= 3);
   assert.ok(lim.options.some((o) => o.id === 'none'));
   const html = renderChart(prep, { adapters: NO_ADAPTERS });
   assert.match(html, /Albuterol taken two hours before arrival/);

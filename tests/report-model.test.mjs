@@ -17,7 +17,7 @@ test('the header carries the ATS 2017 fields', () => {
     assert.ok(field(model, label), `missing header field ${label}`);
   }
   assert.equal(field(model, 'Name'), 'Simulated patient');
-  assert.equal(field(model, 'ID'), caseCode(c.descriptor.seed));
+  assert.equal(field(model, 'ID'), `SIM-${caseCode(c.descriptor.seed)}`);
   assert.equal(field(model, 'Reference group'), c.report.patient.group);
   assert.match(field(model, 'Height'), /\(measured\)$/);
   assert.match(field(model, 'LLN definition'), /1\.645/);
@@ -120,7 +120,7 @@ test('scenario comments, height source and reference sex flow into the report an
     smokingStatus: 'Ex-smoker',
     height: { statedCm: base.report.patient.heightCm, trueCm: base.report.patient.heightCm + 6, source: 'arm-span', note: 'secret true height' },
     referenceSex: { used: base.report.patient.sex, birth: base.report.patient.sex === 'M' ? 'F' : 'M', note: '' },
-    coHbPercent: 5.2,
+    coHbPercent: 5.2, coHbMeasured: true,
   } };
   const interp = interpret(c.report, resolveReference, 'GLIglobal');
   const model = buildReportModel(c, interp, { resolve: resolveReference });
@@ -142,7 +142,7 @@ test('equation names appear per index, and fallbacks are stated', () => {
   assert.match(field(g, 'Reference equations'), /Lung volumes: GLI-2021 volumes/);
   assert.match(field(g, 'Reference equations'), /DLCO: GLI-2017 TLCO/);
   assert.match(g.referenceNote[0], /group-neutral/);
-  assert.match(table(g, 'volumes').footnote, /European-ancestry equation applied/);
+  assert.match(table(g, 'volumes').footnote, /reference population of European ancestry/);
   assert.match(g.referenceNote.join(' '), /derived in people of European ancestry/);
   const o = makeModel({ seed: 90, archetype: 'normal', group: 'Black or African American' }, { equation: 'GLI2012' }).model;
   assert.match(field(o, 'Reference equations'), /Spirometry: GLI-2012/);
@@ -157,7 +157,7 @@ test('lung volume and DLCO tables carry the specified rows and respect the panel
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc']);
   assert.equal(row(table(model, 'volumes'), 'rv_tlc').unit, '%');
-  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['dlco-raw', 'hb', 'hb-factor', 'dlco', 'va', 'kco']);
+  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['dlco-raw', 'hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
   assert.match(table(model, 'dlco').footnote, /Cotes formula, not yet checked/);
   const s = makeModel({ seed: 44, archetype: 'mixed', panel: 'spirometry' }).model;
   assert.equal(table(s, 'volumes'), undefined);
