@@ -195,18 +195,21 @@ function heightModel(method, d, u, labSex) {
   return out;
 }
 
+const genderWord = (s) => (s === 'M' ? 'man' : 'woman');
+const HORMONE_NOTE = 'The effect of gender-affirming hormone therapy on lung size is not established.';
+
 function sexModel(spec, d, u) {
   const birth = d.sex;
   if (spec.use === 'identity') {
     const used = other(birth);
-    return { used, birth, identityWord: sexWord(used), birthWord: sexWord(birth), usedWord: sexWord(used), note: `Reference sex ${sexWord(used)}: the sex the patient identifies with, which differs from the sex assigned at birth (${sexWord(birth)}).` };
+    return { used, birth, identityWord: genderWord(used), birthWord: sexWord(birth), usedWord: sexWord(used), note: `Reference sex ${sexWord(used)}, matching gender identity (${genderWord(used)}); sex assigned at birth: ${sexWord(birth)}. ${HORMONE_NOTE}` };
   }
   if (spec.use === 'default') {
     const used = u[12] < 0.5 ? 'M' : 'F';
     return { used, birth, identityWord: 'not disclosed', birthWord: sexWord(birth), usedWord: sexWord(used), note: `Sex not disclosed; the laboratory default (${sexWord(used)}) was used for the reference values.` };
   }
-  const identityWord = spec.identityDraw > 0.85 ? 'nonbinary' : sexWord(other(birth));
-  return { used: birth, birth, identityWord, birthWord: sexWord(birth), usedWord: sexWord(birth), note: `Reference sex ${sexWord(birth)}: sex assigned at birth, the laboratory default (ATS/ERS 2019). The patient identifies as ${identityWord}.` };
+  const identityWord = spec.identityDraw > 0.85 ? 'nonbinary' : genderWord(other(birth));
+  return { used: birth, birth, identityWord, birthWord: sexWord(birth), usedWord: sexWord(birth), note: `Reference sex ${sexWord(birth)}: sex assigned at birth, the laboratory default (ATS/ERS 2019). Gender identity: ${identityWord}. ${HORMONE_NOTE}` };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -229,7 +232,8 @@ const list = (xs, dp, unit) => xs.map((x) => x.toFixed(dp)).join(', ') + (unit ?
 export function applyScenarios({ selection, descriptor: d }) {
   const resolved = selection.picks.map((p) => {
     const scn = getScenario(p.id);
-    const fx = resolveEffects(scn.effects, p.u);
+    const drawn = resolveEffects(scn.effects, p.u);
+    const fx = scn.finalize ? scn.finalize(drawn, d, p.u) : drawn;
     return { ...p, scn, fx, result: fx.referenceSex ? sexModel(fx.referenceSex, d, p.u) : null };
   });
   const labSex = resolved.find((p) => p.fx.referenceSex)?.result.used ?? d.sex;
@@ -276,19 +280,43 @@ export function applyScenarios({ selection, descriptor: d }) {
       return { frc: f, erv: e, ic: i };
     },
 
-    /** Diffusing-capacity hook: multipliers, incomplete inhalation, carboxyhemoglobin. Returns the measured (Hb-corrected-truth) values. */
-    dlcoParts({ corrected, va, tlc, vc, tlcRatio }) {
+    /**
+     * Diffusing-capacity hook: multipliers, carboxyhemoglobin and VA changes. Returns the measured (Hb-corrected-truth) values.
+     * Technique faults that the single-breath tracing models (incomplete inhalation, Valsalva, Mueller) are NOT applied here: the scenario
+     * forces the fault id and src/core/dlco-trace.js alone determines the numbers, so each fault acts exactly once (case.js takes the
+     * recomputed values). Leak has no numerical effect in the tracing, so its multipliers are applied here and nowhere else.
+     */
+    dlcoParts({ corrected, va, tlc, tlcRatio }) {
       const x = merged.dlco;
       let c = corrected * (x.mult ?? 1), v = va;
       if (x.coHbPercent !== undefined) c *= cohbDlcoFactor(x.coHbPercent);
-      if (x.viFraction !== undefined) {
-        const vNew = Math.max(0.6 * v, v - (0.95 - x.viFraction) * vc);
-        c *= 1 - 0.5 * (1 - vNew / v); // unverified: half the proportional loss of VA is carried by the DLCO
-        v = vNew;
-      }
       if (x.vaMult !== undefined) v *= x.vaMult;
       if (merged.volumes.vaFollowsTlc) v *= tlcRatio;
       return { corrected: c, va: Math.min(v, 0.99 * tlc) };
+    },
+
+    /** Reference-sex contrast: the interpretation under the sex used and under the other sex (GLI Global), or null without a sex scenario. */
+    sexContrast(report, resolve) {
+      if (!sexPick) return null;
+      const alt = other(sexPick.result.used);
+      const a = interpret(report, resolve, 'GLIglobal');
+      const b = interpret({ ...report, patient: { ...report.patient, sex: alt } }, resolve, 'GLIglobal');
+      const keys = ['fev1', 'fvc', 'fev1_fvc', 'tlc', 'dlco'].filter((k) => a.measures[k]?.z !== undefined && b.measures[k]?.z !== undefined);
+      const labelChanges = keys.filter((k) => a.measures[k].label !== b.measures[k].label).map((k) => ({ measure: k, from: a.measures[k].label, to: b.measures[k].label }));
+      return {
+        sex: alt,
+        pattern: b.pattern,
+        patternUsed: a.pattern,
+        z: Object.fromEntries(keys.map((k) => [k, { used: a.measures[k].z, alternative: b.measures[k].z }])),
+        labelChanges,
+        classificationChanges: a.pattern !== b.pattern || labelChanges.length > 0,
+      };
+    },
+
+    /** The conditions that gate caveats and decoys: the tests present in the case plus whether the reference-sex choice changes any label. */
+    caveatFlags(base, report, resolve) {
+      const contrast = plan.sexContrast(report, resolve);
+      return { ...base, sexSame: contrast ? !contrast.classificationChanges : false };
     },
 
     /** Caveats that apply given the data present in the case. */
@@ -321,7 +349,7 @@ export function applyScenarios({ selection, descriptor: d }) {
         fev1Trend: list(mans.slice(0, 3).map((m) => m.fev1), 2, 'L'),
         result: null,
       };
-      const has = { dlco: Boolean(ctx.dlco), volumes: Boolean(ctx.volumes), post: Boolean(post) };
+      const has = plan.caveatFlags({ dlco: Boolean(ctx.dlco), volumes: Boolean(ctx.volumes), post: Boolean(post) }, report, resolve);
       const statements = [], comments = [];
       for (const p of picks) {
         const fx = { ...p.fx, hours: fmtHours };
@@ -337,7 +365,7 @@ export function applyScenarios({ selection, descriptor: d }) {
       const seen = new Set();
       const decoys = [];
       for (const p of picks) for (const c of p.scn.decoyCaveats) {
-        if (caveatIds.has(c.id) || seen.has(c.id)) continue;
+        if (caveatIds.has(c.id) || seen.has(c.id) || (c.unless && has[c.unless])) continue;
         seen.add(c.id); decoys.push({ id: c.id, text: c.text });
       }
 
@@ -353,21 +381,9 @@ export function applyScenarios({ selection, descriptor: d }) {
 
       const sp = sexPick?.result;
       const referenceSex = sp
-        ? { used: sp.used, birth: sp.birth, note: sp.note }
-        : { used: d.sex, birth: d.sex, note: '' };
-      if (sp) {
-        const alt = other(sp.used);
-        const a = interpret(report, resolve, 'GLIglobal');
-        const b = interpret({ ...report, patient: { ...report.patient, sex: alt } }, resolve, 'GLIglobal');
-        const keys = ['fev1', 'fvc', 'fev1_fvc', 'tlc', 'dlco'].filter((k) => a.measures[k]?.z !== undefined && b.measures[k]?.z !== undefined);
-        referenceSex.alternative = {
-          sex: alt,
-          pattern: b.pattern,
-          patternUsed: a.pattern,
-          z: Object.fromEntries(keys.map((k) => [k, { used: a.measures[k].z, alternative: b.measures[k].z }])),
-          labelChanges: keys.filter((k) => a.measures[k].label !== b.measures[k].label).map((k) => ({ measure: k, from: a.measures[k].label, to: b.measures[k].label })),
-        };
-      }
+        ? { used: sp.used, birth: sp.birth, birthDisclosed: sp.identityWord !== 'not disclosed', note: sp.note }
+        : { used: d.sex, birth: d.sex, birthDisclosed: true, note: '' };
+      if (sp) referenceSex.alternative = plan.sexContrast(report, resolve);
 
       const { notes, ...preRest } = merged.preTest;
       const deviations = picks.map((p) => p.scn.deviation).filter(Boolean);
@@ -406,7 +422,7 @@ export function emptyScenario(d) {
   return {
     level: 'none', ids: [], statements: [], technologistComments: [], caveats: [], decoyCaveats: [], preTest: {},
     height: { statedCm: d.heightCm, trueCm: d.heightCm, source: 'measured', note: '' },
-    referenceSex: { used: d.sex, birth: d.sex, note: '' },
+    referenceSex: { used: d.sex, birth: d.sex, birthDisclosed: true, note: '' },
     coHbPercent: null,
     coHbMeasured: false,
     group: { used: d.group, selfReported: d.group },

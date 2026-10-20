@@ -65,7 +65,7 @@ for (const level of ['none', 'light', 'moderate', 'heavy']) {
       const have = new Set(sc.caveats.map((x) => x.id));
       for (const id of sc.ids) {
         for (const cv of getScenario(id).caveats) {
-          const needs = cv.requires === 'dlco' ? c.dlco : cv.requires === 'volumes' ? c.volumes : cv.requires === 'post' ? c.spirometry.post : true;
+          const needs = cv.requires === 'dlco' ? c.dlco : cv.requires === 'volumes' ? c.volumes : cv.requires === 'post' ? c.spirometry.post : cv.requires === 'sexSame' ? (sc.referenceSex.alternative && !sc.referenceSex.alternative.classificationChanges) : true;
           assert.equal(have.has(cv.id), Boolean(needs), `${tag}: ${id} -> ${cv.id}`);
         }
       }

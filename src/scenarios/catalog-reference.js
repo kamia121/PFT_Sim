@@ -5,6 +5,7 @@
  * (estimated height, reference sex), the lungs were generated from the true value.
  */
 import { scenario, BMI, fullPanel, byArchetype } from './define.js';
+import { altitudeDlcoMultiplier } from './constants.js';
 
 const ARMSPAN_ERROR = { id: 'height-estimated-armspan-error', weight: 'major', text: 'Predicted values depend on the height entered, and here the height is estimated from arm span with a fixed ratio. The ratio varies with sex, age and ancestry, so the estimate carries an error of several centimeters in either direction that shifts every predicted value and z-score.' };
 const ARMSPAN_RATIO = { id: 'armspan-ratio-sources-differ', weight: 'minor', text: 'Published fixed arm-span ratios differ between sources, and regression equations are preferred over a fixed ratio when they are available.' };
@@ -60,7 +61,7 @@ export const REFERENCE_SCENARIOS = [
     vars: (fx, c) => ({ ulna: c.result.ulnaCm.toFixed(1), stated: c.result.statedCm.toFixed(1) }),
     caveats: [
       { id: 'height-estimated-ulna-error', weight: 'major', text: 'Height is estimated from ulna length, and the conversion depends on sex, age and ancestry. The error of the estimate moves the predicted values and the z-scores in either direction.' },
-      { id: 'height-method-stated', weight: 'minor', text: 'Standing height is not defined without leg length, so arm span avoids the missing segment, and the report states the method used for height.' },
+      { id: 'height-ulna-measurement', weight: 'minor', text: 'An ulna estimate depends on a reproducible measurement of one forearm segment and on a conversion equation whose coefficients vary with sex, age and ancestry; published equations are best established in children. The report states the ulna length and the method used for height.' },
     ],
     decoyCaveats: [{ id: 'decoy-ulna-exact', text: 'Ulna length gives the same height as standing, so the predicted values are unaffected.' }],
     confidence: 'medium', source: 'SPEC-02; S1 (ulna preferred in children); S14',
@@ -104,38 +105,40 @@ export const REFERENCE_SCENARIOS = [
   scenario({
     id: 'sex-birth-default', category: 'Sex and gender', exclusive: 'sex',
     variants: [
-      'Sex assigned at birth: {birth}. Patient identifies as {identity}. Predicted values calculated with sex assigned at birth, the laboratory default (ATS/ERS 2019).',
-      'Registration lists gender identity {identity}; sex assigned at birth {birth}. Operator note: reference values use birth sex by default.',
-      'Patient was told that predicted lung size follows sex assigned at birth and agreed to this; identity {identity}, reference sex used {birth}.',
+      'Sex assigned at birth: {birth}. Gender identity: {identity}. Predicted values calculated with sex assigned at birth, the laboratory default (ATS/ERS 2019).',
+      'Registration lists gender identity {identity}; sex assigned at birth {birth}. Operator note: reference values use sex assigned at birth by default.',
+      'Patient was informed that predicted lung size follows sex assigned at birth. Gender identity: {identity}; sex assigned at birth: {birth}; reference sex used: {birth}.',
     ],
     weight: 0.6,
     effects: { referenceSex: { use: 'birth', identityDraw: [0, 1] } },
     vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord }),
     caveats: [
-      { id: 'sex-birth-used-default', weight: 'major', text: 'Predicted lung size follows sex assigned at birth in the ATS/ERS 2019 standard, and the operator note states the default used, which here is the birth sex. The standard gives no rule for patients on hormone therapy, for nonbinary patients or for intersex patients.' },
+      { id: 'sex-birth-used-default', weight: 'major', text: 'Predicted lung size follows sex assigned at birth in the ATS/ERS 2019 standard, and the operator note states the default used, which here is the birth sex. The standard gives no rule for patients on hormone therapy, for nonbinary patients or for intersex patients, and the effect of gender-affirming hormone therapy on lung size is not established.' },
       { id: 'sex-evidence-limited', weight: 'minor', text: 'The evidence on which reference equations fit patients on long-term hormone therapy is limited to small retrospective series, and prospective studies are in progress. The sex used can move z-scores across the lower limit of normal without any change in the lungs, so the values under the other sex are shown for contrast.' },
+      { id: 'sex-choice-no-change', weight: 'minor', requires: 'sexSame', text: 'Under the other reference sex the pattern and every label of the spirometry, volumes and DLCO are unchanged, so the sex choice does not change the classification here, although the z-scores shift.' },
     ],
     decoyCaveats: [
-      { id: 'decoy-sex-identity-required', text: 'Reference values should have been calculated with gender identity, so the z-scores are invalid.' },
-      { id: 'decoy-hormones-change-lungs', text: 'Hormone therapy has changed the true lung volumes enough to explain the findings.' },
+      { id: 'decoy-sex-identity-required', text: 'Using sex assigned at birth for the reference values makes the z-scores invalid.' },
+      { id: 'decoy-sex-no-effect', unless: 'sexSame', text: 'The choice of reference sex does not alter the classification.' },
     ],
     confidence: 'medium', source: 'SPEC-12; S1; S7 (abstract); S8-S11 not read',
   }),
   scenario({
     id: 'sex-identity-entered', category: 'Sex and gender', exclusive: 'sex',
     variants: [
-      'Sex assigned at birth: {birth}. Patient identifies as {identity}; registration entered {identity}, and reference values were calculated with {identity}.',
-      'Requisition sex field: {identity} (patient\'s identity). Chart shows sex assigned at birth {birth}. Predicted values use the requisition sex.',
-      'Registration entered identity {identity}; birth sex {birth} is on file. The operator did not change the reference sex.',
+      'Sex assigned at birth: {birth}. Gender identity: {identity}. Reference values were calculated with {used}, matching gender identity.',
+      'Requisition sex field: {used} (gender identity: {identity}). Chart shows sex assigned at birth: {birth}. Predicted values use the requisition sex.',
+      'Registration entered {used}; gender identity: {identity}, sex assigned at birth: {birth}. The reference sex follows the registration entry.',
     ],
     weight: 0.6,
     effects: { referenceSex: { use: 'identity' } },
-    vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord }),
+    vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord, used: c.result.usedWord }),
     caveats: [
-      { id: 'sex-identity-used-nondefault', weight: 'major', text: 'The reference sex on this report is the sex the patient identifies with and not the sex assigned at birth that the ATS/ERS 2019 standard specifies for predicted lung size. Predicted values, z-scores and classification can differ from those under birth sex, and the report names the reference sex it used.' },
+      { id: 'sex-identity-used-nondefault', weight: 'major', text: 'The reference sex on this report follows gender identity and not the sex assigned at birth that the ATS/ERS 2019 standard names as the default for predicted lung size. Neither entry is an error: the standard gives no rule for patients on hormone therapy, and the effect of gender-affirming hormone therapy on lung size is not established. A complete interpretation states the results under both reference sexes and notes how long any hormone therapy has been taken, because predicted values, z-scores and classification can differ between the two.' },
       { id: 'sex-evidence-limited', weight: 'minor', text: 'The evidence on which reference equations fit patients on long-term hormone therapy is limited to small retrospective series, and prospective studies are in progress. The sex used can move z-scores across the lower limit of normal without any change in the lungs, so the values under the other sex are shown for contrast.' },
+      { id: 'sex-choice-no-change', weight: 'minor', requires: 'sexSame', text: 'Under the other reference sex the pattern and every label of the spirometry, volumes and DLCO are unchanged, so the sex choice does not change the classification here, although the z-scores shift.' },
     ],
-    decoyCaveats: [{ id: 'decoy-sex-no-effect', text: 'The choice of reference sex does not alter the classification.' }],
+    decoyCaveats: [{ id: 'decoy-sex-no-effect', unless: 'sexSame', text: 'The choice of reference sex does not alter the classification.' }],
     confidence: 'medium', source: 'SPEC-13; S1; S7 (abstract)',
   }),
   scenario({
@@ -150,8 +153,12 @@ export const REFERENCE_SCENARIOS = [
     vars: (fx, c) => ({ used: c.result.usedWord }),
     caveats: [
       { id: 'sex-default-applied', weight: 'major', text: 'Sex was not disclosed, so the predicted values rest on the laboratory default stated in the operator note (ATS/ERS 2019). Predicted values and z-scores depend on that default and shift with the alternative.' },
+      { id: 'sex-choice-no-change', weight: 'minor', requires: 'sexSame', text: 'Under the other reference sex the pattern and every label of the spirometry, volumes and DLCO are unchanged, so the sex choice does not change the classification here, although the z-scores shift.' },
     ],
-    decoyCaveats: [{ id: 'decoy-sex-irrelevant', text: 'Sex does not enter the GLI equations, so the missing field has no effect.' }],
+    decoyCaveats: [
+      { id: 'decoy-sex-irrelevant', text: 'Sex does not enter the GLI equations, so the missing field has no effect.' },
+      { id: 'decoy-sex-no-effect', unless: 'sexSame', text: 'The choice of reference sex does not alter the classification.' },
+    ],
     confidence: 'high', source: 'SPEC-14; S1',
   }),
   scenario({
@@ -173,14 +180,14 @@ export const REFERENCE_SCENARIOS = [
   scenario({
     id: 'ref-european-only', category: 'Equation coverage',
     variants: [
-      'Reference for TLC, RV and DLCO: GLI equations derived in people of European ancestry; no group-specific set is configured.',
+      'Reference for TLC, RV and DLCO: GLI equations derived in people of European ancestry, applied to every patient irrespective of requisition group.',
       'Report note: lung-volume and diffusing-capacity references are the European-ancestry GLI sets for every patient.',
-      'Laboratory policy: TLC and TLCO use the GLI sets without an ancestry adjustment (none is available).',
+      'Laboratory policy: TLC and TLCO use the European-ancestry GLI sets without an ancestry adjustment, in line with the ATS 2023 statement.',
     ],
     applies: (d) => d.panel === 'full' && d.group !== 'White',
     weight: 1.5,
     caveats: [
-      { id: 'volumes-dlco-european-only', weight: 'minor', text: 'The GLI lung-volume and TLCO equations were derived in people of European ancestry, and the ATS 2023 statement advises against ancestry adjustment factors for volumes and DLCO. Spirometry and the volumes or DLCO therefore rest on different reference populations, and discordance between them calls for extra caution.' },
+      { id: 'volumes-dlco-european-only', weight: 'minor', text: 'The GLI lung-volume and TLCO equations were derived in people of European ancestry, so the limitation lies in the reference population and not in a missing group-specific equation: the ATS 2023 statement advises against ancestry adjustment factors for volumes and DLCO. Spirometry and the volumes or DLCO therefore rest on different reference populations, and discordance between them calls for extra caution.' },
     ],
     decoyCaveats: [{ id: 'decoy-volumes-adjust-group', text: 'The volume and DLCO references should be adjusted by a group-specific factor before classification.' }],
     confidence: 'high', source: 'SPEC-17; S5; S29',
@@ -246,6 +253,7 @@ export const REFERENCE_SCENARIOS = [
     vars: (fx, c) => ({ blows: c.blows('leak') }),
     caveats: [
       { id: 'facial-weakness-leak', weight: 'major', text: 'A leak at the lips makes the affected maneuvers unacceptable and lowers FVC, FEV1 and peak flow. Neuromuscular weakness also slows the rise to peak flow, so the back-extrapolated volume may exceed its limit, a situation in which the operator may override the automatic flag (ATS/ERS 2019).' },
+      { id: 'weakness-true-low-fvc', weight: 'major', text: 'Facial or bulbar weakness often accompanies generalized neuromuscular disease, and respiratory-muscle weakness itself lowers FVC with a preserved or raised ratio. A low FVC is therefore not attributed to the leak alone: lung volumes and, where indicated, respiratory-muscle strength are needed to separate a technique artifact from genuine weakness.' },
     ],
     decoyCaveats: [{ id: 'decoy-weakness-parenchymal', text: 'The low FVC indicates parenchymal lung disease.' }],
     confidence: 'medium', source: 'SPEC-09; S1; S24',
@@ -276,7 +284,7 @@ export const REFERENCE_SCENARIOS = [
     weight: 0.9,
     effects: { maneuver: { effort: { fvc: [0.94, 0.98], fev1: [0.94, 0.98], r: [0.05, 0.09] }, faultProb: { 'variable-effort': 0.5, 'slow-start': 0.35, 'early-termination': 0.25 } } },
     caveats: [
-      { id: 'anxiety-variable-effort', weight: 'major', text: 'Anxiety produces hesitant starts, early stops and variable effort, lowering flows and repeatability. When the loops differ from blow to blow, the values reflect technique and not airway disease.' },
+      { id: 'anxiety-variable-effort', weight: 'major', text: 'Anxiety produces hesitant starts, early stops and variable effort, lowering flows and repeatability. When the loops differ from blow to blow, technique contributes to the values, and airway disease cannot be excluded or confirmed from this session; a repeat with better coaching separates the two.' },
     ],
     decoyCaveats: [{ id: 'decoy-anxiety-dlco', text: 'The hyperventilation raised the DLCO.' }],
     confidence: 'low', source: 'SPEC-11; S1; thin evidence beyond S1',
@@ -300,15 +308,20 @@ export const REFERENCE_SCENARIOS = [
   scenario({
     id: 'env-altitude', category: 'Altitude', applies: fullPanel,
     variants: [
-      'Laboratory elevation {elev} m; patient has lived at altitude for years. No altitude adjustment applied to DLCO.',
+      'Laboratory elevation {elev} m. No altitude adjustment applied to DLCO.',
       'Testing site at moderate altitude ({elev} m); DLCO reported without altitude correction.',
       'Note: laboratory is {elev} m above sea level; DLCO not corrected for barometric pressure.',
     ],
     weight: 0.6,
-    effects: { preTest: { elevationM: [1400, 2000] }, dlco: { mult: [1.02, 1.08] } },
-    vars: (fx) => ({ elev: String(Math.round(fx.preTest.elevationM / 50) * 50) }),
+    // The elevation is drawn, rounded to 50 m as printed, and the DLCO multiplier follows from it (lower alveolar PO2, unverified; src/scenarios/constants.js).
+    effects: { preTest: { elevationM: [1400, 2000] } },
+    finalize: (fx) => {
+      const elevationM = Math.round(fx.preTest.elevationM / 50) * 50;
+      return { ...fx, preTest: { ...fx.preTest, elevationM }, dlco: { ...fx.dlco, mult: altitudeDlcoMultiplier(elevationM) } };
+    },
+    vars: (fx) => ({ elev: String(fx.preTest.elevationM) }),
     caveats: [
-      { id: 'altitude-dlco-unadjusted', weight: 'minor', text: 'DLCO depends on the inspired oxygen tension, and an altitude adjustment is expected. Chronic residents at altitude tend to have a higher DLCO, so an unadjusted value can sit higher than at sea level; the evidence is limited and partly conflicting. No source was found for adjusting the spirometry reference values.' },
+      { id: 'altitude-dlco-unadjusted', weight: 'minor', text: 'DLCO depends on the alveolar oxygen tension. At altitude the lower alveolar PO2 reduces competition between oxygen and CO for hemoglobin, so an unadjusted DLCO is higher than at sea level, whether or not the patient lives there; an altitude adjustment is expected. The size of the simulated rise follows the laboratory elevation and is unverified. Long residence may add other changes that are not simulated, and the evidence is limited and partly conflicting. No source was found for adjusting the spirometry reference values.' },
     ],
     decoyCaveats: [{ id: 'decoy-altitude-spirometry', text: 'The altitude invalidates the spirometry because the flows are not corrected.' }],
     confidence: 'low', source: 'SPEC-18; S23 (search summaries)',
@@ -328,7 +341,7 @@ export const REFERENCE_SCENARIOS = [
     caveats: [
       { id: 'obesity-low-erv-not-restriction', weight: 'major', text: 'Obesity lowers ERV and FRC while TLC is preserved except in severe obesity. Low ERV with a normal TLC is an obesity pattern and not restriction, and a low FVC with a normal ratio needs TLC before restriction is named.' },
     ],
-    decoyCaveats: [{ id: 'decoy-obesity-raises-dlco-artifact', text: 'The obesity makes the diffusing capacity unreliable.' }],
+    decoyCaveats: [{ id: 'decoy-obesity-dlco-unreliable', text: 'The obesity makes the diffusing capacity unreliable.' }],
     confidence: 'medium', source: 'SPEC-19; S19',
   }),
   scenario({
@@ -345,7 +358,7 @@ export const REFERENCE_SCENARIOS = [
     caveats: [
       { id: 'obesity-low-erv-not-restriction', weight: 'major', text: 'Obesity lowers ERV and FRC while TLC is preserved except in severe obesity. Low ERV with a normal TLC is an obesity pattern and not restriction, and a low FVC with a normal ratio needs TLC before restriction is named.' },
     ],
-    decoyCaveats: [{ id: 'decoy-obesity-raises-dlco-artifact', text: 'The obesity makes the diffusing capacity unreliable.' }],
+    decoyCaveats: [{ id: 'decoy-obesity-dlco-unreliable', text: 'The obesity makes the diffusing capacity unreliable.' }],
     confidence: 'medium', source: 'SPEC-19; S19',
   }),
   scenario({
@@ -374,7 +387,7 @@ export const REFERENCE_SCENARIOS = [
     weight: byArchetype({ anemia: 5 }, 0.5),
     effects: { dlco: { hbAvailable: false } },
     caveats: [
-      { id: 'hb-missing-dlco-unadjusted', weight: 'major', text: 'The DLCO is reported without hemoglobin adjustment. Low hemoglobin lowers the unadjusted DLCO and high hemoglobin raises it, so an abnormal value cannot be read as parenchymal or vascular disease until the hemoglobin is known.' },
+      { id: 'hb-missing-dlco-unadjusted', weight: 'major', text: 'The DLCO is reported without hemoglobin adjustment. Low hemoglobin lowers the unadjusted DLCO and high hemoglobin raises it, so how much of a reduction reflects anemia cannot be apportioned until the hemoglobin is known. A markedly low DLCO is still reported as impaired gas transfer and is not set aside for want of a hemoglobin value.' },
     ],
     decoyCaveats: [{ id: 'decoy-hb-missing-va', text: 'The missing hemoglobin makes the VA unreliable.' }],
     confidence: 'medium', source: 'DLC-10; S2; S22',
