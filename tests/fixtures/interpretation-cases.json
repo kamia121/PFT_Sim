@@ -1,0 +1,1038 @@
+{
+ "note": "Hand-built fixtures for the interpretation engine. Values are in the units of the report. The test uses a linear fake reference (pred and SD in the file) so each z-score is exact. Expected outputs are the author's reading of the SPEC.md decision table and are PROVISIONAL until the project physician reviews them.",
+ "reference": {
+  "fev1": {
+   "pred": 4.0,
+   "sd": 0.5
+  },
+  "fvc": {
+   "pred": 5.0,
+   "sd": 0.6
+  },
+  "fev1_fvc": {
+   "pred": 0.8,
+   "sd": 0.06
+  },
+  "tlc": {
+   "pred": 7.0,
+   "sd": 0.8
+  },
+  "rv": {
+   "pred": 1.8,
+   "sd": 0.4
+  },
+  "rv_tlc": {
+   "pred": 26.0,
+   "sd": 4.0
+  },
+  "vc": {
+   "pred": 5.2,
+   "sd": 0.6
+  },
+  "frc": {
+   "pred": 3.4,
+   "sd": 0.6
+  },
+  "erv": {
+   "pred": 1.6,
+   "sd": 0.4
+  },
+  "ic": {
+   "pred": 3.6,
+   "sd": 0.5
+  },
+  "dlco": {
+   "pred": 30.0,
+   "sd": 4.0
+  },
+  "va": {
+   "pred": 6.5,
+   "sd": 0.7
+  },
+  "kco": {
+   "pred": 4.6,
+   "sd": 0.6
+  }
+ },
+ "cases": [
+  {
+   "branch": "S0",
+   "name": "Normal spirometry, no volumes",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "severity": null
+   }
+  },
+  {
+   "branch": "S0",
+   "name": "Normal spirometry and volumes",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 7.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal"
+   }
+  },
+  {
+   "branch": "S1",
+   "name": "Obstruction, FVC normal, TLC not measured",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "severity": "mild"
+   }
+  },
+  {
+   "branch": "S1",
+   "name": "Obstruction, moderate, FEV1 z -3.0",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.5,
+     "fvc": 4.7,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "severity": "moderate"
+   }
+  },
+  {
+   "branch": "S1",
+   "name": "Obstruction, severe, FEV1 z -4.5",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 1.75,
+     "fvc": 4.4,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "severity": "severe"
+   }
+  },
+  {
+   "branch": "S1",
+   "name": "Low ratio with FEV1 within normal limits is mild obstruction",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.5,
+     "fvc": 5.9,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "severity": "mild",
+    "fev1WithinLimits": true
+   }
+  },
+  {
+   "branch": "S2",
+   "name": "Obstruction with low FVC, TLC not measured",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 1.6,
+     "fvc": 3.5,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction-low-fvc",
+    "severity": "severe"
+   }
+  },
+  {
+   "branch": "S3",
+   "name": "Preserved ratio with low FVC, TLC not measured (PRISm)",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.6,
+     "fvc": 3.1,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "prism",
+    "severity": null
+   }
+  },
+  {
+   "branch": "S3",
+   "name": "Preserved ratio with low FEV1 and normal FVC (PRISm by the lower limit)",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.1,
+     "fvc": 4.1,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "prism"
+   }
+  },
+  {
+   "branch": "V1",
+   "name": "Restriction: preserved ratio, TLC low",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.0,
+     "fvc": 3.7,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 5.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "restriction"
+   }
+  },
+  {
+   "branch": "V1",
+   "name": "Restriction with normal spirometry: TLC low defines it",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 5.4,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "restriction"
+   }
+  },
+  {
+   "branch": "V2",
+   "name": "Mixed: ratio low and TLC low",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 1.8,
+     "fvc": 3.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 5.08,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "mixed"
+   }
+  },
+  {
+   "branch": "V3",
+   "name": "Obstruction with hyperinflation and air trapping",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 1.9,
+     "fvc": 4.6,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 8.76,
+     "rv": 3.0,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "flags": [
+     "hyperinflation",
+     "air-trapping"
+    ]
+   }
+  },
+  {
+   "branch": "V3",
+   "name": "Obstruction, TLC normal, no flags",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.5,
+     "fvc": 4.8,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 7.2,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "flags": []
+   }
+  },
+  {
+   "branch": "V4",
+   "name": "Nonspecific: preserved ratio, low FVC, TLC normal",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.7,
+     "fvc": 3.3,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 6.6,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "nonspecific"
+   }
+  },
+  {
+   "branch": "V5",
+   "name": "Low ERV is a finding, not a pattern, and does not override normal spirometry",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 118,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 6.8,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 2.6,
+     "erv": 0.6,
+     "ic": 4.4
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "flags": [
+     "low-erv"
+    ]
+   }
+  },
+  {
+   "branch": "V5",
+   "name": "Low ERV does not hide a nonspecific pattern",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 118,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.7,
+     "fvc": 3.3,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 6.6,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 0.6,
+     "ic": 3.6
+    },
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "nonspecific",
+    "flags": [
+     "low-erv"
+    ]
+   }
+  },
+  {
+   "branch": "D1",
+   "name": "Reduced DLCO, KCO low, VA preserved",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 7.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": {
+     "dlcoAdjusted": 18.0,
+     "va": 6.5
+    },
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "dlco": "reduced",
+    "subtype": "low-kco-preserved-va"
+   }
+  },
+  {
+   "branch": "D1",
+   "name": "Reduced DLCO with low VA and raised KCO (extraparenchymal pattern)",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.0,
+     "fvc": 3.7,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 5.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": {
+     "dlcoAdjusted": 22.0,
+     "va": 3.7
+    },
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "restriction",
+    "dlco": "reduced",
+    "subtype": "low-va-high-kco"
+   }
+  },
+  {
+   "branch": "D1",
+   "name": "Reduced DLCO with low VA and normal KCO",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.0,
+     "fvc": 3.7,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 5.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": {
+     "dlcoAdjusted": 19.6,
+     "va": 4.68
+    },
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "restriction",
+    "dlco": "reduced",
+    "subtype": "low-va-normal-kco"
+   }
+  },
+  {
+   "branch": "D2",
+   "name": "Raised DLCO",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 7.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": {
+     "dlcoAdjusted": 38.8,
+     "va": 6.5
+    },
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "dlco": "raised"
+   }
+  },
+  {
+   "branch": "D0",
+   "name": "Normal DLCO",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": {
+     "tlc": 7.0,
+     "rv": 1.8,
+     "vc": 5.2,
+     "frc": 3.4,
+     "erv": 1.6,
+     "ic": 3.6
+    },
+    "dlco": {
+     "dlcoAdjusted": 30.0,
+     "va": 6.5
+    },
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "dlco": "normal"
+   }
+  },
+  {
+   "branch": "B1",
+   "name": "Significant under both rules (FEV1 +0.5 L, +25% of baseline, +12.5% of predicted)",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.0,
+     "fvc": 4.2,
+     "post": {
+      "fev1": 2.5,
+      "fvc": 4.3
+     }
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "pattern": "obstruction",
+    "bd": "significant",
+    "rule2022": true,
+    "rule2005": true
+   }
+  },
+  {
+   "branch": "B2",
+   "name": "Significant under both rules (FEV1 +0.45 L, 11.25% of predicted, 14% of baseline)",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 3.2,
+     "fvc": 4.6,
+     "post": {
+      "fev1": 3.65,
+      "fvc": 4.7
+     }
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "bd": "significant",
+    "rule2022": true,
+    "rule2005": true
+   }
+  },
+  {
+   "branch": "B2",
+   "name": "2022 positive, 2005 negative: FVC gain of 0.52 L is 10.4% of predicted but below 12% of a large baseline",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.0,
+     "fvc": 4.5,
+     "post": {
+      "fev1": 2.1,
+      "fvc": 5.02
+     }
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "bd": "significant",
+    "rule2022": true,
+    "rule2005": false
+   }
+  },
+  {
+   "branch": "B2",
+   "name": "2005 positive, 2022 negative: FEV1 +0.24 L is 12% of baseline but 6% of predicted",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.0,
+     "fvc": 4.2,
+     "post": {
+      "fev1": 2.24,
+      "fvc": 4.2
+     }
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "bd": "not-significant",
+    "rule2022": false,
+    "rule2005": true
+   }
+  },
+  {
+   "branch": "B0",
+   "name": "No response",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 2.0,
+     "fvc": 4.2,
+     "post": {
+      "fev1": 2.05,
+      "fvc": 4.22
+     }
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "A",
+     "fvc": "A"
+    }
+   },
+   "expect": {
+    "bd": "not-significant",
+    "rule2022": false,
+    "rule2005": false
+   }
+  },
+  {
+   "branch": "Q",
+   "name": "No acceptable or usable maneuver: not interpretable",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": null,
+     "fvc": null,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "F",
+     "fvc": "F"
+    }
+   },
+   "expect": {
+    "pattern": "indeterminate"
+   }
+  },
+  {
+   "branch": "Q",
+   "name": "Poor session limits the interpretation",
+   "report": {
+    "patient": {
+     "age": 50,
+     "sex": "M",
+     "heightCm": 178,
+     "group": "White",
+     "weightKg": 80,
+     "hbGdl": 14.6
+    },
+    "spirometry": {
+     "fev1": 4.0,
+     "fvc": 5.0,
+     "post": null
+    },
+    "volumes": null,
+    "dlco": null,
+    "grades": {
+     "fev1": "E",
+     "fvc": "U"
+    }
+   },
+   "expect": {
+    "pattern": "normal",
+    "qualityLimited": true
+   }
+  }
+ ]
+}

@@ -1,8 +1,8 @@
 # PFT Sim
 
-Creation of a PFT generator to help display the differences of reference equations and how these changes change how one can interpret PFTs. Seeded simulated cases with a known ground truth, a recorded maneuver set with acceptability and quality grading, and, in later versions, the same measured values interpreted under different reference equations with every reclassification attributed to the measurement that caused it.
+Simulated pulmonary function reports for interpretation practice. Each case has a known ground truth, a recorded set of forced maneuvers with ATS/ERS 2019 quality grading, lung volumes and diffusing capacity, and a key computed from the values on the report. The same values are shown under GLI-2012 and GLI Global so that reclassification between reference equations is visible.
 
-This is an uncalibrated educational tool. It does not provide patient-treatment recommendations. `SPEC.md` is the contract for the data model and interpretation logic; `CLAUDE.md` holds the project rules.
+This is an uncalibrated educational tool. It does not provide patient-treatment recommendations and must not be used for clinical decisions. `SPEC.md` is the contract for the data model, archetypes, reference-equation resolution and interpretation logic, and lists every rule that has not been checked against its primary source. `CLAUDE.md` holds the project rules.
 
 ## Run locally
 
@@ -13,8 +13,17 @@ npm test
 npm start
 ```
 
-Open http://127.0.0.1:5173. Do not open `index.html` with `file://`. `npm run build` writes the static site to `dist/`.
+Open http://127.0.0.1:5173. Do not open `index.html` with `file://`, because the page loads its reference tables over HTTP. `npm run build` writes the static site to `dist/`.
+
+Browser check (Chromium; set `PFT_CHROMIUM` to an executable if Playwright's own download is not installed):
+
+```sh
+npm install
+node benchmarks/ui-smoke.mjs
+```
+
+Other tools: `tools/constraint-sweep.mjs` checks the exact constraints over many seeds, `tools/extract-gli.py` rebuilds the reference JSON from the GLI workbooks, `tools/crosscheck-interpreter.mjs` compares it with another implementation, and `scripts/make-vectors.R` regenerates the rspiro test vectors.
 
 ## Licensing
 
-The code is MIT licensed. GLI reference-equation tables are not included, and when they are added they may carry their own license and notice; see `SPEC.md`.
+The code is MIT licensed. The reference data in `src/reference/data/` derive from the Global Lung Function Initiative lookup tables and are covered by the notice in `src/reference/NOTICE`, not by the MIT license. Commercial use of the GLI data requires permission from the European Respiratory Society.

@@ -4,7 +4,6 @@ test-results/
 .DS_Store
 
 # Local agent instructions, handoffs, review notes and model working documents.
-docs/
 .codex/
 
 # Generated QA previews and benchmark/review results; keep executable harnesses.
@@ -15,3 +14,6 @@ benchmarks/*.webp
 benchmarks/*.json
 benchmarks/*.jsonl
 benchmarks/*.txt
+
+# Agent worktrees
+.claude/

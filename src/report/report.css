@@ -1,0 +1,139 @@
+/*
+ * Laboratory-report styling for the simulated PFT report (src/report/html.js).
+ * The report is a paper document, so it uses its own black-on-white palette on screen and in print
+ * instead of the learner page tokens. Everything is scoped to .pft-report. The page margin and the
+ * margin-box footer (case code, page n of m) are emitted by html.js as an inline @page rule.
+ */
+.pft-report {
+  --rpt-ink: #000;
+  --rpt-muted: #3d3d3d;
+  --rpt-rule: #000;
+  --rpt-hair: #9a9a9a;
+  --rpt-paper: #fff;
+  --rpt-shade: #efefef;
+  font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  line-height: 1.3;
+  color: var(--rpt-ink);
+  background: var(--rpt-paper);
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: .4in .5in;
+  border: 1px solid var(--rpt-hair);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, .18);
+}
+.pft-report * { box-sizing: border-box; }
+.pft-report h2 { font-size: 11pt; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; break-after: avoid; }
+.pft-report h3 { font-size: 10pt; margin: 0; font-weight: 700; }
+.pft-report p { margin: 0 0 4px; }
+.pft-report sub { font-size: .75em; line-height: 0; }
+
+/* Header: laboratory identity box and ruled field grid */
+.pft-report .rpt-head { border: 1.5px solid var(--rpt-rule); margin-bottom: 10px; break-inside: avoid; }
+.pft-report .rpt-lab { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; border-bottom: 1.5px solid var(--rpt-rule); }
+.pft-report .rpt-lab > div:first-child { padding: 5px 8px; display: flex; flex-direction: column; }
+.pft-report .rpt-lab strong { font-size: 11.5pt; }
+.pft-report .rpt-lab span { color: var(--rpt-muted); font-size: 8.5pt; }
+.pft-report .rpt-ttl { padding: 5px 10px; font-size: 14pt; font-weight: 700; background: var(--rpt-shade); border-left: 1.5px solid var(--rpt-rule); display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1.15; }
+.pft-report .rpt-ttl .rpt-code { font-size: 9pt; color: var(--rpt-ink); font-variant-numeric: tabular-nums; }
+.pft-report .rpt-fields { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-flow: row dense; margin: 0; }
+.pft-report .rpt-fields > div { padding: 3px 8px; border-right: 1px solid var(--rpt-hair); border-bottom: 1px solid var(--rpt-hair); min-width: 0; }
+.pft-report .rpt-fields > div.wide { grid-column: span 4; border-right: 0; }
+.pft-report .rpt-fields > div.half { grid-column: span 2; border-right: 0; }
+.pft-report .rpt-fields dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; color: var(--rpt-muted); }
+.pft-report .rpt-fields dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* Sections and tables */
+.pft-report .rpt-sec, .pft-report .rpt-col { margin: 0 0 8px; position: relative; }
+.pft-report .rpt-sec > h2, .pft-report .rpt-col > h2 { border-bottom: 2px solid var(--rpt-rule); padding-bottom: 1px; margin-bottom: 5px; }
+.pft-report .rpt-block { margin: 0 0 7px; break-inside: avoid; }
+.pft-report .rpt-cap { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.pft-report .rpt-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 9.5pt; }
+.pft-report .rpt-table th, .pft-report .rpt-table td { padding: 2px 6px; border-bottom: 1px solid var(--rpt-hair); white-space: nowrap; }
+.pft-report .rpt-table td.l, .pft-report .rpt-table th.l { text-align: left; white-space: normal; }
+.pft-report .rpt-table td.r, .pft-report .rpt-table th.r { text-align: right; }
+.pft-report .rpt-table thead th { font-weight: 700; border-bottom: 1.5px solid var(--rpt-rule); vertical-align: bottom; white-space: normal; }
+.pft-report .rpt-table thead tr.grp th { text-align: center; border-bottom: 1px solid var(--rpt-rule); border-top: 1.5px solid var(--rpt-rule); background: var(--rpt-shade); }
+.pft-report .rpt-table thead tr.grp th.empty { background: none; border-top: 0; border-bottom: 0; }
+.pft-report .rpt-table tbody th { font-weight: 600; }
+.pft-report .rpt-table td.best { font-weight: 700; }
+.pft-report .rpt-table tbody tr:last-child th, .pft-report .rpt-table tbody tr:last-child td { border-bottom: 1.5px solid var(--rpt-rule); }
+.pft-report .rpt-block.nocap .rpt-cap { position: absolute; top: 0; right: 0; margin: 0; }
+.pft-report .rpt-fn { font-size: 8.5pt; color: var(--rpt-muted); margin: 2px 0 0; }
+
+/* Figures: two across, the strip full width */
+.pft-report .rpt-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 5px 0 7px; break-inside: avoid; }
+.pft-report .rpt-fig { margin: 0; border: 1px solid var(--rpt-hair); break-inside: avoid; }
+.pft-report .rpt-fig svg { display: block; width: 100%; height: auto; max-height: 2.2in; }
+.pft-report .rpt-fig-z-strip svg { max-height: 1.5in; }
+
+/* Two tables (or two sections) side by side */
+.pft-report .rpt-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; align-items: start; }
+.pft-report .rpt-pair .rpt-table { font-size: 8.5pt; }
+.pft-report .rpt-pair .rpt-fn { font-size: 8pt; }
+.pft-report .rpt-pair .rpt-table th, .pft-report .rpt-pair .rpt-table td { padding: 0 3px; }
+.pft-report .rpt-secpair { break-inside: avoid; }
+.pft-report .rpt-secpair .rpt-col { margin: 0; }
+.pft-report .rpt-secpair .rpt-figs.n1 { grid-template-columns: minmax(0, 50%); }
+.pft-report .rpt-secpair .rpt-figs.n3, .pft-report .rpt-secpair .rpt-figs.n4 { grid-template-columns: repeat(3, 1fr); }
+.pft-report .rpt-secpair .rpt-figs.n4 { grid-template-columns: repeat(4, 1fr); }
+.pft-report .rpt-secpair .rpt-fig svg { max-height: 1.15in; }
+.pft-report .rpt-fig-z-strip { grid-column: 1 / -1; }
+.pft-report .rpt-figs:has(> .rpt-fig:only-child) { grid-template-columns: minmax(0, 60%); }
+
+/* Reference note, comments and interpretation */
+.pft-report .rpt-note { border: 1px solid var(--rpt-rule); padding: 3px 8px; margin: 0 0 8px; font-size: 8.5pt; break-inside: avoid; }
+.pft-report .rpt-note h2 { font-size: 9pt; }
+.pft-report .rpt-note p:last-child { margin-bottom: 0; }
+.pft-report .rpt-boxes { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin-bottom: 10px; align-items: start; }
+.pft-report .rpt-box { border: 1.5px solid var(--rpt-rule); padding: 4px 8px 6px; min-height: 1.2in; break-inside: avoid; font-size: 9pt; line-height: 1.25; }
+.pft-report .rpt-box ul { margin: 0; padding-left: 16px; }
+.pft-report .rpt-box li { margin-bottom: 2px; }
+.pft-report .rpt-none { color: var(--rpt-muted); font-style: italic; }
+.pft-report .rpt-simnotes { margin-top: 6px; padding-top: 4px; border-top: 1px solid var(--rpt-hair); font-size: 8pt; color: var(--rpt-muted); }
+.pft-report .rpt-simnotes h3 { font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; }
+.pft-report .rpt-simnotes ul { margin: 2px 0 0; padding-left: 14px; }
+.pft-report .rpt-watermark { display: none; }
+.pft-report .rpt-end { break-inside: avoid; margin-top: 8px; }
+.pft-report .rpt-sign { display: flex; gap: 24px; margin: 10px 0 4px; }
+.pft-report .rpt-sign > div { flex: 1 1 auto; font-size: 8.5pt; color: var(--rpt-muted); }
+.pft-report .rpt-sign > div:last-child { flex: 0 0 2in; }
+.pft-report .rpt-line { display: block; border-bottom: 1px solid var(--rpt-rule); height: 16px; margin-bottom: 2px; }
+.pft-report .rpt-disc { font-size: 8.5pt; font-weight: 600; margin: 4px 0 0; }
+.pft-report .rpt-gen { font-size: 8pt; color: var(--rpt-muted); font-weight: 400; }
+
+/* Screen-only controls */
+.pft-report .rpt-copy { font: inherit; font-size: 8.5pt; padding: 1px 8px; border: 1px solid var(--rpt-rule); background: #fff; color: #000; border-radius: 3px; cursor: pointer; }
+.pft-report .rpt-copy:hover { background: var(--rpt-shade); }
+.pft-report .rpt-copy:focus-visible { outline: 2px solid #0e2b73; outline-offset: 1px; }
+
+/* A standalone saved file sits on a plain page */
+body.rpt-standalone { margin: 0; background: #e8e8e8; }
+body.rpt-standalone .pft-report { margin: 12px auto; }
+
+@media (max-width: 760px) {
+  .pft-report .rpt-pair { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .pft-report { padding: 8px; font-size: 9.5pt; }
+  .pft-report .rpt-fields { grid-template-columns: repeat(2, 1fr); }
+  .pft-report .rpt-fields > div.wide { grid-column: span 2; }
+  .pft-report .rpt-figs, .pft-report .rpt-boxes { grid-template-columns: 1fr; }
+  .pft-report .rpt-table-scroll, .pft-report .rpt-block { overflow-x: auto; }
+}
+
+@media print {
+  /* Diagonal watermark; a fixed element is repeated on every printed page. */
+  .pft-report .rpt-watermark { display: block; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-32deg); width: 11in; text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(0, 0, 0, .09); pointer-events: none; user-select: none; z-index: 5; white-space: nowrap; }
+  html, body { background: #fff !important; }
+  body.rpt-standalone { background: #fff; }
+  .no-print { display: none !important; }
+  .pft-report { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; font-size: 9pt; }
+  .pft-report .rpt-table { font-size: 8.5pt; }
+  .pft-report .rpt-table th, .pft-report .rpt-table td { padding: 1px 5px; }
+  .pft-report .rpt-box { min-height: 1in; font-size: 8.5pt; }
+  /* In the app, print only the report. */
+  body.report-active .masthead, body.report-active .footer, body.report-active .tabs, body.report-active h1, body.report-active .lede, body.report-active .warn,
+  body.report-active .rpt-toolbar, body.report-active #panel-practice, body.report-active #panel-method { display: none !important; }
+  body.report-active main { max-width: none; padding: 0; }
+}

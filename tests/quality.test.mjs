@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateManeuver, summarizeSession } from '../src/core/quality.js';
+import { evaluateManeuver, summarizeSession, PAUSE_AT_TLC_MAX_SECONDS, FAULT_LABELS } from '../src/core/quality.js';
 
 const m = (fvc, fev1, extra = {}) => ({ fvc, fev1, pef: 8, fef2575: 3, fet: 7, bev: 0.03, plateau: 0.01, coughFirstSecond: false, glottisClosedAt: null, ...extra });
 
@@ -58,4 +58,39 @@ test('Table 10: FEV1 and FVC are graded separately, and U and F need zero accept
   const u = summarizeSession([m(4, 3.2, { glottisClosedAt: 3 })]);
   assert.deepEqual(u.grades, { fev1: 'E', fvc: 'U' });
   assert.equal(u.fvc, 4);
+});
+
+test('when the best FEV1 exceeds the best acceptable FVC, FVC is set to FEV1 and the adjustment is flagged', () => {
+  // The first maneuver has the larger FEV1 but a late glottic closure, so its FVC is usable but not acceptable.
+  const s = summarizeSession([m(4.0, 3.9, { glottisClosedAt: 3 }), m(4.3, 3.4), m(4.25, 3.35)]);
+  assert.equal(s.fvc, 4.3);
+  assert.equal(s.fvcAdjusted, false);
+  const t = summarizeSession([m(3.6, 3.9, { glottisClosedAt: 3 }), m(3.5, 3.4), m(3.45, 3.35)]);
+  assert.equal(t.fev1, 3.9);
+  assert.equal(t.fvc, 3.9);
+  assert.equal(t.fvcAdjusted, true);
+});
+
+test('scenario faults: a leak or an obstructed mouthpiece spoils acceptability of both variables and leaves them usable', () => {
+  for (const fault of ['leak', 'mouthpiece-obstruction']) {
+    const e = evaluateManeuver(m(4, 3.2, { faults: [fault] }));
+    assert.equal(e.fev1.acceptable, false);
+    assert.equal(e.fvc.acceptable, false);
+    assert.equal(e.fev1.usable, true);
+    assert.equal(e.fvc.usable, true);
+    assert.ok(e.fev1.reasons.length && e.fvc.reasons.length);
+  }
+  assert.equal(evaluateManeuver(m(4, 3.2, { faults: ['submaximal-effort'] })).fev1.acceptable, true, 'effort cannot be seen by a single-maneuver criterion');
+});
+
+test('a pause at total lung capacity longer than 2 s spoils the FEV1 only', () => {
+  assert.equal(PAUSE_AT_TLC_MAX_SECONDS.value, 2);
+  const long = evaluateManeuver(m(4, 3.2, { faults: ['pause-at-TLC'], pauseSeconds: 4.5 }));
+  assert.equal(long.fev1.acceptable, false);
+  assert.equal(long.fvc.acceptable, true);
+  assert.equal(evaluateManeuver(m(4, 3.2, { faults: ['pause-at-TLC'], pauseSeconds: 1.5 })).fev1.acceptable, true);
+});
+
+test('every fault the generator can record has a report label', () => {
+  for (const f of ['slow-start', 'early-termination', 'variable-effort', 'cough', 'glottic-closure', 'leak', 'mouthpiece-obstruction', 'pause-at-TLC', 'submaximal-effort', 'no-plateau']) assert.ok(FAULT_LABELS[f], f);
 });

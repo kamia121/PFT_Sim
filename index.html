@@ -4,18 +4,50 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0E2B73">
-  <meta name="description" content="Simulated pulmonary function reports for interpretation practice, with the same values read under different reference equations.">
+  <meta name="description" content="Practice interpreting simulated pulmonary function reports, and see how the same values are classified under different GLI reference equations.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%230E2B73%27/%3E%3Cpath d=%27M5 22C9 22 9 9 14 9s4 13 13 13%27 stroke=%27%235FD0BD%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
   <title>PFT Sim | Simulated pulmonary function reports</title>
+  <script>try{const t=localStorage.getItem("pft-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch{}</script>
   <link rel="stylesheet" href="./fonts.css">
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./src/report/report.css">
+  <script type="module" src="./src/app/main.js"></script>
 </head>
 <body>
-<header class="masthead"><a href="./" class="wordmark">PFT Sim</a></header>
+<header class="masthead"><a href="./" class="wordmark">PFT Sim</a><a href="./quiz.html" class="wordmark" style="font-size:1rem;margin-left:auto;margin-right:12px;text-decoration:underline">Quiz</a><button id="theme-toggle" type="button" class="theme-button" aria-label="Toggle light or dark theme">Dark mode</button></header>
 <main>
   <h1>Simulated pulmonary function reports</h1>
-  <p class="lede">Under construction. The case generator and report are not yet connected to this page.</p>
-  <p class="note">This is an uncalibrated educational tool. It does not provide patient-treatment recommendations.</p>
+  <p class="lede">Read the report, write an interpretation, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.</p>
+  <p class="warn"><strong>Educational use only.</strong> Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.</p>
+  <nav class="tabs" role="tablist" aria-label="Sections"><button type="button" role="tab" data-tab="practice" aria-selected="true">Practice</button><button type="button" role="tab" data-tab="report" aria-selected="false">Lab report</button><button type="button" role="tab" data-tab="method" aria-selected="false">Method and limits</button></nav>
+  <div id="panel-practice" class="panel" role="tabpanel">
+    <div class="toolbar">
+      <button type="button" class="primary" id="new-case">New case</button>
+      <label class="field">Test quality<select id="technique"><option value="varies">Varies</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select></label>
+      <label class="field">Technologist notes<select id="scenario"><option value="varies">Varies</option><option value="none">None</option><option value="light">One</option><option value="moderate">Several</option><option value="heavy">Many</option></select></label>
+      <label class="field">Tests<select id="panel"><option value="varies">Varies</option><option value="full">Spirometry, volumes, DLCO</option><option value="spirometry">Spirometry only</option></select></label>
+      <button type="button" class="secondary" id="copy-link">Copy case link</button>
+      <label class="field">Case link<input type="text" id="caseCode" readonly size="30" aria-label="Case link"></label>
+    </div>
+    <p id="tally" class="muted" aria-live="polite"></p>
+    <div id="case" aria-live="polite"><p class="muted">Loading reference tables…</p></div>
+  </div>
+  <div id="panel-report" class="panel" role="tabpanel" hidden>
+    <div class="toolbar rpt-toolbar">
+      <button type="button" class="primary" id="report-print">Print or save as PDF</button>
+      <button type="button" class="secondary" id="report-csv">Download CSV</button>
+      <button type="button" class="secondary" id="report-csv-wide">Download CSV (wide)</button>
+      <button type="button" class="secondary" id="report-html">Download report HTML</button>
+      <label class="field">Spirometry reference<select id="report-eq"><option value="GLIglobal">GLI Global 2022</option><option value="GLI2012">GLI-2012</option></select></label>
+      <label><input type="checkbox" id="report-interp" disabled> Add the interpretation statement</label>
+      <label><input type="checkbox" id="report-dark"> Dark figure panels (screen only)</label>
+    </div>
+    <p class="muted" id="report-hint">Quality grades, per-maneuver acceptability and the interpretation statement appear after you check your answers on the Practice tab.</p>
+    <div id="report-root" aria-live="polite"></div>
+  </div>
+  <div id="panel-method" class="panel" role="tabpanel" hidden><div id="method"></div></div>
 </main>
+<footer class="footer">Generator version <span id="version"></span>. Reference data: Global Lung Function Initiative, used under its terms (see Method and limits).</footer>
 </body>
 </html>
