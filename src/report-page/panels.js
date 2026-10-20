@@ -17,6 +17,9 @@ export const SLOTS = {
   dlco: { chain: ['panel-dlco', 'dlco-trace'] },
   // A full-width z-score strip is used only where the per-row inline graphic is not available.
   zstrip: { chain: ['z-strip'], onlyWithoutInline: true },
+  // The maneuver log draws each forced maneuver on its own, so that repeatability can be judged by eye; with more than eight
+  // maneuvers the tiles would take several sheets, so they are overlaid instead.
+  review: { chain: ['panel-spirometry'], view: (cd) => ((cd.spirometry.pre.maneuvers.length + (cd.spirometry.post?.maneuvers.length ?? 0)) <= 8 ? 'separate' : 'all') },
 };
 
 /** Drawing width of a full-width panel: 7 in at 96 px per inch. */
@@ -29,13 +32,13 @@ const isFull = (id) => isPanel(id) || id === 'z-strip';
 /** Case data in the form the figure registry reads (the practice page's figureCaseData plus what the z-score strip needs). */
 export const slotCaseData = (caseData, interp, equation, resolve = null) => ({ ...caseData, interp, equation, resolve, revealed: false, showSchematic: false });
 
-function drawOne(id, cd, palette, errors) {
+function drawOne(id, cd, palette, errors, view = 'best') {
   const f = FIGURES[id];
   if (!f || typeof f.dataFor !== 'function' || typeof f.render !== 'function') return null;
   try {
     const data = f.dataFor(cd);
     if (data === null || data === undefined) return null;
-    const svg = f.render(data, { palette, ...(isFull(id) ? { width: PANEL_WIDTH_PX } : {}), showQuality: false, view: 'best' });
+    const svg = f.render(data, { palette, ...(isFull(id) ? { width: PANEL_WIDTH_PX } : {}), showQuality: false, view });
     return typeof svg === 'string' && svg.trim() ? { id, svg, title: f.title ?? id } : null;
   } catch (e) {
     errors?.push({ id, message: String(e?.message ?? e) });
@@ -54,7 +57,7 @@ export function resolveSlot(name, cd, { palette, hasInline = false, errors } = {
   if (!slot || (slot.onlyWithoutInline && hasInline)) return null;
   for (const entry of slot.chain) {
     const ids = Array.isArray(entry) ? entry : [entry];
-    const drawn = ids.map((id) => drawOne(id, cd, palette, errors)).filter(Boolean);
+    const drawn = ids.map((id) => drawOne(id, cd, palette, errors, typeof slot.view === 'function' ? slot.view(cd) : slot.view ?? 'best')).filter(Boolean);
     if (!drawn.length) continue;
     const span = !Array.isArray(entry) && isFull(entry) ? 'full' : Array.isArray(entry) && drawn.length > 1 ? 'pair' : 'half';
     return { ids: drawn.map((d) => d.id), svgs: drawn.map((d) => d.svg), span };

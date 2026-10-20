@@ -26,12 +26,12 @@ export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy
 
   const cd = slotCaseData(caseData, interp, equation, resolve);
   const hasInline = typeof zInline === 'function';
-  const slots = Object.fromEntries(['spirometry', 'pleth', 'dlco', 'zstrip'].map((name) => {
-    const present = name === 'spirometry' || (name === 'pleth' && caseData.volumes) || (name === 'dlco' && caseData.dlco) || name === 'zstrip';
+  const slots = Object.fromEntries(['spirometry', 'pleth', 'dlco', 'zstrip', 'review'].map((name) => {
+    const present = name === 'spirometry' || (name === 'pleth' && caseData.volumes) || (name === 'dlco' && caseData.dlco) || name === 'zstrip' || name === 'review';
     return [name, present ? resolveSlot(name, cd, { palette, hasInline, errors }) : null];
   }));
 
-  const { pages } = buildPages(model, slots, { zInline, palette, llnZ: LLN_Z });
+  const { pages, continued } = buildPages(model, slots, { zInline, palette, llnZ: LLN_Z });
   const label = COPY_LABEL[copy];
   let fullModel = null;
   let appendix = null;
@@ -42,6 +42,6 @@ export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy
     const d = caseData.descriptor;
     appendix = buildAppendix(fullModel, { generatedAs: `Generated as archetype ${d.archetype}, severity ${d.severity}, technique ${d.technique}, panel ${d.panel}, seed ${d.seed}; spirometry equation ${equation}.` });
   }
-  const html = frameDocument(model, pages, { label, appendix });
-  return { html, model, fullModel, title: `PFT Sim report ${model.meta.caseCode}, ${label.toLowerCase()}`, pageCount: pages.length, errors, slots };
+  const html = frameDocument(model, pages, { label, appendix, continued });
+  return { html, model, fullModel, title: `PFT Sim report ${model.meta.caseCode}, ${label.toLowerCase()}`, pageCount: pages.length + 1, errors, slots };
 }

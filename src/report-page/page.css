@@ -102,6 +102,8 @@
   .rp-box:last-child { break-after: auto; page-break-after: auto; }
   .pft-report.rp-page { transform: none; box-shadow: none; }
   .rp-box.flow { height: auto; page: apx; break-before: page; }
+  .rp-box.flow.cont { page: cont; }
+  .rp-flow .rpt-sec, .rp-flow .rpt-boxes, .rp-flow .rp-slot, .rp-flow .rpt-end, .rp-flow .rpt-note { break-inside: avoid; }
   .pft-report.rp-page.rp-flow { position: static; width: auto; min-height: 0; }
   .rp-flow .rp-content { margin: 0; }
   .rp-flow .rp-foot { display: none; }

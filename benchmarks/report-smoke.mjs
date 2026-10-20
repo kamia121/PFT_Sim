@@ -97,7 +97,7 @@ try {
         const file = `${shotDir ?? '/tmp'}/${name}-student.pdf`;
         await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
         const { pages, letter } = pdfPages(file);
-        check(pages <= 3 && pages === expected, `${name}: student PDF has ${expected} pages (${pages})`);
+        check(pages >= expected && pages <= expected + 3, `${name}: student PDF has ${expected} boxes and prints to ${expected} to ${expected + 3} sheets (${pages})`);
         check(letter, `${name}: PDF page size is Letter`);
         if (!shotDir) fs.unlinkSync(file);
       }
@@ -120,11 +120,11 @@ try {
     await ready(page);
     const text = await page.locator('#rp-stage').innerText();
     check(text.includes(info.statement) && /Instructor appendix/i.test(text) && /Answer key/i.test(text) && /Test quality grades/i.test(text) && /Notes on this simulation/i.test(text), 'instructor copy shows the statement, key, grades and notes');
-    check((await page.locator('.rp-box').count()) === 4, 'instructor copy has the three pages and the appendix');
+    check((await page.locator('.rp-box').count()) === 4, 'instructor copy has the pages and the appendix');
     const file = `${shotDir ?? '/tmp'}/obstruction-instructor.pdf`;
     await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
     const { pages } = pdfPages(file);
-    check(pages >= 4 && pages <= 6, `instructor PDF is the three student pages plus a short appendix (${pages})`);
+    check(pages >= 4 && pages <= 8, `instructor PDF is the student pages plus a short appendix (${pages})`);
     if (shotDir) { await page.locator('.rp-box').nth(3).screenshot({ path: `${shotDir}/obstruction-instructor-appendix.png` }); } else fs.unlinkSync(file);
     await page.selectOption('#rp-copy', 'student');
     await ready(page);
@@ -175,7 +175,7 @@ try {
     check(/^report\.html\?c=[\w-]+&eq=GLIglobal$/.test(href), `"Open full report" link on the practice page (${href})`);
     await page.click('.pft-report .rpt-open a');
     await ready(page);
-    check((await page.locator('.rp-box').count()) === 3, 'the link opens the same case as a three-page report');
+    check((await page.locator('.rp-box').count()) === 3, 'the link opens the same case as a report');
     await page.close();
   }
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);

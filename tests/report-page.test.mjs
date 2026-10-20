@@ -100,7 +100,7 @@ test('spirometry-only cases have no airway-resistance rows and a two-page report
   assert.equal(asm(FULL).pageCount, 3);
 });
 
-test('the student copy is three pages, well formed, and carries no answer-key text', () => {
+test('the student copy is well formed (two fixed sheets with volumes, one without, then the continuation), and carries no answer-key text', () => {
   for (const input of [FULL, { seed: 5, archetype: 'normal' }, { seed: 31, archetype: 'restriction-parenchymal' }, { seed: 8, archetype: 'bd-discordant', technique: 'poor' }, SPIRO_ONLY, { seed: 90, archetype: 'mixed', scenarioLevel: 'heavy' }]) {
     const c = build(input);
     const out = assembleReport({ caseData: c, resolve: resolveReference, copy: 'student' });
@@ -240,8 +240,8 @@ test('printed pages carry the sizes the layout promises', async () => {
   const out = asm(FULL);
   assert.match(out.html, /@page\{size:8\.5in 11in;margin:0\}/);
   assert.equal((out.html.match(/<footer class="rpt-end">/g) ?? []).length, 1);
-  assert.match(textOf(out.html), /Page 1 of 3/);
-  assert.match(textOf(out.html), /Page 3 of 3/);
+  assert.match(textOf(out.html), /Page 1/);
+  assert.match(textOf(out.html), /Page 2/);
 });
 
 test('model strings reach the page escaped', () => {

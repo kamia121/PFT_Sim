@@ -1,9 +1,9 @@
 /**
  * Page layout of the printed report: Letter pages of 8.5 in by 11 in, assembled from the report model (src/report/model.js)
  * and the figure slots (panels.js). Page 1 holds the identification grid, the spirometry table and its figure slot; page 2
- * the lung volumes (with the airway-resistance rows), the plethysmography slot, and the diffusing capacity with its slot;
- * page 3 the per-maneuver tables, technologist comments, the reference equation note, the interpretation box, signature
- * lines and the disclaimer. A case without volumes and DLCO has two pages. The instructor copy appends a flowing appendix.
+ * the lung volumes (with the airway-resistance rows) and the plethysmography slot; page 3 the diffusing capacity with its slot, the
+ * technologist comments, the reference equation note, the interpretation box, signature lines and the disclaimer; page 4 the
+ * per-maneuver tables. A case without volumes and DLCO has three pages. The maneuver page also draws every maneuver on its own (the separate view of the spirometry panel). The instructor copy appends a flowing appendix.
  *
  * Sizes: a page is 816 by 1056 CSS px (8.5 by 11 in). Content sits inside margins of 0.42 in (top), 0.5 in (sides) and
  * 0.55 in (bottom, which also holds the footer line), leaving 7.5 in by 10.03 in. Panels are drawn 7 in wide; running text
@@ -49,23 +49,25 @@ export function buildPages(model, slots, { zInline = null, palette, llnZ = -1.64
     `<section class="rpt-sec rp-sec" data-section="spirometry"><h2>${esc(spiro.title)}</h2>${tbl('spirometry', spiro.title, true)}${slotHtml(slots.spirometry, 'spirometry')}${slotHtml(slots.zstrip, 'zstrip')}</section>`,
   ].join('');
 
-  const p2 = [];
+  let p2vols = '', dlcoSection = '';
   if (vols) {
-    p2.push(`<section class="rpt-sec rp-sec" data-section="volumes"><h2>${esc(vols.title)}</h2><div class="rp-vols${byId(model, 'pleth') ? '' : ' solo'}"><div>${tbl('volumes', vols.title, true)}</div>${byId(model, 'pleth') ? `<div>${tbl('pleth')}</div>` : ''}</div>${slotHtml(slots.pleth, 'pleth')}</section>`);
+    p2vols = (`<section class="rpt-sec rp-sec" data-section="volumes"><h2>${esc(vols.title)}</h2><div class="rp-vols${byId(model, 'pleth') ? '' : ' solo'}"><div>${tbl('volumes', vols.title, true)}</div>${byId(model, 'pleth') ? `<div>${tbl('pleth')}</div>` : ''}</div>${slotHtml(slots.pleth, 'pleth')}</section>`);
   }
   if (dlco) {
     const half = slots.dlco?.span === 'half';
-    p2.push(`<section class="rpt-sec rp-sec" data-section="dlco"><h2>${esc(dlco.title)}</h2><div class="rp-dlco${half ? ' side' : ''}"><div>${tbl('dlco', dlco.title, true)}</div>${slotHtml(slots.dlco, 'dlco')}</div></section>`);
+    dlcoSection = (`<section class="rpt-sec rp-sec" data-section="dlco"><h2>${esc(dlco.title)}</h2><div class="rp-dlco${half ? ' side' : ''}"><div>${tbl('dlco', dlco.title, true)}</div>${slotHtml(slots.dlco, 'dlco')}</div></section>`);
   }
 
-  const p3 = [
-    `<section class="rpt-sec rp-sec" data-section="maneuvers"><h2>Forced maneuvers</h2>${tbl('maneuvers-pre')}${tbl('maneuvers-post')}</section>`,
-    boxesHtml(model),
-    refNoteHtml(model),
-    endHtml(model),
-  ].join('');
-
-  return { pages: [p1, ...(p2.length ? [p2.join('')] : []), p3] };
+  const maneuvers = `<section class="rpt-sec rp-sec" data-section="maneuvers"><h2>Forced maneuvers</h2>${tbl('maneuvers-pre')}${tbl('maneuvers-post')}${slotHtml(slots.review, 'review')}</section>`;
+  const closing = [boxesHtml(model), refNoteHtml(model), endHtml(model)].join('');
+  // With volumes or diffusing capacity the clinical pages come first (spirometry; volumes) are fixed sheets; diffusing capacity, the comments, interpretation box and signature, and the
+  // maneuver log, which a reader consults for repeatability, flow on from page 3.
+  // Pages 1 and 2 are fixed sheets. Everything after them flows, so that a long list of maneuvers or technologist comments
+  // takes another sheet and nothing is shrunk to fit.
+  const pages = [p1];
+  if (vols) pages.push(p2vols);
+  const continued = (dlcoSection ? dlcoSection : '') + closing + maneuvers;
+  return { pages, continued };
 }
 
 /**
@@ -90,7 +92,7 @@ export function buildAppendix(full, { generatedAs }) {
 }
 
 /** Footer line of a fixed page. */
-export const footHtml = (model, { n, total, label }) => `<div class="rp-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record. ${esc(label)}.</span><span>Page ${n} of ${total}</span></div>`;
+export const footHtml = (model, { n, label }) => `<div class="rp-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record. ${esc(label)}.</span><span>Page ${n}</span></div>`;
 
 /**
  * Wrap the page bodies in their frames.
@@ -98,14 +100,17 @@ export const footHtml = (model, { n, total, label }) => `<div class="rp-foot"><s
  * @param {string[]} pages inner HTML of the fixed pages
  * @param {{ label: string, appendix?: string|null }} opts
  */
-export function frameDocument(model, pages, { label, appendix = null }) {
+export function frameDocument(model, pages, { label, appendix = null, continued = '' }) {
   const mark = `<div class="rp-markwrap" aria-hidden="true"><div class="rp-mark">${esc(model.meta.marker)}</div></div>`;
-  const fixed = pages.map((body, i) => `<div class="rp-box" data-page-box="${i + 1}"><article class="pft-report rp-page" data-page="${i + 1}" aria-label="Report page ${i + 1} of ${pages.length}, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${body}</div>${footHtml(model, { n: i + 1, total: pages.length, label })}</article></div>`);
+  const fixed = pages.map((body, i) => `<div class="rp-box" data-page-box="${i + 1}"><article class="pft-report rp-page" data-page="${i + 1}" aria-label="Report page ${i + 1} of ${pages.length}, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${body}</div>${footHtml(model, { n: i + 1, label })}</article></div>`);
+  const cont = continued
+    ? `<div class="rp-box flow cont" data-page-box="continued"><article class="pft-report rp-page rp-flow" data-page="continued" aria-label="Report, continued, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${continued}</div><div class="rp-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record. ${esc(label)}.</span></div></article></div>`
+    : '';
   const apx = appendix
     ? `<div class="rp-box flow" data-page-box="appendix"><article class="pft-report rp-page rp-flow" data-page="appendix" aria-label="Instructor appendix, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${appendix}</div><div class="rp-foot"><span>${esc(model.meta.marker)}. Case ${esc(model.meta.caseCode)}. Instructor appendix: contains the answer key.</span></div></article></div>`
     : '';
   const code = String(model.meta.caseCode).replace(/[^A-Z0-9-]/gi, '');
   // Named page for the appendix: it flows over several sheets, so it takes real page margins and its own margin-box footer.
-  const css = `@page{size:8.5in 11in;margin:0}@page apx{size:8.5in 11in;margin:.5in .5in .6in}@media print{@page apx{@bottom-left{content:"SIMULATED REPORT - educational use only. Case ${code}. Instructor appendix.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}}`;
-  return `<style>${css}</style><div class="rp-doc" data-copy="${appendix ? 'instructor' : 'student'}">${fixed.join('')}${apx}</div>`;
+  const css = `@page{size:8.5in 11in;margin:0}@page apx{size:8.5in 11in;margin:.5in .5in .6in}@page cont{size:8.5in 11in;margin:.5in .5in .6in}@media print{@page cont{@bottom-left{content:"SIMULATED REPORT - educational use only. PFT Sim, generator version ${model.meta.generatorVersion}. Case ${code}. Not a patient record. ${label}.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}@page apx{@bottom-left{content:"SIMULATED REPORT - educational use only. Case ${code}. Instructor appendix.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}}`;
+  return `<style>${css}</style><div class="rp-doc" data-copy="${appendix ? 'instructor' : 'student'}">${fixed.join('')}${cont}${apx}</div>`;
 }
