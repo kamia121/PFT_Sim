@@ -36,7 +36,7 @@ test('mock modules that follow the contract are picked up', async () => {
   const mods = { scenarios: { SCENARIO_LEVELS: [] }, narrative: { composeNarrative: compose }, figures: { FIGURES, FIGURE_ORDER: Object.keys(FIGURES) }, palettes: { PALETTES } };
   const a = await loadAdapters(async (spec) => mods[spec]);
   assert.deepEqual(a.status, { scenarios: true, narrative: true, figures: 4 });
-  assert.deepEqual(descriptorExtras(a, 'heavy'), { scenario: 'heavy' });
+  assert.deepEqual(descriptorExtras(a, 'heavy'), { scenarioLevel: 'heavy' });
   assert.deepEqual(descriptorExtras(a, 'none'), {});
   const figs = figuresFor(a, {}, 'dark');
   assert.deepEqual(figs.map((f) => f.id), ['z-strip'], 'placeholders returning empty strings, null data and throwing figures are skipped');

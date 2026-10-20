@@ -10,18 +10,20 @@ import { archetypeNote } from '../core/physiology.js';
 const bmi = (p) => p.weightKg / (p.heightCm / 100) ** 2;
 
 export function renderPatient(c) {
-  const p = c.report.patient, d = c.descriptor;
+  const p = c.report.patient, d = c.descriptor, sc = c.scenario ?? {};
+  const notes = (sc.statements ?? []).length
+    ? `<h3>Technologist and intake notes</h3><ul class="notes">${sc.statements.map((t) => `<li>${esc(t.text)}</li>`).join('')}</ul>` : '';
   return `<section class="card" aria-labelledby="h-patient"><h2 id="h-patient">Patient and requisition</h2>
   <dl class="demo">
     <div><dt>Age</dt><dd>${p.age} years</dd></div>
-    <div><dt>Sex</dt><dd>${p.sex === 'M' ? 'Male' : 'Female'}</dd></div>
-    <div><dt>Height</dt><dd>${p.heightCm} cm</dd></div>
+    <div><dt>Sex used for the reference</dt><dd>${p.sex === 'M' ? 'Male' : 'Female'}${sc.referenceSex && sc.referenceSex.birth !== sc.referenceSex.used ? ` <span class="muted">(assigned at birth: ${sc.referenceSex.birth === 'M' ? 'male' : 'female'})</span>` : ''}</dd></div>
+    <div><dt>Height</dt><dd>${p.heightCm} cm${sc.height && sc.height.source !== 'measured' ? ` <span class="muted">(${esc({ 'arm-span': 'estimated from arm span', ulna: 'estimated from ulna length', reported: 'self-reported' }[sc.height.source] ?? sc.height.source)})</span>` : ''}</dd></div>
     <div><dt>Weight</dt><dd>${p.weightKg} kg (BMI ${num(bmi(p), 1)})</dd></div>
     <div><dt>Group on requisition</dt><dd>${esc(p.group)}</dd></div>
     <div><dt>Hemoglobin</dt><dd>${num(p.hbGdl, 1)} g/dL</dd></div>
     <div><dt>Tests performed</dt><dd>${d.panel === 'full' ? 'Spirometry' + (c.spirometry.post ? ' with bronchodilator' : '') + ', lung volumes, DLCO' : 'Spirometry' + (c.spirometry.post ? ' with bronchodilator' : '')}</dd></div>
   </dl>
-  <p class="note">The group on the requisition selects the GLI-2012 reference when that equation is chosen. It is an administrative field, not a measurement.</p></section>`;
+  <p class="note">The group on the requisition selects the GLI-2012 reference when that equation is chosen. It is an administrative field, not a measurement.</p>${notes}</section>`;
 }
 
 function reasonText(ev, key) {
@@ -160,6 +162,12 @@ export function renderReveal(c, interp, cmp, scores, scored) {
     if (c.groundTruth.bdVariant === 'volume') parts.push(`<p>${esc(BD_TEXT.volume)}</p>`);
     if (c.groundTruth.bdVariant === 'artifact') parts.push(`<p>${esc(BD_TEXT.artifact)}</p>`);
   }
+  const sc = c.scenario ?? {};
+  if ((sc.caveats ?? []).length) {
+    parts.push(`<h3>Limits on this interpretation</h3><ul>${sc.caveats.map((v) => `<li>${esc(v.text)}</li>`).join('')}</ul>`);
+  } else if ((sc.statements ?? []).length) {
+    parts.push('<h3>Limits on this interpretation</h3><p>None of the notes changes the interpretation.</p>');
+  }
   const gr = c.spirometry.pre.summary.grades;
   parts.push(`<h3>Session quality</h3><p>FEV₁ grade <strong>${gr.fev1}</strong>: ${esc(GRADE_TEXT[gr.fev1])} FVC grade <strong>${gr.fvc}</strong>: ${esc(GRADE_TEXT[gr.fvc])} FEV₁ and FVC are graded separately because a cough in the first second spoils FEV₁ but not FVC, and an early end of expiration spoils FVC but not FEV₁.${interp.qualityLimited ? ' With these grades the interpretation is qualified: the values may understate the patient’s best effort.' : ''}</p>`);
 
@@ -188,7 +196,7 @@ export function renderMethod(version) {
   <p>The generator draws a lung from a stated archetype, converts standardized deviations to liters with the GLI Global (spirometry), GLI-2021 (volumes) and GLI-2017 (diffusing capacity) equations, and derives the remaining quantities so that physical constraints hold exactly: FEV₁ does not exceed FVC, TLC equals RV plus VC, FRC equals RV plus ERV, IC equals TLC minus FRC, VA does not exceed TLC, and DLCO equals KCO times VA. Forced maneuvers are produced from one volume–time curve per attempt, so the tabulated FEV₁, FVC and PEF come from the plotted trace. Three to eight maneuvers are recorded, with technical faults whose frequency depends on the technique level.</p>
   <p>The key is computed from the values that appear on the report, after maneuver variability and technique faults, so a poor session can change the key. The archetype is shown as ground truth after the answers are checked.</p>
   <h3>Limits that matter when reading a case</h3>
-  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled. The expiratory flow–volume curve has no inspiratory limb. The predicted and lower-limit curves, when shown, are schematic. FEF₂₅₋₇₅ is displayed without a reference value. Replicate FRC and DLCO determinations, and the criteria for children, are not simulated. TLC is by plethysmography.</p>
+  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled. The predicted and lower-limit curves, when shown, are schematic. FEF₂₅₋₇₅ is displayed without a reference value. Replicate FRC and DLCO determinations, and the criteria for children, are not simulated. TLC is by plethysmography.</p>
   <h3>Rules that have not been checked against their primary source</h3>
   <p>The spirometry acceptability, repeatability and grading rules were compared line by line with the 2019 ATS/ERS statement. The following were not: the 2022 interpretation statement (severity bands and their boundaries, the 10%-of-predicted bronchodilator threshold and whether the boundary is inclusive, and the definitions of air trapping and hyperinflation); severity grading for restriction, mixed disease and a preserved ratio, which this tool leaves unscored; the hemoglobin correction for DLCO; and the correlations and archetype distributions used to generate cases, which are proposals for physician review. The regression coefficients for the GLI-2021 volume and GLI-2017 diffusing capacity equations were taken from another implementation and have not been compared with the publications.</p>
   <h3>Reference equations and attribution</h3>

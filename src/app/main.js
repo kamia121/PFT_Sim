@@ -31,7 +31,8 @@ function randomCase(options) {
   const u = () => randomUint32() / 4294967296;
   const technique = options.technique === 'varies' ? (u() < 0.6 ? 'good' : u() < 0.7 ? 'fair' : 'poor') : options.technique;
   const panel = options.panel === 'varies' ? (u() < 0.8 ? 'full' : 'spirometry') : options.panel;
-  return { seed: randomUint32(), archetype, severity: 1 + Math.floor(u() * 3), technique, panel };
+  const level = options.scenario === 'varies' ? (() => { const r = u(); return r < 0.25 ? 'none' : r < 0.65 ? 'light' : r < 0.9 ? 'moderate' : 'heavy'; })() : options.scenario;
+  return { seed: randomUint32(), archetype, severity: 1 + Math.floor(u() * 3), technique, panel, ...(level && level !== 'none' ? { scenarioLevel: level } : {}) };
 }
 
 function currentQuery() {
@@ -91,7 +92,7 @@ function loadCase(descriptorLike, mode = 'code') {
 }
 
 function newCase() {
-  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value }));
+  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }));
 }
 
 function check(scored) {

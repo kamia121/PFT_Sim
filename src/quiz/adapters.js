@@ -7,7 +7,7 @@
  *   src/scenarios/index.js            presence only; the case itself carries `case.scenario`
  *                                     { level, ids, statements[{id,category,text}], technologistComments[], caveats[{id,text,weight}],
  *                                       decoyCaveats[{id,text}], preTest, height{statedCm,trueCm,source,note}, referenceSex{used,birth,note}, coHbPercent }
- *                                     and buildCase() accepts `scenario: 'none'|'light'|'moderate'|'heavy'` in its input
+ *                                     and buildCase() accepts `scenarioLevel: 'none'|'light'|'moderate'|'heavy'` in its input
  *   src/interpret/narrative.js        export composeNarrative({ caseData, interp, cmp, seed }) ->
  *                                     { sections, finalStatement, findings, distractors: [{ id, text, flaw }] }
  *   src/ui/figures/index.js           exports FIGURES (id -> { id, title, render(data, opts), dataFor(caseData) }) and FIGURE_ORDER
@@ -48,7 +48,7 @@ export async function loadAdapters(importer = defaultImporter) {
  * present, so a build without it never sees an unknown field.
  */
 export function descriptorExtras(adapters, level) {
-  return adapters?.scenarios && level && level !== 'none' ? { scenario: level } : {};
+  return adapters?.scenarios && level && level !== 'none' ? { scenarioLevel: level } : {};
 }
 
 /**
