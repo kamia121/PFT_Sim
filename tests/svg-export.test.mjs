@@ -32,7 +32,7 @@ test('standaloneSvg adds the XML declaration, xmlns, width and height, and is id
 
 test('svgVariants returns four standalone, different SVG strings for each available figure', () => {
   const figs = availableFigures(caseData);
-  // Plethysmography and DLCO figures join this list when their modules are merged; the first three are always there.
+  // The first three are always there; the plethysmography and DLCO figures follow for full-panel cases.
   assert.deepEqual(figs.map((f) => f.id).slice(0, 3), ['flow-volume', 'volume-time', 'z-strip']);
   for (const { id } of figs) {
     const v = svgVariants(id, caseData);
@@ -43,7 +43,9 @@ test('svgVariants returns four standalone, different SVG strings for each availa
       assertWellFormed(svg, `${id}/${pal}`);
       assertSelfContained(svg, `${id}/${pal}`);
       assert.match(svg, /width="\d+" height="\d+"/);
-      assert.equal(/<rect /.test(svg), PALETTES[pal].background !== null);
+      const [, w, h] = svg.match(/width="(\d+)" height="(\d+)"/);
+      const fullRect = new RegExp(`<rect [^>]*width="${w}" height="${h}"`).test(svg) || new RegExp(`<rect [^>]*height="${h}"[^>]*width="${w}"`).test(svg);
+      assert.equal(fullRect, PALETTES[pal].background !== null, `${id}/${pal} background rectangle`);
     }
   }
 });
@@ -53,7 +55,9 @@ test('svgVariants honors size and title options and returns an empty object for 
   assert.match(v.dark, /viewBox="0 0 480 400" width="480" height="400"/);
   assert.match(v.dark, /<title>Loop<\/title>/);
   assert.deepEqual(svgVariants('no-such-figure', caseData), {});
-  assert.deepEqual(svgVariants('pleth-shutter', caseData), {});
+  const spirometryOnly = buildCase({ seed: 3, archetype: 'normal', panel: 'spirometry' }, ds);
+  assert.deepEqual(svgVariants('pleth-shutter', spirometryOnly), {});
+  assert.deepEqual(svgVariants('dlco-trace', spirometryOnly), {});
   assert.deepEqual(svgVariants('flow-volume', {}), {});
 });
 
