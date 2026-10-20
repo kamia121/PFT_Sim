@@ -193,14 +193,15 @@ test('volume-time: starts at least 1 s before time zero with a tidal baseline, a
 test('z-strip: FVC, FEV1 and FEV1/FVC always; TLC, DLCO, VA and KCO when present; marker at the z-score; no flag fill', () => {
   const full = caseData({ seed: 21, archetype: 'obstruction', severity: 3 });
   const dFull = FIGURES['z-strip'].dataFor(full);
-  assert.deepEqual(dFull.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'tlc', 'dlco', 'va', 'kco']);
+  assert.deepEqual(dFull.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'tlc', 'rv', 'rv_tlc', 'dlco', 'va', 'kco']);
   const spiro = caseData({ seed: 21, archetype: 'obstruction', panel: 'spirometry' });
   assert.deepEqual(FIGURES['z-strip'].dataFor(spiro).rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc']);
   for (const r of dFull.rows) assert.equal(r.z, full.interp.measures[r.id].z);
   const svg = FIGURES['z-strip'].render(dFull, { palette: PALETTES.white });
   assert.match(svg, /LLN −1\.645/);
   assert.match(svg, /Predicted/);
-  assert.equal((svg.match(/<circle /g) ?? []).length, dFull.rows.length);
+  assert.equal((svg.match(/<polygon /g) ?? []).length, dFull.rows.length, 'one star per row');
+  assert.ok(!svg.includes('<circle'), 'the result is a star, not a circle');
   assert.ok(!/#(ff0000|f00|00ff00|c0392b|2ecc71)/i.test(svg));
   // Marker x position: z = -1.645 and z = 0 lines bracket the strip in the expected ratio.
   const xs = (z) => { const m = new RegExp(`<line x1="([\\d.]+)" y1="[\\d.]+" x2="\\1" y2="[\\d.]+" stroke="${PALETTES.white.lln}"`).exec(svg); return m ? Number(m[1]) : NaN; };
@@ -209,13 +210,13 @@ test('z-strip: FVC, FEV1 and FEV1/FVC always; TLC, DLCO, VA and KCO when present
   const off = { llnZ: -1.645, rows: [{ id: 'fev1', label: 'FEV1', z: -7.2, below: true, borderline: false, equation: 'GLI Global' }] };
   const offSvg = FIGURES['z-strip'].render(off, { palette: PALETTES.white });
   assert.match(offSvg, /off scale/);
-  assert.match(offSvg, /fill="none" stroke="#2F6E66" stroke-width="2.5"/);
+  assert.match(offSvg, /<polygon [^>]*fill="none" stroke="#2F6E66"/);
   assertWellFormed(offSvg, 'z-strip off scale');
 });
 
 test('z-strip: the interpretation can be passed or computed with the resolver; without either there is no data', () => {
   const c = buildCase({ seed: 9, archetype: 'mixed' }, ds);
-  const passed = FIGURES['z-strip'].dataFor({ ...c, interp: interpret(c.report, resolveReference, 'GLI2012') });
+  const passed = FIGURES['z-strip'].dataFor({ ...c, resolve: resolveReference, interp: interpret(c.report, resolveReference, 'GLI2012') });
   const computed = FIGURES['z-strip'].dataFor({ ...c, resolve: resolveReference, equation: 'GLI2012' });
   assert.deepEqual(passed, computed);
   assert.equal(FIGURES['z-strip'].dataFor(c), null);

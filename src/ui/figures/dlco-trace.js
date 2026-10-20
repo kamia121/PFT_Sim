@@ -4,12 +4,39 @@
  * the same gases against expired volume, which is how the 2017 standard asks the test to be reviewed.
  * Data come from `buildDlcoTrace` (case.dlcoTrace). The test grade and fault text are drawn only
  * when `showQuality` is true, because test acceptability is a learner question.
+ *
+ * Time view: the rapid analyzer samples the mouth only during inspiration and expiration. During the
+ * breath-hold no gas reaches the analyzer, so the concentrations are not drawn there; the interval is
+ * shaded and marked "not sampled". (Earlier versions drew the test-gas concentration as a flat dashed line
+ * across the hold, which implied a measurement that does not exist.) The volume trace, recorded by the
+ * pneumotach, runs through the hold.
+ *
+ * Known model limitation, not drawn around: the generated trace begins at residual volume with the
+ * inspiration, with no tidal breathing before it, so the volume axis starts at 0 (RV) and the first second
+ * is a flat baseline. A real record shows several tidal breaths and a full expiration to RV first.
+ *
+ * `dataFor` returns case.dlcoTrace as stored. The case holds one test today; if it holds several (an array,
+ * or an object with a `tests` array) this figure draws the best one, and `panel-dlco.js` can separate them.
  */
 import { PALETTES } from '../palettes.js';
 import { buildDlcoTrace } from '../../core/dlco-trace.js';
 import { open, close, text, line, rect, polyline, scale, niceTicks, frame, num } from './fig-a-kit.js';
 
 const cache = new WeakMap();
+
+/** The tests held in dlco data: an array of traces, `{ tests: [...] }`, or one trace. */
+export function dlcoTests(data) {
+  if (!data) return [];
+  const list = Array.isArray(data) ? data : Array.isArray(data.tests) ? data.tests : [data];
+  return list.filter((t) => t?.time?.t?.length && t?.byVolume?.volumeL?.length);
+}
+
+/** Index of the best test: the lowest grade letter (A to D), the first among equals. */
+export function bestDlcoIndex(tests) {
+  let best = 0;
+  tests.forEach((t, i) => { if ((t.grade?.grade ?? 'A') < (tests[best].grade?.grade ?? 'A')) best = i; });
+  return best;
+}
 
 function dataFor(caseData) {
   if (!caseData) return null;
@@ -25,7 +52,9 @@ function dataFor(caseData) {
 const niceTop = (x) => { const t = niceTicks(0, x, 4); const top = t[t.length - 1]; return top >= x ? top : top + (t[1] - t[0]); };
 
 function render(data, { palette = PALETTES.dark, width = 640, height = 360, title, description, showQuality = false } = {}) {
-  if (!data?.time?.t?.length) return '';
+  const tests = dlcoTests(data);
+  if (!tests.length) return '';
+  data = tests[bestDlcoIndex(tests)];
   const heading = title ?? 'Single-breath DLCO: CO and tracer gas';
   const mk = data.markers, v = data.values, q = data.quality;
   const desc = description ?? `Carbon monoxide and ${data.gas.tracer} tracer concentration in percent against time, with inspired volume, and against expired volume. Inspired volume ${num(data.inspired.volumeL, 2)} L, ${num(data.inspired.viOverVc * 100, 0)} percent of vital capacity; breath-hold ${num(data.breathHold.seconds, 1)} s; alveolar sample from ${num(mk.sample.startL, 2)} to ${num(mk.sample.endL, 2)} L after a ${num(mk.washout.endL, 2)} L washout. VA ${num(v.vaL, 2)} L, DLCO ${num(v.dlcoMlMinMmHg, 1)} mL/min/mmHg.`;
@@ -74,9 +103,11 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
 
   const slice = (arr, a, b) => { const pts = []; for (let j = 0; j < nT; j++) if (T.t[j] >= a && T.t[j] <= b) pts.push([xsT(T.t[j]), arr(j)]); return pts; };
   out.push(polyline(slice((j) => ysV(T.volumeL[j]), 0, tmax), { stroke: palette.third, width: 1.5, opacity: 0.9 }));
+  // Breath-hold: no gas reaches the analyzer, so no concentration is drawn; the interval is shaded and labelled.
+  out.push(bandT(mk.tInspEndS, mk.tExhaleStartS, palette.mark, 0.1));
+  out.push(text((xsT(mk.tInspEndS) + xsT(mk.tExhaleStartS)) / 2, top + h / 2, 'not sampled', { size: 9.5, anchor: 'middle', fill: palette.axis, italic: true }));
   for (const [arr, stroke] of [[T.tracer, palette.second], [T.co, palette.measured]]) {
     out.push(polyline(slice((j) => ysC(arr[j]), 0, mk.tInspEndS), { stroke, width: 1.8 }));
-    out.push(polyline(slice((j) => ysC(arr[j]), mk.tInspEndS, mk.tExhaleStartS), { stroke, width: 1.4, dash: '2 3', opacity: 0.65 }));
     out.push(polyline(slice((j) => ysC(arr[j]), mk.tExhaleStartS, tmax), { stroke, width: 1.8 }));
   }
   // Breath-hold bracket and event markers.
