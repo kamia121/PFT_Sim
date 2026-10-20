@@ -91,7 +91,7 @@ Update, 2026-10-20: the project physician has read the ERS terms and confirmed t
 
 The 2019 spirometry constants in `src/core/standards.js` were compared with Tables 7 and 10 of Graham et al., Am J Respir Crit Care Med 2019;200:e70-e88, doi 10.1164/rccm.201908-1590ST, using the copy the project physician supplied.
 
-Vectors received, 2026-10-20: `tests/vectors/rspiro-vectors.csv` holds 2,664 rows from rspiro 0.5 on R 4.6.1 (GLI-2012 for ethnicity codes 1 to 5 and GLI Global, each for FEV1, FVC and FEV1/FVC, 148 grid points per sex-independent combination), validated by the project physician against vectorized package calls to about 5e-15. The package places the lower limit at z = -1.645, matching the cutoff used here. The vectors cover spirometry only. NHANES III, GLI-2021 volumes and GLI-2017 TLCO vectors are still needed, together with the GLI lookup tables, before any reference module can be written.
+Vectors received, 2026-10-20: `tests/vectors/rspiro-vectors.csv` holds 2,664 rows from rspiro 0.5 on R 4.6.1 (GLI-2012 for ethnicity codes 1 to 5 and GLI Global, each for FEV1, FVC and FEV1/FVC, 148 grid points for each combination of equation, ethnicity code and measurement, covering both sexes), validated by the project physician against vectorized package calls to about 5e-15. The package places the lower limit at z = -1.645, matching the cutoff used here. The vectors cover spirometry only. NHANES III, GLI-2021 volumes and GLI-2017 TLCO vectors are still needed, together with the GLI lookup tables, before any reference module can be written.
 
 ## Interpretation module
 
