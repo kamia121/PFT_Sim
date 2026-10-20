@@ -1,0 +1,195 @@
+{
+  "retrieved_at_utc": "2026-10-20T23:48:20Z",
+  "retrieval": "ERS publisher pages opened directly in cloud browser; downloaded using page links, without login or bypass.",
+  "primary_table_locations": {
+    "Hall2021": "Table 3, printed and PDF page 5, visually inspected",
+    "Stanojevic2020_correction": "Corrected Table 2, printed and PDF page 2, visually inspected"
+  },
+  "files": [
+    {
+      "filename": "Hall2021.pdf",
+      "source_url": "https://publications.ersnet.org/content/erj/57/3/2000289.full.pdf",
+      "sha256": "4e76cb9536c585531647305d6cc079bb7d1a9cd113ec194811b82f7d64008411",
+      "bytes": 702390,
+      "included_in_bundle": false
+    },
+    {
+      "filename": "Hall2021_Lookup_tables.xlsx",
+      "source_url": "https://publications.ersnet.org/content/erj/57/3/2000289/DC1/embed/inline-supplementary-material-2.xlsx",
+      "sha256": "00552cae54afd5b5342f7749222170235dc528fede365bc2871fb57c07e35742",
+      "bytes": 187630,
+      "included_in_bundle": true,
+      "sheets": [
+        {
+          "name": "frc_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "frc_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "tlc_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "tlc_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "rv_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "rv_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "rvtlc_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "rvtlc_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "erv_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "erv_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "ic_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "ic_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "vc_m_lookuptable",
+          "rows": 302,
+          "columns": 4
+        },
+        {
+          "name": "vc_f_lookuptable",
+          "rows": 302,
+          "columns": 4
+        }
+      ]
+    },
+    {
+      "filename": "Stanojevic2020_correction.pdf",
+      "source_url": "https://publications.ersnet.org/content/erj/56/4/1750010.full.pdf",
+      "sha256": "02ab8e39429d97e2110ac4c5115c151ae02d52a85da1ae706bee8cd178383235",
+      "bytes": 195692,
+      "included_in_bundle": false
+    },
+    {
+      "filename": "Stanojevic2017_corrected_Lookup_SI.xlsx",
+      "source_url": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-2.xlsx",
+      "sha256": "dd0504212540164da6b10f669e27f898b4729c8cff1d558f52b79bc5a2aa0b3d",
+      "bytes": 114723,
+      "included_in_bundle": true,
+      "sheets": [
+        {
+          "name": "TLCO_SI_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "TLCO_SI_f",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "KCO_SI_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "KCO_SI_f",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "VA_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "VA_f",
+          "rows": 342,
+          "columns": 5
+        }
+      ]
+    },
+    {
+      "filename": "Stanojevic2017_corrected_Lookup_Traditional.xlsx",
+      "source_url": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-3.xlsx",
+      "sha256": "fb72d9399fc135964d6abdacea4c31e3843ab46889ab37235a9b8564e6c01b11",
+      "bytes": 114721,
+      "included_in_bundle": true,
+      "sheets": [
+        {
+          "name": "DLCO_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "DLCO_f",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "KCO_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "KCO_f",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "VA_m",
+          "rows": 342,
+          "columns": 5
+        },
+        {
+          "name": "VA_f",
+          "rows": 342,
+          "columns": 5
+        }
+      ]
+    },
+    {
+      "filename": "Stanojevic2017_official_calculator.xlsm",
+      "source_url": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-4.xlsm",
+      "sha256": "3ce3b6c50d1a1d9644cbf3782240c915970cbf7fc66d8ef66cc79ee9fe9e8fbe",
+      "bytes": 488618,
+      "included_in_bundle": false
+    },
+    {
+      "filename": "Stanojevic2017_calculator_help.pdf",
+      "source_url": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-5.pdf",
+      "sha256": "3af0b00c643005306928d56e4cf8c4418af8b688c3870b1a0ebd33e736085d88",
+      "bytes": 252165,
+      "included_in_bundle": false
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+GLI coefficient and lookup-table comparison, run 2026-10-20 with tools/verify-gli-primary.py against the packet (provenance and hashes: docs/verification/gli-packet-2026-10-20/provenance.json; src/reference/sources.json).
+Scope: stored coefficients and spline tables against the transcribed printed tables and the ERS lookup workbooks. Not a validation of units, interpolation, age boundaries or LMS evaluation; no official calculator case was run; an independent Codex comparison was still under way.
+
+coefficients ok: volumes frc male
+coefficients ok: volumes frc female
+coefficients ok: volumes tlc male
+coefficients ok: volumes tlc female
+coefficients ok: volumes rv male
+coefficients ok: volumes rv female
+coefficients ok: volumes rv_tlc male
+coefficients ok: volumes rv_tlc female
+coefficients ok: volumes erv male
+coefficients ok: volumes erv female
+coefficients ok: volumes ic male
+coefficients ok: volumes ic female
+coefficients ok: volumes vc male
+coefficients ok: volumes vc female
+coefficients ok: tlco dlco male
+coefficients ok: tlco dlco female
+coefficients ok: tlco kco male
+coefficients ok: tlco kco female
+coefficients ok: tlco va male
+coefficients ok: tlco va female
+unit offset dlco male: traditional - SI intercept = 1.094269 (factor 2.98700)
+unit offset dlco female: traditional - SI intercept = 1.094269 (factor 2.98700)
+unit offset kco male: traditional - SI intercept = 1.094271 (factor 2.98700)
+unit offset kco female: traditional - SI intercept = 1.094270 (factor 2.98700)
+splines volumes frc male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes frc female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes tlc male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes tlc female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes rv male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes rv female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes rv_tlc male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes rv_tlc female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes erv male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes erv female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes ic male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes ic female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes vc male: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines volumes vc female: 301 ages, ages 5 to 80, max abs diff M 0, S 0, L 0
+splines tlco dlco male: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+splines tlco dlco female: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+splines tlco kco male: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+splines tlco kco female: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+splines tlco va male: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+splines tlco va female: 341 ages, ages 5 to 90, max abs diff M 0, S 0, L 0
+
+All coefficients equal the transcribed printed values (to 1e-12) and all spline tables equal the published workbooks (to 1e-9).
+Not checked here: units, interpolation, age boundaries, LMS evaluation against an official calculator (none was run).

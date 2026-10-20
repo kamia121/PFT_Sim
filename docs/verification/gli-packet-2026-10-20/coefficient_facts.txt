@@ -1,0 +1,33 @@
+Numerical coefficient facts extracted from primary printed tables. This file is a transcription aid, not a claim that the implementation is validated. Check signs, units, spline lookup, age handling and output independently.
+
+HALL 2021: TABLE 3, PAGE 5
+FRC                    Male      exp(−13.4898+0.1111*log(age)+2.7634*log(height)+Mspline)               exp(−1.60197+0.01513*log(age)+Sspline)         0.3416
+Female     exp(−12.7674+0.1251*log(age)+2.6049*log(height)+Mspline)               exp(−1.48310–0.03372*log(age)+Sspline)         0.2898
+TLC                    Male      exp(−10.5861+0.1433*log(age)+2.3155*log(height)+Mspline)               exp(−2.0616143–0.0008534*age+Sspline           0.9337
+Female     exp(−10.1128+0.1062*log(age)+2.2259*log(height)+Mspline)               exp(−2.0999321+0.0001564*age+Sspline)          0.4636
+RV                     Male         exp(−2.37211+0.01346*age+0.01307*height+Mspline)                     exp(−0.878572–0.007032*age+Sspline)           0.5931
+Female        exp(−2.50593+0.01307*age+0.01379*height+Mspline)                     exp(−0.902550–0.006005*age+Sspline)           0.4197
+RV/TLC                 Male          exp(2.634+0.01302*age–0.00008862*height+Mspline)                     exp(−0.96804–0.01004*age+Sspline)            0.8646
+Female         exp(2.666+0.01411*age–0.00003689*height+Mspline)                    exp(−0.976602–0.009679*age+Sspline)           0.8037
+ERV                    Male     exp(−17.328650–0.006288*age+3.478116*log(height)+Mspline)                    exp(−1.307616+0.009177*age)               0.5517
+Female    exp(−14.145513–0.009573*age+2.871446*log(height)+Mspline)                     exp(−1.54992+0.01409*age)                0.5326
+IC                     Male     exp(−10.121688+0.001265*age+2.188801*log(height)+Mspline)                    exp(−1.856546+0.002008*age)               1.146
+Female   exp(−9.4438787–0.0002484*age+2.0312769*log(height)+Mspline)                   exp(−1.775276+0.002673*age)               0.9726
+VC                     Male     exp(−10.134371–0.003532*age+2.307980*log(height)+Mspline)                   exp(−2.1367411+0.0009367*age               0.8611
+Female     exp(−9.230600–0.005517*age+2.116822*log(height)+Mspline                     exp(−2.220260+0.002956*age                1.038
+
+STANOJEVIC 2020 CORRECTION: TABLE 2, PAGE 2
+Male
+TLCO mmol·min-1·kPa-1                          exp(-8.129189 + 2.018368·ln(height) - 0.012425·ln(age) + Mspline)                   exp(-1.98996 + 0.03536·ln (age) + Sspline)               0.39482
+DLCO mL·min-1·mmHg-1                           exp(-7.034920 + 2.018368·ln(height) - 0.012425·ln(age) + Mspline)
+KCO (SI) mmol·min-1·kPa-1·L-1                  exp(2.994137 - 0.415334·ln(height) - 0.113166·ln(age) + Mspline)                    exp(-1.98186 + 0.01460·ln(age) + Sspline)                0.67330
+KCO (trad) mL·min-1·mmHg-1·L-1                 exp(4.088408 - 0.415334·ln(height) - 0.113166·ln(age) + Mspline)
+VA L                                           exp(-11.086573 + 2.430021·ln(height) + 0.097047·ln(age) + Mspline)                  exp(-2.20953 + 0.01937·ln(age) + Sspline)                0.62559
+Female
+TLCO mmol·min-1·kPa-1                          exp(-6.253720 + 1.618697·ln(height) - 0.015390·ln(age) + Mspline)                   exp(-1.82905 - 0.01815·ln(age) + Sspline)                0.24160
+DLCO mL·min-1·mmHg-1                           exp(-5.159451 + 1.618697·ln(height) - 0.015390·ln(age) + Mspline)
+KCO (SI) mmol·min-1·kPa-1·L-1                  exp(4.037222 - 0.645656·ln(height) - 0.097395·ln(age) + Mspline)                    exp(-1.63787 - 0.07757·ln(age) + Sspline)                0.48963
+KCO (trad) mL·min-1·mmHg-1·L-1                 exp(5.131492 - 0.645656·ln(height) - 0.097395·ln(age) + Mspline)
+VA L                                           exp(-9.873970 + 2.182316·ln(height) + 0.082868·ln(age) + Mspline)                   exp(-2.08839 - 0.01334·ln(age) + Sspline)                0.51919
+
+Notes: Hall printed table omits closing parentheses in several formulas; this transcription preserves the visible printing. The intended exponentiation parentheses should not be inferred as a new model. The 2020 correction changes both sexes; original 2017 coefficients are superseded. SI and traditional spline sheets have tiny numeric differences. No official online calculator cases were run: the calculator presents a CAPTCHA; no challenge was attempted.
