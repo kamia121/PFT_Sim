@@ -46,3 +46,25 @@ test('poorer technique lowers the share of sessions graded A', () => {
   const [g, f, p] = ['good', 'fair', 'poor'].map(share);
   assert.ok(g > f && f > p, `${g} ${f} ${p}`);
 });
+
+test('scenario faults use their own streams: a scenario that adds nothing leaves the maneuvers unchanged', () => {
+  const truth = { fvc: 4.2, fev1: 3.3, k: 0.9, T: 12, technique: 'fair' };
+  const a = generateManeuvers(7, truth), b = generateManeuvers(7, { ...truth, scenario: {} });
+  assert.equal(JSON.stringify(a.maneuvers.map(({ curve, ...m }) => m)), JSON.stringify(b.maneuvers.map(({ curve, ...m }) => m)));
+});
+
+test('forced scenario faults appear on the named blow and are recorded in the fault list', () => {
+  for (const fault of ['leak', 'mouthpiece-obstruction', 'pause-at-TLC', 'no-plateau', 'slow-start', 'cough', 'glottic-closure', 'early-termination', 'variable-effort']) {
+    for (const first of [0, 1, 2]) {
+      const r = generateManeuvers(11, { fvc: 4.2, fev1: 3.3, k: 0.9, T: 12, technique: 'good', scenario: { forced: [{ fault, p: 0, first }] } });
+      assert.ok(r.maneuvers[first].faults.includes(fault), `${fault} on blow ${first}`);
+      for (const m of r.maneuvers) assert.ok(m.fev1 <= m.fvc + 1e-9);
+    }
+  }
+});
+
+test('set-wide effort and the blow cap', () => {
+  const r = generateManeuvers(3, { fvc: 4.2, fev1: 3.3, k: 0.9, T: 12, technique: 'good', scenario: { effort: { fvc: 0.85, fev1: 0.85, r: 0.1 }, maxManeuvers: 3 } });
+  assert.equal(r.maneuvers.length, 3);
+  assert.ok(r.maneuvers.every((m) => m.faults.includes('submaximal-effort') && m.fvc < 4.2 * 0.9));
+});

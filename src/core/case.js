@@ -6,6 +6,7 @@
  */
 import { resolveDescriptor } from './descriptor.js';
 import { generatePhysiology, hbFactor, ANCHOR } from './physiology.js';
+import { selectScenarios, applyScenarios, emptyScenario } from '../scenarios/apply.js';
 import { generateManeuvers } from './maneuver.js';
 import { createStream } from './prng.js';
 import { createReference } from '../reference/gli.js';
@@ -25,29 +26,38 @@ export function buildCase(input, datasets) {
   const { resolveReference } = createReference(datasets);
   const truth = generatePhysiology(d.seed, d, datasets);
 
-  const pre = generateManeuvers(d.seed, { fvc: truth.fvc, fev1: truth.fev1, k: shapeFor(truth.ratio), T: durationFor(truth.ratio), technique: d.technique, prefix: 'maneuver' });
+  // Encounter scenarios (src/scenarios). Without them every line below reproduces the case exactly as it was made before they existed.
+  const plan = d.scenarioLevel || d.scenarioIds?.length
+    ? applyScenarios({ selection: selectScenarios({ seed: d.seed, level: d.scenarioLevel ?? 'light', archetype: d.archetype, panel: d.panel, forcedIds: d.scenarioIds ?? [], descriptor: d }), descriptor: d })
+    : null;
+  // What the laboratory enters (stated height, reference sex, requisition group) and the true values after acute effects.
+  const lab = plan ? plan.demographics() : { heightCm: d.heightCm, sex: d.sex, group: d.group, hbGdl: d.hbGdl };
+  const eff = plan ? plan.physiology(truth) : truth;
+
+  const pre = generateManeuvers(d.seed, { fvc: eff.fvc, fev1: eff.fev1, k: shapeFor(eff.ratio), T: durationFor(eff.ratio), technique: d.technique, prefix: 'maneuver', scenario: plan?.maneuver('pre') ?? null });
 
   // A bronchodilator study follows when the baseline is obstructive, in the bronchodilator archetype,
   // and occasionally otherwise, as in a laboratory that tests on clinical suspicion.
   let post = null;
-  if (truth.post && d.panel === 'full') {
+  if (eff.post && d.panel === 'full') {
     const perform = createStream(d.seed, 'bd-decision').uniform();
-    const patient = { age: d.age, sex: d.sex, heightCm: d.heightCm, group: d.group };
+    const patient = { age: d.age, sex: lab.sex, heightCm: lab.heightCm, group: lab.group };
     const ratioZ = pre.summary.ratio ? resolveReference('fev1_fvc', { ...patient, measured: pre.summary.ratio }, 'GLIglobal').z : 0;
-    if (['obstruction', 'mixed', 'bd-discordant'].includes(d.archetype) || ratioZ < LLN_Z || perform < 0.15) {
-      const ratioPost = truth.post.fev1 / truth.post.fvc;
-      post = generateManeuvers(d.seed, { fvc: truth.post.fvc, fev1: truth.post.fev1, k: shapeFor(ratioPost), T: durationFor(ratioPost), technique: d.technique, prefix: 'post', earlyStop: truth.post.earlyStop });
+    if (['obstruction', 'mixed', 'bd-discordant'].includes(d.archetype) || ratioZ < LLN_Z || perform < 0.15 || plan?.forcePostBd) {
+      const ratioPost = eff.post.fev1 / eff.post.fvc;
+      post = generateManeuvers(d.seed, { fvc: eff.post.fvc, fev1: eff.post.fev1, k: shapeFor(ratioPost), T: durationFor(ratioPost), technique: d.technique, prefix: 'post', earlyStop: eff.post.earlyStop, scenario: plan?.maneuver('post') ?? null });
     }
   }
 
   // Lung volumes by plethysmography: FRC, ERV and IC are measured; TLC, RV and VC follow from them.
-  let volumes = null;
+  let volumes = null, tlcBeforeScenario = null;
   if (d.panel === 'full') {
     const rng = createStream(d.seed, 'volumes');
-    const frc = truth.frc * Math.exp(0.03 * rng.normal());
+    let frc = truth.frc * Math.exp(0.03 * rng.normal());
     // ERV cannot exceed FRC; the cap keeps RV = FRC - ERV positive so the identities stay exact.
-    const erv = Math.min(truth.erv * Math.exp(0.08 * rng.normal()), 0.85 * frc);
-    const ic = truth.ic * Math.exp(0.04 * rng.normal());
+    let erv = Math.min(truth.erv * Math.exp(0.08 * rng.normal()), 0.85 * frc);
+    let ic = truth.ic * Math.exp(0.04 * rng.normal());
+    if (plan) { tlcBeforeScenario = frc + ic; ({ frc, erv, ic } = plan.volumeComponents({ frc, erv, ic })); }
     volumes = { method: 'plethysmography', frc, erv, ic, tlc: frc + ic, rv: frc - erv, vc: ic + erv };
   }
 
@@ -55,15 +65,25 @@ export function buildCase(input, datasets) {
   let dlco = null;
   if (d.panel === 'full') {
     const rng = createStream(d.seed, 'dlco');
-    const corrected = truth.dlcoCorrected * Math.exp(0.04 * rng.normal());
-    const va = Math.min(truth.va * Math.exp(0.03 * rng.normal()), 0.99 * volumes.tlc);
-    const factor = hbFactor(d.hbGdl, d.sex, d.age);
-    const raw = corrected / factor;
-    dlco = { raw, hbGdl: d.hbGdl, hbFactor: factor, adjusted: corrected, va, kco: corrected / va };
+    let corrected = truth.dlcoCorrected * Math.exp(0.04 * rng.normal());
+    let va = Math.min(truth.va * Math.exp(0.03 * rng.normal()), 0.99 * volumes.tlc);
+    if (!plan) {
+      const factor = hbFactor(d.hbGdl, d.sex, d.age);
+      const raw = corrected / factor;
+      dlco = { raw, hbGdl: d.hbGdl, hbFactor: factor, adjusted: corrected, va, kco: corrected / va };
+    } else {
+      ({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: volumes.tlc, vc: volumes.vc, tlcRatio: volumes.tlc / tlcBeforeScenario }));
+      // The measured value follows the patient's own hemoglobin and birth sex; the laboratory adjusts with the sex and hemoglobin it has on file.
+      const raw = corrected / hbFactor(d.hbGdl, d.sex, d.age);
+      const factor = lab.hbGdl === null ? 1 : hbFactor(lab.hbGdl, lab.sex, d.age);
+      // With the patient's own sex and hemoglobin the adjustment returns the corrected value exactly.
+      const adjusted = lab.hbGdl !== null && lab.sex === d.sex ? corrected : raw * factor;
+      dlco = { raw, hbGdl: lab.hbGdl, hbFactor: factor, adjusted, va, kco: adjusted / va };
+    }
   }
 
   const report = {
-    patient: { age: d.age, sex: d.sex, heightCm: d.heightCm, group: d.group, weightKg: d.weightKg, hbGdl: d.hbGdl },
+    patient: { age: d.age, sex: lab.sex, heightCm: lab.heightCm, group: lab.group, weightKg: d.weightKg, hbGdl: lab.hbGdl },
     spirometry: {
       fev1: pre.summary.fev1,
       fvc: pre.summary.fvc,
@@ -74,6 +94,12 @@ export function buildCase(input, datasets) {
     grades: { fev1: pre.summary.grades.fev1, fvc: pre.summary.grades.fvc, postFev1: post?.summary.grades.fev1, postFvc: post?.summary.grades.fvc },
   };
 
+  let scenario = emptyScenario(d);
+  if (plan) {
+    // Caveat ids travel with the report so that interpret() carries them into the key (key.caveatIds).
+    report.caveatIds = plan.caveatsFor({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }).map((c) => c.id);
+    scenario = plan.describe({ report, pre, post, volumes, dlco, resolve: resolveReference });
+  }
   const anchorKey = interpret(report, resolveReference, ANCHOR.spirometry);
   return {
     descriptor: d,
@@ -84,6 +110,7 @@ export function buildCase(input, datasets) {
     dlco,
     report,
     anchorKey,
+    scenario,
   };
 }
 
