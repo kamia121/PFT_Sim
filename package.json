@@ -1,0 +1,16 @@
+{
+  "name": "pft-sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Seeded simulated pulmonary function reports with side-by-side reference equation interpretation, for education",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}

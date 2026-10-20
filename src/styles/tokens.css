@@ -25,8 +25,6 @@
   --flag: #9A6B12;             /* outside reference range (text only, never a fill) */
   --flag-bg: #FBF4E6;
   --focus: #0E2B73;
-  /* diastolic grades: normal in the reference gray, grades I–IV as one ordinal blue ramp, light → dark */
-  --g0: #9AA3A0; --g1: #86B6EF; --g2: #3987E5; --g3: #1C5CAB; --g4: #0D366B;
   color-scheme: light;
 }
 
@@ -50,7 +48,6 @@
     --flag: #E0B35F;
     --flag-bg: #2A2416;
     --focus: #9DB2EC;
-    --g0: #6A7572; --g1: #256ABF; --g2: #3987E5; --g3: #6DA7EC; --g4: #B7D3F6;
     color-scheme: dark;
   }
 }
@@ -74,7 +71,6 @@
   --flag: #E0B35F;
   --flag-bg: #2A2416;
   --focus: #9DB2EC;
-  --g0: #6A7572; --g1: #256ABF; --g2: #3987E5; --g3: #6DA7EC; --g4: #B7D3F6;
   color-scheme: dark;
 }
 
