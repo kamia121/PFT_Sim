@@ -38,13 +38,13 @@ function tabulate(curve, tStop, faults, glottisClosedAt) {
 
 /**
  * @param {number} seed
- * @param {{ fvc: number, fev1: number, k: number, T?: number, technique: 'good'|'fair'|'poor' }} truth
+ * @param {{ fvc: number, fev1: number, k: number, T?: number, technique: 'good'|'fair'|'poor', prefix?: string, earlyStop?: [number, number]|null }} truth
  * @returns {{ maneuvers: (ReturnType<typeof tabulate> & { curve: object, index: number })[], summary: ReturnType<typeof summarizeSession> }}
  */
-export function generateManeuvers(seed, { fvc, fev1, k, T = 12, technique }) {
+export function generateManeuvers(seed, { fvc, fev1, k, T = 12, technique, prefix = 'maneuver', earlyStop = null }) {
   const maneuvers = [];
   for (let i = 0; i < MAX_MANEUVERS; i++) {
-    const rng = createStream(seed, `maneuver-${i}`);
+    const rng = createStream(seed, `${prefix}-${i}`);
     const faults = [];
     // Natural breath-to-breath variability, FEV1 and FVC moving together.
     const common = rng.normal(), indep = rng.normal();
@@ -60,6 +60,8 @@ export function generateManeuvers(seed, { fvc, fev1, k, T = 12, technique }) {
     if (rng.chance(p * 0.6)) { faults.push('cough'); fev1T *= rng.range(0.88, 0.95); }
     let glottisClosedAt = null;
     if (rng.chance(p * 0.4)) { faults.push('glottic-closure'); glottisClosedAt = rng.range(0.5, 4); tStop = Math.min(tStop, glottisClosedAt); }
+    // A forced early stop (for example after a bronchodilator) applies to every maneuver in the set.
+    if (earlyStop) { const stop = rng.range(earlyStop[0], earlyStop[1]); tStop = Math.min(tStop, stop); if (!faults.includes('early-termination')) faults.push('early-termination'); }
     fev1T = Math.min(fev1T, 0.995 * fvcT);
     const { curve } = solveCurve({ fvc: fvcT, fev1: fev1T, k, r, T });
     const row = tabulate(curve, tStop, faults, glottisClosedAt);

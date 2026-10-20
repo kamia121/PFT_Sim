@@ -93,6 +93,10 @@ export function summarizeSession(maneuvers) {
       spread: largestTwoSpread(acc.map((m) => m[key])),
     };
   }
+  // The best FEV1 and best FVC can come from different maneuvers with different acceptability. A report never
+  // shows FEV1 above FVC, so in that case FVC is taken as the FEV1 value and the adjustment is flagged.
+  const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;
+  if (fvcAdjusted) out.fvc.value = out.fev1.value;
   const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));
   const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);
   return {
@@ -103,6 +107,7 @@ export function summarizeSession(maneuvers) {
     fev1: out.fev1.value,
     pef: maxOf('pef', poolFor('fev1')),
     fef2575: maxOf('fef2575', poolFor('fvc')),
+    fvcAdjusted,
     ratio: out.fvc.value && out.fev1.value !== null ? out.fev1.value / out.fvc.value : null,
     spread: { fev1: out.fev1.spread, fvc: out.fvc.spread },
     repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && x <= S.repeatabilityLitersAdult.value),

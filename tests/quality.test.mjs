@@ -59,3 +59,14 @@ test('Table 10: FEV1 and FVC are graded separately, and U and F need zero accept
   assert.deepEqual(u.grades, { fev1: 'E', fvc: 'U' });
   assert.equal(u.fvc, 4);
 });
+
+test('when the best FEV1 exceeds the best acceptable FVC, FVC is set to FEV1 and the adjustment is flagged', () => {
+  // The first maneuver has the larger FEV1 but a late glottic closure, so its FVC is usable but not acceptable.
+  const s = summarizeSession([m(4.0, 3.9, { glottisClosedAt: 3 }), m(4.3, 3.4), m(4.25, 3.35)]);
+  assert.equal(s.fvc, 4.3);
+  assert.equal(s.fvcAdjusted, false);
+  const t = summarizeSession([m(3.6, 3.9, { glottisClosedAt: 3 }), m(3.5, 3.4), m(3.45, 3.35)]);
+  assert.equal(t.fev1, 3.9);
+  assert.equal(t.fvc, 3.9);
+  assert.equal(t.fvcAdjusted, true);
+});
