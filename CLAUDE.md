@@ -4,7 +4,7 @@ PFT_Sim is an explicitly uncalibrated educational tool. It generates simulated p
 
 ## Stack
 
-Static site. TypeScript, Vite, vitest, no backend, no production dependencies without a clear need. Deployed to GitHub Pages. Every case is a pure function of a seed and archetype, and both are encoded in the URL so a case can be shared and reproduced without storage. A backend is considered only for saved learner responses or instructor dashboards.
+Static site matching ARDS_sim: plain ES modules with JSDoc typedefs, `node --test` for tests, Node 22 or newer, no production dependencies, a pinned Playwright as the only development dependency for browser harnesses, `scripts/build.mjs` to `dist/`, and the same two GitHub Actions workflows deployed to GitHub Pages. Every case is a pure function of a descriptor (generator version, seed, archetype and any overridden inputs), and the descriptor is encoded in the URL so a case can be shared and reproduced without storage. A backend is considered only for saved learner responses or instructor dashboards. `SPEC.md` is the contract for the data model, archetypes, reference-equation resolution and interpretation table.
 
 ## Theme
 
@@ -12,7 +12,7 @@ Use the shared MCW green and navy tokens in `src/styles/tokens.css`, copied from
 
 ## Reference equations
 
-Reference equations sit behind one interface so GLI-2012 (race-specific), GLI Global (2022), GLI-2017 TLCO, GLI-2021 volumes and NHANES III can be swapped. The shipped placeholder is labelled in the UI as a demonstration reference and must be replaced by the ported GLI tables before any release. Port every table from the published coefficients, and assert agreement to several decimal places in vitest against test vectors generated in R with `rspiro`. Check the GLI terms of use before redistributing tables in the public repository.
+Reference equations are resolved per measurement behind one interface, so GLI-2012 (group-specific), GLI Global (2022), GLI-2017 TLCO, GLI-2021 volumes and NHANES III can be swapped, and a measurement with no matching equation falls back to the closest available one with the fallback shown on the report line, as in routine laboratory practice. Port every table from the published coefficients and tables, never from `rspiro` source (GPL), and assert agreement in `node --test` against test vectors generated in R with `rspiro`. Do not commit GLI tables until the primary ERS terms of use have been read and recorded in `SPEC.md`; the license of the tables may differ from this repository's MIT license and would then need its own directory and notice.
 
 ## Interpretation logic
 
