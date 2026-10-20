@@ -15,6 +15,10 @@ import { MEASURES } from '../app/format.js';
  * @returns {string}
  */
 export function statementFor(caseData, interp, cmp = null) {
+  try {
+    const narrative = composeNarrative({ caseData, interp, cmp, seed: caseData.descriptor?.seed ?? 0 });
+    if (narrative?.finalStatement) return narrative.finalStatement;
+  } catch { /* fall through to the key-based statement */ }
   const out = [];
   const sev = interp.severity?.scored ? `, ${interp.severity.id} by the FEV1 z-score` : '';
   out.push(`${PATTERNS[interp.pattern]}${sev}.`);
