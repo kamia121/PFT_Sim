@@ -1,0 +1,37 @@
+[
+  {
+    "file": "GLI-2012-spirometry.xls",
+    "source": "https://publications.ersnet.org/content/erj/suppl/2013/04/19/09031936.00080312.DC1/lookuptables.xls",
+    "download_date": "2026-10-20",
+    "bytes": 513536,
+    "sha256": "7ac00853ab68a69bb1dd88bbda255fe0556057fe917ecbc8bd1c9387460a9a0c"
+  },
+  {
+    "file": "GLI-2021-volumes.xlsx",
+    "source": "https://publications.ersnet.org/content/erj/57/3/2000289/DC1/embed/inline-supplementary-material-2.xlsx",
+    "download_date": "2026-10-20",
+    "bytes": 187630,
+    "sha256": "00552cae54afd5b5342f7749222170235dc528fede365bc2871fb57c07e35742"
+  },
+  {
+    "file": "GLI-2017-TLCO-SI-corrected2020.xlsx",
+    "source": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-2.xlsx",
+    "download_date": "2026-10-20",
+    "bytes": 114723,
+    "sha256": "dd0504212540164da6b10f669e27f898b4729c8cff1d558f52b79bc5a2aa0b3d"
+  },
+  {
+    "file": "GLI-2017-TLCO-traditional-corrected2020.xlsx",
+    "source": "https://publications.ersnet.org/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-3.xlsx",
+    "download_date": "2026-10-20",
+    "bytes": 114721,
+    "sha256": "fb72d9399fc135964d6abdacea4c31e3843ab46889ab37235a9b8564e6c01b11"
+  },
+  {
+    "file": "GLI-Global-2022-spirometry.xlsx",
+    "source": "https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/ajrccm/207/6/10.1164_rccm.202205-0963OC/1/gli_global_lookuptables_dec6.xlsx",
+    "download_date": "2026-10-20",
+    "bytes": 115298,
+    "sha256": "f5cdeaf4a16d90dd9b94c2ea3bdea1e49e4846f4510b9dd4cca9947f61877e14"
+  }
+]

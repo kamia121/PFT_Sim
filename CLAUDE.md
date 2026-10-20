@@ -12,7 +12,7 @@ Use the shared MCW green and navy tokens in `src/styles/tokens.css`, copied from
 
 ## Reference equations
 
-Reference equations are resolved per measurement behind one interface, so GLI-2012 (group-specific), GLI Global (2022), GLI-2017 TLCO, GLI-2021 volumes and NHANES III can be swapped, and a measurement with no matching equation falls back to the closest available one with the fallback shown on the report line, as in routine laboratory practice. Port every table from the published coefficients and tables, never from `rspiro` source (GPL), and assert agreement in `node --test` against test vectors generated in R with `rspiro`. Do not commit GLI tables until the primary ERS terms of use have been read and recorded in `SPEC.md`; the license of the tables may differ from this repository's MIT license and would then need its own directory and notice.
+Reference equations are resolved per measurement behind one interface, so GLI-2012 (group-specific), GLI Global (2022), GLI-2017 TLCO, GLI-2021 volumes and NHANES III can be swapped, and a measurement with no matching equation falls back to the closest available one with the fallback shown on the report line, as in routine laboratory practice. Port every table from the published coefficients and tables, never from `rspiro` source (GPL), and assert agreement in `node --test` against test vectors generated in R with `rspiro`. The GLI-derived data live in `src/reference/data/` under the notice in `src/reference/NOTICE` and are not covered by this repository's MIT license; regenerate them with `tools/extract-gli.py` and check them with `tools/crosscheck-interpreter.mjs`. The exact ERS license wording still has to be pasted into the notice.
 
 ## Interpretation logic
 
