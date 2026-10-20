@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Browser smoke test for the learner site. Starts the static server, drives Chromium, and checks
- * that cases render without console errors, answers can be scored, links reproduce a case, both
- * themes render, and no page overflows horizontally at phone width.
+ * that cases render without console errors, figures and their SVG download controls are present and the
+ * downloaded variants parse as SVG, answers can be scored, links reproduce a case, both themes render, and
+ * no page overflows horizontally at phone width.
  *
  * Usage: node benchmarks/ui-smoke.mjs [screenshotDir]
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
@@ -27,7 +28,34 @@ try {
   page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector('#pre-maneuvers');
-  check((await page.locator('svg.fig').count()) === 2, 'two figures render');
+  const nFig = await page.locator('svg.fig').count();
+  check(nFig >= 3, `at least three figures render (${nFig}): loop, volume-time, z-score strip`);
+  check((await page.locator('details.fig-dl').count()) === nFig, 'every figure has a Download SVG control');
+  check((await page.locator('details.fig-dl button[data-act=download]').count()) === 4 * nFig, 'each control offers four SVG variants');
+  check((await page.locator('details.fig-dl button[data-act=copy]').count()) === 4 * nFig, 'each control offers Copy SVG');
+  const firstSvg = await page.locator('figure[data-figure=flow-volume] svg.fig').first().evaluate((el) => el.outerHTML);
+  check(!firstSvg.includes('#6A7572') && !/Not acceptable/.test(firstSvg), 'before checking, no maneuver is drawn as rejected');
+
+  // A downloaded variant parses as SVG.
+  const variantIds = ['transparent-dark-ink', 'transparent-light-ink', 'dark', 'white'];
+  await page.locator('figure[data-figure=flow-volume] details.fig-dl summary').click();
+  for (const pal of variantIds) {
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator(`figure[data-figure=flow-volume] button[data-act=download][data-pal=${pal}]`).click()]);
+    const text = fs.readFileSync(await dl.path(), 'utf8');
+    const parsed = await page.evaluate((xml) => {
+      const doc = new DOMParser().parseFromString(xml, 'image/svg+xml');
+      return { error: !!doc.querySelector('parsererror'), root: doc.documentElement.nodeName, paths: doc.querySelectorAll('path').length, rects: doc.querySelectorAll('rect').length, w: doc.documentElement.getAttribute('width') };
+    }, text);
+    check(!parsed.error && parsed.root === 'svg' && parsed.paths > 0 && !!parsed.w, `variant ${pal} downloads and parses as SVG (${dl.suggestedFilename()})`);
+    check(!/var\(/.test(text) && text.startsWith('<?xml'), `variant ${pal} has no CSS variables and starts with the XML declaration`);
+    check(pal.startsWith('transparent') ? parsed.rects === 0 : parsed.rects === 1, `variant ${pal} ${pal.startsWith('transparent') ? 'has no background rectangle' : 'has a background rectangle'}`);
+  }
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+  await page.locator('figure[data-figure=z-strip] details.fig-dl summary').click();
+  await page.locator('figure[data-figure=z-strip] button[data-act=copy][data-pal=white]').click();
+  await page.waitForFunction(() => /copied|blocked/i.test(document.querySelector('figure[data-figure=z-strip] .fig-dl-status')?.textContent ?? ''));
+  const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => null));
+  if (clip !== null) check(/^<\?xml/.test(clip) && /<svg /.test(clip), 'Copy SVG puts a standalone SVG on the clipboard');
   check((await page.locator('#spiro-table tbody tr').count()) === 3, 'spirometry report has three rows');
   check(!(await page.locator('#reveal').count()), 'no key is shown before checking');
   const href = await page.url();

@@ -2,9 +2,9 @@ import { esc, num, signed, MEASURES, EQUATION_NAMES } from './format.js';
 import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT } from './explain.js';
 import { QUESTIONS, hasData, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
-import { flowVolumeSvg, volumeTimeSvg } from '../ui/figures.js';
-import { solveCurve } from '../core/curve.js';
-import { shapeFor, durationFor } from '../core/case.js';
+import { FIGURES } from '../ui/figures/index.js';
+import { PALETTES } from '../ui/palettes.js';
+import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
 import { archetypeNote } from '../core/physiology.js';
 
 const bmi = (p) => p.weightKg / (p.heightCm / 100) ** 2;
@@ -43,36 +43,34 @@ export function renderManeuvers(set, title, { revealed, id }) {
   <tfoot><tr><th scope="row">Reported</th><td><strong>${num(best('fvc'))}</strong></td><td><strong>${num(best('fev1'))}</strong></td><td><strong>${num(summary.ratio, 3)}</strong></td><td>${num(summary.pef, 1)}</td><td>${num(summary.fef2575, 2)}</td><td colspan="${revealed ? 6 : 4}" class="l muted">Largest FVC and FEV₁ among the maneuvers selected by the software${summary.fvcAdjusted ? '; FVC set equal to FEV₁ because the best FEV₁ came from a maneuver whose FVC was not acceptable' : ''}</td></tr></tfoot></table></div>`;
 }
 
-function bestIndex(set) {
-  const ev = set.summary.evaluations;
-  let bestI = 0, bestScore = -1;
-  set.maneuvers.forEach((m, i) => {
-    const ok = ev[i].fev1.acceptable && ev[i].fvc.acceptable ? 2 : ev[i].fev1.usable || ev[i].fvc.usable ? 1 : 0;
-    const score = ok * 100 + m.fvc + m.fev1;
-    if (score > bestScore) { bestScore = score; bestI = i; }
-  });
-  return bestI;
+/** Case data in the form the figure registry reads: the case plus the interpretation and the page state. */
+export function figureCaseData(c, interp, { revealed, showSchematic }) {
+  return { ...c, interp, revealed: !!revealed, showSchematic: !!showSchematic };
 }
 
-function schematic(measure, interp, pickKey) {
-  const m = interp.measures;
-  if (!m.fvc || !m.fev1 || m.fvc.available === false || m.fev1.available === false) return null;
-  const fvc = m.fvc[pickKey], fev1 = m.fev1[pickKey];
-  if (!(fvc > 0 && fev1 > 0 && fev1 < fvc)) return null;
-  const ratio = fev1 / fvc;
-  return solveCurve({ fvc, fev1, k: shapeFor(ratio), r: 0.04, T: durationFor(ratio) }).curve;
-}
+const FIGURE_NOTES = {
+  'flow-volume': (cd) => `Expiratory flow is plotted upward against exhaled volume and inspiratory flow downward; each trace is one maneuver. A loop whose inspiratory limb returns to zero volume has an inspired volume equal to the exhaled volume.${cd.spirometry.post ? ' Post-bronchodilator maneuvers are overlaid in the second color.' : ''} The inspiratory limb is generated from the exhaled volume and is not calibrated against patient data.${cd.showSchematic ? ' The predicted and lower-limit curves are schematic: they are drawn from the predicted and lower-limit FVC and FEV₁, not from a published predicted loop.' : ''}`,
+  'volume-time': () => 'Tidal breathing and a maximal inspiration precede the forced expiration, which starts at total lung capacity (volume 0). The dotted line is the tangent at peak flow; it meets the time axis at the back-extrapolated time zero, and FEV₁ is the volume one second after that point.',
+  'z-strip': () => 'Each marker is the z-score of a measured value against its reference equation. The dashed line is the predicted value (z = 0) and the dotted line is the lower limit of normal (z = −1.645).',
+};
 
+/**
+ * Figures from the registry, drawn with the dark palette, each with its download control. Figures whose
+ * dataFor returns null (for example plethysmography when no volumes were measured) are omitted.
+ * Before the answers are checked every maneuver is drawn in the measured color; after checking, maneuvers that
+ * failed the acceptability rules are muted.
+ */
 export function renderFigures(c, interp, { revealed, showSchematic }) {
-  const set = c.spirometry.pre;
-  const mans = set.maneuvers.map((m, i) => ({ curve: m.curve, fet: m.fet, accepted: revealed ? set.summary.evaluations[i].fev1.acceptable && set.summary.evaluations[i].fvc.acceptable : true }));
-  const predicted = showSchematic ? schematic('pred', interp, 'predicted') : null;
-  const lln = showSchematic ? schematic('lln', interp, 'lln') : null;
-  const best = set.maneuvers[bestIndex(set)];
-  return `<div class="grid2"><figure class="card"><figcaption><strong>Expiratory flow–volume curves</strong></figcaption>${flowVolumeSvg({ maneuvers: mans, predicted, lln })}
-  <p class="muted">Each trace is one maneuver. Only the expiratory limb is simulated.${showSchematic ? ' The predicted and lower-limit curves are schematic: they are drawn from the predicted and lower-limit FVC and FEV₁, not from a published predicted loop.' : ''}</p></figure>
-  <figure class="card"><figcaption><strong>Volume–time curve of the best maneuver</strong></figcaption>${volumeTimeSvg({ curve: best.curve, fet: best.fet })}
-  <p class="muted">The dashed line is the tangent at peak flow; it meets the time axis at the back-extrapolated time zero. FEV₁ is the volume one second after that point.</p></figure></div>`;
+  const cd = figureCaseData(c, interp, { revealed, showSchematic });
+  const card = ({ id, title, data }) => {
+    const note = FIGURE_NOTES[id]?.(cd);
+    return `<figure class="card" data-figure="${id}"${id === 'z-strip' ? ' style="max-width:48rem"' : ''}><figcaption><strong>${title}</strong></figcaption>${FIGURES[id].render(data, { palette: PALETTES.dark })}${note ? `<p class="muted">${note}</p>` : ''}${downloadControlsHtml(id)}</figure>`;
+  };
+  const figs = availableFigures(cd);
+  // The z-score strip is wide and low, so it takes a full row; the other figures tile in columns of at least 30 rem.
+  const tiled = figs.filter((f) => f.id !== 'z-strip').map(card).join('');
+  const strip = figs.filter((f) => f.id === 'z-strip').map(card).join('');
+  return `${tiled ? `<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,30rem),1fr))">${tiled}</div>` : ''}${strip}`;
 }
 
 function flagCell(mr) {

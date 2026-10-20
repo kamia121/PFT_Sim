@@ -6,6 +6,7 @@ import { encodeCase, decodeCase } from '../core/code.js';
 import { interpret, compareEquations } from '../interpret/interpret.js';
 import { scoreAnswers } from './answers.js';
 import * as R from './render.js';
+import { bindFigureDownloads } from './figure-downloads.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -128,6 +129,7 @@ async function boot() {
   $('#method').innerHTML = R.renderMethod(GENERATOR_VERSION);
   state.datasets = await loadDatasets();
   state.resolve = createReference(state.datasets).resolveReference;
+  bindFigureDownloads($('#case'), () => R.figureCaseData(state.case, interpretations().a, state));
 
   const params = new URLSearchParams(location.search);
   try {
