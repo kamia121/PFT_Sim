@@ -43,6 +43,7 @@ const VOLS = ['tlc', 'rv', 'rv_tlc', 'vc', 'frc', 'erv', 'ic'];
  * @property {{ tlc: number, rv: number, vc: number, frc: number, erv: number, ic: number }|null} volumes liters
  * @property {{ dlcoAdjusted: number, va: number }|null} dlco DLCO already corrected for hemoglobin (mL/min/mmHg), VA in liters
  * @property {{ fev1: string, fvc: string, postFev1?: string, postFvc?: string }} grades
+ * @property {string[]} [caveatIds] ids of the scenario caveats a careful interpreter states; copied into key.caveatIds
  */
 
 /**
@@ -146,6 +147,8 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
     bronchodilator: bd ? (bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     dlco: dlco ? dlco.category : null,
   };
+  // Scenario caveats the laboratory record supports (src/scenarios); absent for a plain case.
+  if (report.caveatIds?.length) key.caveatIds = [...new Set(report.caveatIds)].sort();
   return { spirometryEquation, measures, pattern, patternLabel: PATTERNS[pattern], flags, severity, bd, dlco, qualityLimited: limited, key };
 }
 

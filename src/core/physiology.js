@@ -259,3 +259,54 @@ export function generatePhysiology(seed, d, datasets) {
 }
 
 export { GROUP_TO_GLI2012 };
+
+/**
+ * Carboxyhemoglobin and the measured DLCO. A raised COHb competes with the test gas for hemoglobin and
+ * adds CO back-pressure, so the measured DLCO falls. The rule of about 1% of DLCO per 1% of COHb above
+ * the endogenous level is quoted in the research catalog as not verified; both constants are
+ * UNVERIFIED teaching values (see src/scenarios/constants.js and docs/scenarios-model.md).
+ */
+export const COHB = {
+  referencePercent: { value: 1.5, verification: 'unverified' },
+  dlcoFractionPerPercent: { value: 0.01, verification: 'unverified' },
+};
+
+/** Multiplier on the measured DLCO for a carboxyhemoglobin of `cohbPercent` (1 at or below the endogenous level). */
+export function cohbDlcoFactor(cohbPercent) {
+  const excess = Math.max(0, cohbPercent - COHB.referencePercent.value);
+  return Math.max(0.5, 1 - COHB.dlcoFractionPerPercent.value * excess);
+}
+
+/**
+ * Acute, reversible effects on the measured spirometric quantities, applied to a copy of the true
+ * physiology before maneuvers are generated. The lungs themselves (volumes, DLCO) are not changed here;
+ * the multipliers are simulator choices whose directions come from the research catalog.
+ *
+ * @param {ReturnType<typeof generatePhysiology>} truth
+ * @param {{ baselineShiftToPost?: number, postResponseMult?: number, fvcMult?: number, fev1Mult?: number,
+ *   preOnlyMult?: { fvc?: number, fev1?: number } }} fx
+ * @returns {{ fvc: number, fev1: number, ratio: number, post: ({ fvc: number, fev1: number, earlyStop: [number, number]|null }|null) }}
+ */
+export function applyAcuteEffects(truth, fx = {}) {
+  let fvc = truth.fvc, fev1 = truth.fev1;
+  const post = truth.post ? { ...truth.post } : null;
+  // A bronchodilator taken before the visit moves the baseline toward the post-bronchodilator values, which stay put.
+  if (post && fx.baselineShiftToPost) {
+    fvc += fx.baselineShiftToPost * (post.fvc - fvc);
+    fev1 += fx.baselineShiftToPost * (post.fev1 - fev1);
+  }
+  // A short wait before the post-bronchodilator set captures only part of the response.
+  if (post && fx.postResponseMult !== undefined) {
+    post.fvc = fvc + fx.postResponseMult * (post.fvc - fvc);
+    post.fev1 = fev1 + fx.postResponseMult * (post.fev1 - fev1);
+  }
+  const fm = fx.fvcMult ?? 1, em = fx.fev1Mult ?? 1;
+  fvc *= fm; fev1 *= em;
+  if (post) { post.fvc *= fm; post.fev1 *= em; }
+  // Effects on the baseline set only (a better-coached post-bronchodilator set makes the response look larger).
+  if (fx.preOnlyMult) { fvc *= fx.preOnlyMult.fvc ?? 1; fev1 *= fx.preOnlyMult.fev1 ?? 1; }
+  fev1 = Math.min(fev1, 0.985 * fvc);
+  if (post) post.fev1 = Math.min(post.fev1, 0.985 * post.fvc);
+  const unchanged = fvc === truth.fvc && fev1 === truth.fev1;
+  return { fvc, fev1, ratio: unchanged ? truth.ratio : fev1 / fvc, post };
+}

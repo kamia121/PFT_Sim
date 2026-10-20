@@ -1,5 +1,6 @@
 import { GENERATOR_VERSION } from './standards.js';
 import { createStream } from './prng.js';
+import { isScenarioId } from '../scenarios/library.js';
 
 /**
  * A case is a pure function of its descriptor. The URL carries the generator version, seed and
@@ -11,6 +12,13 @@ export const ARCHETYPES = ['normal', 'obstruction', 'restriction-parenchymal', '
 /** Test panels: full adds lung volumes and diffusing capacity to spirometry. */
 export const PANELS = ['full', 'spirometry'];
 export const TECHNIQUE_LEVELS = ['good', 'fair', 'poor'];
+/**
+ * Scenario levels: none (a plain case, byte-identical to cases made before the scenario layer), then 1, 2, and 3 or 4
+ * encounter scenarios (src/scenarios). The keys `sc` (level) and `si` (comma-separated explicit scenario ids) are
+ * optional additions to the link: the generator version stays 1 because a link without them reproduces exactly the
+ * case it always did. Explicit ids are always applied, and the level is the target for the total count.
+ */
+export const SCENARIO_LEVELS = ['none', 'light', 'moderate', 'heavy'];
 /** Requisition-style labels. Wording is a placeholder pending physician review. */
 export const GROUP_LABELS = ['White', 'Black or African American', 'Asian: Northeast', 'Asian: Southeast', 'Other or mixed'];
 
@@ -28,6 +36,8 @@ const OVERRIDABLE = {
  * @property {number} v @property {number} seed @property {string} archetype @property {number} severity
  * @property {string} technique @property {number} age @property {'M'|'F'} sex @property {number} heightCm
  * @property {number} weightKg @property {number} hbGdl @property {string} group
+ * @property {'light'|'moderate'|'heavy'} [scenarioLevel] present only when scenarios are requested
+ * @property {string[]} [scenarioIds] present only when scenarios are forced by id (sorted)
  */
 
 /**
@@ -73,10 +83,17 @@ export function resolveDescriptor(input) {
   }
   const panel = input.panel ?? 'full';
   if (!PANELS.includes(panel)) throw new RangeError(`unknown panel: ${panel}`);
-  return { v: input.v ?? GENERATOR_VERSION, seed: input.seed, archetype: input.archetype, severity, technique, panel, ...merged };
+  const ids = [...new Set(input.scenarioIds ?? [])].sort();
+  for (const id of ids) if (!isScenarioId(id)) throw new RangeError(`unknown scenario: ${id}`);
+  const scenarioLevel = input.scenarioLevel ?? (ids.length ? 'light' : 'none');
+  if (!SCENARIO_LEVELS.includes(scenarioLevel)) throw new RangeError(`unknown scenario level: ${scenarioLevel}`);
+  if (scenarioLevel === 'none' && ids.length) throw new RangeError('explicit scenario ids need a scenario level other than none');
+  // The scenario keys are present only when set, so a plain descriptor is unchanged.
+  const scenario = { ...(scenarioLevel !== 'none' ? { scenarioLevel } : {}), ...(ids.length ? { scenarioIds: ids } : {}) };
+  return { v: input.v ?? GENERATOR_VERSION, seed: input.seed, archetype: input.archetype, severity, technique, panel, ...merged, ...scenario };
 }
 
-const SHORT = { panel: 'p', age: 'ag', sex: 'x', heightCm: 'h', weightKg: 'w', hbGdl: 'b', group: 'g', severity: 'sv', technique: 't' };
+const SHORT = { panel: 'p', age: 'ag', sex: 'x', heightCm: 'h', weightKg: 'w', hbGdl: 'b', group: 'g', severity: 'sv', technique: 't', scenarioLevel: 'sc', scenarioIds: 'si' };
 
 /** Query string holding the version, seed, archetype and only the fields that differ from the derived defaults. */
 export function serializeDescriptor(d) {
@@ -86,6 +103,8 @@ export function serializeDescriptor(d) {
   if (d.technique !== 'good') p.set(SHORT.technique, d.technique);
   if (d.panel !== 'full') p.set(SHORT.panel, d.panel);
   for (const key of Object.keys(base)) if (d[key] !== base[key]) p.set(SHORT[key], String(d[key]));
+  if (d.scenarioLevel && d.scenarioLevel !== 'none') p.set(SHORT.scenarioLevel, d.scenarioLevel);
+  if (d.scenarioIds?.length) p.set(SHORT.scenarioIds, d.scenarioIds.join(','));
   return p.toString();
 }
 
@@ -109,5 +128,7 @@ export function parseDescriptor(query) {
     weightKg: num(SHORT.weightKg),
     hbGdl: num(SHORT.hbGdl),
     group: p.get(SHORT.group) ?? undefined,
+    scenarioLevel: p.get(SHORT.scenarioLevel) ?? undefined,
+    scenarioIds: p.has(SHORT.scenarioIds) ? p.get(SHORT.scenarioIds).split(',').filter(Boolean) : undefined,
   });
 }
