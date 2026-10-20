@@ -71,7 +71,7 @@
    "technique": "poor",
    "severity": 3,
    "panel": "full",
-   "sha256": "f84ef57444de500a286f37f7351d366d22e89c186bf51dcd35efde3698c01f18"
+   "sha256": "d2c9e4201af5cc0fce2aea545f22f8c53e03cdd82b8ad938b92ceaae9312c348"
   },
   {
    "seed": 1333,
@@ -151,7 +151,7 @@
    "technique": "good",
    "severity": 1,
    "panel": "full",
-   "sha256": "265b0bb2f340faf3f841ef6a0b9d2ea133305a3ea5eaf0b598bd78928204e188"
+   "sha256": "012baa934fd596e966f59e6cc589552d942ddbdd1e2bbd1d4c8f179ccf54bb53"
   },
   {
    "seed": 1703,
@@ -231,7 +231,7 @@
    "technique": "fair",
    "severity": 2,
    "panel": "full",
-   "sha256": "47c380c7e774632a230a9637f9e41287791d69d8e20712f463cbb94bd1d76cc3"
+   "sha256": "21fbaca479bef192fc1df71c37e76094d3b9a1de27d805a39cf86a1d8e64233d"
   },
   {
    "seed": 2073,
@@ -311,7 +311,7 @@
    "technique": "poor",
    "severity": 3,
    "panel": "full",
-   "sha256": "256289e604f345ba74c94182f7c9649bd1e7ae60ebf7eb09e3d56a9f09e91969"
+   "sha256": "8a9a9f88447ea74d049e66c2e0efacad831b75e3994483308ab58d025d68181e"
   },
   {
    "seed": 2443,
@@ -391,7 +391,7 @@
    "technique": "good",
    "severity": 1,
    "panel": "spirometry",
-   "sha256": "4cb3b207dba07461d366295a1e5808011ec8ce68b247390b0e167b6f6b49b9dd"
+   "sha256": "be0719d2d5b01fc609925d0e464dc78e4cd6f37c64ba4edcd287e4bb664059e1"
   },
   {
    "seed": 2813,

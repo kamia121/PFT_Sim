@@ -33,7 +33,7 @@ const ARCHETYPE_NOTES = {
   nonspecific: 'Low FVC with a preserved ratio and a TLC that is not low. Spirometry alone labels this preserved ratio with impaired spirometry (PRISm).',
   'low-dlco': 'Isolated reduction in diffusing capacity with normal spirometry and volumes.',
   anemia: 'Low measured DLCO caused by anemia; normal after hemoglobin correction.',
-  'obesity-low-erv': 'Obesity with low expiratory reserve volume and FRC, normal or mildly low TLC, and a normal or raised DLCO.',
+  'obesity-low-erv': 'Obesity with low expiratory reserve volume and FRC, normal or mildly low TLC, and a DLCO that is not reduced.',
   'bd-discordant': 'Obstruction with a bronchodilator response that is discordant between FEV1 and FVC. Two variants: a volume response, and a post-bronchodilator technique artifact.',
 };
 export const archetypeNote = (a) => ARCHETYPE_NOTES[a];
@@ -167,7 +167,7 @@ export function generatePhysiology(seed, d, datasets) {
       lat.zTLC = tn(-0.6, 0.6, -1.4, 0.5);
       lat.zRVT = tn(-0.2, 0.7, -1.4, 1);
       lat.zERV = uni(...SEVERITY_Z[sev]);
-      lat.zDLCO = tn(0.5, 0.7, -0.8, 2.2);
+      lat.zDLCO = tn(0.2, 0.7, -0.8, 1.6);
       lat.zRatio = tn(0.3, 0.8, -1, 2);
       break;
     }

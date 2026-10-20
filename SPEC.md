@@ -54,7 +54,7 @@ Ten archetypes are implemented. Every number is a proposal for physician review,
 | Nonspecific | FVC z −2.7 to −1.9, ratio z ≥ −0.8, TLC z −1.15 to −0.2 | RV follows as TLC − VC (raised); labeled PRISm when no volumes were measured |
 | Low DLCO | DLCO z in the severity band | everything else as normal |
 | Anemia | Hb 7.0 to 9.0 g/dL; hemoglobin-adjusted DLCO z −1.0 to 0.5 | measured DLCO is low, adjusted DLCO is normal |
-| Obesity, low ERV | BMI 35 to 50; ERV z in the severity band (floor 0.12 L) | TLC mildly low to normal, DLCO normal to raised |
+| Obesity, low ERV | BMI 35 to 50; ERV z in the severity band (floor 0.12 L) | TLC mildly low to normal, DLCO not reduced (z −0.8 to 1.6) |
 | Bronchodilator, discordant | Obstruction with air trapping (RV/TLC z +1.2 to +4.2, FVC/VC gap 0.10 to 0.18) | Variant from the seed: volume response (FVC rises by 12% to 20% of predicted with little FEV1 change) or technique artifact (FEV1 rises by 12% to 20% of predicted while every post-bronchodilator maneuver stops early, so FVC falls) |
 
 A technique modifier is applied after the archetype. A poor session degrades the measured values and the recorded quality; it does not change the lungs. The archetype's intended pattern agrees with the engine's key under the anchor equations in at least 93% of cases with good technique (at least 96% for normal and 97% for nonspecific), asserted by a test and not enforced by a filter.
