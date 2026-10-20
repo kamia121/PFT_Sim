@@ -14,7 +14,7 @@ import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadRep
 import { interpretationFor } from '../report/statement.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { datasets: null, resolve: null, case: null, spirometryEquation: 'GLIglobal', answers: {}, revealed: false, scored: false, showSchematic: false, reportModel: null, reportDark: false, reportInterp: false, printing: false, tally: { answered: 0, matched: 0, items: 0 } };
+const state = { datasets: null, resolve: null, case: null, spirometryEquation: 'GLIglobal', answers: {}, revealed: false, scored: false, showSchematic: false, figView: {}, reportModel: null, reportDark: false, reportInterp: false, printing: false, tally: { answered: 0, matched: 0, items: 0 } };
 
 /** Practice mix: weights are teaching choices, not prevalence. */
 const MIX = [['normal', 14], ['obstruction', 22], ['restriction-parenchymal', 10], ['restriction-extraparenchymal', 6], ['mixed', 8], ['nonspecific', 8], ['low-dlco', 7], ['anemia', 4], ['obesity-low-erv', 7], ['bd-discordant', 8]];
@@ -67,8 +67,8 @@ function render() {
       ${R.renderManeuvers(c.spirometry.pre, 'Pre-bronchodilator forced maneuvers', { revealed, id: 'pre-maneuvers' })}
       <p><fieldset class="inline"><legend class="muted">Reference equation for spirometry</legend>${eqOptions}</fieldset></p>
       ${R.renderReport(a, spiroNames, 'Reported spirometry', 'spiro-table')}
-      <label><input type="checkbox" id="schematic" ${state.showSchematic ? 'checked' : ''}> Show schematic predicted and lower-limit curves</label>
-      ${R.renderFigures(c, a, { revealed, showSchematic: state.showSchematic })}</section>`,
+      <label><input type="checkbox" id="schematic" ${state.showSchematic ? 'checked' : ''}> Show the constructed predicted flow-volume curve</label>
+      <div id="figs">${R.renderFigures(c, a, { revealed, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve })}</div></section>`,
     R.renderBronchodilator(c, a),
     R.renderVolumes(c, a),
     R.renderDlco(c, a),
@@ -81,8 +81,15 @@ function render() {
   if (!$('#panel-report').hidden) renderReportView();
 }
 
+/** Redraws only the figure cards (a view or chip change), so the answer form and the scroll position stay as they are. */
+function renderFiguresOnly() {
+  const el = $('#figs');
+  if (el) el.innerHTML = R.renderFigures(state.case, interpretations().a, { revealed: state.revealed, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve });
+}
+
 function loadCase(descriptorLike, mode = 'code') {
   state.case = buildCase(descriptorLike, state.datasets);
+  state.figView = {};
   state.answers = {};
   state.revealed = false;
   state.scored = false;
@@ -160,9 +167,12 @@ async function boot() {
   state.datasets = await loadDatasets();
   state.resolve = createReference(state.datasets).resolveReference;
   bindFigureDownloads($('#case'), () => R.figureCaseData(state.case, interpretations().a, state));
+  // The practice page and the report page share the equation in the address.
 
   const params = new URLSearchParams(location.search);
   try {
+    const eq = params.get('eq');
+    if (eq === 'GLI2012' || eq === 'GLIglobal') state.spirometryEquation = eq;
     if (params.has('c')) loadCase(parseDescriptor(decodeCase(params.get('c'))), 'code');
     else if (params.has('s')) loadCase(parseDescriptor(params.toString()), 'plain');
     else newCase();
@@ -195,6 +205,17 @@ async function boot() {
     else if (e.target.id === 'report-dark') { state.reportDark = e.target.checked; renderReportView(); }
     else if (e.target.name === 'eq') { state.spirometryEquation = e.target.value; render(); }
     else if (e.target.id === 'schematic') { state.showSchematic = e.target.checked; render(); }
+    else if (e.target.dataset?.figView) {
+      const id = e.target.dataset.figView;
+      state.figView[id] = { ...state.figView[id], view: e.target.value };
+      renderFiguresOnly();
+    } else if (e.target.dataset?.figChip) {
+      const id = e.target.dataset.figChip;
+      const boxes = [...document.querySelectorAll(`input[data-fig-chip="${id}"]`)];
+      const selected = boxes.filter((b) => b.checked).map((b) => Number(b.value));
+      state.figView[id] = { ...state.figView[id], selected: selected.length ? selected : [Number(e.target.value)] };
+      renderFiguresOnly();
+    }
     else if (e.target.closest?.('#answer-form')) state.answers[e.target.name] = e.target.value;
   });
 }

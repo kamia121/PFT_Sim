@@ -34,8 +34,8 @@ const withoutNamespaces = (s) => s.replaceAll('http://www.w3.org/2000/svg', '').
 function stubFigures(fn) {
   const saved = Object.fromEntries(Object.entries(FIGURES).map(([k, v]) => [k, { ...v }]));
   try {
-    for (const id of Object.keys(FIGURES)) if (!['flow-volume', 'volume-time', 'z-strip'].includes(id)) FIGURES[id].dataFor = () => null;
-    for (const id of ['flow-volume', 'volume-time', 'z-strip']) {
+    for (const id of Object.keys(FIGURES)) if (!['panel-spirometry', 'panel-pleth', 'z-strip'].includes(id)) FIGURES[id].dataFor = () => null;
+    for (const id of ['panel-spirometry', 'panel-pleth', 'z-strip']) {
       FIGURES[id].dataFor = () => ({ id });
       FIGURES[id].render = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" role="img"><title>${id}</title><desc>stub</desc><rect width="640" height="320" fill="#fff"/><path d="M0 0L10 10" stroke="#000"/></svg>`;
     }

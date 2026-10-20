@@ -70,3 +70,12 @@ summary{cursor:pointer;font-weight:600}
 figure svg{max-width:100%;height:auto;display:block}
 
 .notes{margin:.2em 0 .2em 1.1em;padding:0}.notes li{margin:.25em 0;max-width:52rem}
+
+/* Figure view controls: best, overlay or separate maneuvers, with numbered chips. */
+.fig-view{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:4px 0 8px;font-size:.92rem}
+.fig-view .chips{display:inline-flex;gap:6px;flex-wrap:wrap}
+.fig-view .chip{display:inline-flex;align-items:center;gap:4px;padding:1px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);cursor:pointer}
+.fig-view .chip:has(input:checked){border-color:var(--link);color:var(--link)}
+.fig-view .chip input{position:absolute;opacity:0;pointer-events:none}
+.fig-view .chip:focus-within{outline:2px solid var(--link);outline-offset:1px}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

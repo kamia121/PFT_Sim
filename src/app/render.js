@@ -2,7 +2,7 @@ import { esc, num, signed, MEASURES, EQUATION_NAMES, hbKnown, hbLow, coHbMeasure
 import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT, bdArtifactText, ARCHETYPE_NOTE_OVERRIDES } from './explain.js';
 import { QUESTIONS, hasData, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
-import { FIGURES } from '../ui/figures/index.js';
+import { FIGURES, PANEL_IDS } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
 import { archetypeNote } from '../core/physiology.js';
@@ -47,33 +47,59 @@ export function renderManeuvers(set, title, { revealed, id }) {
 }
 
 /** Case data in the form the figure registry reads: the case plus the interpretation and the page state. */
-export function figureCaseData(c, interp, { revealed, showSchematic }) {
-  return { ...c, interp, revealed: !!revealed, showSchematic: !!showSchematic };
+export function figureCaseData(c, interp, { revealed, showSchematic, figView, resolve }) {
+  return { ...c, interp, resolve: resolve ?? null, revealed: !!revealed, showSchematic: !!showSchematic, figView: figView ?? {} };
 }
 
 const FIGURE_NOTES = {
-  'flow-volume': (cd) => `Expiratory flow is plotted upward against exhaled volume and inspiratory flow downward; each trace is one maneuver. A loop whose inspiratory limb returns to zero volume has an inspired volume equal to the exhaled volume.${cd.spirometry.post ? ' Post-bronchodilator maneuvers are overlaid in the second color.' : ''} The inspiratory limb is generated from the exhaled volume and is not calibrated against patient data.${cd.showSchematic ? ' The predicted and lower-limit curves are schematic: they are drawn from the predicted and lower-limit FVC and FEV₁, not from a published predicted loop.' : ''}`,
-  'volume-time': () => 'Tidal breathing and a maximal inspiration precede the forced expiration, which starts at total lung capacity (volume 0). The dotted line is the tangent at peak flow; it meets the time axis at the back-extrapolated time zero, and FEV₁ is the volume one second after that point.',
-  'z-strip': () => 'Each marker is the z-score of a measured value against its reference equation. The dashed line is the predicted value (z = 0) and the dotted line is the lower limit of normal (z = −1.645).',
+  'panel-spirometry': (cd) => `Left: the flow-volume loop, with expiratory flow upward against exhaled volume from total lung capacity (volume 0) and the inspiratory limb below zero. The quiet tidal loop sits at the end-expiratory level, which is the inspiratory capacity from total lung capacity. Right: volume against time, with the tick marking one second after the back-extrapolated start.${cd.showSchematic ? ' The dashed predicted curve is constructed from the predicted FEV₁ and FVC with a fixed curve family; it is not a published predicted loop, and no lower-limit loop is drawn because the lower limits of different indices do not describe one person.' : ''} The inspiratory limb and the tidal loop are generated from the case values and are not calibrated against patient data.`,
+  'panel-pleth': () => 'A: the plethysmograph record in absolute volume. Tidal breathing, shutter closure with panting (the volume is flat while the shutter is closed, and the pants appear on the mouth-pressure lane), then expiration to residual volume and inspiration to total lung capacity. B: mouth pressure against shift volume for each panting trial; the slope gives the thoracic gas volume, and acceptable trials overlap. C: flow against shift volume during tidal breathing with the shutter open; the slope near zero flow is specific airway resistance. D: residual volume, expiratory reserve volume and inspiratory capacity stacked against the predicted values. Alveolar compression is plotted as positive.',
+  'panel-dlco': () => 'Single-breath diffusing capacity: carbon monoxide and tracer gas fractions against expired volume. The washout (discarded) volume and the sample window are shaded. The strip below lists the inspired volume fraction, the time to 85% of the inspired volume, the breath-hold time and the washout and sample volumes. The tracing is generated from the case values and is not calibrated against patient data.',
+  'flow-volume': (cd) => `Expiratory flow is plotted upward against exhaled volume and inspiratory flow downward; each trace is one maneuver. A loop whose inspiratory limb returns to zero volume has an inspired volume equal to the exhaled volume.${cd.spirometry.post ? ' Post-bronchodilator maneuvers are overlaid in the second color.' : ''} The inspiratory limb is generated from the exhaled volume and is not calibrated against patient data.${cd.showSchematic ? ' The dashed predicted curve is constructed from the predicted FEV₁ and FVC; it is not a published predicted loop.' : ''}`,
+  'volume-time': () => 'Exhaled volume against time from one second before the start of the forced expiration. The tick marks one second after the back-extrapolated start, where FEV₁ is read; the dotted line is the tangent at peak flow that gives the back-extrapolated start.',
+  'z-strip': () => 'Each star is the z-score of a measured value against its reference equation. The dashed line is the predicted value (z = 0), the dotted line on the left is the lower limit of normal (z = −1.645), and, for indices that can be abnormal in either direction, the dotted line on the right is the upper limit (z = +1.645).',
 };
 
+/** Number of maneuvers or trials a panel can separate; 0 when it has nothing to separate. */
+function separableCount(id, c) {
+  if (id === 'panel-spirometry') return Math.max(c.spirometry.pre.maneuvers.length, c.spirometry.post?.maneuvers.length ?? 0);
+  if (id === 'panel-pleth') return c.pleth?.trials?.length ?? 0;
+  return 0;
+}
+
+const VIEW_LABELS = [['best', 'Best'], ['all', 'Overlay'], ['separate', 'Separate']];
+
+/** View switch and numbered chips for a panel with several maneuvers or trials. */
+function viewControls(id, n, view) {
+  const radios = VIEW_LABELS.map(([v, l]) => `<label><input type="radio" name="fv-${id}" data-fig-view="${id}" value="${v}" ${view.view === v ? 'checked' : ''}> ${l}</label>`).join(' ');
+  const noun = id === 'panel-pleth' ? 'trial' : 'maneuver';
+  const chips = view.view === 'best' ? '' : Array.from({ length: n }, (_, i) => `<label class="chip"><input type="checkbox" data-fig-chip="${id}" value="${i + 1}" ${view.selected.includes(i + 1) ? 'checked' : ''}><span class="visually-hidden">${noun} </span>${i + 1}</label>`).join('');
+  return `<div class="fig-view" role="group" aria-label="Show ${noun}s as"><span class="muted">${noun === 'trial' ? 'Panting trials' : 'Maneuvers'}:</span> ${radios}${chips ? `<span class="chips">${chips}</span>` : ''}</div>`;
+}
+
+/** The view state of a panel: best curve by default, every maneuver selected. */
+export function figureView(id, n, figView = {}) {
+  const v = figView[id] ?? {};
+  return { view: v.view ?? 'best', selected: (v.selected ?? Array.from({ length: n }, (_, i) => i + 1)).filter((k) => k >= 1 && k <= n) };
+}
+
 /**
- * Figures from the registry, drawn with the dark palette, each with its download control. Figures whose
- * dataFor returns null (for example plethysmography when no volumes were measured) are omitted.
- * Before the answers are checked every maneuver is drawn in the measured color; after checking, maneuvers that
- * failed the acceptability rules are muted.
+ * The figure cards: the combined panels and the z-score strip first, each panel with its view switch, then the individual plots
+ * they are built from inside a closed disclosure. `figView` holds each panel's { view, selected }.
  */
-export function renderFigures(c, interp, { revealed, showSchematic }) {
-  const cd = figureCaseData(c, interp, { revealed, showSchematic });
+export function renderFigures(c, interp, { revealed, showSchematic, figView, resolve }) {
+  const cd = figureCaseData(c, interp, { revealed, showSchematic, figView, resolve });
   const card = ({ id, title, data }) => {
+    const n = separableCount(id, c);
+    const view = n ? figureView(id, n, figView) : null;
+    const opts = { palette: PALETTES.dark, showQuality: !!revealed, ...(view ? { view: view.view, selected: view.selected } : {}) };
     const note = FIGURE_NOTES[id]?.(cd);
-    return `<figure class="card" data-figure="${id}"${id === 'z-strip' ? ' style="max-width:48rem"' : ''}><figcaption><strong>${title}</strong></figcaption>${FIGURES[id].render(data, { palette: PALETTES.dark })}${note ? `<p class="muted">${note}</p>` : ''}${downloadControlsHtml(id)}</figure>`;
+    return `<figure class="card" data-figure="${id}"${id === 'z-strip' || PANEL_IDS.includes(id) ? ' style="max-width:48rem"' : ''}><figcaption><strong>${title}</strong></figcaption>${n > 1 ? viewControls(id, n, view) : ''}${FIGURES[id].render(data, opts)}${note ? `<p class="muted">${note}</p>` : ''}${downloadControlsHtml(id)}</figure>`;
   };
   const figs = availableFigures(cd);
-  // The z-score strip is wide and low, so it takes a full row; the other figures tile in columns of at least 30 rem.
-  const tiled = figs.filter((f) => f.id !== 'z-strip').map(card).join('');
-  const strip = figs.filter((f) => f.id === 'z-strip').map(card).join('');
-  return `${tiled ? `<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,30rem),1fr))">${tiled}</div>` : ''}${strip}`;
+  const primary = figs.filter((f) => PANEL_IDS.includes(f.id) || f.id === 'z-strip').map(card).join('');
+  const individual = figs.filter((f) => !PANEL_IDS.includes(f.id) && f.id !== 'z-strip').map(card).join('');
+  return `${primary}${individual ? `<details class="card"><summary><strong>Individual plots</strong> <span class="muted">(the plots the panels are built from, for download)</span></summary><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,30rem),1fr))">${individual}</div></details>` : ''}`;
 }
 
 function flagCell(mr) {
@@ -213,7 +239,7 @@ export function renderMethod(version) {
   <p>The generator draws a lung from a stated archetype, converts standardized deviations to liters with the GLI Global (spirometry), GLI-2021 (volumes) and GLI-2017 (diffusing capacity) equations, and derives the remaining quantities so that physical constraints hold exactly: FEV₁ does not exceed FVC, TLC equals RV plus VC, FRC equals RV plus ERV, IC equals TLC minus FRC, VA does not exceed TLC, and DLCO equals KCO times VA. Forced maneuvers are produced from one volume–time curve per attempt, so the tabulated FEV₁, FVC and PEF come from the plotted trace. Three to eight maneuvers are recorded, with technical faults whose frequency depends on the technique level.</p>
   <p>The key is computed from the values that appear on the report, after maneuver variability and technique faults, so a poor session can change the key. The archetype is shown as ground truth after the answers are checked.</p>
   <h3>Limits that matter when reading a case</h3>
-  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled, and the limit is the reference population, not a call for a race-specific equation: the 2023 ATS statement advises against race adjustment for volumes and DLCO. The predicted and lower-limit curves, when shown, are schematic. FEF₂₅₋₇₅ is displayed without a reference value. The inspiratory limb, the tidal breathing before a maneuver, the plethysmograph tracings and the single-breath DLCO tracing are generated from the case values with fixed models and are not calibrated against patient data. The inspired volume and the breath-hold time of the single-breath DLCO are simulated in its tracing; replicate DLCO tests and the criteria for children are not simulated. TLC is by plethysmography.</p>
+  <p>The anchor equations are fixed and are not offered as a comparison, so a case that is normal for the anchor can be borderline under another equation. The GLI-2021 volume and GLI-2017 diffusing capacity equations were derived in people of European ancestry; for any other group on the requisition the European equation is applied and labeled, and the limit is the reference population, not a call for a race-specific equation: the 2023 ATS statement advises against race adjustment for volumes and DLCO. The predicted flow-volume curve, when shown, is constructed from the predicted FEV₁ and FVC with a fixed curve family, and no lower-limit loop is drawn. FEF₂₅₋₇₅ is displayed without a reference value. The inspiratory limb, the tidal loop, the plethysmograph tracings and the single-breath DLCO tracing are generated from the case values with fixed models and are not calibrated against patient data. The inspired volume and the breath-hold time of the single-breath DLCO are simulated in its tracing; replicate DLCO tests and the criteria for children are not simulated. TLC is by plethysmography.</p>
   <h3>Technologist and intake notes</h3>
   <p>Some cases carry notes of the kind a technologist or an intake form records: estimated height, a reference sex that differs from the patient’s gender identity (the 2019 standard names sex assigned at birth as the determinant of predicted lung size), recent smoking or inhaler use, and technical problems. Each note has a stated effect on the data and a stated effect on the interpretation, and some notes change nothing, so that irrelevant information is not mistaken for a finding. The effect sizes are teaching values and are not verified against primary sources.</p>
   <h3>Rules that have not been checked against their primary source</h3>

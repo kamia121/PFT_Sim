@@ -51,7 +51,7 @@ export const patientId = (seed) => `SIM-${caseCode(seed)}`;
 
 const SEX = { M: 'Male', F: 'Female' };
 const HEIGHT_SOURCE = { measured: 'measured', 'arm-span': 'estimated from arm span', ulna: 'estimated from ulna length', reported: 'patient-reported' };
-const FIGURE_PLAN = { spirometry: ['flow-volume', 'volume-time', 'z-strip'], volumes: ['pleth-shutter', 'pleth-raw'], dlco: ['dlco-trace'] };
+const FIGURE_PLAN = { spirometry: ['panel-spirometry', 'z-strip'], volumes: ['panel-pleth'], dlco: ['panel-dlco'] };
 
 const eqName = (id) => EQUATION_NAMES[id] ?? id;
 const bmiOf = (p) => p.weightKg / (p.heightCm / 100) ** 2;

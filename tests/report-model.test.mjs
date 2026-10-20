@@ -208,26 +208,26 @@ test('the interpretation text is null unless supplied', () => {
 
 test('figures come from the registry, skipping null and empty results, with the requested palette', () => {
   const { c, interp } = makeModel(SAMPLE_INPUTS[0]);
-  const saved = { fv: { ...FIGURES['flow-volume'] }, vt: { ...FIGURES['volume-time'] }, dl: { ...FIGURES['dlco-trace'] } };
+  const saved = { fv: { ...FIGURES['panel-spirometry'] }, vt: { ...FIGURES['panel-pleth'] }, dl: { ...FIGURES['panel-dlco'] } };
   const seen = [];
   try {
-    FIGURES['flow-volume'].dataFor = () => ({ ok: 1 });
-    FIGURES['flow-volume'].render = (data, opts) => { seen.push(opts.palette.id); return '<svg xmlns="http://www.w3.org/2000/svg"><title>fv</title></svg>'; };
-    FIGURES['volume-time'].dataFor = () => ({ ok: 1 });
-    FIGURES['volume-time'].render = () => '';
-    FIGURES['dlco-trace'].dataFor = () => { throw new Error('boom'); };
+    FIGURES['panel-spirometry'].dataFor = () => ({ ok: 1 });
+    FIGURES['panel-spirometry'].render = (data, opts) => { seen.push(opts.palette.id); return '<svg xmlns="http://www.w3.org/2000/svg"><title>fv</title></svg>'; };
+    FIGURES['panel-pleth'].dataFor = () => ({ ok: 1 });
+    FIGURES['panel-pleth'].render = () => '';
+    FIGURES['panel-dlco'].dataFor = () => { throw new Error('boom'); };
     const model = buildReportModel(c, interp, { resolve: resolveReference, palette: 'dark' });
-    assert.deepEqual(model.sections[0].figureIds, ['flow-volume', 'z-strip']);
+    assert.deepEqual(model.sections[0].figureIds, ['panel-spirometry', 'z-strip']);
     assert.deepEqual(seen, ['dark']);
     assert.equal(model.meta.figureErrors.length, 1);
-    assert.equal(model.meta.figureErrors[0].id, 'dlco-trace');
+    assert.equal(model.meta.figureErrors[0].id, 'panel-dlco');
     assert.equal(buildReportModel(c, interp, { figures: false }).sections[0].figures.length, 0);
-    assert.deepEqual(buildReportModel(c, interp, { resolve: resolveReference }).meta.figureErrors.map((e) => e.id), ['dlco-trace']);
+    assert.deepEqual(buildReportModel(c, interp, { resolve: resolveReference }).meta.figureErrors.map((e) => e.id), ['panel-dlco']);
     assert.deepEqual(seen.slice(1), ['white']);
   } finally {
-    Object.assign(FIGURES['flow-volume'], saved.fv);
-    Object.assign(FIGURES['volume-time'], saved.vt);
-    Object.assign(FIGURES['dlco-trace'], saved.dl);
+    Object.assign(FIGURES['panel-spirometry'], saved.fv);
+    Object.assign(FIGURES['panel-pleth'], saved.vt);
+    Object.assign(FIGURES['panel-dlco'], saved.dl);
   }
 });
 
