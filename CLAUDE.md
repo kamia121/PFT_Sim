@@ -8,7 +8,7 @@ Static site matching ARDS_sim: plain ES modules with JSDoc typedefs, `node --tes
 
 ## Theme
 
-Use the shared MCW green and navy tokens in `src/styles/tokens.css`, copied from ARDS_sim `theme.css`, which matches VA_coupling_sim `site/css/tokens.css`. All colors come from that file, in light and dark, including the dark monitor panels (`--mon-*`) used for flow-volume loops, volume-time traces and gas tracings. Font is Source Sans 3. Series color encodes the quantity or reference equation, dash style encodes the relation (measured, predicted, LLN). Flag color is text only, never a fill. The diastolic grade ramp (`--g0` to `--g4`) in the file is specific to the heart project and can be removed or repurposed.
+Use the shared MCW green and navy tokens in `src/styles/tokens.css`, copied from ARDS_sim `theme.css`, which matches VA_coupling_sim `site/css/tokens.css`. All colors come from that file, in light and dark, including the dark monitor panels (`--mon-*`) used for flow-volume loops, volume-time traces and gas tracings. Font is Source Sans 3. Series color encodes the quantity or reference equation, dash style encodes the relation (measured, predicted, LLN). Flag color is text only, never a fill.
 
 ## Reference equations
 
