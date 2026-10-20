@@ -1,0 +1,7 @@
+        pred          lln          z80        zpred         zlln 
+5.329071e-15 5.329071e-15 5.329071e-15 0.000000e+00 3.774758e-15 
+           
+            FEV1 FEV1FVC FVC
+  GLI2012    740     740 740
+  GLIglobal  148     148 148
+All rows checked against vectorized package calls. Predicted values have z=0 and LLNs have z=-1.645 (the rspiro implementation uses this rounded cutoff).
