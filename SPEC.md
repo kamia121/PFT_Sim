@@ -1,0 +1,134 @@
+# PFT_Sim specification
+
+Revision 2. This revision replaces the scope memo with an implementable specification. Every clinical threshold, criterion and coefficient in it carries a source column and a verification state. Nothing marked "unverified" may be coded until someone has read the primary source and recorded the check next to the value.
+
+## Status
+
+Nothing of v0.01 is implemented. The repository holds the theme tokens, the project rules in `CLAUDE.md`, the research scaffold in `research/` (not imported by anything in the product) and this specification.
+
+## Purpose
+
+PFT_Sim generates simulated pulmonary function reports with a known ground truth, lets a learner write an interpretation, and then breaks the case down. Its distinguishing feature is that the same measured values are interpreted under more than one reference equation, and every change in classification is shown, attributed to the measurement that caused it. It is an educational and research tool. It is explicitly uncalibrated, makes no validation claim that has not been run and recorded, and gives no treatment recommendation.
+
+## Stack and repository conventions
+
+The stack matches ARDS_sim so that the two projects build, test, deploy and look alike. This supersedes the TypeScript, Vite and vitest wording in earlier drafts of `CLAUDE.md`. Source is plain ES modules under `src/` with JSDoc typedefs for the data contracts. Tests run with `node --test tests/*.test.mjs`. Node 22 or newer. There are no production dependencies, and the only development dependency is a pinned Playwright for browser harnesses under `benchmarks/`. `scripts/build.mjs` copies `index.html`, styles, local fonts, `src/` and a `.nojekyll` file into `dist/`, and `scripts/serve.mjs` serves it on port 5173 (files are never opened over `file://`, because module workers require HTTP). The two workflows are copies of ARDS_sim's `check.yml` and `pages.yml`, including the pinned runner image and the Node 22 setup. Fonts are local Source Sans 3 and Source Code Pro, copied from ARDS_sim with their OFL notices. Colors come only from `src/styles/tokens.css`; the diastolic grade ramp (`--g0` to `--g4`) belongs to the heart project and is removed.
+
+## Case model
+
+A case is a pure function of a descriptor. The descriptor is `{ v, seed, archetype, severity, technique, age, sex, heightCm, weightKg, hbGdl, group }`, where `v` is the generator version, `seed` is an unsigned 32-bit integer, `severity` is an archetype-specific ordinal, `technique` is the quality modifier described below, and `group` is the self-reported group as it would appear on a requisition. The URL encodes the version, seed and archetype, plus any demographic or severity field the user has overridden. Fields that are not overridden are derived from the seed, so a shared link reproduces the case exactly, and a link with a retired generator version loads under that version's code or states that it cannot. The generator version increments whenever any sampling code, stream order, archetype table or curve family changes.
+
+The pseudo-random generator is a specified, implemented algorithm (sfc32 seeded through a splitmix32 expansion of the seed) with a documented stream order: demographics, then latent physiology, then each maneuver in turn, then measurement noise. `Math.random` is never used. A test asserts that a fixed set of seeds yields byte-identical serialized cases, and that inserting a draw in one stream does not shift the draws of another.
+
+### Ground truth
+
+The ground truth of a case is the set of physical-unit values (liters, liters per second, mL/min/mmHg), the archetype, the severity and the technique modifier. It is not a set of z-scores, because z-scores exist only relative to an equation. The generator needs a reference to anchor latent physiology, and that anchor is a declared, versioned choice stored in the case as `genRef` (GLI Global for spirometry, the volume and TLCO families described below for the others). The interface states plainly that archetypes such as "normal" are normal with respect to the anchor, and that a difference seen under another equation therefore partly reflects the anchor. The anchor is never presented as one of the neutral lenses in the comparison view. The thoracic model in `research/` is not the generator and supplies no reference values.
+
+### Latent physiology and exact constraints
+
+Latent standardized deviations are drawn per archetype from a multivariate normal with a stated correlation matrix, then transformed to physical values through the inverse LMS of the anchor, `value = M(1 + L·S·z)^(1/L)` (with the log form when L = 0). Derived quantities are computed, never sampled independently, so the following hold to within floating-point error and are enforced by property tests over at least 100,000 seeds per archetype:
+
+FEV1 ≤ FVC for every maneuver and for the reported values. TLC = RV + VC. FRC = RV + ERV. IC = TLC − FRC and VC = IC + ERV. VA ≤ TLC, with VA/TLC lower in obstruction as a modeled effect, not an accident. DLCO = KCO × VA before hemoglobin correction. FVC may differ from slow VC, with FVC ≤ VC permitted and larger gaps in obstruction. The flow-volume loop, the volume-time curve and the tabulated FEV1, FVC, PEF and FEF25-75 come from one curve per maneuver: the tabulated numbers are computed from the curve, not sampled beside it. The curve family has a rise-time and a shape parameter, and a root-find fixes the shape parameter so that volume at exactly 1.000 s equals the target FEV1 within 1 mL while the integral equals FVC.
+
+### Maneuver set
+
+A spirometry case contains between three and eight maneuvers, each with FVC, FEV1, PEF, forced expiratory time, back-extrapolated volume (BEV), end-of-test plateau, and flags for the usual technical faults (slow start, early termination, cough in the first second, variable effort, glottic closure). The `technique` modifier, independent of archetype, sets the probability and size of faults. A learner therefore has to decide which maneuvers are acceptable, whether the acceptable ones are repeatable, and whether the grade supports the interpretation, before any equation enters.
+
+Acceptability, repeatability and the quality grade follow the ATS/ERS 2019 spirometry standardization. The reported FVC and FEV1 are the largest values among acceptable maneuvers, taken separately, and FEV1/FVC is computed from those two numbers. The implementation values, to be confirmed against the standard before coding, are a BEV below 5% of FVC or 0.100 L, whichever is greater; an end-of-test plateau (volume change at most 0.025 L in the last second) with a forced expiratory time of at least 6 s in adults, or a plateau criterion met earlier; repeatability within 0.150 L for both FVC and FEV1 between the two largest acceptable values (0.100 L when FVC is 1 L or less); and quality grades A to F and U built from the number of acceptable maneuvers and the repeatability spread. Verification state: unverified.
+
+Lung volumes carry replicate FRC determinations and DLCO carries replicate tests, each with a repeatability rule from the corresponding ATS/ERS standard (verification state: unverified), so the same logic of reviewing replicates before reading the report applies to all three sections. The shutter-closure panel and the single-breath gas tracings remain later features, but the data model already stores a breath-hold time and an inspired volume for DLCO so that adding the tracing does not change the case schema.
+
+### Archetypes
+
+Each archetype is a row in `src/archetypes.js` with latent means, a covariance, a severity ladder, and the modifiers it implies. The v0.01 set is normal, obstruction, restriction, mixed, preserved ratio with impaired spirometry (PRISm), isolated low DLCO, obesity with low ERV, and discordant bronchodilator response in FEV1 and FVC. A first set of proposed latent means follows. Every number is a proposal for physician review, not a source-backed value, and the ladder boundaries use the severity breakpoints in the interpretation section so that the intended severity and the computed severity agree.
+
+| Archetype | FEV1/FVC z | TLC z | RV z (or RV/TLC) | DLCO z | Other |
+|---|---|---|---|---|---|
+| Normal | N(0,1) truncated to −1.2 and above in each measure | N(0,1) | N(0,1) | N(0,1) | none |
+| Obstruction | −1.8 to −5 by severity | −0.5 to +2.5 with severity | +1 to +4 | 0 to −4 (emphysema-like branch, optional) | bronchodilator response optional |
+| Restriction | ≥ −1.0 | −1.8 to −5 | −0.5 to −3 | 0 to −3 | KCO preserved or raised in extraparenchymal branch |
+| Mixed | −1.8 to −4 | −1.8 to −4 | free | 0 to −4 | |
+| PRISm | ≥ −1.0 | ≥ −1.0 (TLC normal) | free | free | FVC and FEV1 z −1.8 to −4 |
+| Isolated low DLCO | ≥ −1.0 | ≥ −1.0 | ≥ −1.0 | −2 to −5 | KCO low; VA preserved |
+| Obesity with low ERV | ≥ −1.0 | ≥ −1.0 or mildly low | RV z near 0 | normal to raised | ERV z −1.5 to −4 with FRC low and weight consistent with BMI ≥ 35 |
+| Discordant bronchodilator response | variable | ≥ −1.0 | free | free | FVC and FEV1 change in opposite directions or one without the other |
+
+A technique modifier is applied after the archetype. A case that is technically poor stays physiologically what its archetype says, and the report shows that the measured values are degraded, which is the teaching point.
+
+## Reference equations
+
+### Per-measurement resolution
+
+Reference values are resolved per measurement, which matches routine laboratory practice. Spirometry is read against a spirometry equation, static volumes against a volume equation, and TLCO against a TLCO equation, and when no equation matching the requested group exists for a measurement, the laboratory uses the closest available one and says so on the report. The interface is therefore:
+
+`resolveReference(measure, { age, sex, heightCm, group }, requestedFamily) → { equationId, matched, fallbackReason, predicted, lln, uln, z, percentPredicted }`
+
+`measure` is one of FEV1, FVC, FEV1/FVC, FEF25-75, TLC, RV, RV/TLC, FRC, ERV, VC, DLCO, KCO and VA. `matched` is false whenever the requested group or family could not be honored, and `fallbackReason` is a fixed-vocabulary string such as `no-group-specific-equation` or `age-outside-range`. Every report line shows its equation identifier, and every fallback is visible on the line, not in a footnote.
+
+### Families
+
+The spirometry families are GLI-2012 (group-specific), GLI Global 2022 (group-neutral) and NHANES III. Static volumes use GLI-2021 and TLCO uses GLI-2017. The population coverage of the volume and TLCO families is narrower than that of the 2012 spirometry set, so the group coverage, age range and sex handling of each family are entered in `src/reference/coverage.json` from the primary publications, with a verification state, before the fallback table is written. If the volume and TLCO families cover only one group, which is expected to be largely the case but is unverified, then the fallback is the common path for those measurements and the interface has to treat it that way.
+
+### Comparison and reclassification
+
+The comparison view evaluates the same measured values under each selected combination. Reclassification is computed per family and attributed: the output records which measurements changed their low, normal or high label, the resulting change in the overall pattern, and the equation change responsible. A change in the final pattern label is never shown without the measurement-level cause. Borderline cases, defined as a z-score within a configurable band of the lower limit (default 0.25 z, to be confirmed), are flagged whether or not they flipped.
+
+The interpretation logic accepts z-scores from different sources. A pattern built from spirometry under one family and TLC under another is a legitimate laboratory output, and the report states that the pattern rests on more than one reference.
+
+### Implementation and test vectors
+
+Reference values are implemented from the published equations and published lookup tables, not by translating the `rspiro` source. `rspiro` is licensed GPL (version 0.5 on CRAN lists GPL-2 or GPL-3), and copying its code into this MIT-licensed repository would create a licensing problem, whereas using it only to generate numeric test vectors does not. `scripts/make-vectors.R` generates JSON vectors with `rspiro` over a grid of age, sex, height and group (including edge ages), and `tests/reference.test.mjs` asserts agreement of predicted value, LLN and z-score. The tolerance is set when the tables are ported, because it depends on the precision of the shipped coefficients and spline tables. It is recorded in the test, not guessed here. The R script prints `sessionInfo()` into the vector file header so that the vectors are reproducible, and each argument convention of `rspiro` is checked against its documentation before the vectors are trusted.
+
+### Terms of use for the GLI tables
+
+The terms are not yet settled, and this is what is known. The summary supplied for this project states that the equations and lookup tables are freely available for implementation, that official GLI software is restricted to research, education, training and validation and is not approved for direct patient treatment, that distribution is under a CC BY-NC license, and that the programmatic API needs keys from the ERS. That summary rests partly on vendor and aggregator pages, and the claim that matters most (the license that governs the lookup tables) is the one that could not be confirmed: the ERS pages were unreachable from the build environment when this revision was written, and a web search surfaced only a CC BY-NC license on an unrelated 2025 paper and the statement that the equations need spline tables, not the terms for the tables. Treat the CC BY-NC statement as unverified until someone reads the ERS terms directly.
+
+If the tables are CC BY-NC with attribution, three consequences follow. The public repository can host them only with attribution and a notice that they are non-commercial, the repository's MIT license cannot be allowed to read as covering them, and the tables belong in their own directory with their own `NOTICE` file. Anyone who reuses the tool commercially would need ERS permission, which the README must say. No browser code may call the ERS API, because the site is static and a key shipped to the client would be exposed, so the tool uses ported tables only. Until the primary terms are read and recorded here, no table is committed; only vector files generated by `rspiro`, containing derived numbers and no coefficients, are acceptable, and even those should be confirmed with the same terms in hand. The educational disclaimer in the footer already matches the restriction against direct patient treatment.
+
+## Interpretation module
+
+`src/interpret.js` implements ATS/ERS 2022 interpretive strategy with the lower limit of normal at z = −1.645 (the fifth percentile) and the upper limit at +1.645. It is a function of measured values and the resolved references, with no hidden state, and it returns a structured key: pattern, severity, per-measurement labels, bronchodilator result, DLCO result, flags, and the equation provenance of every input.
+
+The decision table below is the contract. It is data in `tests/fixtures/interpretation-cases.json`, one or more cases per branch with the expected output, and it is written and reviewed by the clinician before the engine is coded. Branch order matters because earlier branches take precedence.
+
+| Branch | Condition | Output |
+|---|---|---|
+| S0 | FEV1/FVC, FVC and FEV1 present, none below LLN | Normal spirometry |
+| S1 | FEV1/FVC below LLN, FVC at or above LLN | Obstruction |
+| S2 | FEV1/FVC below LLN, FVC below LLN, TLC unavailable | Obstruction with low FVC; volumes needed to separate air trapping from coexisting restriction |
+| S3 | FEV1/FVC at or above LLN, FVC below LLN, TLC unavailable | Low FVC with preserved ratio; restriction not excluded; volumes needed |
+| V1 | FEV1/FVC at or above LLN, TLC below LLN | Restriction |
+| V2 | FEV1/FVC below LLN, TLC below LLN | Mixed obstruction and restriction |
+| V3 | FEV1/FVC below LLN, TLC at or above LLN | Obstruction; add hyperinflation if TLC above ULN, add air trapping if RV or RV/TLC above ULN |
+| V4 | FEV1/FVC at or above LLN, FVC below LLN, TLC at or above LLN | Preserved ratio impaired spirometry (nonspecific pattern) |
+| V5 | Low ERV with normal TLC and normal ratio | Reduced ERV, report with BMI context |
+| D1 | DLCO below LLN | Reduced diffusing capacity; subtype from KCO and VA/TLC relation |
+| D2 | DLCO above ULN | Raised diffusing capacity |
+| B1 | Post-bronchodilator FEV1 or FVC rises by more than 10% of predicted | Significant response under ATS/ERS 2022 |
+| B2 | Same change fails B1 but meets the older criterion (at least 12% and 200 mL over baseline) | Not significant under 2022, would be significant under the older rule |
+
+Severity of an obstructive or restrictive pattern is graded from the FEV1 z-score with the 2022 breakpoints (mild above −2.5, moderate −2.5 to −4.0, severe below −4.0). DLCO severity uses the grading from the same standard. Verification state of the table, the severity breakpoints and the bronchodilator criteria: unverified until compared with the standard line by line. The bronchodilator result is displayed under both rules because the difference between them is itself a reclassification lesson.
+
+## Report and figures
+
+The report table lists every measurement with measured value, units, predicted, LLN, z-score, percent predicted, equation identifier and flag. Flag color is text only, never a fill. Figures sit on the dark monitor panels (`--mon-*`) in both themes: the flow-volume loop with predicted and LLN envelopes and the color-coded trace, the volume-time curve with the FEV1 mark and the extrapolated-volume construction, and an overlay of all maneuvers with the accepted ones distinguished. Series color encodes the quantity or equation, and dash style encodes the relation (measured, predicted, LLN). Figures are drawn from the same curve data as the table, and a test recomputes the table values from the plotted arrays.
+
+## Learner flow
+
+v0.01 shows the case and the report with the interpretation hidden until the learner reveals it, and the comparison view after that. Structured learner answers (pattern, severity, quality grade, bronchodilator result, DLCO) stored only in the page, scored against the deterministic key, are a candidate for v0.01 or v0.02 and are listed under open decisions. Server-side capture and instructor dashboards stay out of scope until a backend is justified.
+
+## Acceptance criteria for v0.01
+
+The same descriptor yields byte-identical serialized cases on repeated runs and across the supported Node versions. Over at least 100,000 seeds per archetype and technique level, zero constraint violations. The volume at 1.000 s on every maneuver curve equals the tabulated FEV1 within 1 mL, and the curve integral equals FVC within 1 mL. Reference outputs agree with the `rspiro` vectors within the tolerance recorded at port time. Every branch of the decision table has at least one fixture case, and the engine reproduces the expected key for all of them. Reclassification output for a hand-built pair of equations changes only the measurements it should and attributes each change correctly. The build is deterministic, `npm test` and `npm run build` pass in CI, and browser QA harnesses pass in both themes and at a phone width.
+
+## Later features
+
+Full laboratory report layout. Body plethysmography with the shutter-closure panel (box pressure against mouth pressure for thoracic gas volume, and the airway resistance loop). Single-breath DLCO tracing with inspired and expired tracer gas and CO over time, the breath-hold interval and the washout sample. Raw-value export for statistics teaching. Instructor mode with assigned seeds. Learner response capture and scoring on a server.
+
+## Research track
+
+`research/thorax_sim.py` and its design document remain as an unreferenced research scaffold. They are not used for reference equations, not imported by the product, and not a source for any value in it. The prior-predictive run with placeholder priors reproduced neither the direction nor the age pattern of the between-group differences in GLI predicted values, and because every group-specific chest offset is an unsourced placeholder, the reported interval describes the priors and not anatomy. Anthropometric differences between self-reported groups are also shaped by early-life nutrition, altitude, air pollution and socioeconomic position, so a gap the model fails to explain cannot be attributed to ancestry. The defensible output is the portion of a difference in predicted values that body proportions fail to account for. Moving this track to its own repository is recommended and is listed as an open decision.
+
+## Open decisions
+
+Whether the self-reported group is displayed to learners as it would appear on a requisition (recommended, because the point is that an administrative field changes the interpretation). The primary-source GLI terms and the resulting licensing arrangement for the tables. The borderline band width. Whether structured learner answers ship in v0.01. Whether the research track moves to its own repository. The tolerance for agreement with `rspiro`, set when the tables are ported. The clinician's review of the archetype latent means and of the decision table, which gates the interpretation engine.
