@@ -14,3 +14,6 @@ benchmarks/*.webp
 benchmarks/*.json
 benchmarks/*.jsonl
 benchmarks/*.txt
+
+# Agent worktrees
+.claude/
