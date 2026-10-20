@@ -5,7 +5,7 @@
  * bronchodilator study. The existing renderers in src/app/render.js are reused as they are.
  */
 import * as R from '../app/render.js';
-import { esc, num, EQUATION_NAMES } from '../app/format.js';
+import { esc, num, EQUATION_NAMES, hbKnown, coHbMeasured, sexUndisclosed, showBirthSex } from '../app/format.js';
 import { createStream } from '../core/prng.js';
 import { figuresFor } from './adapters.js';
 import { fallbackStatements } from './fallbacks.js';
@@ -43,7 +43,7 @@ function equationRows(a) {
     const m = have[0];
     const name = EQUATION_NAMES[m.equationId] ?? m.equationId;
     const fallback = have.some((x) => x.available !== false && x.matched === false);
-    rows.push(`<tr><th scope="row" class="l">${label}</th><td class="l">${esc(name)}</td><td class="l">${fallback ? '<span class="flag">European equation applied</span> (no equation exists for the group on the requisition)' : 'matches the patient'}</td></tr>`);
+    rows.push(`<tr><th scope="row" class="l">${label}</th><td class="l">${esc(name)}</td><td class="l">${fallback ? '<span class="flag">European reference population</span> (limits the result; no ancestry adjustment is applied)' : 'matches the patient'}</td></tr>`);
   };
   line(['fev1', 'fvc', 'fev1_fvc'], 'FEV₁, FVC, FEV₁/FVC');
   line(['tlc', 'rv', 'rv_tlc', 'vc', 'frc', 'erv', 'ic'], 'TLC, RV, RV/TLC, VC, FRC, ERV, IC');
@@ -65,7 +65,8 @@ export function renderHeader(prep, { equation = prep.equation } = {}) {
   const c = prep.caseData, p = c.report.patient, d = c.descriptor, sc = c.scenario ?? null;
   const seed = d.seed;
   const bmi = p.weightKg / (p.heightCm / 100) ** 2;
-  const sexNote = sc?.referenceSex && sc.referenceSex.birth !== sc.referenceSex.used
+  // The birth sex of a patient who declined to give a sex is never shown on the chart.
+  const sexNote = showBirthSex(sc)
     ? `<div><dt>Sex assigned at birth</dt><dd>${SEX_NAME[sc.referenceSex.birth] ?? esc(sc.referenceSex.birth)}${sc.referenceSex.note ? `<br><span class="muted">${esc(sc.referenceSex.note)}</span>` : ''}</dd></div>` : '';
   const hs = sc?.height ? (HEIGHT_SOURCE[sc.height.source] ?? esc(sc.height.source)) : 'measured, stadiometer';
   const heightNote = sc?.height?.note ? `<br><span class="muted">${esc(sc.height.note)}</span>` : '';
@@ -78,13 +79,13 @@ export function renderHeader(prep, { equation = prep.equation } = {}) {
   return `<section class="card" aria-labelledby="h-patient"><h2 id="h-patient">Patient and requisition</h2>
   <dl class="demo">
     <div><dt>Age</dt><dd>${p.age} years</dd></div>
-    <div><dt>Sex used for the reference</dt><dd>${SEX_NAME[p.sex]}</dd></div>
+    <div><dt>Sex used for the reference</dt><dd>${SEX_NAME[p.sex]}${sexUndisclosed(sc) ? '<br><span class="muted">Laboratory default; sex not disclosed</span>' : ''}</dd></div>
     ${sexNote}
     <div><dt>Height used</dt><dd>${num(p.heightCm, 1)} cm<br><span class="muted">${hs}</span>${heightNote}</dd></div>
     <div><dt>Weight</dt><dd>${p.weightKg} kg (BMI ${num(bmi, 1)} kg/m²)</dd></div>
     <div><dt>Group on requisition</dt><dd>${esc(groupDisplay(p.group, seed))}<br><span class="muted">${groupNote}</span></dd></div>
     <div><dt>Smoking</dt><dd>${esc(smokingStatus(p.age, seed, sc?.preTest?.lastSmokingHours))}</dd></div>
-    ${c.dlco ? `<div><dt>Hemoglobin</dt><dd>${num(p.hbGdl, 1)} g/dL${Number.isFinite(sc?.coHbPercent) ? `<br><span class="muted">COHb ${num(sc.coHbPercent, 1)}%</span>` : ''}</dd></div>` : ''}
+    ${c.dlco ? `<div><dt>Hemoglobin</dt><dd>${hbKnown(c.dlco) ? `${num(p.hbGdl, 1)} g/dL` : 'not available'}${coHbMeasured(sc) ? `<br><span class="muted">COHb ${num(sc.coHbPercent, 1)}%</span>` : ''}</dd></div>` : ''}
     <div><dt>Tests performed</dt><dd>${tests}</dd></div>
   </dl>
   ${notes.length ? `<h3>Intake and technologist notes</h3><ul class="notes">${notes.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}

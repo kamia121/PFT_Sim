@@ -11,7 +11,7 @@ import { GENERATOR_VERSION } from '../core/standards.js';
 import { buildReportModel, allTables } from '../report/model.js';
 import { renderReportHtml } from '../report/html.js';
 import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadReportHtml } from '../report/export.js';
-import { statementFor } from '../report/statement.js';
+import { interpretationFor } from '../report/statement.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = { datasets: null, resolve: null, case: null, spirometryEquation: 'GLIglobal', answers: {}, revealed: false, scored: false, showSchematic: false, reportModel: null, reportDark: false, reportInterp: false, printing: false, tally: { answered: 0, matched: 0, items: 0 } };
@@ -73,7 +73,7 @@ function render() {
     R.renderVolumes(c, a),
     R.renderDlco(c, a),
     R.renderAnswerForm(c, state.answers, state.scored),
-    revealed ? R.renderReveal(c, a, cmp, scoreAnswers(state.answers, a.key, b.key), state.scored) : '',
+    revealed ? R.renderReveal(c, a, cmp, scoreAnswers(state.answers, a.key, b.key, state.spirometryEquation), state.scored) : '',
   ].join('');
   $('#case').innerHTML = html;
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
@@ -104,7 +104,7 @@ function check(scored) {
   state.revealed = true;
   if (scored) {
     const { a, b } = interpretations();
-    const s = scoreAnswers(state.answers, a.key, b.key);
+    const s = scoreAnswers(state.answers, a.key, b.key, state.spirometryEquation);
     state.tally.answered += 1;
     state.tally.items += s.length;
     state.tally.matched += s.filter((x) => x.status === 'correct' || x.status === 'other-equation').length;
@@ -118,12 +118,14 @@ function renderReportView() {
   if (!state.case) return;
   const { a, cmp } = interpretations();
   const revealed = state.revealed;
+  const interpretation = revealed && state.reportInterp ? interpretationFor(state.case, a, cmp) : null;
   const model = buildReportModel(state.case, a, {
     equation: state.spirometryEquation,
     includeGrades: revealed,
     resolve: state.resolve,
     palette: state.reportDark && !state.printing ? 'dark' : 'white',
-    interpretationText: revealed && state.reportInterp ? statementFor(state.case, a, cmp) : null,
+    interpretationText: interpretation?.text ?? null,
+    interpretationNotes: interpretation?.notes ?? [],
   });
   state.reportModel = model;
   $('#report-root').innerHTML = renderReportHtml(model, { interactive: true });

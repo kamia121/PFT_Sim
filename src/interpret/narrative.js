@@ -20,15 +20,16 @@
  * unverified against the primary text.
  */
 import { createStream } from '../core/prng.js';
+import { hbKnown, coHbMeasured, coHbUnmeasured, sexUndisclosed } from '../app/format.js';
 
-export const NARRATIVE_VERSION = 1;
+export const NARRATIVE_VERSION = 2;
 
 /** Error classes a distractor can commit. */
 export const FLAWS = [
   'wrong-severity',
+  'wrong-pattern',
   'restriction-without-tlc',
   'ignores-quality',
-  'omits-major-caveat',
   'ignores-equation-change',
   'wrong-bronchodilator-rule',
   'reads-percent-predicted-as-normal-range',
@@ -88,6 +89,83 @@ export const caveatCore = (text) => {
   // Items are joined inside sentences, so an ordinary capitalized word is lowercased; acronyms and units keep their case.
   return /^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
 };
+
+/**
+ * One-clause paraphrases of the scenario caveats, keyed by caveat id. The narrative states a limitation in these words and never
+ * quotes the caveat text, which the quiz shows as a limitations option, so the final interpretation does not hand over the answer to
+ * that item. A caveat id that is not listed gets a generic clause. Each entry is a lower-case clause without a final period.
+ */
+export const CAVEAT_PARAPHRASE = {
+  'saba-baseline-raised': 'a short-acting beta-agonist taken inside its withholding window can raise the baseline FEV1 and FVC and narrow the bronchodilator increment',
+  'saba-deviation-recorded': 'the drug, dose and time of the last bronchodilator dose are recorded as a deviation from the preparation list',
+  'laba-baseline-raised': 'a long-acting beta-agonist taken inside its withholding window leaves the airways partly dilated and blunts the bronchodilator increment',
+  'lama-baseline-raised': 'a long-acting antimuscarinic taken inside its withholding window lowers airway tone and leaves little room for a bronchodilator increment',
+  'on-treatment-context': 'the study was done on current inhaled therapy, so baseline airflow reflects treatment and a small bronchodilator response does not exclude reversibility',
+  'ics-today-no-change': 'a daily inhaled corticosteroid or leukotriene-modifier dose taken today does not change the interpretation',
+  'allergy-meds-no-change': 'a nasal spray or an antihistamine does not change the interpretation',
+  'smoking-acute-airflow': 'smoke or vapor inhaled shortly before testing can cause acute bronchoconstriction and cough, so mild obstruction may be exaggerated',
+  'smoking-cohb-dlco': 'carboxyhemoglobin from recent smoking lowers the measured DLCO, and no adjustment for it is made',
+  'smoking-cohb-dlco-hours': 'carboxyhemoglobin persists for hours after smoking and can lower the measured DLCO and KCO, which are not adjusted for it',
+  'cohb-measured-unadjusted': 'a measured carboxyhemoglobin above the endogenous level lowers the DLCO and KCO, and the reported values are not adjusted for it',
+  'alcohol-effort-variable': 'recent intoxicants can impair effort and coordination and lower flows and repeatability',
+  'caffeine-small-bronchodilation': 'caffeine is a weak bronchodilator and could raise the baseline FEV1 slightly, mainly when obstruction is near the limit',
+  'exercise-airway-lability': 'vigorous exercise shortly before testing can lower the FEV1 in people with exercise-sensitive airways',
+  'exercise-yesterday-no-change': 'exercise on the previous day does not change the interpretation',
+  'meal-abdominal-distension': 'a full stomach can slightly lower the FVC, VC and inspiratory capacity, with weak supporting evidence',
+  'binder-restriction-artifact': 'restrictive clothing lowers FVC, VC and TLC with a preserved ratio, so a restrictive pattern may reflect chest-wall mechanics and not parenchymal disease',
+  'oxygen-dlco-lowered': 'supplemental oxygen raises the alveolar oxygen tension and lowers the measured DLCO',
+  'mi-contraindication-effort': 'a recent myocardial infarction limits effort, so the flows may not represent the patient’s best',
+  'surgery-splinting-restriction': 'recent abdominal or thoracic surgery can limit inspiration through pain and splinting and give a restrictive-looking pattern from reduced effort',
+  'uri-transient-narrowing': 'a current respiratory infection can cause transient bronchial narrowing and cough, so the values may overstate chronic impairment',
+  'serial-decline-best-early': 'the FEV1 fell across successive maneuvers, so the best values come from the early blows and maneuver-induced airway narrowing is possible',
+  'syncope-fvc-understated': 'effort was eased late in expiration, so the maneuver was not maximal and the FVC is understated',
+  'kyphoscoliosis-standing-height': 'standing height understates skeletal height in kyphoscoliosis, so arm span is the usual substitute',
+  'height-estimated-armspan-error': 'height was estimated from arm span with a fixed ratio, an estimate whose error of several centimeters shifts every predicted value and z-score',
+  'armspan-ratio-sources-differ': 'published arm-span ratios differ between sources',
+  'height-method-stated': 'the method used to obtain height is stated on the report',
+  'height-estimated-ulna-error': 'height was estimated from ulna length, and the error of that estimate moves the predicted values and z-scores',
+  'halfspan-less-precise': 'a doubled half-span is less precise than a full arm span',
+  'chart-height-too-tall': 'a height carried over from an old record is likely to be too tall, which raises predicted values and can make normal values look low',
+  'sex-birth-used-default': 'predicted values follow sex assigned at birth, the default of the standard, which gives no rule for hormone therapy, nonbinary or intersex patients',
+  'sex-evidence-limited': 'the evidence on which sex fits patients receiving hormone therapy is limited, and the sex used can move z-scores across the lower limit without a change in the lungs',
+  'sex-identity-used-nondefault': 'the reference sex is the sex the patient identifies with and not the sex assigned at birth that the standard specifies, so z-scores and classification can differ',
+  'sex-default-applied': 'sex was not disclosed, so the predicted values rest on the laboratory default and shift with the alternative',
+  'race-field-default-group': 'a missing or other group on the requisition selects the composite GLI-2012 set, so a classification that differs between GLI-2012 and GLI Global reflects the equation and not the lungs',
+  'race-global-no-field': 'GLI Global does not use the group field of the requisition',
+  'volumes-dlco-european-only': 'the lung-volume and TLCO equations were derived in people of European ancestry, which limits how well that reference population represents the patient, and a discordance with spirometry calls for caution',
+  'trach-interface-unreliable': 'a tracheostomy adapter changes dead space and may leak, so flows and volumes are less reliable',
+  'dentures-poor-fit-leak': 'poorly fitting dentures can cause air escape or an obstructed mouthpiece',
+  'dentures-ok-no-change': 'well-fitting dentures left in place do not change the interpretation',
+  'facial-weakness-leak': 'facial weakness can cause a leak at the lips and slow the rise to peak flow, which makes affected maneuvers unreliable',
+  'coop-submaximal-unreliable': 'difficulty following directions can produce submaximal and variable results, so the ratio is unreliable',
+  'anxiety-variable-effort': 'anxiety can cause hesitant starts, early stops and variable effort, so the values may reflect technique and not airway disease',
+  'pain-limits-inspiration': 'pain on deep inspiration can limit inflation and lower the FVC and FEV1 with a preserved ratio, which does not establish a low TLC',
+  'altitude-dlco-unadjusted': 'the DLCO depends on the inspired oxygen tension, and an unadjusted value may sit higher at altitude, with limited evidence',
+  'obesity-low-erv-not-restriction': 'obesity lowers ERV and FRC with a preserved TLC, so a low ERV is not restriction and a low FVC with a normal ratio needs a TLC',
+  'anemia-dlco-adjusted': 'low hemoglobin lowers the measured DLCO and KCO, and the reported DLCO is adjusted for hemoglobin',
+  'hb-missing-dlco-unadjusted': 'the DLCO is reported without hemoglobin adjustment, so an abnormal value cannot be attributed to the lung until the hemoglobin is known',
+  'submaximal-effort-mimics': 'consistently low effort can mimic restriction or more severe disease even when repeatability is good',
+  'slow-start-bev-hides-obstruction': 'a slow start enlarges the back-extrapolated volume, which can inflate the FEV1 and hide obstruction',
+  'early-termination-fvc-low': 'early termination lowers the FVC and raises the ratio, which can mimic restriction or mask obstruction',
+  'no-plateau-eofe': 'without an end-of-forced-expiration indicator the FVC is not acceptable and the ratio is overestimated',
+  'cough-first-second': 'a cough in the first second makes the FEV1 unreliable while the FVC may remain acceptable',
+  'glottic-closure-fvc': 'glottic closure ends expiration abruptly, which lowers the FVC and raises the ratio',
+  'leak-unacceptable': 'a leak makes the FEV1 and FVC unacceptable and lowers the measured flows',
+  'mouthpiece-obstruction': 'obstruction of the mouthpiece by the tongue or teeth makes the FEV1 and FVC unacceptable',
+  'pause-at-tlc': 'a pause at total lung capacity lowers the peak flow and the FEV1',
+  'variable-effort-grade': 'poor repeatability lowers the grade and the confidence that a repeat would give the same number',
+  'post-bd-set-small': 'the post-bronchodilator set has too few maneuvers for a high grade, so the change is less reliable',
+  'bd-timing-short': 'a post-bronchodilator maneuver taken before the protocol wait can underestimate the response',
+  'bd-effort-artifact': 'better effort after the bronchodilator can raise the apparent response, and a rise in the FVC can reflect a longer expiratory time',
+  'dlco-low-vi': 'an incomplete inhalation lowers the VA and the DLCO and raises the KCO artifactually',
+  'dlco-valsalva': 'straining during the breath-hold lowers the measured DLCO, and the maneuver is not acceptable',
+  'dlco-mueller': 'inspiratory effort against a closed glottis can spuriously raise the measured DLCO',
+  'dlco-leak': 'a leak during the breath-hold makes the VA and DLCO unreliable',
+  'pant-fast-frc-over': 'rapid panting overestimates the FRC, RV and TLC and can look like air trapping',
+  'pleth-thermal-drift': 'thermal drift makes the FRC unstable, so the RV and TLC carry extra uncertainty',
+  'pleth-ic-short-tlc-low': 'a linked maneuver that does not reach total lung capacity lowers IC, VC and TLC, so a low TLC may be a technique artifact',
+};
+const GENERIC_CAVEAT = 'a limitation recorded for this session qualifies the result';
 
 // ---------------------------------------------------------------------------------------------
 // Phrasing variants. Every sentence type has at least three, equivalent in meaning. Variants of a
@@ -170,13 +248,10 @@ const F1_UNKNOWN = [
   () => 'Test quality was not graded for this session, and the interpretation is made with reduced confidence.',
   () => 'Without a recorded quality grade, the interpretation carries reduced confidence.',
 ];
-const F1_IGNORE = [
-  () => 'The maneuvers are adequate, and the results can be accepted at face value.',
-  () => 'Technical quality is adequate, so no qualification of the results is needed.',
-  () => 'The session is adequate for interpretation, and the values can be classified without reservation.',
-];
 TYPES['f-quality-good'] = F1_GOOD; TYPES['f-quality-moderate'] = F1_MODERATE; TYPES['f-quality-limited'] = F1_LIMITED;
-TYPES['f-quality-unknown'] = F1_UNKNOWN; TYPES['f-quality-ignore'] = F1_IGNORE;
+TYPES['f-quality-unknown'] = F1_UNKNOWN;
+// A distractor that ignores poor quality uses the sentences of a correct adequate-quality statement, so its wording is no tell; only the grades it cites contradict it.
+TYPES['f-quality-ignore'] = F1_GOOD;
 
 // --- pattern ---
 T('p-lowfvc',
@@ -235,9 +310,9 @@ T('p-severity-scored',
   (p) => `Severity of obstruction is graded from the FEV1 z-score; at ${zf(p.z)} the obstruction is of ${p.w} severity${p.within}.`,
   (p) => `Grading by FEV1 z-score, with cut-points at ${MINUS}2.5 and ${MINUS}4.0, gives an obstruction of ${p.w} severity${p.within}.`);
 T('p-severity-unscored',
-  () => 'Severity is not graded for this pattern, because the 2022 grading rule for it has not been verified and this tool grades severity only for obstruction.',
-  () => 'No severity grade is assigned to this pattern: the grading rule has not been verified against the 2022 statement, so severity is not graded.',
-  () => 'This tool does not grade severity for this pattern, since the rule for it is unverified, and severity is therefore not graded.');
+  () => 'Severity is not graded for this pattern.',
+  () => 'No severity grade is assigned to this pattern, so severity is not graded.',
+  () => 'Severity is not graded here, because severity grading applies to airflow obstruction only.');
 
 // --- lung volumes ---
 T('vf-tlc',
@@ -274,6 +349,10 @@ T('df-cat',
   (p) => `the hemoglobin-adjusted ${p.mz} is ${p.cat}`,
   (p) => `adjusted for hemoglobin, the ${p.mz} is ${p.cat}`,
   (p) => `the ${p.mz}, adjusted for hemoglobin, is ${p.cat}`);
+T('df-cat-nohb',
+  (p) => `the ${p.mz}, reported without hemoglobin adjustment because no hemoglobin was available, is ${p.cat}`,
+  (p) => `with no hemoglobin available, the ${p.mz} is classified without adjustment and is ${p.cat}`,
+  (p) => `the ${p.mz} is ${p.cat}, classified without hemoglobin adjustment because no hemoglobin was available`);
 T('df-unadjusted-claim',
   (p) => `the DLCO, taken as measured without hemoglobin adjustment, is ${p.cat}`,
   (p) => `without hemoglobin adjustment, the DLCO is ${p.cat}`,
@@ -290,6 +369,10 @@ T('ds-hb',
   (p) => `Hemoglobin concentration is ${p.hb} g/dL, and the measured DLCO of ${p.raw} mL/min/mmHg was adjusted to ${p.adj} mL/min/mmHg for the standard hemoglobin before classification.`,
   (p) => `The measured DLCO of ${p.raw} mL/min/mmHg corresponds to ${p.adj} mL/min/mmHg after adjustment from the patient's hemoglobin of ${p.hb} g/dL to the standard value.`,
   (p) => `Adjustment for a hemoglobin of ${p.hb} g/dL changes the measured DLCO from ${p.raw} mL/min/mmHg to ${p.adj} mL/min/mmHg, and the adjusted value is the one classified.`);
+T('ds-hb-missing',
+  (p) => `No hemoglobin was available, so the measured DLCO of ${p.raw} mL/min/mmHg is classified without hemoglobin adjustment; a low hemoglobin concentration lowers the measured value and a high one raises it.`,
+  (p) => `Without a hemoglobin concentration the measured DLCO of ${p.raw} mL/min/mmHg cannot be adjusted, and it is classified as measured; anemia lowers the measured value and polycythemia raises it.`,
+  (p) => `The hemoglobin concentration was not recorded, so the DLCO of ${p.raw} mL/min/mmHg is classified as measured; a low hemoglobin lowers it and a high hemoglobin raises it, independently of the lung.`);
 T('ds-hb-direction',
   (p) => (p.low ? 'A low hemoglobin concentration lowers the measured DLCO because less hemoglobin is available to bind carbon monoxide.' : 'A high hemoglobin concentration raises the measured DLCO because more hemoglobin is available to bind carbon monoxide.'),
   (p) => (p.low ? 'Carbon monoxide uptake falls with the hemoglobin available to bind it, so a low hemoglobin concentration lowers the measured DLCO.' : 'Carbon monoxide uptake rises with the hemoglobin available to bind it, so a high hemoglobin concentration raises the measured DLCO.'),
@@ -298,17 +381,21 @@ T('ds-cohb',
   (p) => `Carboxyhemoglobin was ${p.pct}%; carbon monoxide already bound to hemoglobin lowers the measured DLCO, and no correction for it is applied to the value reported here.`,
   (p) => `The carboxyhemoglobin of ${p.pct}% lowers the measured DLCO through back-pressure of carbon monoxide, and the reported value is not corrected for it.`,
   (p) => `With carboxyhemoglobin at ${p.pct}%, the measured DLCO is lowered by carbon monoxide already in the blood, and this report applies no carboxyhemoglobin correction.`);
+T('ds-cohb-unmeasured',
+  () => 'Carboxyhemoglobin was not measured; if smoking was recent, carbon monoxide already bound to hemoglobin lowers the measured DLCO, which may therefore be underestimated.',
+  () => 'Without co-oximetry the carboxyhemoglobin is unknown, and the DLCO may be underestimated if smoking was recent.',
+  () => 'No carboxyhemoglobin measurement was made, so the DLCO may be underestimated if smoking was recent, because carbon monoxide already in the blood lowers the measured value.');
 T('ds-vatlc',
   (p) => `Alveolar volume is ${p.pct}% of TLC; in airflow obstruction uneven ventilation lowers this share, so the KCO is read together with the alveolar volume.`,
   (p) => `The alveolar volume measured by the single breath is ${p.pct}% of TLC, and the KCO is interpreted with that volume because uneven ventilation lowers the share in airflow obstruction.`,
   (p) => `VA is ${p.pct}% of TLC; where ventilation is uneven the single-breath volume understates TLC, and the KCO is read with the VA.`);
 T('ds-severity',
-  () => 'The degree of reduction is not scored here because the grading rule has not been verified against the 2022 statement.',
-  () => 'No degree of reduction is scored, since the grading rule is unverified.',
-  () => 'The grading of the degree of reduction is not scored by this tool, because its rule is unverified.');
+  () => 'The degree of reduction is not scored.',
+  () => 'No degree of reduction is scored for the DLCO.',
+  () => 'The reduction in DLCO is not scored for severity.');
 T('ds-value',
-  (p) => `The adjusted DLCO is ${p.dlco} (predicted ${p.pred}), with alveolar volume ${p.va} and KCO ${p.kco}.`,
-  (p) => `Adjusted DLCO is ${p.dlco} against a predicted ${p.pred}; alveolar volume is ${p.va} and KCO is ${p.kco}.`,
+  (p) => `The ${p.which} is ${p.dlco} (predicted ${p.pred}), with alveolar volume ${p.va} and KCO ${p.kco}.`,
+  (p) => `${cap(p.which)} is ${p.dlco} against a predicted ${p.pred}; alveolar volume is ${p.va} and KCO is ${p.kco}.`,
   (p) => `The values are DLCO ${p.dlco} (predicted ${p.pred}), alveolar volume ${p.va} and KCO ${p.kco}.`);
 
 // --- bronchodilator ---
@@ -320,10 +407,6 @@ T('f-bd',
   (p) => { const s = bdSegments(p); return `The bronchodilator response is ${s.a} and ${s.b}.`; },
   (p) => { const s = bdSegments(p); return `The change in FEV1 and FVC after bronchodilator is ${s.a}; it is ${s.b}.`; },
   (p) => { const s = bdSegments(p); return `After bronchodilator the response is ${s.b}, and ${s.a}.`; });
-T('f-bd-earlier',
-  (p) => `The bronchodilator response is ${p.rE ? 'significant' : 'not significant'} by the earlier criterion (change of at least 12% and 200 mL over baseline), which is taken as the result.`,
-  (p) => `The response to bronchodilator, judged against a change of at least 12% and 200 mL over baseline, is ${p.rE ? 'significant' : 'not significant'} by the earlier criterion, and no other criterion is applied.`,
-  (p) => `After bronchodilator the response is ${p.rE ? 'significant' : 'not significant'} by the earlier criterion (change of at least 12% and 200 mL over baseline), the criterion this laboratory applies.`);
 T('bd-why',
   (p) => `the two criteria disagree because ${p.reason}`,
   (p) => `the criteria disagree: ${p.reason}`,
@@ -349,15 +432,21 @@ T('bd-discordant-short',
   () => 'the responses of FEV1 and FVC are discordant',
   () => 'FEV1 and FVC show a discordant response');
 T('bd-discordant',
-  (p) => (p.kind === 'opposite'
-    ? `The FEV1 and FVC responses are discordant: ${p.fell} fell while ${p.rose} rose, and a shorter forced expiratory time after the bronchodilator lowers the FVC and raises the FEV1/FVC ratio without any change in the airways, so the expiratory times need review before the response is accepted.`
-    : `The FEV1 and FVC responses are discordant in size: ${p.bigger} rose more than ${p.smaller}, ${p.meaning}.`),
-  (p) => (p.kind === 'opposite'
-    ? `The responses of FEV1 and FVC are discordant, with ${p.fell} falling and ${p.rose} rising; a shorter expiration after the bronchodilator can lower the FVC and improve the ratio without a change in the airways, which makes the expiratory times worth reviewing.`
-    : `The responses of FEV1 and FVC are discordant in size, with ${p.bigger} rising more than ${p.smaller}; ${p.meaning}.`),
-  (p) => (p.kind === 'opposite'
-    ? `Discordant directions of change are present, ${p.fell} falling and ${p.rose} rising, and a technique effect on expiratory time must be considered before the improvement in the ratio is attributed to the airways.`
-    : `The two variables show a discordant response in size, ${p.bigger} more than ${p.smaller}, and ${p.meaning}.`));
+  (p) => {
+    if (p.kind === 'opposite-fvc-fell') return `The FEV1 and FVC responses are discordant: the FVC fell while the FEV1 rose, and a shorter forced expiratory time after the bronchodilator lowers the FVC and raises the FEV1/FVC ratio without any change in the airways, so the expiratory times need review before the response is accepted.`;
+    if (p.kind === 'opposite-fev1-fell') return `The FEV1 and FVC responses are discordant: the FEV1 fell while the FVC rose, and a weaker early effort or a bronchoconstrictor response after the bronchodilator lowers the FEV1 while a longer expiration raises the FVC, so the first-second effort and the expiratory times need review before the response is accepted.`;
+    return `The FEV1 and FVC responses are discordant in size: ${p.bigger} rose more than ${p.smaller}, ${p.meaning}.`;
+  },
+  (p) => {
+    if (p.kind === 'opposite-fvc-fell') return `The responses of FEV1 and FVC are discordant, with the FVC falling and the FEV1 rising; a shorter expiration after the bronchodilator can lower the FVC and improve the ratio without a change in the airways, which makes the expiratory times worth reviewing.`;
+    if (p.kind === 'opposite-fev1-fell') return `The responses of FEV1 and FVC are discordant, with the FEV1 falling and the FVC rising; a weaker first-second effort after the bronchodilator can lower the FEV1 while a longer expiration raises the FVC, and bronchoconstriction is also possible, which makes the maneuvers worth reviewing.`;
+    return `The responses of FEV1 and FVC are discordant in size, with ${p.bigger} rising more than ${p.smaller}; ${p.meaning}.`;
+  },
+  (p) => {
+    if (p.kind === 'opposite-fvc-fell') return `Discordant directions of change are present, the FVC falling and the FEV1 rising, and a technique effect on expiratory time must be considered before the improvement in the ratio is attributed to the airways.`;
+    if (p.kind === 'opposite-fev1-fell') return `Discordant directions of change are present, the FEV1 falling and the FVC rising, and a technique effect on the first-second effort or an induced airway narrowing must be considered before the change in the ratio is attributed to a lasting change in the airways.`;
+    return `The two variables show a discordant response in size, ${p.bigger} more than ${p.smaller}, and ${p.meaning}.`;
+  });
 
 // --- sensitivity to the reference equation ---
 const eqDetail = (p) => p.changes.map((c) => `${DISPLAY[c.measure]} is ${LABEL_PHRASE[c.from]} under ${p.nameA} (z-score ${zf(c.zA)}${c.border ? ', borderline' : ''}) but ${LABEL_PHRASE[c.to]} under ${p.nameB} (z-score ${zf(c.zB)}${c.border ? ', borderline' : ''})`).join('; ');
@@ -371,9 +460,9 @@ T('f-eq-borderline',
   (p) => `Because the ${p.list} ${p.plural ? 'are' : 'is'} near a limit, the classification could change under another reference equation.`,
   (p) => `Classification of the ${p.list} is borderline and could change under another reference equation.`);
 T('f-eq-robust',
-  () => 'The classification is unchanged by the choice of reference equation.',
-  () => 'This classification does not depend on the reference equation, and it is unchanged by the choice of reference equation.',
-  () => 'Both reference equations give the same classification, so it is unchanged by the choice of reference equation.');
+  (p) => `The ${p.m} has a z-score of ${p.zA} under ${p.nameA} and ${p.zB} under ${p.nameB}, and it is classified the same way under both reference equations.`,
+  (p) => `The classification of the ${p.m} is the same under both reference equations, with z-scores of ${p.zA} under ${p.nameA} and ${p.zB} under ${p.nameB}.`,
+  (p) => `Under ${p.nameA} and ${p.nameB} the ${p.m} has z-scores of ${p.zA} and ${p.zB}, and its classification is the same under both reference equations.`);
 T('se-compare',
   (p) => `The same measurements were classified under ${p.nameA} and ${p.nameB}, and only the spirometry equation differs between the two runs.`,
   (p) => `Two classifications were made from identical measurements, one under ${p.nameA} and one under ${p.nameB}; only the spirometry equation differs between them.`,
@@ -405,9 +494,9 @@ T('r-mixed',
   () => 'The pattern is built from indices referenced to different equations and therefore rests on more than one reference.',
   () => 'More than one reference source supplies the indices that define the pattern, so the pattern rests on more than one reference.');
 T('r-fallback',
-  (p) => `No equation derived in the requisition group (${p.group}) was available for ${p.what}, so the ${p.eqs}, derived in people of European ancestry, ${p.was} applied, and the result carries that limitation.`,
-  (p) => `For ${p.what} the ${p.eqs}, derived in people of European ancestry, ${p.was} applied because no equation exists for the requisition group (${p.group}); the result carries that limitation.`,
-  (p) => `The requisition group (${p.group}) has no specific equation for ${p.what}, and the ${p.eqs}, derived in people of European ancestry, ${p.was} used in its place, which limits the result.`);
+  (p) => `The reference population for ${p.what} (${p.eqs}) is of European ancestry, so it may represent a patient recorded as ${p.group} less well, which limits the result, and no ancestry adjustment is applied.`,
+  (p) => `For ${p.what} the ${p.eqs} ${p.was} applied, and its reference population is of European ancestry; how closely that population represents a patient recorded as ${p.group} is uncertain, and this limits the result.`,
+  (p) => `The ${p.eqs}, derived in people of European ancestry, ${p.was} applied to ${p.what}; the reference population may not represent a patient recorded as ${p.group} well, and the result carries that limitation without any ancestry adjustment.`);
 T('r-age',
   (p) => `The patient's age lies outside the range of the ${p.eq} equation, so ${p.what} could not be referenced.`,
   (p) => `${cap(p.what)} could not be referenced because the patient's age is outside the range of the ${p.eq} equation.`,
@@ -420,6 +509,10 @@ T('r-sex',
   (p) => `Reference values were calculated for ${p.used} sex, which differs from the sex recorded at birth (${p.birth}); predicted values and limits would change if the other were used.`,
   (p) => `The prediction used ${p.used} sex and not the ${p.birth} sex recorded at birth, so the predicted values and limits are those of the sex assumed.`,
   (p) => `Reference equations were applied for ${p.used} sex, an assumption that differs from the recorded sex at birth (${p.birth}) and that changes the predicted values and limits.`);
+T('r-sex-default',
+  (p) => `Sex was not disclosed, so reference values were calculated for ${p.used} sex, the laboratory default; predicted values and limits would change with the other sex.`,
+  (p) => `The patient did not give a sex, and the laboratory default of ${p.used} sex was used for the prediction, so the predicted values and limits are those of the sex assumed.`,
+  (p) => `Reference equations were applied for ${p.used} sex by laboratory default because sex was not disclosed, an assumption that changes the predicted values and limits.`);
 
 // --- limitations ---
 T('l-major',
@@ -439,9 +532,9 @@ T('l-generic',
   () => 'Only the measurements, the recorded demographics and the reference equations inform this interpretation, which cannot take account of clinical history or earlier studies.',
   () => 'No clinical history, symptoms or earlier results were available, so the interpretation depends on the measurements, the demographics and the reference equations.');
 T('l-fallback',
-  () => 'Use of an equation not derived in the requisition group adds uncertainty to the volume and transfer-factor classifications.',
-  () => 'Where an equation from another group was applied, the classification of that index is less certain.',
-  () => 'The lung volume and transfer-factor classifications carry added uncertainty from the use of an equation derived in a different group.');
+  () => 'The volume and transfer-factor classifications rest on a reference population of European ancestry, which may represent this patient less well.',
+  () => 'Where the reference population differs in ancestry from the patient, the classification of the volume and transfer-factor indices is less certain.',
+  () => 'The lung volume and transfer-factor classifications carry added uncertainty because their reference population is of European ancestry.');
 T('l-none',
   () => 'No session-specific limitations were recorded beyond those of the reference equations.',
   () => 'Apart from the limits of the reference equations, no specific limitation was recorded for this session.',
@@ -451,17 +544,20 @@ T('l-none',
 T('f-dx',
   (p) => (p.kind === 'exclude' ? `These findings exclude ${p.term}.` : `These findings are diagnostic of ${p.term}.`),
   (p) => (p.kind === 'exclude' ? `Together they establish that ${p.term} is absent.` : `Together they establish ${p.term}.`),
-  (p) => (p.kind === 'exclude' ? `The diagnosis is clear: ${p.term} is excluded.` : `The diagnosis is ${p.term}.`));
+  (p) => (p.kind === 'exclude' ? `They make ${p.term} an unlikely explanation.` : `They point to ${p.term} as the likely cause.`));
+
+// The percent-predicted convention. The sentence is used by a correct statement (which then names the engine label) and by the
+// distractor that applies the 80% rule, so the phrasing is the same in both and only the stated classification differs.
 T('f-pctpred',
-  (p) => `the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold, and is therefore ${p.status}`,
-  (p) => `on percent predicted, the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold, and is therefore ${p.status}`,
-  (p) => `by the percent-predicted convention, the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold, and is therefore ${p.status}`);
+  (p) => `the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold, with a z-score of ${p.z}, and is classified as ${p.status}`,
+  (p) => `on percent predicted, the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold, and its z-score of ${p.z} gives a classification of ${p.status}`,
+  (p) => `by the percent-predicted convention, the ${p.nm} is ${p.pp}% of predicted, ${p.dir} the conventional 80% threshold; with a z-score of ${p.z} it is classified as ${p.status}`);
 
 // ---------------------------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------------------------
 
-function makeContext(caseData, interp, cmp) {
+function makeContext(caseData, interp, cmp, { finalCaveats = true } = {}) {
   const m = interp.measures ?? {};
   const report = caseData.report ?? {};
   const patient = report.patient ?? {};
@@ -503,15 +599,19 @@ function makeContext(caseData, interp, cmp) {
   for (const c of Array.isArray(scen?.caveats) ? scen.caveats : []) {
     const text = String(c?.text ?? '').trim();
     if (!text) continue;
-    if (CAVEAT_NO_EFFECT.test(text)) { const core = caveatCore(text); if (core) caveats.noEffect.push(core); }
-    else (c.weight === 'major' ? caveats.major : caveats.minor).push(caveatCore(text));
+    const noEffect = CAVEAT_NO_EFFECT.test(text);
+    const clause = CAVEAT_PARAPHRASE[c.id] ?? (noEffect ? 'an item recorded for this session' : GENERIC_CAVEAT);
+    if (noEffect) caveats.noEffect.push(caveatCore(clause));
+    else (c.weight === 'major' ? caveats.major : caveats.minor).push(clause);
   }
 
   const dl = caseData.dlco ?? null;
+  const hbOk = hbKnown(dl);
   const rawDlco = dl && Number.isFinite(dl.raw) ? dl.raw : null;
   let rawCat = null;
-  if (hasDlco && rawDlco !== null) rawCat = rawDlco < m.dlco.lln ? 'reduced' : rawDlco > m.dlco.uln ? 'raised' : 'normal';
-  const hbFactor = dl && Number.isFinite(dl.hbFactor) ? dl.hbFactor : null;
+  // Without a hemoglobin the reported value is the measured value, so there is no separate unadjusted category.
+  if (hasDlco && rawDlco !== null && hbOk) rawCat = rawDlco < m.dlco.lln ? 'reduced' : rawDlco > m.dlco.uln ? 'raised' : 'normal';
+  const hbFactor = dl && hbOk && Number.isFinite(dl.hbFactor) ? dl.hbFactor : null;
   const hbMaterial = hbFactor !== null && Math.abs(hbFactor - 1) >= 0.05;
   const bmi = patient.weightKg && patient.heightCm ? patient.weightKg / (patient.heightCm / 100) ** 2 : null;
 
@@ -524,7 +624,7 @@ function makeContext(caseData, interp, cmp) {
   return {
     m, has, band, zp, mz, rel, val, report, patient, scen, caveats, tier, letters, graded, hasBd, postLimited, hasVol, hasDlco,
     interp, key: interp.key ?? {}, pattern: interp.pattern, bd: interp.bd ?? null, dl: interp.dlco ?? null, caseData,
-    rawCat, rawDlco, hbFactor, hbMaterial, bmi, cmp: cmpOk ? cmp : null, flips, borderMeasures, eqSensitive,
+    rawCat, rawDlco, hbOk, hbFactor, hbMaterial, bmi, finalCaveats, cmp: cmpOk ? cmp : null, flips, borderMeasures, eqSensitive,
     limited: tier === 'limited',
     sevScored: Boolean(interp.severity?.scored),
     sevWord: interp.severity?.scored ? interp.severity.id : null,
@@ -640,6 +740,14 @@ function subtypeCore(ctx) {
   return null;
 }
 
+/** Qualification placed before the KCO and alveolar volume reading: a borderline value, or an unknown hemoglobin that could account for part of the change. */
+function subtypeHedge(ctx) {
+  const parts = [];
+  if (ctx.m.dlco.borderline && ctx.dl.category !== 'normal') parts.push('with the transfer factor only marginally outside its limit');
+  if (!ctx.hbOk) parts.push('because the hemoglobin is unknown and could account for part of the change');
+  return parts.length ? `${parts.join(' and ')}, ` : '';
+}
+
 function dlcoCatPhrase(ctx, cat) {
   const e = ctx.m.dlco;
   if (cat === 'reduced') return e.borderline && ctx.dl?.category === 'reduced' ? 'only marginally reduced' : 'reduced';
@@ -659,7 +767,8 @@ function correctClaims(ctx) {
     pattern: { id: ctx.pattern, synthetic: false },
     severity,
     dx: null,
-    pctpred: null,
+    pctpred: pctPredTarget(ctx),
+    pctpredStatus: 'engine',
     volumes: 'full',
     bd: ctx.bd ? 'both' : null,
     dlco: ctx.hasDlco ? 'adjusted' : null,
@@ -702,12 +811,25 @@ function sensitivityFlip(ctx, P) {
   return extras.length ? sentence(`${cap(extras.join('; '))}, so the result depends on the reference equation`) : '';
 }
 
+/** Parameters of the sentence that says the classification does not depend on the equation. Null when no spirometric z-score exists. */
+function robustParams(ctx) {
+  if (!ctx.cmp) return null;
+  const pref = ctx.flips.length ? [ctx.flips[0].measure] : [];
+  for (const k of [...pref, 'fev1_fvc', 'fev1', 'fvc']) {
+    const a = ctx.cmp.a.measures?.[k], b = ctx.cmp.b.measures?.[k];
+    if (a && b && a.available !== false && b.available !== false && Number.isFinite(a.z) && Number.isFinite(b.z)) {
+      return { m: DISPLAY[k], zA: zf(a.z), zB: zf(b.z), nameA: eqName(ctx.cmp.a.spirometryEquation), nameB: eqName(ctx.cmp.b.spirometryEquation) };
+    }
+  }
+  return null;
+}
+
 function buildFinal(ctx, c, P) {
   const out = [];
 
   // 1. quality
   const gr = ctx.graded ? gradesClause(ctx) : '';
-  if (c.quality === 'ignore') out.push(P('f-quality-ignore', {}));
+  if (c.quality === 'ignore') out.push(P('f-quality-ignore', { gr }));
   else if (ctx.tier === 'unknown') out.push(P('f-quality-unknown', {}));
   else out.push(P(`f-quality-${ctx.tier}`, { gr }));
 
@@ -716,7 +838,8 @@ function buildFinal(ctx, c, P) {
   let s2 = patternSentence(ctx, P, c.pattern, c.severity, skipNear);
   if (c.pctpred) {
     const q = c.pctpred;
-    s2 = `${s2.replace(/\.$/, '')}; ${P('f-pctpred', { nm: DISPLAY[q.k], pp: q.pp, dir: q.pp >= 80 ? 'above' : 'below', status: q.claim })}.`;
+    const status = c.pctpredStatus === 'wrong' ? (q.claim === 'normal' ? LABEL_PHRASE.normal : LABEL_PHRASE.low) : LABEL_PHRASE[ctx.m[q.k].label];
+    s2 = `${s2.replace(/\.$/, '')}; ${P('f-pctpred', { nm: DISPLAY[q.k], pp: q.pp, dir: q.pp >= 80 ? 'at or above' : 'below', z: zf(ctx.m[q.k].z), status })}.`;
   }
   out.push(s2);
   if (c.dx) out.push(P('f-dx', c.dx));
@@ -730,9 +853,9 @@ function buildFinal(ctx, c, P) {
       const erv = lowErvFragment(ctx, P); if (erv) pieces.push(erv);
     } else pieces.push(missingVolumesFragment(ctx, P));
     if (c.dlco === 'adjusted' && ctx.hasDlco) {
-      pieces.push(P('df-cat', { mz: ctx.mz('dlco'), cat: dlcoCatPhrase(ctx, ctx.dl.category) }));
+      pieces.push(P(ctx.hbOk ? 'df-cat' : 'df-cat-nohb', { mz: ctx.mz('dlco'), cat: dlcoCatPhrase(ctx, ctx.dl.category) }));
       if (ctx.rawCat && ctx.rawCat !== ctx.dl.category) pieces.push(P('df-raw-misleads', { cat: DLCO_CAT[ctx.rawCat] }));
-      const core = subtypeCore(ctx); if (core) pieces.push(P('df-subtype', { core, hedge: ctx.m.dlco.borderline && ctx.dl.category !== 'normal' ? 'with the transfer factor only marginally outside its limit, ' : '' }));
+      const core = subtypeCore(ctx); if (core) pieces.push(P('df-subtype', { core, hedge: subtypeHedge(ctx) }));
     } else if (c.dlco && typeof c.dlco === 'object') {
       pieces.push(P('df-unadjusted-claim', { cat: DLCO_CAT[c.dlco.cat] }));
     }
@@ -747,21 +870,29 @@ function buildFinal(ctx, c, P) {
     if (why) s = `${s.replace(/\.$/, '')}; ${P('bd-why', { reason: why })}.`;
     if (ctx.bd.discordant) s = `${s.replace(/\.$/, '')}; ${P('bd-discordant-short', {})}.`;
     out.push(s);
-  } else if (ctx.bd && c.bd === 'earlier-only') out.push(P('f-bd-earlier', { rE: ctx.bd.rule2005.significant }));
+  } else if (ctx.bd && c.bd === 'earlier-as-2022') {
+    // The earlier criterion's result is reported under the 2022 label, so the two criteria appear to agree.
+    out.push(P('f-bd', { r22: ctx.bd.rule2005.significant, rE: ctx.bd.rule2005.significant }));
+  }
 
   // 5. reference equation
-  if (c.equation === 'robust') out.push(P('f-eq-robust', {}));
-  else if (c.equation === 'auto' && ctx.cmp) {
+  if (c.equation === 'robust') {
+    const rp = robustParams(ctx);
+    if (rp) out.push(P('f-eq-robust', rp));
+  } else if (c.equation === 'auto' && ctx.cmp) {
     if (ctx.eqSensitive) {
       const s = sensitivityFlip(ctx, P);
       if (s) out.push(s);
     } else if (ctx.borderMeasures.length) {
       out.push(P('f-eq-borderline', { list: list(ctx.borderMeasures.map((k) => ctx.mz(k))), plural: ctx.borderMeasures.length > 1 }));
+    } else {
+      const rp = robustParams(ctx);
+      if (rp) out.push(P('f-eq-robust', rp));
     }
   }
 
   // 6. limitations
-  if (c.caveats === 'full' && (ctx.caveats.major.length || ctx.caveats.noEffect.length)) {
+  if (c.caveats === 'full' && ctx.finalCaveats && (ctx.caveats.major.length || ctx.caveats.noEffect.length)) {
     const parts = [];
     if (ctx.caveats.major.length) parts.push(P('l-major', { items: ctx.caveats.major.join('; ') }));
     if (ctx.caveats.noEffect.length) parts.push(P('l-noeffect', { items: ctx.caveats.noEffect.join('; ') }));
@@ -822,7 +953,10 @@ function referenceSection(ctx, P) {
     const SRC = { 'arm-span': 'arm span', ulna: 'ulna length', reported: 'the patient’s report' };
     out.push(sentence(P('r-height', { cm: sc.height.statedCm, source: SRC[sc.height.source] ?? sc.height.source })));
   }
-  if (sc?.referenceSex && sc.referenceSex.used && sc.referenceSex.birth && sc.referenceSex.used !== sc.referenceSex.birth) {
+  if (sc?.referenceSex?.used && sexUndisclosed(sc)) {
+    // The sex the patient declined to give is not revealed, and the sentence is written whether or not the default matches it.
+    out.push(sentence(P('r-sex-default', { used: SEX[sc.referenceSex.used] ?? sc.referenceSex.used })));
+  } else if (sc?.referenceSex && sc.referenceSex.used && sc.referenceSex.birth && sc.referenceSex.used !== sc.referenceSex.birth) {
     out.push(sentence(P('r-sex', { used: SEX[sc.referenceSex.used] ?? sc.referenceSex.used, birth: SEX[sc.referenceSex.birth] ?? sc.referenceSex.birth })));
   }
   return out.join(' ');
@@ -853,20 +987,23 @@ function volumesSection(ctx, P) {
 function dlcoSection(ctx, P) {
   const out = [];
   const dl = ctx.caseData.dlco;
-  if (dl && Number.isFinite(dl.raw) && Number.isFinite(dl.adjusted ?? ctx.m.dlco.value) && Number.isFinite(dl.hbGdl)) {
+  if (dl && Number.isFinite(dl.raw) && Number.isFinite(dl.adjusted ?? ctx.m.dlco.value) && ctx.hbOk) {
     out.push(P('ds-hb', { hb: dl.hbGdl.toFixed(1), raw: dl.raw.toFixed(1), adj: (dl.adjusted ?? ctx.m.dlco.value).toFixed(1) }));
+  } else if (dl && Number.isFinite(dl.raw) && !ctx.hbOk) {
+    out.push(P('ds-hb-missing', { raw: dl.raw.toFixed(1) }));
   }
   if (ctx.hbMaterial) {
     out.push(P('ds-hb-direction', { low: ctx.hbFactor > 1 }));
     if (ctx.rawCat && ctx.rawCat !== ctx.dl.category) out.push(sentence(cap(P('df-raw-misleads', { cat: DLCO_CAT[ctx.rawCat] }))));
   }
-  out.push(sentence(cap(P('df-cat', { mz: ctx.mz('dlco'), cat: dlcoCatPhrase(ctx, ctx.dl.category) }))));
+  out.push(sentence(cap(P(ctx.hbOk ? 'df-cat' : 'df-cat-nohb', { mz: ctx.mz('dlco'), cat: dlcoCatPhrase(ctx, ctx.dl.category) }))));
   const m = ctx.m;
-  if (ctx.has('va') && ctx.has('kco')) out.push(P('ds-value', { dlco: ctx.val('dlco'), pred: `${m.dlco.predicted.toFixed(1)} mL/min/mmHg`, va: ctx.val('va'), kco: ctx.val('kco') }));
-  const core = subtypeCore(ctx); if (core) out.push(sentence(cap(P('df-subtype', { core, hedge: ctx.m.dlco.borderline && ctx.dl.category !== 'normal' ? 'with the transfer factor only marginally outside its limit, ' : '' }))));
+  if (ctx.has('va') && ctx.has('kco')) out.push(P('ds-value', { which: ctx.hbOk ? 'adjusted DLCO' : 'DLCO', dlco: ctx.val('dlco'), pred: `${m.dlco.predicted.toFixed(1)} mL/min/mmHg`, va: ctx.val('va'), kco: ctx.val('kco') }));
+  const core = subtypeCore(ctx); if (core) out.push(sentence(cap(P('df-subtype', { core, hedge: subtypeHedge(ctx) }))));
   if (ctx.dl.vaOverTlc && ['obstruction', 'obstruction-low-fvc', 'mixed'].includes(ctx.pattern)) out.push(P('ds-vatlc', { pct: (100 * ctx.dl.vaOverTlc).toFixed(0) }));
-  const co = ctx.scen?.coHbPercent;
-  if (Number.isFinite(co) && co > 0) out.push(P('ds-cohb', { pct: co.toFixed(1) }));
+  // A carboxyhemoglobin value is stated only when co-oximetry was done; otherwise the section says it was not measured.
+  if (coHbMeasured(ctx.scen) && ctx.scen.coHbPercent > 0) out.push(P('ds-cohb', { pct: ctx.scen.coHbPercent.toFixed(1) }));
+  else if (coHbUnmeasured(ctx.scen)) out.push(P('ds-cohb-unmeasured', {}));
   if (ctx.dl.category === 'reduced') out.push(P('ds-severity', {}));
   return out.join(' ');
 }
@@ -891,8 +1028,8 @@ function bronchodilatorSection(ctx, P) {
   if (bd.discordant) {
     const opposite = (bd.dFev1 > 0) !== (bd.dFvc > 0);
     if (opposite) {
-      const fvcFell = bd.dFvc < 0;
-      out.push(P('bd-discordant', { kind: 'opposite', fell: fvcFell ? 'the FVC' : 'the FEV1', rose: fvcFell ? 'the FEV1' : 'the FVC' }));
+      // The explanation depends on which value fell: a shorter expiration lowers the FVC, whereas a weaker first-second effort or airway narrowing lowers the FEV1.
+      out.push(P('bd-discordant', { kind: bd.dFvc < 0 ? 'opposite-fvc-fell' : 'opposite-fev1-fell' }));
     } else {
       const fvcBigger = bd.pctPred.fvc > bd.pctPred.fev1;
       out.push(P('bd-discordant', {
@@ -951,11 +1088,13 @@ function buildFindings(ctx) {
     if (ctx.bd.discordant) add('bd-discordant', 'The FEV1 and FVC responses are discordant.');
   }
   if (ctx.hasDlco) {
-    add('dlco', `Diffusing capacity, adjusted for hemoglobin: ${DLCO_CAT[ctx.dl.category]}.`);
+    add('dlco', ctx.hbOk ? `Diffusing capacity, adjusted for hemoglobin: ${DLCO_CAT[ctx.dl.category]}.` : `Diffusing capacity, not adjusted because no hemoglobin was available: ${DLCO_CAT[ctx.dl.category]}.`);
+    if (!ctx.hbOk) add('hb-missing', 'Hemoglobin was not available: the DLCO is classified without adjustment.');
     const core = subtypeCore(ctx);
     if (core) add('dlco-subtype', `KCO and alveolar volume: ${core}.`);
     if (ctx.hbMaterial) add('hb-adjustment', `Hemoglobin adjustment is material (factor ${ctx.hbFactor.toFixed(2)})${ctx.rawCat && ctx.rawCat !== ctx.dl.category ? `; unadjusted DLCO would be classified as ${ctx.rawCat}` : ''}.`);
-    if (Number.isFinite(ctx.scen?.coHbPercent) && ctx.scen.coHbPercent > 0) add('cohb', `Carboxyhemoglobin ${ctx.scen.coHbPercent.toFixed(1)}%: not corrected for.`);
+    if (coHbMeasured(ctx.scen) && ctx.scen.coHbPercent > 0) add('cohb', `Carboxyhemoglobin ${ctx.scen.coHbPercent.toFixed(1)}%: not corrected for.`);
+    else if (coHbUnmeasured(ctx.scen)) add('cohb', 'Carboxyhemoglobin was not measured: the DLCO may be underestimated if smoking was recent.');
   }
   if (ctx.cmp) {
     if (ctx.flips.length) add('equation-change', `Classification differs between ${eqName(ctx.cmp.a.spirometryEquation)} and ${eqName(ctx.cmp.b.spirometryEquation)} for ${list(ctx.flips.map((c) => DISPLAY[c.measure]))}.`);
@@ -978,14 +1117,30 @@ const DX = {
   normal: ['asthma', 'interstitial lung disease', 'early chronic obstructive pulmonary disease'],
 };
 
+/** A wrong pattern a statement can assert for each true pattern. Restriction and mixed disease are offered only when a TLC was measured; without one they belong to the restriction-without-tlc flaw. */
+function wrongPatterns(ctx) {
+  const vol = ctx.hasVol;
+  const table = {
+    normal: ['obstruction', 'prism', ...(vol ? ['restriction'] : [])],
+    obstruction: ['normal', ...(vol ? ['mixed'] : [])],
+    'obstruction-low-fvc': ['normal'],
+    restriction: ['normal', 'nonspecific', 'obstruction'],
+    mixed: ['obstruction', 'restriction'],
+    nonspecific: ['restriction', 'normal'],
+    prism: ['normal', 'obstruction'],
+    indeterminate: ['normal'],
+  };
+  return (table[ctx.pattern] ?? ['normal']).slice(0, 2);
+}
+
 /** Applicability of each flaw to the case, as functions of the engine output only. */
 export function applicableFlaws(caseData, interp, cmp) {
   const ctx = makeContext(caseData, interp, cmp);
-  const flaws = new Set(['wrong-severity', 'over-diagnoses']);
+  const flaws = new Set(['wrong-pattern', 'over-diagnoses']);
+  if (ctx.sevScored) flaws.add('wrong-severity');
   if (!ctx.hasVol && (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc')) flaws.add('restriction-without-tlc');
   if (ctx.tier === 'limited') flaws.add('ignores-quality');
-  if (ctx.caveats.major.length) flaws.add('omits-major-caveat');
-  if (ctx.eqSensitive) flaws.add('ignores-equation-change');
+  if (ctx.eqSensitive && robustParams(ctx)) flaws.add('ignores-equation-change');
   if (ctx.bd && !ctx.bd.rulesAgree) flaws.add('wrong-bronchodilator-rule');
   if (pctPredTarget(ctx)) flaws.add('reads-percent-predicted-as-normal-range');
   if (ctx.hasDlco && ctx.rawCat && ctx.rawCat !== ctx.dl.category) flaws.add('dlco-unadjusted-for-hb');
@@ -1010,15 +1165,22 @@ function buildDistractors(ctx, P) {
   };
   const base = () => correctClaims(ctx);
 
-  // wrong-severity: two different wrong grades (for unscored or normal results, a grade the engine does not assign)
-  const trueWord = ctx.sevScored ? ctx.sevWord : null;
-  const wrong = SEV_WORDS.filter((w) => w !== trueWord);
-  const pick2 = ctx.sevScored ? wrong : (ctx.pattern === 'normal' || ctx.pattern === 'indeterminate' ? ['mild', 'moderate'] : ['moderate', 'severe']);
-  for (const w of pick2.slice(0, 2)) {
+  // wrong-severity: the two other bands. Severity is graded for obstruction only; stating a grade for another pattern is a convention of this tool, not an error.
+  if (ctx.sevScored) {
+    for (const w of SEV_WORDS.filter((x) => x !== ctx.sevWord)) {
+      const c = base();
+      c.severity = { kind: 'scored', word: w };
+      add('wrong-severity', c);
+    }
+  }
+
+  // wrong-pattern: a pattern the values do not show
+  for (const id of wrongPatterns(ctx)) {
     const c = base();
-    if (ctx.pattern === 'normal' || ctx.pattern === 'indeterminate') c.pattern = { id: 'obstruction', synthetic: true };
-    c.severity = { kind: 'scored', word: w, bare: c.pattern.synthetic };
-    add('wrong-severity', c);
+    c.pattern = { id, synthetic: true };
+    c.severity = id === 'obstruction' ? { kind: 'scored', word: ctx.sevWord ?? 'moderate', bare: true } : id === 'normal' ? { kind: 'none' } : { kind: 'unscored' };
+    c.pctpred = null;
+    add('wrong-pattern', c);
   }
 
   if (!ctx.hasVol && (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc')) {
@@ -1026,19 +1188,41 @@ function buildDistractors(ctx, P) {
     c.pattern = { id: ctx.pattern === 'prism' ? 'restriction' : 'mixed', synthetic: true };
     c.severity = { kind: 'unscored' };
     c.volumes = 'omit';
+    c.pctpred = null;
     add('restriction-without-tlc', c);
   }
   if (ctx.tier === 'limited') { const c = base(); c.quality = 'ignore'; add('ignores-quality', c); }
-  if (ctx.caveats.major.length) { const c = base(); c.caveats = 'omit'; add('omits-major-caveat', c); }
-  if (ctx.eqSensitive) { const c = base(); c.equation = 'robust'; add('ignores-equation-change', c); }
-  if (ctx.bd && !ctx.bd.rulesAgree) { const c = base(); c.bd = 'earlier-only'; add('wrong-bronchodilator-rule', c); }
-  const pp = pctPredTarget(ctx);
-  if (pp) { const c = base(); c.pctpred = pp; add('reads-percent-predicted-as-normal-range', c); }
+  if (ctx.eqSensitive && robustParams(ctx)) { const c = base(); c.equation = 'robust'; add('ignores-equation-change', c); }
+  if (ctx.bd && !ctx.bd.rulesAgree) { const c = base(); c.bd = 'earlier-as-2022'; add('wrong-bronchodilator-rule', c); }
+  if (pctPredTarget(ctx)) { const c = base(); c.pctpredStatus = 'wrong'; add('reads-percent-predicted-as-normal-range', c); }
   if (ctx.hasDlco && ctx.rawCat && ctx.rawCat !== ctx.dl.category) { const c = base(); c.dlco = { cat: ctx.rawCat }; add('dlco-unadjusted-for-hb', c); }
 
   const family = ctx.pattern === 'normal' ? 'normal' : ['obstruction', 'obstruction-low-fvc', 'indeterminate'].includes(ctx.pattern) ? 'obstruction' : 'restrictive';
   for (const term of DX[family]) { const c = base(); c.dx = { kind: family === 'normal' ? 'exclude' : 'diagnostic', term }; add('over-diagnoses', c); }
   return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Notes on the simulation
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Verification notes for the reader of a simulated report. They state which rules in the interpretation are conventions of this tool
+ * or rest on secondary sources, so that the physician text itself stays free of statements about the tool. Deterministic and not varied.
+ * @returns {string[]}
+ */
+function notesFor(ctx) {
+  const n = [];
+  if (ctx.sevScored) n.push('Severity of obstruction is graded from the FEV1 z-score with cut-points at −2.5 and −4.0; these cut-points come from secondary summaries of the 2022 ERS/ATS statement and have not been checked against it.');
+  else if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') n.push('Severity is graded for obstruction only in this simulation; the 2022 grading rule for the other patterns has not been checked against the statement.');
+  if (ctx.hasDlco && ctx.dl?.category === 'reduced') n.push('The degree of DLCO reduction is not scored in this simulation because the grading rule has not been checked against the 2022 statement.');
+  if (ctx.bd) n.push('The bronchodilator criterion of a change above 10% of the predicted value is taken from secondary summaries of the 2022 statement, and whether the boundary is inclusive has not been checked.');
+  if (ctx.hasVol && (ctx.m.tlc?.label === 'high' || ['rv', 'rv_tlc'].some((k) => ctx.has(k) && ctx.m[k].label === 'high'))) n.push('The definitions of hyperinflation (TLC above the upper limit) and air trapping (RV or RV/TLC above the upper limit) used here have not been checked against the statement.');
+  if (ctx.hasDlco && ctx.hbOk) n.push('The hemoglobin adjustment of the DLCO follows the Cotes formula, which has not been checked against the 2017 ERS/ATS standard.');
+  if (coHbMeasured(ctx.scen) || coHbUnmeasured(ctx.scen)) n.push('No numerical correction for carboxyhemoglobin is applied, and the size of such a correction is not settled in the sources reviewed.');
+  if (['tlc', 'dlco'].some((k) => ctx.m[k] && ctx.m[k].available !== false && ctx.m[k].matched === false)) n.push('The statement that the 2023 ATS statement advises against race adjustment of volumes and DLCO is taken from a search summary and has not been checked against the primary text.');
+  n.push('The wording of this interpretation is rule-based and has not been reviewed by a clinician.');
+  return n;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1052,10 +1236,11 @@ function buildDistractors(ctx, P) {
  * @param {object|null} [args.cmp] result of compareEquations()
  * @param {number} [args.seed] selects phrasing variants through createStream(seed, 'narrative')
  * @param {number} [args.forceVariant] test hook: use variant (forceVariant mod n) of every sentence type
- * @returns {{ sections: {id: string, title: string, text: string}[], finalStatement: string, findings: {id: string, text: string}[], distractors: {id: string, text: string, flaw: string}[] }}
+ * @param {boolean} [args.finalCaveats] false leaves the scenario limitations out of the final statement and its distractors (the quiz asks for them in a separate item)
+ * @returns {{ sections: {id: string, title: string, text: string}[], finalStatement: string, findings: {id: string, text: string}[], distractors: {id: string, text: string, flaw: string}[], notes: string[] }}
  */
-export function composeNarrative({ caseData, interp, cmp = null, seed = 0, forceVariant } = {}) {
-  const ctx = makeContext(caseData, interp, cmp);
+export function composeNarrative({ caseData, interp, cmp = null, seed = 0, forceVariant, finalCaveats = true } = {}) {
+  const ctx = makeContext(caseData, interp, cmp, { finalCaveats });
   const rng = createStream((Number.isFinite(seed) ? seed : 0) >>> 0, 'narrative');
   const P = (type, params) => {
     const variants = TYPES[type];
@@ -1078,7 +1263,7 @@ export function composeNarrative({ caseData, interp, cmp = null, seed = 0, force
   const finalStatement = buildFinal(ctx, correctClaims(ctx), P);
   const findings = buildFindings(ctx);
   const distractors = buildDistractors(ctx, P).filter((d) => d.text !== finalStatement);
-  return { sections, finalStatement, findings, distractors };
+  return { sections, finalStatement, findings, distractors, notes: notesFor(ctx) };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1140,7 +1325,8 @@ export function extractFacts(text) {
     if (!/DLCO|diffusing capacity/.test(c)) continue;
     const cat = /\bonly marginally reduced\b|\breduced\b/.test(c) ? 'reduced' : /\braised\b|\bonly marginally raised\b/.test(c) ? 'raised' : /within the reference range/.test(c) ? 'normal' : null;
     if (!cat) continue;
-    if (/without hemoglobin adjustment|before hemoglobin adjustment|unadjusted/i.test(c)) f.add(`dlco:unadjusted:${cat}`);
+    if (/no hemoglobin (?:was )?available/i.test(c)) { f.add(`dlco:${cat}`); f.add('dlco:hb-unavailable'); }
+    else if (/without hemoglobin adjustment|before hemoglobin adjustment|unadjusted/i.test(c)) f.add(`dlco:unadjusted:${cat}`);
     else {
       f.add(`dlco:${cat}`);
       if (/adjusted for hemoglobin|hemoglobin-adjusted/i.test(c)) f.add('dlco:hb-adjusted');
@@ -1160,10 +1346,10 @@ export function extractFacts(text) {
   if (/bronchodilator[^;.]* differs between the equations/.test(text)) f.add('equation:bd-changes');
   if (/could change under another reference equation/i.test(text)) f.add('equation:borderline');
   if (/no classification[^;.]* differs between|no classification differs/i.test(text)) f.add('equation:stable');
-  if (/unchanged by the choice of reference equation|does not depend on the reference equation/i.test(text)) f.add('equation:robust');
+  if (/the same(?: way)? under both reference equations/i.test(text)) f.add('equation:robust');
 
   if (/do(?:es)? not change the interpretation/i.test(text)) f.add('caveat:no-effect');
-  if (/(?:diagnostic of|diagnosis is|These findings exclude|These findings are enough to exclude|Together they establish)/.test(text)) f.add('diagnosis');
-  for (const m of text.matchAll(/(FEV1\/FVC ratio|FEV1|FVC|TLC|DLCO) is (\d+)% of predicted, (?:above|below) the conventional 80% threshold, and is therefore (normal|reduced)/g)) f.add(`pctpred:${m[1]}:${m[3]}`);
+  if (/(?:diagnostic of|These findings exclude|Together they establish|as the likely cause|an unlikely explanation)/.test(text)) f.add('diagnosis');
+  for (const m of text.matchAll(/(FEV1\/FVC ratio|FEV1|FVC|TLC|DLCO) is (\d+)% of predicted, (?:at or above|below) the conventional 80% threshold[^]{0,90}?(?:classified as|classification of) (within the reference range|below the lower limit of normal|above the upper limit of normal)/g)) f.add(`pctpred:${m[1]}:${m[3] === 'within the reference range' ? 'normal' : 'reduced'}`);
   return [...f].sort();
 }

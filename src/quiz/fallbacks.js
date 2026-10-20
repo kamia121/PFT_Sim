@@ -7,6 +7,7 @@
  */
 import { shuffled, pick } from './shuffle.js';
 import { PATTERNS } from '../interpret/interpret.js';
+import { hbKnown, hbLow, showBirthSex, sexUndisclosed } from '../app/format.js';
 
 /** Twelve neutral intake notes, each with two equivalent phrasings. */
 export const INTAKE_POOL = [
@@ -43,61 +44,104 @@ export function caseFacts(prep) {
   const g = c.report.grades;
   const p = c.report.patient;
   const measures = Object.values(a.measures);
+  const sc = c.scenario ?? null;
+  const trace = c.dlcoTrace ?? null;
   return {
     pre, post,
     poorFev1: POOR.includes(g.fev1), poorFvc: POOR.includes(g.fvc),
-    cough: hasFault(pre, 'cough'), early: hasFault(pre, 'early-termination'), slow: hasFault(pre, 'slow-start'), variable: hasFault(pre, 'variable-effort'),
+    cough: hasFault(pre, 'cough'), early: hasFault(pre, 'early-termination'), slow: hasFault(pre, 'slow-start'), variable: hasFault(pre, 'variable-effort'), glottic: hasFault(pre, 'glottic-closure'),
     postEarly: post ? hasFault(post, 'early-termination') : false,
     bmi: p.weightKg / (p.heightCm / 100) ** 2,
-    hb: c.dlco ? c.dlco.hbGdl : null,
+    // A missing hemoglobin is null. It is neither low nor normal, and `null < 11` is true in JavaScript, so it is kept apart on purpose.
+    hb: hbKnown(c.dlco) ? c.dlco.hbGdl : null,
+    hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
     hasVolumes: Boolean(c.volumes), hasDlco: Boolean(c.dlco),
+    lowErv: a.flags.some((x) => x.id === 'low-erv'),
     europeanApplied: measures.some((m) => m.available !== false && m.matched === false),
     unavailable: measures.some((m) => m.available === false),
     equationFlip: cmp.labelChanges.length > 0 || cmp.patternChanged,
     borderline: ['fev1', 'fvc', 'fev1_fvc', 'tlc', 'dlco'].some((k) => a.measures[k]?.borderline),
     bdVariant: c.groundTruth.bdVariant ?? null,
+    // Scenario facts the chart shows to the learner.
+    medicationNote: Boolean(sc?.ids?.some((id) => id.startsWith('med-'))) || Number.isFinite(sc?.preTest?.lastSabaHours) || Number.isFinite(sc?.preTest?.lastLabaHours),
+    recentSmoke: Number.isFinite(sc?.preTest?.lastSmokingHours) && sc.preTest.lastSmokingHours < 1,
+    estimatedHeight: Boolean(sc?.height) && sc.height.source !== 'measured',
+    sexAssumption: showBirthSex(sc) || sexUndisclosed(sc),
+    lowInspiredVolume: Number.isFinite(trace?.inspired?.viOverVc) && trace.inspired.viOverVc < 0.9,
   };
 }
 
 /**
- * Statements that limit or qualify this interpretation, and plausible statements that do not apply.
- * @returns {{ caveats: { id: string, text: string, weight: 'major'|'minor' }[], decoyCaveats: { id: string, text: string, why: string }[] }}
+ * Each rule is one statement about limits on an interpretation. The statement is true in general. It applies to a case when
+ * `applies(f)` holds, and it is offered as a distractor when `decoy(f)` holds, so the same words are a correct option in one case and
+ * a wrong one in another and only the case facts tell them apart. `why` explains, after submission, which fact makes it irrelevant.
+ * `topic` keeps two statements about the same subject out of one question.
+ */
+const RULES = [
+  { id: 'fb-quality', topic: 'quality', weight: 'major', text: 'A grade of D or poorer for the FEV₁ or the FVC means that the reported values may understate what the patient can achieve, so the classification is provisional until the test is repeated.',
+    applies: (f, a) => a.qualityLimited, decoy: (f, a) => !a.qualityLimited, why: 'Both quality grades are better than D.' },
+  { id: 'fb-early', topic: 'early', weight: 'major', text: 'Expiration that ends early lowers the FVC and raises the FEV₁/FVC ratio, so obstruction may be understated and a low FVC may not reflect lung volume.',
+    applies: (f) => f.poorFvc && f.early, decoy: (f) => !f.early, why: 'No pre-bronchodilator maneuver ended early.' },
+  { id: 'fb-cough', topic: 'cough', weight: 'minor', text: 'A cough in the first second makes the FEV₁ of the affected maneuver unreliable, which weakens confidence in the FEV₁ and in the ratio.',
+    applies: (f) => f.poorFev1 && f.cough, decoy: (f) => !f.cough, why: 'No pre-bronchodilator maneuver recorded a cough.' },
+  { id: 'fb-slow', topic: 'slow', weight: 'minor', text: 'A slow start with a large back-extrapolated volume overstates the FEV₁, because the first second of the forced expiration begins late.',
+    applies: (f) => f.poorFev1 && f.slow, decoy: (f) => !f.slow, why: 'No maneuver had a slow start.' },
+  { id: 'fb-variable', topic: 'variable', weight: 'minor', text: 'Variable effort between maneuvers means that the largest values may not be the patient’s maximal values.',
+    applies: (f) => (f.poorFev1 || f.poorFvc) && f.variable, decoy: (f) => !f.variable, why: 'The maneuvers did not show variable effort.' },
+  { id: 'fb-equation', topic: 'equation', weight: 'major', text: 'A spirometry classification that changes between GLI-2012 and GLI Global shows that a result close to the lower limit of normal depends on the reference equation chosen.',
+    applies: (f) => f.equationFlip, decoy: (f) => !f.equationFlip, why: 'No spirometry classification changes between GLI-2012 and GLI Global.' },
+  { id: 'fb-borderline', topic: 'borderline', weight: 'minor', text: 'A value within 0.25 z-score units of a limit can change its label through measurement variability alone.',
+    applies: (f) => !f.equationFlip && f.borderline, decoy: (f) => !f.borderline, why: 'No value lies within 0.25 z-score units of a limit.' },
+  { id: 'fb-volumes-needed', topic: 'volumes', weight: 'major', text: 'Without a measured TLC a low FVC cannot be assigned to restriction or to air trapping, so lung volumes are needed.',
+    applies: (f, a) => ['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: (f) => f.hasVolumes, why: 'Lung volumes were measured.' },
+  { id: 'fb-no-volumes', topic: 'volumes', weight: 'minor', text: 'When lung volumes and diffusing capacity are not measured, restriction and gas-transfer impairment are not assessed.',
+    applies: (f, a) => !f.hasVolumes && !['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: () => false, why: '' },
+  { id: 'fb-european', topic: 'european', weight: 'minor', text: 'Lung volume and diffusing capacity equations derived in people of European ancestry may represent a patient of another group less well, which limits how firmly those indices can be classified.',
+    applies: (f) => f.europeanApplied, decoy: (f) => !f.europeanApplied && (f.hasVolumes || f.hasDlco), why: 'The reference equations for volumes and diffusing capacity match the group on the requisition.' },
+  { id: 'fb-hb', topic: 'hemoglobin', weight: 'minor', text: 'A low hemoglobin concentration lowers the measured DLCO and KCO while the VA is unchanged, which is why the interpretation rests on the hemoglobin-adjusted value.',
+    applies: (f) => f.hasDlco && hbLow(f.hb), decoy: (f) => f.hasDlco && !f.hbMissing && !hbLow(f.hb), why: 'The hemoglobin concentration is not low.' },
+  { id: 'fb-hb-missing', topic: 'hemoglobin', weight: 'major', text: 'Without a hemoglobin concentration the DLCO cannot be adjusted, so a low hemoglobin could lower it and a high hemoglobin could raise it independently of the lung.',
+    applies: (f, a, c) => f.hbMissing && !(c.scenario?.caveats ?? []).some((x) => x.id === 'hb-missing-dlco-unadjusted'), decoy: (f) => f.hasDlco && !f.hbMissing, why: 'A hemoglobin concentration was available, so the DLCO was adjusted.' },
+  { id: 'fb-erv', topic: 'erv', weight: 'minor', text: 'A low expiratory reserve volume with obesity reflects chest wall load; it qualifies the volumes and is not a pattern.',
+    applies: (f) => f.lowErv, decoy: (f) => f.hasVolumes && !f.lowErv, why: 'The expiratory reserve volume is not below its lower limit.' },
+  { id: 'fb-bd-artifact', topic: 'bd', weight: 'major', text: 'A post-bronchodilator expiration that ends early lowers the FVC and makes the ratio look better, so the fall in FVC and the apparent improvement in the ratio are technique effects and not a response.',
+    applies: (f) => Boolean(f.post) && f.bdVariant === 'artifact', decoy: (f) => !f.post || (f.bdVariant !== 'artifact' && !f.postEarly), why: 'No post-bronchodilator technique problem is present, or no bronchodilator study was done.' },
+  { id: 'fb-bd-volume', topic: 'bd', weight: 'minor', text: 'A rise in the FVC that exceeds the rise in the FEV₁ after a bronchodilator is a volume response that reflects air trapping and does not require the ratio to change.',
+    applies: (f) => Boolean(f.post) && f.bdVariant === 'volume', decoy: (f) => f.bdVariant !== 'volume', why: 'The bronchodilator response was not a volume response, or no bronchodilator study was done.' },
+  { id: 'fb-bd-rules', topic: 'bd', weight: 'minor', text: 'When the 2022 rule (percent of predicted) and the earlier rule (percent of baseline) disagree, the bronchodilator conclusion depends on the criterion.',
+    applies: (f, a) => Boolean(a.bd) && !a.bd.rulesAgree && f.bdVariant === null, decoy: (f, a) => !a.bd || a.bd.rulesAgree, why: 'The two bronchodilator criteria agree, or no bronchodilator study was done.' },
+  // Statements that never become a caveat in the built-in set; they are irrelevant whenever the stated fact is absent.
+  { id: 'fb-d-age', topic: 'age', text: 'An age outside the range of a reference equation means that predicted values cannot be computed or must be extrapolated.',
+    decoy: (f) => !f.unavailable, why: 'The age lies inside the range of every equation used.' },
+  { id: 'fb-d-saba', topic: 'medication', text: 'A short-acting bronchodilator taken inside its withholding window can raise the baseline FEV₁ and FVC and narrow the bronchodilator increment.',
+    decoy: (f) => !f.medicationNote, why: 'No bronchodilator or other inhaled medication is recorded before the test.' },
+  { id: 'fb-d-smoke', topic: 'smoke', text: 'Smoke or vapor inhaled within the hour before testing can cause bronchoconstriction and cough, lowering the FEV₁ and FVC.',
+    decoy: (f) => !f.recentSmoke, why: 'No smoking within the hour before testing is recorded.' },
+  { id: 'fb-d-height', topic: 'height', text: 'A height estimated from arm span or ulna length carries an error of several centimeters that shifts every predicted value and z-score.',
+    decoy: (f) => !f.estimatedHeight, why: 'The height was measured.' },
+  { id: 'fb-d-sex', topic: 'sex', text: 'A reference sex that differs from the sex assigned at birth can move z-scores across the lower limit without any change in the lungs.',
+    decoy: (f) => !f.sexAssumption, why: 'The reference sex is the patient’s recorded sex, and no assumption about sex is recorded.' },
+  { id: 'fb-d-vi', topic: 'vi', text: 'An incomplete inhalation before the breath-hold lowers the VA and the DLCO and raises the KCO artifactually.',
+    decoy: (f) => f.hasDlco && !f.lowInspiredVolume, why: 'The inspired volume reached at least 90% of the vital capacity.' },
+  { id: 'fb-d-glottic', topic: 'glottic', text: 'Glottic closure ends expiration abruptly, which makes the FVC unacceptable and raises the ratio.',
+    decoy: (f) => !f.glottic, why: 'No maneuver showed glottic closure.' },
+];
+
+/**
+ * Statements that limit or qualify this interpretation, and true statements that do not apply to this case.
+ * @returns {{ caveats: { id: string, text: string, weight: 'major'|'minor', topic: string }[], decoyCaveats: { id: string, text: string, why: string, topic: string }[] }}
  */
 export function fallbackCaveats(prep) {
   const f = caseFacts(prep);
   const { a, caseData: c } = prep;
-  const caveats = [];
-  const add = (cond, id, text, weight) => { if (cond) caveats.push({ id, text, weight }); };
-  add(a.qualityLimited, 'fb-quality', 'The FEV₁ or FVC grade is D or poorer, so the reported values may understate what the patient can achieve and the classification is provisional until the test is repeated.', 'major');
-  add(f.poorFvc && f.early, 'fb-early', 'Expiration that ended early lowers the FVC and raises the FEV₁/FVC ratio, so obstruction may be understated and a low FVC may not reflect lung volume.', 'major');
-  add(f.poorFev1 && f.cough, 'fb-cough', 'A cough in the first second lowers the FEV₁ of the affected maneuvers, which weakens confidence in the FEV₁ and in the ratio.', 'minor');
-  add(f.poorFev1 && f.slow, 'fb-slow', 'A slow start with a large back-extrapolated volume overstates the FEV₁, because the first second of the forced expiration begins late.', 'minor');
-  add((f.poorFev1 || f.poorFvc) && f.variable, 'fb-variable', 'Variable effort between maneuvers means that the largest values may not be the patient’s maximal values.', 'minor');
-  add(f.equationFlip, 'fb-equation', 'A spirometry classification changes between GLI-2012 and GLI Global, so a result close to the lower limit of normal depends on the reference equation chosen.', 'major');
-  add(!f.equationFlip && f.borderline, 'fb-borderline', 'At least one value lies within 0.25 z-score units of a limit, where measurement variability alone can change the label.', 'minor');
-  add(['prism', 'obstruction-low-fvc'].includes(a.pattern), 'fb-volumes-needed', 'Lung volumes were not measured, so a low FVC cannot be assigned to restriction or to air trapping.', 'major');
-  add(!f.hasVolumes && !['prism', 'obstruction-low-fvc'].includes(a.pattern), 'fb-no-volumes', 'Lung volumes and diffusing capacity were not measured, so restriction and gas-transfer impairment are not assessed.', 'minor');
-  add(f.europeanApplied, 'fb-european', 'The lung volume and diffusing capacity equations were derived in people of European ancestry and are applied to a patient of another group.', 'minor');
-  add(f.hasDlco && f.hb < 11, 'fb-hb', 'The hemoglobin is low, which lowers the measured DLCO by itself; the interpretation rests on the hemoglobin-adjusted value.', 'minor');
-  add(a.flags.some((x) => x.id === 'low-erv'), 'fb-erv', 'A low expiratory reserve volume with obesity reflects chest wall load; it qualifies the volumes and is not a pattern.', 'minor');
-  add(Boolean(f.post) && f.bdVariant === 'artifact', 'fb-bd-artifact', 'The post-bronchodilator expirations ended early, so the fall in FVC and the apparent improvement in the ratio are technique effects and not a response.', 'major');
-  add(Boolean(f.post) && f.bdVariant === 'volume', 'fb-bd-volume', 'The FVC rose more than the FEV₁ after the bronchodilator, a volume response that reflects air trapping and does not require the ratio to change.', 'minor');
-  add(Boolean(a.bd) && !a.bd.rulesAgree && f.bdVariant === null, 'fb-bd-rules', 'The bronchodilator conclusion depends on the criterion: the 2022 rule (percent of predicted) and the earlier rule (percent of baseline) disagree.', 'minor');
-
-  const decoys = [];
-  const dec = (cond, id, text, why) => { if (cond) decoys.push({ id, text, why }); };
-  dec(!f.cough, 'fb-d-cough', 'A cough in the first second invalidates the FEV₁ in this session.', 'No maneuver in the pre-bronchodilator set recorded a cough.');
-  dec(!f.early, 'fb-d-early', 'Expiration that ended early lowers the FVC and raises the FEV₁/FVC ratio.', 'No pre-bronchodilator maneuver ended early.');
-  dec(!f.slow, 'fb-d-slow', 'A slow start with a large back-extrapolated volume overstates the FEV₁.', 'No maneuver had a slow start.');
-  dec(!f.variable, 'fb-d-variable', 'Variable effort between maneuvers means that the largest values may not be maximal.', 'The maneuvers did not show variable effort.');
-  dec(!(f.hasDlco && f.hb < 11), 'fb-d-hb', 'Anemia lowers the measured DLCO and qualifies its interpretation.', 'The hemoglobin concentration is not low enough to matter, or no diffusing capacity was measured.');
-  dec(f.bmi < 30, 'fb-d-obesity', 'Obesity lowers the expiratory reserve volume and qualifies the interpretation of the volumes.', 'The body mass index is below the obese range.');
-  dec(!f.post || (f.bdVariant !== 'artifact' && !f.postEarly), 'fb-d-postearly', 'The post-bronchodilator expiration ended early, so the change in FVC is a technique effect.', 'No post-bronchodilator technique problem is present, or no bronchodilator study was done.');
-  dec(!f.europeanApplied, 'fb-d-european', 'The volume and diffusing capacity equations were derived in a different ancestry group from the patient.', 'Those equations match the group on the requisition, or no volumes were measured.');
-  dec(f.hasVolumes, 'fb-d-novol', 'Lung volumes were not measured, so restriction was not assessed.', 'Lung volumes were measured.');
-  dec(!f.unavailable, 'fb-d-age', 'The patient’s age lies outside the range of the reference equations, so the predicted values are extrapolated.', 'The age lies inside the range of every equation used.');
-  void c;
-  return { caveats, decoyCaveats: decoys };
+  const caveats = [], decoys = [];
+  for (const r of RULES) {
+    if (r.applies?.(f, a, c)) caveats.push({ id: r.id, text: r.text, weight: r.weight, topic: r.topic });
+    else if (r.decoy?.(f, a, c)) decoys.push({ id: r.id, text: r.text, why: r.why, topic: r.topic });
+  }
+  // A subject that is a caveat in this case is never also offered as a distractor.
+  const live = new Set(caveats.map((x) => x.topic));
+  return { caveats, decoyCaveats: decoys.filter((d) => !live.has(d.topic)) };
 }
 
 // ---------------------------------------------------------------------------------------------

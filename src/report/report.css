@@ -90,6 +90,10 @@
 .pft-report .rpt-box ul { margin: 0; padding-left: 16px; }
 .pft-report .rpt-box li { margin-bottom: 2px; }
 .pft-report .rpt-none { color: var(--rpt-muted); font-style: italic; }
+.pft-report .rpt-simnotes { margin-top: 6px; padding-top: 4px; border-top: 1px solid var(--rpt-hair); font-size: 8pt; color: var(--rpt-muted); }
+.pft-report .rpt-simnotes h3 { font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; }
+.pft-report .rpt-simnotes ul { margin: 2px 0 0; padding-left: 14px; }
+.pft-report .rpt-watermark { display: none; }
 .pft-report .rpt-end { break-inside: avoid; margin-top: 8px; }
 .pft-report .rpt-sign { display: flex; gap: 24px; margin: 10px 0 4px; }
 .pft-report .rpt-sign > div { flex: 1 1 auto; font-size: 8.5pt; color: var(--rpt-muted); }
@@ -119,6 +123,8 @@ body.rpt-standalone .pft-report { margin: 12px auto; }
 }
 
 @media print {
+  /* Diagonal watermark; a fixed element is repeated on every printed page. */
+  .pft-report .rpt-watermark { display: block; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-32deg); width: 11in; text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(0, 0, 0, .09); pointer-events: none; user-select: none; z-index: 5; white-space: nowrap; }
   html, body { background: #fff !important; }
   body.rpt-standalone { background: #fff; }
   .no-print { display: none !important; }

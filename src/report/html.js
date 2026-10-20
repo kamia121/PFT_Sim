@@ -12,7 +12,7 @@ const BEST_KEYS = new Set(['pre', 'post', 'result']);
 /** @page rule: margin boxes carry the case code and the page counter (supported by current Chromium). */
 export function pageRuleCss(model) {
   const code = String(model.meta.caseCode).replace(/[^A-Z0-9-]/gi, '');
-  return `@page{size:letter;margin:.45in .5in .6in}@media print{@page{@bottom-left{content:"PFT Sim, generator version ${model.meta.generatorVersion}. Case ${code}. Simulated report, not a patient record.";font:8pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:8pt Arial,sans-serif;color:#000}}}`;
+  return `@page{size:letter;margin:.45in .5in .6in}@media print{@page{@bottom-left{content:"SIMULATED REPORT - educational use only. PFT Sim, generator version ${model.meta.generatorVersion}. Case ${code}. Not a patient record.";font:8pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:8pt Arial,sans-serif;color:#000}}}`;
 }
 
 function tableHtml(table, { interactive }, sectionTitle = null) {
@@ -75,11 +75,15 @@ export function renderReportHtml(model, { interactive = false } = {}) {
   const sections = parts.map((p) => p.html).join('');
   const comments = model.technologistComments.length ? `<ul>${model.technologistComments.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="rpt-none">No comments recorded.</p>';
   const interp = model.interpretation ? paragraphs(model.interpretation) : '<p class="rpt-none">Interpretation to be entered by the reader.</p>';
-  const boxes = `<div class="rpt-boxes"><section class="rpt-box"><h2>Technologist comments</h2>${comments}</section><section class="rpt-box rpt-interp"><h2>Interpretation</h2>${interp}</section></div>`;
+  // Verification notes sit apart from the interpretation, so that the statement a physician would write stays free of remarks about the simulation.
+  const simNotes = model.interpretation && model.interpretationNotes?.length
+    ? `<div class="rpt-simnotes"><h3>Notes on this simulation</h3><ul>${model.interpretationNotes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
+  const boxes = `<div class="rpt-boxes"><section class="rpt-box"><h2>Technologist comments</h2>${comments}</section><section class="rpt-box rpt-interp"><h2>Interpretation</h2>${interp}${simNotes}</section></div>`;
   const foot = model.footer;
   const footer = `<footer class="rpt-end"><div class="rpt-sign"><div><span class="rpt-line"></span>${esc(foot.signatureLabel)}</div><div><span class="rpt-line short"></span>${esc(foot.dateLabel)}</div></div>`
     + `<p class="rpt-disc">${esc(foot.disclaimer)} <span class="rpt-gen">${esc(foot.generator)}. Case ${esc(foot.caseCode)}.</span></p></footer>`;
-  return `<article class="pft-report" aria-label="Simulated pulmonary function report, case ${esc(model.meta.caseCode)}"><style>${pageRuleCss(model)}</style>${head}${sections}${boxes}${footer}</article>`;
+  const watermark = `<div class="rpt-watermark" aria-hidden="true">${esc(model.meta.marker ?? 'SIMULATED REPORT - educational use only')}</div>`;
+  return `<article class="pft-report" aria-label="Simulated pulmonary function report, case ${esc(model.meta.caseCode)}"><style>${pageRuleCss(model)}</style>${watermark}${head}${sections}${boxes}${footer}</article>`;
 }
 
 /**
