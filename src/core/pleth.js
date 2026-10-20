@@ -16,7 +16,8 @@
  * effort lies to the right.
  *
  * Random streams used (none are shared with the rest of case generation): `pleth-setup`,
- * `pleth-trial-<i>` and `pleth-raw`.
+ * `pleth-trial-<i>`, `pleth-raw` (one draw: the physiological Raw target), `pleth-resistance` and
+ * `pleth-timeline-<i>` (the last two draw only display traces).
  *
  * Every number marked unverified below is a teaching value, not a published finding. See
  * docs/pleth-dlco-model.md.
@@ -73,8 +74,8 @@ import { createStream } from './prng.js';
  * @typedef {object} PlethTimelineLevels
  * @property {number} reportedFrcL reported FRC (mean of the acceptable trials): the anchor of the axis
  * @property {number} trialFrcL this trial's FRC from the plotted arrays; the volume at closure
- * @property {number} closureOffsetL trialFrcL minus the stable end-expiratory level that precedes it; nonzero when the shutter closed away from the stable level
- * @property {number} stableEelL stable end-expiratory level (the reported FRC for every trial)
+ * @property {number} closureOffsetL trialFrcL minus stableEelL; far from zero when the shutter closed away from the stable level (unstable end-tidal level)
+ * @property {number} stableEelL end-expiratory level of the first quiet breath, before any drift toward the closure level; the open-shutter breath returns to it and the slow expiration starts from it
  * @property {number} rvL residual volume at the end of the slow expiration (reported FRC minus ERV)
  * @property {number} tlcL total lung capacity at the end of the record (reported FRC plus IC)
  * @property {number} ervL expiratory reserve volume from the stable level (case value)
@@ -135,7 +136,6 @@ import { createStream } from './prng.js';
  * @property {number[]} pbox box pressure signal, Pa, compression positive
  * @property {number[]} shiftMl shift volume, mL (derived from pbox)
  * @property {number[]} volumeL tidal volume above the end-expiratory level, L
- * @property {number[]} phase cumulative breath phase, rad
  * @property {number[]} breath 0-based breath index of each sample
  * @property {PlethRawMorphology} morphology
  * @property {PlethRawEstimator} estimator
@@ -404,50 +404,222 @@ export function gradeFrc(acceptableValues, usableCount) {
   return 'E';
 }
 
-/** Open-shutter airway resistance loop from the case physiology. */
-function buildRawLoop({ seed, box, tgvTrue, frcReported, u, z, phenotype, tech }) {
-  const r = createStream(seed, 'pleth-raw');
-  const dt = 0.05;
+// ---------------------------------------------------------------------------------------------------------------
+// Display traces: tidal breathing, the open-shutter resistance loop and the volume-time record.
+// Random streams used here are `pleth-raw` (first draw only, the physiological Raw target, as before),
+// `pleth-resistance`, and `pleth-timeline-<trial>`. No other stream is read.
+// ---------------------------------------------------------------------------------------------------------------
+
+const TAU = 2 * Math.PI;
+const smoothstep = (x) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };
+const smootherstep = (x) => { const c = clamp(x, 0, 1); return c * c * c * (c * (6 * c - 15) + 10); };
+
+/** Shift volume in mL per pascal of box pressure: the box converts a thoracic volume change dV into dPbox = PB dV / Vbox. */
+export const shiftMlPerPa = (box) => (box.freeVolumeL / box.barometricPa) * 1000;
+
+/**
+ * Breathing mode and loop-shape constants of the resistance trace. The breathing mode is quiet tidal breathing (VT 0.85 L,
+ * Ti 1.3 s, Te 1.65 s, after Kraemer 2021, PMC, adults in the box). Morphology parameters are teaching values (unverified);
+ * the shape of each morphology is graded by the source of its description in docs/research/pleth-dlco.md section 1.5.
+ */
+export const RAW_LOOP_MODEL = {
+  version: 2,
+  breathingMode: { id: 'tidal', label: 'tidal breathing', tidalVolumeL: 0.85, inspiratoryTimeS: 1.3, expiratoryTimeS: 1.65, verification: 'secondary' },
+  fitRangeLs: { value: 0.5, verification: 'secondary' },
+  nBreaths: 5,
+  sampleIntervalS: 0.04,
+  referenceFlowLs: { value: 0.55, note: 'scale of the quadrature opening term', verification: 'unverified' },
+  flowBlendEpsLs: { value: 0.08, note: 'width of the tanh blend between the inspiratory and expiratory limbs', verification: 'unverified' },
+  expiratoryOpeningAsymmetry: { value: 0.35, note: 'the opening term is larger on expiration and smaller on inspiration, by a smooth function of phase, equal at the two zero-flow points', verification: 'unverified' },
+  verification: 'unverified',
+};
+
+/** Morphologies of the resistance loop (flow against shift signal). The first letter of `tag` grades the shape source: verified, secondary or MEM. */
+export const RAW_MORPHOLOGIES = {
+  closed: {
+    label: 'Closed, near-linear',
+    appearance: 'steep, nearly straight loop through the origin; the inspiratory and expiratory limbs superimpose',
+    source: { text: 'Normal: steep, nearly straight, closed loop (Criee 2011 summary and a society slide set), docs/research/pleth-dlco.md 1.5', tag: 'secondary' },
+    params: () => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.12, opening: 0.015 }),
+  },
+  'golf-club': {
+    label: 'Golf club (expiratory flow limitation)',
+    appearance: 'inspiratory limb near linear; the expiratory limb bends toward the shift axis as flow rises, and the loop opens at zero flow',
+    source: { text: 'Expiratory limb flattens, bends or opens, "golf club"; opening at zero flow with air trapping (docs/research/pleth-dlco.md 1.5; Kraemer 2021, PMC). Direction of rotation: counterclockwise in expiration (PMC8223795). Size of the bend and of the opening is not published', tag: 'secondary' },
+    params: (u) => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.6 + 2.2 * u, opening: 0.06 + 0.35 * u }),
+  },
+  restriction: {
+    label: 'Steep, closed (restriction)',
+    appearance: 'steep, narrow, closed loop: low resistance for the small lung and no distortion unless there is coexisting airway disease',
+    source: { text: 'Restriction: steep curve excludes relevant obstruction; sRaw may look normal or low (docs/research/pleth-dlco.md 1.5, memory-based inference from the steep-curve statement)', tag: 'MEM' },
+    params: () => ({ cubicInspiratory: 0.05, cubicExpiratory: 0.05, opening: 0.01 }),
+  },
+  sigmoid: {
+    label: 'Sigmoid (central or extrathoracic obstruction)',
+    appearance: 'S-shaped loop: resistance rises with flow on both limbs, with the flow dependence at least as large on inspiration',
+    source: { text: 'Central or extrathoracic obstruction: sigmoid (S-shaped) loop, raised inspiratory resistance for extrathoracic obstruction (docs/research/pleth-dlco.md 1.5). No archetype in this simulator is a central obstruction, so this shape is used only when requested', tag: 'secondary' },
+    params: () => ({ cubicInspiratory: 1.4, cubicExpiratory: 1.0, opening: 0.05 }),
+  },
+};
+
+/**
+ * Quiet tidal breathing as one phase-continuous record. Lung volume above the end-expiratory level is
+ *   V(t) = (VT(t) / 2) (1 - cos theta(t)),   d theta / dt = w0 (1 + eps sin theta) (1 + mu(t)),
+ * so every breath is one cycle of a single phase theta (0 at end-expiration, pi at end-inspiration). eps = sin((pi/2)(Te - Ti)/(Te + Ti))
+ * makes the inspiratory half of the cycle last Ti and the expiratory half Te; w0 gives the period Ti + Te. Flow follows from dV/dt, so it is smooth through
+ * every reversal (it vanishes with zero slope in volume at theta = 0 and pi) and nothing switches at zero flow. mu(t) and the
+ * relative change of VT(t) are slow sums of two sinusoids (breath-to-breath variation of `varFrac`), not per-breath jumps.
+ * Flow is returned with expiration positive.
+ */
+function simulateTidal({ rng, nBreaths, vt, ti, te, dt, varFrac }) {
+  const eps = Math.sin((Math.PI / 2) * ((te - ti) / (te + ti)));
+  const w0 = TAU / ((ti + te) * Math.sqrt(1 - eps * eps));
+  const waves = (amp) => [0, 1].map(() => ({ a: amp * (0.5 + 0.5 * rng.uniform()), om: TAU / (7 + 12 * rng.uniform()), ph: TAU * rng.uniform() }));
+  const rateW = waves(0.5 * varFrac), ampW = waves(varFrac);
+  const sumW = (ws, t) => ws.reduce((s, w) => s + w.a * Math.sin(w.om * t + w.ph), 0);
+  const dsumW = (ws, t) => ws.reduce((s, w) => s + w.a * w.om * Math.cos(w.om * t + w.ph), 0);
+  const rate = (th, t) => w0 * (1 + eps * Math.sin(th)) * (1 + sumW(rateW, t));
+  const rk4 = (th, t, h) => {
+    const k1 = rate(th, t), k2 = rate(th + 0.5 * h * k1, t + 0.5 * h), k3 = rate(th + 0.5 * h * k2, t + 0.5 * h), k4 = rate(th + h * k3, t + h);
+    return (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+  };
+  const end = nBreaths * TAU;
+  const t = [0], theta = [0];
+  let th = 0, tt = 0;
+  while (th < end - 1e-12) {
+    let h = dt;
+    const step = rk4(th, tt, h);
+    const remaining = end - th;
+    if (remaining <= 1.5 * step) {
+      // the record ends on the last end-expiration; the remaining phase is covered in one or two steps, none much shorter than dt
+      const nSub = remaining <= step ? 1 : 2;
+      h = (h * remaining) / step / nSub;
+      for (let q = 0; q < nSub; q++) {
+        th = q === nSub - 1 ? end : th + rk4(th, tt, h);
+        tt += h;
+        t.push(tt); theta.push(th);
+      }
+      break;
+    }
+    th += step; tt += h;
+    t.push(tt); theta.push(th);
+  }
+  const vol = [], flow = [];
+  for (let j = 0; j < t.length; j++) {
+    const vtj = vt * (1 + sumW(ampW, t[j])), dvt = vt * dsumW(ampW, t[j]);
+    const c = Math.cos(theta[j]), s = Math.sin(theta[j]);
+    vol.push(0.5 * vtj * (1 - c));
+    flow.push(-(0.5 * dvt * (1 - c) + 0.5 * vtj * s * rate(theta[j], t[j])));
+  }
+  const breath = theta.map((x) => Math.min(nBreaths - 1, Math.floor(x / TAU + 1e-9)));
+  // realized timing and volume of each breath, by linear interpolation of the half-cycle crossings
+  const crossing = (level) => {
+    const j = theta.findIndex((x) => x >= level);
+    if (j <= 0) return t[Math.max(j, 0)];
+    return t[j - 1] + ((level - theta[j - 1]) / (theta[j] - theta[j - 1])) * (t[j] - t[j - 1]);
+  };
+  const breaths = Array.from({ length: nBreaths }, (_, b) => {
+    const a = crossing(b * TAU), m = crossing(b * TAU + Math.PI), e = crossing((b + 1) * TAU);
+    return { ti: m - a, te: e - m, vt: Math.max(...vol.filter((_, j) => breath[j] === b)) };
+  });
+  return { t, theta, vol, flow, breath, breaths };
+}
+
+/** Which morphology a case gets. Sigmoid is never chosen automatically (no archetype is a central or extrathoracic obstruction). */
+function pickMorphology({ requested, obstructed, restricted }) {
+  if (requested && RAW_MORPHOLOGIES[requested]) return requested;
+  if (obstructed) return 'golf-club';
+  if (restricted) return 'restriction';
+  return 'closed';
+}
+
+/** Remove the least-squares fit on [1, x] within the window from y, so the fit slope within the window is not changed by y. */
+function orthogonalize(y, x, inWindow) {
+  const xs = [], ys = [];
+  for (let j = 0; j < y.length; j++) if (inWindow[j]) { xs.push(x[j]); ys.push(y[j]); }
+  const slope = lsSlope(xs, ys), my = mean(ys), mx = mean(xs);
+  return y.map((q, j) => q - (my + slope * (x[j] - mx)));
+}
+
+/**
+ * Open-shutter airway resistance loop from the case physiology, built from one phase-continuous tidal record.
+ * Alveolar pressure of the noise-free loop is p = S * [ g(v) - h(v) cos(theta) ] with
+ *   g(v) = v + (kI (1 - w(v)) + kE w(v)) v^3,   w(v) = (1 + tanh(v / eps)) / 2
+ * (flow-dependent resistance, the expiratory term blended in by tanh so nothing switches at v = 0) and a quadrature
+ * opening term h cos(theta) that is symmetric about the fit line, so it adds no slope. The scale S is set so the least-squares
+ * slope over |flow| <= 0.5 L/s equals the physiological Raw target of the case; the noise is smooth and made orthogonal to
+ * [1, flow] inside the window, so the recomputed sRaw reproduces the target to the rounding of the stored arrays.
+ */
+function buildRawLoop({ seed, box, tgvTrue, frcReported, u, z, phenotype, tech, morphology, restricted }) {
+  const r0 = createStream(seed, 'pleth-raw');
   const sizeFactor = (3.0 / clamp(tgvTrue, 1.2, 9)) ** 0.35; // Raw falls with lung size (exponent unverified)
   const phenotypeFactor = phenotype === 'airway' ? 1.15 : phenotype === 'emphysema' ? 0.85 : 1;
   const m = obstructionMeasure(z);
-  const rawModel = PLETH_MODEL.rawMedianKpaSL.value * sizeFactor * phenotypeFactor * Math.exp(0.36 * m) * Math.exp(0.08 * r.normal());
-  const tau = 0.012 + 0.16 * u; // phase lag of box signal behind flow (loop opening), s
-  const kq = 0.05 + 1.0 * u; // flow-dependent resistance (S shape), per L/s
-  const expFlat = 1 + 0.5 * u; // higher expiratory resistance
+  const rawModel = PLETH_MODEL.rawMedianKpaSL.value * sizeFactor * phenotypeFactor * Math.exp(0.36 * m) * Math.exp(0.08 * r0.normal());
+
+  const rng = createStream(seed, 'pleth-resistance');
+  const M = RAW_LOOP_MODEL;
+  const sim = simulateTidal({
+    rng, nBreaths: M.nBreaths, vt: M.breathingMode.tidalVolumeL * (1 - 0.12 * u), ti: M.breathingMode.inspiratoryTimeS,
+    te: M.breathingMode.expiratoryTimeS * (1 + 0.25 * u), dt: M.sampleIntervalS, varFrac: tech.rawBreathVar,
+  });
+  const { t, theta, vol, flow: v, breath } = sim;
+  const n = v.length;
+
+  const morphId = pickMorphology({ requested: morphology, obstructed: z < -1.645, restricted });
+  const morph = RAW_MORPHOLOGIES[morphId];
+  const par = morph.params(u);
+  const eps = M.flowBlendEpsLs.value, vref = M.referenceFlowLs.value, asym = M.expiratoryOpeningAsymmetry.value;
+  const w = (x) => 0.5 * (1 + Math.tanh(x / eps));
+  const g = (x) => x + (par.cubicInspiratory * (1 - w(x)) + par.cubicExpiratory * w(x)) * x ** 3;
+  // counterclockwise in expiration (flow upward, shift to the right): pressure leads flow, so the opening term enters as -h cos(theta).
+  // Its amplitude h (1 - asym sin theta) is larger in expiration (sin theta < 0) and equal at the two zero-flow points, so it never jumps.
+  const p0 = v.map((x, j) => g(x) - par.opening * vref * (1 - asym * Math.sin(theta[j])) * Math.cos(theta[j]));
+
+  const fitRange = M.fitRangeLs.value;
+  const inWin = v.map((x) => Math.abs(x) <= fitRange);
+  const vw = v.filter((_, j) => inWin[j]), pw = p0.filter((_, j) => inWin[j]);
+  const S = rawModel / lsSlope(vw, pw); // kPa.s/L, so that the fit slope over the window equals rawModel
+  // smooth noise (first-order low-pass, correlation time about 0.3 s), orthogonal to [1, flow] inside the fit window
+  const nz = [];
+  let s = 0;
+  const a = 0.88;
+  for (let j = 0; j < n; j++) { s = a * s + Math.sqrt(1 - a * a) * rng.normal(); nz.push(s); }
+  const sd = Math.sqrt(mean(nz.map((q) => q * q)));
+  const noise = orthogonalize(nz.map((q) => (q / sd) * tech.rawNoise * rawModel), v, inWin);
+
   const kBox = boxPaPerKpa(tgvTrue, box);
-  const flow = [], pbox = [], breath = [];
-  for (let b = 0; b < 5; b++) {
-    const vt = 0.85 * (1 - 0.12 * u) * (1 + tech.rawBreathVar * r.normal());
-    const ti = 1.3 * (1 + 0.5 * tech.rawBreathVar * r.normal());
-    const te = 1.65 * (1 + 0.25 * u) * (1 + 0.5 * tech.rawBreathVar * r.normal());
-    for (const [phaseSign, T] of [[-1, ti], [1, te]]) {
-      const A = (vt * Math.PI) / (2 * T);
-      const steps = Math.round(T / dt);
-      for (let j = 0; j < steps; j++) {
-        const xph = j / steps;
-        const v = phaseSign * A * Math.sin(Math.PI * xph);
-        const dv = phaseSign * A * (Math.PI / T) * Math.cos(Math.PI * xph);
-        const lin = v * (1 + kq * Math.abs(v)) * (v > 0 ? expFlat : 1);
-        const palv = rawModel * (lin + tau * dv); // kPa
-        flow.push(round(v, 4));
-        pbox.push(round(kBox * palv + tech.rawNoise * kBox * rawModel * r.normal(), 4));
-        breath.push(b);
-      }
-    }
-  }
-  // sRaw from the tidal fit over |flow| <= 0.5 L/s of the plotted arrays.
+  const flow = v.map((x) => round(x, 4));
+  const pbox = p0.map((q, j) => round(kBox * (S * q + noise[j]), 4));
+  const shiftMl = pbox.map((q) => round(q * shiftMlPerPa(box), 3));
+  const volumeL = vol.map((x) => round(x, 4));
+
+  // sRaw from the tidal fit over |flow| <= 0.5 L/s of the stored arrays.
   const fx = [], fy = [];
-  for (let j = 0; j < flow.length; j++) if (Math.abs(flow[j]) <= 0.5) { fx.push(flow[j]); fy.push(pbox[j]); }
+  for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= fitRange) { fx.push(flow[j]); fy.push(pbox[j]); }
   const slope = lsSlope(fx, fy);
   const sRaw = sRawFromSlope(slope, box);
-  // Shape descriptors from the arrays.
+  const near = [], nearY = [];
+  for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= 0.15) { near.push(flow[j]); nearY.push(pbox[j]); }
+  const tangent = near.length >= 8 ? lsSlope(near, nearY) : slope;
+
+  // sRtot: slope of the line between the points of maximal shift (largest and smallest box signal) of each breath, averaged.
+  const rtot = [];
+  for (let b = 0; b < M.nBreaths; b++) {
+    let iMax = -1, iMin = -1;
+    for (let j = 0; j < n; j++) if (breath[j] === b) { if (iMax < 0 || pbox[j] > pbox[iMax]) iMax = j; if (iMin < 0 || pbox[j] < pbox[iMin]) iMin = j; }
+    if (iMax >= 0 && Math.abs(flow[iMax] - flow[iMin]) > 0.2) rtot.push((pbox[iMax] - pbox[iMin]) / (flow[iMax] - flow[iMin]));
+  }
+  const sRtot = rtot.length ? sRawFromSlope(mean(rtot), box) : sRaw;
+
+  // Shape descriptors from the arrays: opening at the zero-flow crossings and slope at high against low flow.
   const peak = Math.max(...pbox.map(Math.abs));
-  const near0 = pbox.filter((_, j) => Math.abs(flow[j]) < 1e-6).map(Math.abs); // box signal at the zero-flow points
-  const opening = near0.length ? mean(near0) / peak : 0;
+  const open0 = [];
+  for (let j = 1; j < n; j++) if (flow[j - 1] * flow[j] < 0) open0.push(Math.abs(pbox[j - 1] + ((pbox[j] - pbox[j - 1]) * flow[j - 1]) / (flow[j - 1] - flow[j])));
+  const opening = open0.length ? mean(open0) / peak : 0;
   const vRef = Math.min(Math.max(...flow), -Math.min(...flow));
   const lowX = [], lowY = [], hiPos = [], hiNeg = [];
-  for (let j = 0; j < flow.length; j++) {
+  for (let j = 0; j < n; j++) {
     if (Math.abs(flow[j]) <= 0.3 * vRef) { lowX.push(flow[j]); lowY.push(pbox[j]); }
     else if (flow[j] >= 0.7 * vRef) hiPos.push([flow[j], pbox[j]]);
     else if (flow[j] <= -0.7 * vRef) hiNeg.push([flow[j], pbox[j]]);
@@ -455,16 +627,114 @@ function buildRawLoop({ seed, box, tgvTrue, frcReported, u, z, phenotype, tech }
   const lowSlope = lowX.length > 4 ? lsSlope(lowX, lowY) : slope;
   const highSlope = hiPos.length && hiNeg.length ? (mean(hiPos.map((q) => q[1])) - mean(hiNeg.map((q) => q[1]))) / (mean(hiPos.map((q) => q[0])) - mean(hiNeg.map((q) => q[0]))) : lowSlope;
   const sIndex = lowSlope > 0 ? highSlope / lowSlope - 1 : 0;
-  const open = opening > 0.07, sShaped = sIndex > 0.15;
-  const descriptor = open && sShaped ? 'open, S-shaped' : open ? 'open' : sShaped ? 'S-shaped' : 'closed, nearly linear';
+  const isOpen = opening > 0.06, isBent = sIndex > 0.15;
+  const descriptor = morphId === 'sigmoid' ? 'S-shaped' : isOpen && isBent ? 'open, golf club' : isOpen ? 'open' : isBent ? 'bent toward the shift axis' : 'closed, nearly linear';
+
   return {
-    flow, pbox, breath, fitSlopePaPerLs: round(slope, 5),
+    t: t.map((x) => round(x, 3)), flow, pbox, shiftMl, volumeL, breath, fitSlopePaPerLs: round(slope, 5), tangentSlopePaPerLs: round(tangent, 5),
     sRawKpaS: round(sRaw, 4), sGawPerKpaS: round(1 / sRaw, 4),
     rawKpaSL: round(sRaw / frcReported, 4), rawCmH2OSL: round((sRaw / frcReported) * CMH2O_PER_KPA, 3), sRawCmH2OS: round(sRaw * CMH2O_PER_KPA, 3),
     modelRawKpaSL: round(rawModel, 4),
-    fitRangeLs: 0.5,
+    fitRangeLs: fitRange,
+    morphology: {
+      id: morphId, label: morph.label, appearance: morph.appearance, source: morph.source,
+      parameters: Object.fromEntries(Object.entries(par).map(([k, q]) => [k, round(q, 4)])), parameterVerification: 'unverified',
+    },
+    estimator: {
+      id: 'ls-slope-abs-flow', label: `sRaw: least-squares slope of shift signal on flow, |flow| ≤ ${fitRange} L/s`, fitRangeLs: fitRange, nPoints: fx.length,
+    },
+    breathingMode: {
+      id: 'tidal', label: M.breathingMode.label, tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),
+      inspiratoryTimeS: round(mean(sim.breaths.map((q) => q.ti)), 3), expiratoryTimeS: round(mean(sim.breaths.map((q) => q.te)), 3),
+      ratePerMin: round(60 / mean(sim.breaths.map((q) => q.ti + q.te)), 1),
+    },
+    rawBasis: { definition: 'Raw = sRaw / reported FRC (mean of the acceptable trials)', frcL: round(frcReported, 4) },
+    alternativeEstimates: { sRtotKpaS: round(sRtot, 4), note: 'sRtot (line between the points of maximal shift) diverges from the fit in open loops' },
     shape: { opening: round(opening, 3), sIndex: round(sIndex, 3), descriptor },
     reference: { sRawUpperKpaS: PLETH_MODEL.sRawUpperLimitKpaS.value, verification: 'secondary' },
+  };
+}
+
+export const TIMELINE_MODEL = {
+  version: 1,
+  quietBreaths: 5,
+  sampleIntervalS: 0.1,
+  note: 'Quiet breathing, open-shutter breath and slow VC maneuver durations are teaching values (unverified).',
+  verification: 'unverified',
+};
+
+/** Index (1-based) of the trial drawn alone in the "best" views: among the acceptable trials (else usable, else all), the one closest to the reported FRC. */
+export function bestTrialIndex(pleth) {
+  const pool = ['acceptable', 'usable'].map((s) => pleth.trials.filter((t) => t.status === s)).find((a) => a.length) ?? pleth.trials;
+  return pool.reduce((a, b) => (Math.abs(b.deviationPct) < Math.abs(a.deviationPct) ? b : a)).index;
+}
+
+/**
+ * Volume-time record of every panting trial, in absolute volume anchored at the reported FRC.
+ * quiet breaths (baseline moving through the end-expiratory levels recorded before closure) -> shutter closed (flat volume;
+ * the pants appear only on the mouth-pressure lane, which carries the trial's own arrays) -> shutter open, one quiet breath that returns to the
+ * stable level -> slow expiration to RV -> slow inspiration to TLC.
+ */
+function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech }) {
+  const M = TIMELINE_MODEL;
+  const out = trials.map((tr) => {
+    const rng = createStream(seed, `pleth-timeline-${tr.index}`);
+    const vt = clamp(0.85 * (1 - 0.12 * u) * (1 + 0.04 * rng.normal()), 0.35, 0.6 * suggested.ic);
+    const ti = 1.3 * (1 + 0.06 * rng.normal()), te = 1.65 * (1 + 0.25 * u) * (1 + 0.06 * rng.normal());
+    const sim = simulateTidal({ rng, nBreaths: M.quietBreaths, vt, ti, te, dt: M.sampleIntervalS, varFrac: 0.8 * tech.rawBreathVar });
+    const closureL = tr.frcL;
+    // end-expiratory level after each quiet breath, ending at the closure level
+    const eelL = tr.eelDeviationL.map((d) => closureL + d - tr.eelDeviationL[M.quietBreaths - 1]);
+    const stableL = eelL[0]; // the end-expiratory level before any drift toward the closure level
+    const t = [], v = [], segments = [];
+    const push = (id, label, ts, vs) => {
+      const i0 = t.length ? t.length - 1 : 0;
+      ts.forEach((x, j) => { if (j > 0 || !t.length) { t.push(x); v.push(vs[j]); } });
+      segments.push({ id, label, t0: ts[0], t1: ts[ts.length - 1], i0, i1: t.length - 1 });
+    };
+    // quiet breathing
+    const tidalV = sim.theta.map((th, j) => {
+      const b = sim.breath[j];
+      const e0 = b === 0 ? eelL[0] : eelL[b - 1], e1 = eelL[b];
+      return e0 + (e1 - e0) * smoothstep((th - b * TAU) / TAU) + sim.vol[j];
+    });
+    push('tidal', 'Quiet breathing', sim.t, tidalV);
+    // shutter closed: the pneumotach volume does not change
+    const tClose = sim.t[sim.t.length - 1];
+    const tPant = tr.t[tr.t.length - 1];
+    push('closure', 'Shutter closed', [tClose, tClose + tPant / 2, tClose + tPant], [closureL, closureL, closureL]);
+    // shutter open: one quiet breath that returns to the stable end-expiratory level
+    const open = simulateTidal({ rng, nBreaths: 1, vt: 0.9 * vt, ti, te, dt: M.sampleIntervalS, varFrac: 0.3 * tech.rawBreathVar });
+    const tOpen = tClose + tPant;
+    push('open-shutter', 'Shutter open', open.t.map((x) => tOpen + x), open.theta.map((th, j) => closureL + (stableL - closureL) * smoothstep(th / TAU) + open.vol[j]));
+    // slow expiration to RV, slow inspiration to TLC (smooth, zero flow at both ends)
+    const tEx = tOpen + open.t[open.t.length - 1];
+    const dEx = clamp(2.2 + 1.5 * suggested.erv, 3, 6), nEx = Math.ceil(dEx / M.sampleIntervalS);
+    const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);
+    push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - suggested.rv) * smootherstep(j / nEx)));
+    const tIn = exT[exT.length - 1];
+    const dIn = clamp(2.5 + 0.6 * suggested.vc, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
+    const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);
+    push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => suggested.rv + (suggested.tlc - suggested.rv) * smootherstep(j / nIn)));
+    const closureOffsetL = closureL - stableL;
+    return {
+      trial: tr.index,
+      t: t.map((x) => round(x, 3)), v: v.map((x) => round(x, 4)),
+      segments: segments.map((sg) => ({ ...sg, t0: round(sg.t0, 3), t1: round(sg.t1, 3) })),
+      eelL: eelL.map((x) => round(x, 4)),
+      levels: {
+        reportedFrcL: round(reportedFrc, 4), trialFrcL: tr.frcL, closureOffsetL: round(closureOffsetL, 4), stableEelL: round(stableL, 4),
+        rvL: round(suggested.rv, 4), tlcL: round(suggested.tlc, 4), ervL: round(suggested.erv, 4), icL: round(suggested.ic, 4),
+        tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),
+      },
+      lane: { trial: tr.index, tStartS: round(tClose, 3), t: tr.t, pm: tr.pm, pbox: tr.pbox, panFreqHz: tr.panFreqHz },
+      offsetFromStable: tr.faults.includes('unstable-eel'),
+    };
+  });
+  return {
+    version: M.version, breathingMode: 'tidal',
+    anchor: `Volume axis anchored at the reported FRC (mean of the ${basis} trials); RV and TLC are the reported values`,
+    reportedFrcL: round(reportedFrc, 4), trials: out,
   };
 }
 
@@ -477,8 +747,10 @@ function buildRawLoop({ seed, box, tgvTrue, frcReported, u, z, phenotype, tech }
  * @param {object} [args.scenario] case.scenario; ids PLE-01 to PLE-05 force behaviors
  * @param {number} [args.ratioZ] true FEV1/FVC z-score if the caller has the reference tables
  * @param {number} [args.barometricMmHg]
+ * @param {'closed'|'golf-club'|'restriction'|'sigmoid'} [args.morphology] force a resistance-loop morphology (otherwise chosen from the physiology; sigmoid only on request)
+ * @returns {object|null} trials, FRC, grade, `raw` (a PlethRawLoop) and `timeline` (a PlethTimeline)
  */
-export function buildPleth({ seed, truth, volumes, technique = 'good', scenario = null, ratioZ, barometricMmHg } = {}) {
+export function buildPleth({ seed, truth, volumes, technique = 'good', scenario = null, ratioZ, barometricMmHg, morphology } = {}) {
   if (!volumes || !truth) return null;
   const tech = TECHNIQUE[technique] ?? TECHNIQUE.good;
   const box = makeBox(barometricMmHg ?? scenario?.barometricMmHg ?? PLETH_MODEL.barometricMmHg.value);
@@ -522,11 +794,14 @@ export function buildPleth({ seed, truth, volumes, technique = 'good', scenario 
 
   const faults = trials.flatMap((tr) => tr.faultText);
 
-  const raw = buildRawLoop({ seed, box, tgvTrue, frcReported: reportedFrc, u, z, phenotype: truth.phenotype ?? null, tech });
+  const restricted = Number.isFinite(truth.latent?.zTLC) && truth.latent.zTLC < -1.645;
+  const raw = buildRawLoop({ seed, box, tgvTrue, frcReported: reportedFrc, u, z, phenotype: truth.phenotype ?? null, tech, morphology, restricted });
   if (raw.sRawKpaS > PLETH_MODEL.sRawUpperLimitKpaS.value) add('sraw-above-upper-limit', `sRaw ${raw.sRawKpaS.toFixed(2)} kPa.s is above the 1.2 kPa.s upper limit quoted for adults (secondary source).`, 'minor');
 
   const erv = Math.min(volumes.erv ?? truth.erv, 0.85 * reportedFrc);
   const ic = volumes.ic ?? truth.ic;
+  const suggestedVolumes = { method: 'plethysmography', frc: reportedFrc, erv, ic, tlc: reportedFrc + ic, rv: reportedFrc - erv, vc: ic + erv };
+  const timeline = buildTimeline({ seed, trials, reportedFrc, suggested: suggestedVolumes, basis: acceptable.length ? 'acceptable' : usable.length ? 'usable' : 'all', u, tech });
   return {
     version: PLETH_MODEL.version,
     method: 'whole-body plethysmography',
@@ -545,9 +820,10 @@ export function buildPleth({ seed, truth, volumes, technique = 'good', scenario 
     },
     grade,
     raw,
+    timeline,
     flags,
     faults,
-    suggestedVolumes: { method: 'plethysmography', frc: reportedFrc, erv, ic, tlc: reportedFrc + ic, rv: reportedFrc - erv, vc: ic + erv },
+    suggestedVolumes,
     unverified: Object.entries(PLETH_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),
   };
 }

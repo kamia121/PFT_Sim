@@ -156,7 +156,8 @@ test('airway resistance: sRaw follows the FEV1/FVC z-score monotonically and the
   assert.equal(pleth(c, { ratioZ: 0.3 }).raw.shape.descriptor, 'closed, nearly linear');
   const open = pleth(c, { ratioZ: -3.5 }).raw.shape.descriptor;
   assert.match(open, /open/);
-  assert.match(open, /S-shaped/);
+  assert.match(open, /golf club/);
+  assert.equal(pleth(c, { ratioZ: -3.5 }).raw.morphology.id, 'golf-club');
   // A healthy adult sits near the published medians and under the upper limit.
   const healthy = pleth(c, { ratioZ: 0.2 }).raw;
   assert.ok(healthy.sRawKpaS > 0.3 && healthy.sRawKpaS < 1.2, `healthy sRaw ${healthy.sRawKpaS}`);
