@@ -1,8 +1,11 @@
 import { SPIROMETRY_2019 as S } from './standards.js';
 
 /**
- * Acceptability, repeatability and session grading for a set of forced maneuvers.
- * Criteria constants live in standards.js with their verification state.
+ * Acceptability, usability, repeatability and grading for a set of forced maneuvers, following
+ * Tables 7 and 10 of the ATS/ERS 2019 statement. FEV1 and FVC are judged and graded separately,
+ * because the criteria differ: a cough in the first second spoils FEV1 but not FVC, glottic
+ * closure after the first second spoils FVC but not FEV1, and only FVC needs an end-of-forced-
+ * expiration (EOFE) indicator. Leaks, obstructed mouthpieces and zero-flow errors are not modeled.
  */
 
 /**
@@ -11,65 +14,97 @@ import { SPIROMETRY_2019 as S } from './standards.js';
  * @property {number} fet forced expiratory time (s)
  * @property {number} bev back-extrapolated volume (L)
  * @property {number} plateau volume change over the last second (L)
- * @property {string[]} faults technical faults present
+ * @property {boolean} coughFirstSecond
+ * @property {number|null} glottisClosedAt time of glottic closure (s), or null
  */
 
-/** A maneuver is usable when the start of test is sound: BEV in range and no cough or hesitation fault. */
-export function evaluateManeuver(m) {
-  const reasons = [];
+/**
+ * @param {Maneuver} m
+ * @param {number} maxFvcInSet largest FVC among all maneuvers in the set
+ * @returns {{ fev1: { usable: boolean, acceptable: boolean, reasons: string[] }, fvc: { usable: boolean, acceptable: boolean, reasons: string[] } }}
+ */
+export function evaluateManeuver(m, maxFvcInSet = m.fvc) {
   const bevLimit = Math.max(S.bevFractionOfFvc.value * m.fvc, S.bevAbsoluteLiters.value);
-  if (m.bev >= bevLimit) reasons.push('back-extrapolated volume above limit');
-  if (m.faults.includes('cough')) reasons.push('cough in the first second');
-  const usable = reasons.length === 0;
-  const eofe = m.plateau < S.plateauLiters.value || m.fet >= S.longFetSeconds.value;
-  if (usable && !eofe) reasons.push('no end-of-test plateau');
-  if (m.faults.includes('glottic-closure')) reasons.push('glottic closure');
-  return { usable, acceptable: reasons.length === 0, reasons };
+  const bevBad = m.bev >= bevLimit;
+  const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;
+  const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;
+
+  const fev1Reasons = [];
+  if (bevBad) fev1Reasons.push('back-extrapolated volume above limit');
+  if (m.coughFirstSecond) fev1Reasons.push('cough in the first second');
+  if (closureFirstSecond) fev1Reasons.push('glottic closure in the first second');
+
+  const fvcUsableReasons = [];
+  if (bevBad) fvcUsableReasons.push('back-extrapolated volume above limit');
+  if (closureFirstSecond) fvcUsableReasons.push('glottic closure in the first second');
+
+  const fvcReasons = [...fvcUsableReasons];
+  if (closureLater) fvcReasons.push('glottic closure after the first second');
+  const eofe = m.plateau < S.plateauLiters.value
+    || m.fet >= S.longFetSeconds.value
+    || m.fvc >= maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value;
+  if (!eofe) fvcReasons.push('no end-of-forced-expiration indicator');
+
+  return {
+    fev1: { usable: fev1Reasons.length === 0, acceptable: fev1Reasons.length === 0, reasons: fev1Reasons },
+    fvc: { usable: fvcUsableReasons.length === 0, acceptable: fvcReasons.length === 0, reasons: fvcReasons },
+  };
 }
 
-const largestTwo = (xs) => xs.slice().sort((a, b) => b - a).slice(0, 2);
+/** Table 10, adult column. */
+function gradeVariable(acceptableValues, usableCount) {
+  if (acceptableValues.length === 0) return usableCount ? 'U' : 'F';
+  if (acceptableValues.length === 1) return 'E';
+  const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);
+  const spread = hi - next;
+  const g = S.gradeSpreadLiters;
+  if (acceptableValues.length >= 3 && spread <= g.A) return 'A';
+  if (spread <= g.B) return 'B';
+  if (spread <= g.C) return 'C';
+  if (spread <= g.D) return 'D';
+  return 'E';
+}
+
+const largestTwoSpread = (xs) => {
+  if (xs.length < 2) return null;
+  const [hi, next] = xs.slice().sort((a, b) => b - a);
+  return hi - next;
+};
 
 /**
  * @param {Maneuver[]} maneuvers in recorded order
- * @returns {{ evaluations: object[], nAcceptable: number, nUsable: number, fvc: number|null, fev1: number|null,
- *   pef: number|null, fef2575: number|null, ratio: number|null, spreadFvc: number|null, spreadFev1: number|null,
- *   repeatable: boolean, grade: 'A'|'B'|'C'|'D'|'E'|'U'|'F' }}
+ * @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },
+ *   nAcceptable: { fev1: number, fvc: number }, fvc: number|null, fev1: number|null, pef: number|null,
+ *   fef2575: number|null, ratio: number|null, spread: { fev1: number|null, fvc: number|null }, repeatable: boolean }}
  */
 export function summarizeSession(maneuvers) {
-  const evaluations = maneuvers.map(evaluateManeuver);
-  const acc = maneuvers.filter((_, i) => evaluations[i].acceptable);
-  const usable = maneuvers.filter((_, i) => evaluations[i].usable);
-  const pool = acc.length ? acc : usable;
-  const max = (key, xs) => (xs.length ? Math.max(...xs.map((m) => m[key])) : null);
-  const fvc = max('fvc', pool), fev1 = max('fev1', pool);
-  const spread = (key) => {
-    if (acc.length < 2) return null;
-    const [hi, next] = largestTwo(acc.map((m) => m[key]));
-    return hi - next;
-  };
-  const spreadFvc = spread('fvc'), spreadFev1 = spread('fev1');
-  const worst = spreadFvc === null ? null : Math.max(spreadFvc, spreadFev1);
-  const g = S.gradeSpreadLiters;
-  let grade;
-  if (acc.length === 0) grade = usable.length ? 'U' : 'F';
-  else if (acc.length === 1) grade = 'E';
-  else if (acc.length >= 3 && worst <= g.A) grade = 'A';
-  else if (worst <= g.B) grade = 'B';
-  else if (worst <= g.C) grade = 'C';
-  else if (worst <= g.D) grade = 'D';
-  else grade = 'E';
+  const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;
+  const evaluations = maneuvers.map((m) => evaluateManeuver(m, maxFvcInSet));
+  const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);
+  const out = {};
+  for (const key of ['fev1', 'fvc']) {
+    const acc = pick(key, 'acceptable');
+    const use = pick(key, 'usable');
+    const pool = acc.length ? acc : use;
+    out[key] = {
+      value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,
+      grade: gradeVariable(acc.map((m) => m[key]), use.length),
+      n: acc.length,
+      spread: largestTwoSpread(acc.map((m) => m[key])),
+    };
+  }
+  const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));
+  const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);
   return {
     evaluations,
-    nAcceptable: acc.length,
-    nUsable: usable.length,
-    fvc,
-    fev1,
-    pef: max('pef', pool),
-    fef2575: max('fef2575', pool),
-    ratio: fvc ? fev1 / fvc : null,
-    spreadFvc,
-    spreadFev1,
-    repeatable: worst !== null && worst <= S.repeatabilityLitersAdult.value,
-    grade,
+    grades: { fev1: out.fev1.grade, fvc: out.fvc.grade },
+    nAcceptable: { fev1: out.fev1.n, fvc: out.fvc.n },
+    fvc: out.fvc.value,
+    fev1: out.fev1.value,
+    pef: maxOf('pef', poolFor('fev1')),
+    fef2575: maxOf('fef2575', poolFor('fvc')),
+    ratio: out.fvc.value && out.fev1.value !== null ? out.fev1.value / out.fvc.value : null,
+    spread: { fev1: out.fev1.spread, fvc: out.fvc.spread },
+    repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && x <= S.repeatabilityLitersAdult.value),
   };
 }

@@ -27,7 +27,7 @@ test('constraints hold on every maneuver: FEV1 <= FVC, tabulated values come fro
       const { maneuvers } = generateManeuvers(seed, { ...truth, technique });
       for (const m of maneuvers) {
         assert.ok(m.fev1 <= m.fvc + 1e-9, `seed ${seed}`);
-        assert.ok(Math.abs(volume(m.curve, m.t0 + 1) - m.fev1) < 1e-9);
+        assert.ok(Math.abs(volume(m.curve, Math.min(m.t0 + 1, m.fet)) - m.fev1) < 1e-9);
         assert.ok(Math.abs(volume(m.curve, m.fet) - m.fvc) < 1e-9);
         assert.ok(m.pef > 0 && m.fef2575 > 0 && m.bev >= 0);
         checked++;
@@ -40,7 +40,7 @@ test('constraints hold on every maneuver: FEV1 <= FVC, tabulated values come fro
 test('poorer technique lowers the share of sessions graded A', () => {
   const share = (technique) => {
     let a = 0;
-    for (let seed = 0; seed < 400; seed++) if (generateManeuvers(seed, { ...truth, technique }).summary.grade === 'A') a++;
+    for (let seed = 0; seed < 400; seed++) if (generateManeuvers(seed, { ...truth, technique }).summary.grades.fev1 === 'A' && generateManeuvers(seed, { ...truth, technique }).summary.grades.fvc === 'A') a++;
     return a / 400;
   };
   const [g, f, p] = ['good', 'fair', 'poor'].map(share);

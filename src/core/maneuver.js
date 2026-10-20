@@ -17,10 +17,10 @@ const MAX_MANEUVERS = 8;
  * @param {number} tStop end of the recorded expiration (s)
  * @param {string[]} faults
  */
-function tabulate(curve, tStop, faults) {
+function tabulate(curve, tStop, faults, glottisClosedAt) {
   const { t0, bev } = backExtrapolation(curve);
   const fvc = volume(curve, tStop);
-  const fev1 = volume(curve, t0 + 1);
+  const fev1 = volume(curve, Math.min(t0 + 1, tStop));
   const t25 = timeAtVolume(curve, 0.25 * fvc), t75 = timeAtVolume(curve, 0.75 * fvc);
   return {
     fvc, fev1,
@@ -31,6 +31,8 @@ function tabulate(curve, tStop, faults) {
     t0,
     plateau: volume(curve, tStop) - volume(curve, Math.max(0, tStop - 1)),
     faults,
+    coughFirstSecond: faults.includes('cough'),
+    glottisClosedAt,
   };
 }
 
@@ -56,15 +58,16 @@ export function generateManeuvers(seed, { fvc, fev1, k, T = 12, technique }) {
     if (rng.chance(p)) { faults.push('early-termination'); tStop = rng.range(2.5, Math.min(6, T)); }
     if (rng.chance(p)) { faults.push('variable-effort'); const f = rng.range(0.88, 0.96); fvcT *= f; fev1T *= f; }
     if (rng.chance(p * 0.6)) { faults.push('cough'); fev1T *= rng.range(0.88, 0.95); }
-    if (rng.chance(p * 0.4)) { faults.push('glottic-closure'); tStop = Math.min(tStop, rng.range(1.6, 4)); }
+    let glottisClosedAt = null;
+    if (rng.chance(p * 0.4)) { faults.push('glottic-closure'); glottisClosedAt = rng.range(0.5, 4); tStop = Math.min(tStop, glottisClosedAt); }
     fev1T = Math.min(fev1T, 0.995 * fvcT);
     const { curve } = solveCurve({ fvc: fvcT, fev1: fev1T, k, r, T });
-    const row = tabulate(curve, tStop, faults);
+    const row = tabulate(curve, tStop, faults, glottisClosedAt);
     maneuvers.push({ ...row, curve, index: i });
     // The technologist stops once three acceptable, repeatable efforts are recorded.
     if (i >= 2) {
       const s = summarizeSession(maneuvers);
-      if (s.grade === 'A') break;
+      if (s.grades.fev1 === 'A' && s.grades.fvc === 'A') break;
     }
   }
   return { maneuvers, summary: summarizeSession(maneuvers) };
