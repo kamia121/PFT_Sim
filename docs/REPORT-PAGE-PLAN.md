@@ -21,6 +21,10 @@ Report: one long column inside the practice page; no figures beside the tables t
    The existing individual figures stay registered for the practice page and for download.
 3. The practice page's Lab report tab becomes a preview plus an "Open full report" link; the quiz item review links the same page.
 
+## Separable loops (user request)
+
+When a figure holds several maneuvers or trials (3 to 8 spirometry efforts before and after the bronchodilator, 3 or more panting trials, replicate DLCO tests), the learner can separate them. Every panel takes `view: 'best' | 'all' | 'separate'` and `selected: number[]` (1-based maneuver or trial numbers). `best` draws the best curve only (the report default); `all` overlays the selected ones in distinct tints with the best emphasized; `separate` draws one small panel per maneuver or trial in a grid (same axes, trial number, value and fault comment under each), as a laboratory reviews repeatability. On the page and in the report page, a row of numbered chips toggles each maneuver on and off, with a view switch; the standalone SVG downloads follow the current view and selection. Rejected or unacceptable maneuvers are marked only after the answers are checked, as elsewhere.
+
 ## Physiology constraints
 
 The reported numbers do not change: `src/core/pleth.js` may gain a tidal and closure timeline trace and smoother Raw loops, but FRC from the shutter slopes, sRaw and Raw, and every value in `case.report`, must be reproduced exactly (the baseline hashes in `tests/fixtures/baseline-case-hashes.json` stay valid, or are regenerated with a stated reason). Raw loop morphology follows resistance: near-linear and narrow when airway resistance is normal, open and scooped (S-shaped, higher slope at low flow) with flow limitation, with a phase-lag opening that depends on panting frequency. Source for each morphology rule is stated in `docs/pleth-dlco-model.md` and marked verified, secondary or unverified, as in `src/core/standards.js`.
