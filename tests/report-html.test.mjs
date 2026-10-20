@@ -93,8 +93,15 @@ test('figures embed inline and others are skipped', () => {
     assert.equal((html.match(/<svg /g) ?? []).length, 3);
     assert.ok(html.includes('rpt-fig-z-strip'));
   });
-  const { model } = makeModel(SAMPLE_INPUTS[0]);
-  assert.ok(!renderReportHtml(model).includes('rpt-figs'));
+  // When no figure has data (for example before a figure module is available), the figure block is omitted.
+  const saved = Object.fromEntries(Object.entries(FIGURES).map(([k, v]) => [k, v.dataFor]));
+  try {
+    for (const f of Object.values(FIGURES)) f.dataFor = () => null;
+    const { model } = makeModel(SAMPLE_INPUTS[0]);
+    assert.ok(!renderReportHtml(model).includes('rpt-figs'));
+  } finally {
+    for (const [k, fn] of Object.entries(saved)) FIGURES[k].dataFor = fn;
+  }
 });
 
 test('the standalone document is self-contained: doctype, inline CSS, no external URLs or scripts', async () => {
