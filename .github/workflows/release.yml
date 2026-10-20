@@ -2,6 +2,11 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to create at the selected commit when no tag exists yet (for example v0.1.0)
+        required: true
 permissions:
   contents: write
 jobs:
@@ -10,18 +15,22 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
+      - name: Resolve the tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: echo "TAG=${INPUT_TAG:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm test
       - run: npm run build
       - name: Package the static site
-        run: cd dist && zip -qr "../pft-sim-${GITHUB_REF_NAME}.zip" . && cd ..
+        run: cd dist && zip -qr "../pft-sim-${TAG}.zip" . && cd ..
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "pft-sim-${GITHUB_REF_NAME}.zip" \
-            --title "PFT Sim ${GITHUB_REF_NAME}" \
+          gh release create "$TAG" "pft-sim-${TAG}.zip" \
+            --title "PFT Sim ${TAG}" \
             --notes-file RELEASE_NOTES.md \
-            --verify-tag
+            --target "$GITHUB_SHA"
