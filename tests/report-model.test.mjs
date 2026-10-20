@@ -155,7 +155,7 @@ test('equation names appear per index, and fallbacks are stated', () => {
 
 test('lung volume and DLCO tables carry the specified rows and respect the panel', () => {
   const { model } = makeModel(SAMPLE_INPUTS[0]);
-  assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc']);
+  assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc', 'sraw', 'sgaw', 'raw']);
   assert.equal(row(table(model, 'volumes'), 'rv_tlc').unit, '%');
   assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['dlco-raw', 'hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
   assert.match(table(model, 'dlco').footnote, /Cotes formula, not yet checked/);
@@ -217,7 +217,7 @@ test('figures come from the registry, skipping null and empty results, with the 
     FIGURES['volume-time'].render = () => '';
     FIGURES['dlco-trace'].dataFor = () => { throw new Error('boom'); };
     const model = buildReportModel(c, interp, { resolve: resolveReference, palette: 'dark' });
-    assert.deepEqual(model.sections[0].figureIds, ['flow-volume']);
+    assert.deepEqual(model.sections[0].figureIds, ['flow-volume', 'z-strip']);
     assert.deepEqual(seen, ['dark']);
     assert.equal(model.meta.figureErrors.length, 1);
     assert.equal(model.meta.figureErrors[0].id, 'dlco-trace');
