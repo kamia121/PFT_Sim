@@ -22,9 +22,10 @@ export const SCENARIO_LEVELS = ['none', 'light', 'moderate', 'heavy'];
 /** Requisition-style labels. Wording is a placeholder pending physician review. */
 export const GROUP_LABELS = ['White', 'Black or African American', 'Asian: Northeast', 'Asian: Southeast', 'Other or mixed'];
 
-// Age stops at 80 because the GLI-2021 volume equations end there.
+// Random draws stay at 18 to 80. An explicit age may go to 95, the upper limit of the GLI spirometry tables; above 80 (volumes) and
+// 85 (TLCO) the reference values for the last available age are used and the report says so.
 const OVERRIDABLE = {
-  age: [18, 80],
+  age: [18, 95],
   heightCm: [140, 205],
   weightKg: [40, 200],
   hbGdl: [7, 19],

@@ -9,8 +9,10 @@
  *
  * The data come from the GLI lookup workbooks through tools/extract-gli.py and are covered by the
  * notice in src/reference/NOTICE, not by the MIT license of the surrounding code. Splines are
- * interpolated linearly in age between the 0.25-year rows of the workbooks. Ages outside the
- * published range return null; nothing is extrapolated.
+ * interpolated linearly in age between the 0.25-year rows of the workbooks. Ages below the
+ * published range return null; nothing is extrapolated. Above the upper limit the reference
+ * values for the last available age are used and the result says so (`ageUsed`, `ageClamped`),
+ * as laboratory software does for the oldest patients.
  */
 
 export const Z_LIMIT = 1.645;
@@ -27,6 +29,9 @@ export const GROUP_TO_GLI2012 = {
 const VOLUME_MEASURES = ['tlc', 'rv', 'vc', 'ic', 'erv', 'frc', 'rv_tlc'];
 const TLCO_MEASURES = ['dlco', 'kco', 'va'];
 const SPIROMETRY_MEASURES = ['fev1', 'fvc', 'fev1_fvc'];
+
+/** Upper age limit stated by the equation's authors where it is below the last row of the workbook: GLI-2017 TLCO is published for ages 5 to 85 (the workbook runs to 90). */
+const OFFICIAL_MAX_AGE = { GLI2017tlco: 85 };
 
 function interpolate(sp, key, age) {
   const a = sp.age;
@@ -104,9 +109,14 @@ export function createReference(datasets) {
     if (equationId === 'GLI2012' && ethnicityCode === undefined) throw new RangeError(`unknown group: ${patient.group}`);
     const entry = datasets[equationId].measures[measure][sex];
     const base = { measure, equationId, matched, fallbackReason };
-    const params = lms(entry, equationId, { age: patient.age, heightCm: patient.heightCm, ethnicityCode });
+    // Above the last published age the values for that age are used, so the oldest patients are still graded.
+    const ages = entry.splines.age;
+    const maxAge = Math.min(ages[ages.length - 1], OFFICIAL_MAX_AGE[equationId] ?? Infinity);
+    const ageClamped = patient.age > maxAge;
+    const ageUsed = ageClamped ? maxAge : patient.age;
+    const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });
     if (params === null) return { ...base, available: false, fallbackReason: 'age-outside-range', predicted: null, lln: null, uln: null, z: null, percentPredicted: null };
-    const out = { ...base, available: true, lms: params, predicted: params.M, lln: valueAtZ(params, -Z_LIMIT), uln: valueAtZ(params, Z_LIMIT), z: null, percentPredicted: null };
+    const out = { ...base, available: true, ...(ageClamped ? { ageClamped: true, ageUsed, ageRequested: patient.age } : {}), lms: params, predicted: params.M, lln: valueAtZ(params, -Z_LIMIT), uln: valueAtZ(params, Z_LIMIT), z: null, percentPredicted: null };
     if (patient.measured !== undefined) {
       out.z = zScore(params, patient.measured);
       out.percentPredicted = (100 * patient.measured) / params.M;

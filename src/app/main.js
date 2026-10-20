@@ -32,7 +32,9 @@ function randomCase(options) {
   const technique = options.technique === 'varies' ? (u() < 0.6 ? 'good' : u() < 0.7 ? 'fair' : 'poor') : options.technique;
   const panel = options.panel === 'varies' ? (u() < 0.8 ? 'full' : 'spirometry') : options.panel;
   const level = options.scenario === 'varies' ? (() => { const r = u(); return r < 0.25 ? 'none' : r < 0.65 ? 'light' : r < 0.9 ? 'moderate' : 'heavy'; })() : options.scenario;
-  return { seed: randomUint32(), archetype, severity: 1 + Math.floor(u() * 3), technique, panel, ...(level && level !== 'none' ? { scenarioLevel: level } : {}) };
+  // About one case in twelve is a patient above 80 years, so that the upper age limit of the volume and TLCO equations is met in practice.
+  const old = u() < 1 / 12 ? { age: 81 + Math.floor(u() * 15) } : {};
+  return { seed: randomUint32(), archetype, severity: 1 + Math.floor(u() * 3), technique, panel, ...old, ...(level && level !== 'none' ? { scenarioLevel: level } : {}) };
 }
 
 function currentQuery() {

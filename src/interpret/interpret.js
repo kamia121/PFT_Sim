@@ -60,7 +60,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
     if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }
     measures[name] = {
       measure, value: measured, predicted: r.predicted, lln: r.lln, uln: r.uln, z: r.z, percentPredicted: r.percentPredicted,
-      label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...extra,
+      label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...(r.ageClamped ? { ageClamped: true, ageUsed: r.ageUsed } : {}), ...extra,
     };
   };
   const sp = report.spirometry;

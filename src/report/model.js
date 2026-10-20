@@ -440,6 +440,11 @@ export function buildReportModel(caseData, interp, options = {}) {
   if (hs && hs.source !== 'measured') note.push(`Height was ${heightSource}; the stated height of ${patient.heightCm} cm is the value used for the predicted values, so they carry added uncertainty.`);
   if (undisclosedSex && scenario?.referenceSex) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations, the laboratory default; the patient did not disclose sex.`);
   else if (scenario?.referenceSex && scenario.referenceSex.used !== scenario.referenceSex.birth) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations; sex assigned at birth is recorded as ${SEX[scenario.referenceSex.birth].toLowerCase()}.${scenario.referenceSex.note ? ` ${scenario.referenceSex.note}` : ''}`);
+  const clamped = Object.values(m).filter((x) => x.ageClamped);
+  if (clamped.length) {
+    const ids = [...new Set(clamped.map((x) => `${EQUATION_NAMES[x.equationId] ?? x.equationId} (${x.ageUsed} years)`))];
+    note.push(`The patient is older than the upper age limit of ${ids.join(' and ')}; the reference values for that age are used.`);
+  }
   const unavailable = Object.values(m).filter((x) => x.available === false);
   if (unavailable.length) note.push(`No reference value could be computed for ${unavailable.length} measurement${unavailable.length > 1 ? 's' : ''} (${[...new Set(unavailable.map((x) => x.reason))].join('; ')}).`);
 

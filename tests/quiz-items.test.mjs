@@ -84,7 +84,7 @@ test('decoy caveats are true statements whose subject is absent from the case, a
     'fb-hb': (f) => f.hasDlco && hbLow(f.hb), 'fb-hb-missing': (f) => f.hbMissing, 'fb-erv': (f) => f.lowErv,
     'fb-bd-artifact': (f) => Boolean(f.post) && (f.bdVariant === 'artifact' || f.postEarly), 'fb-bd-volume': (f) => Boolean(f.post) && f.bdVariant === 'volume',
     'fb-bd-rules': (f, a) => Boolean(a.bd) && !a.bd.rulesAgree,
-    'fb-d-age': (f) => f.unavailable, 'fb-d-saba': (f) => f.medicationNote, 'fb-d-smoke': (f) => f.recentSmoke, 'fb-d-height': (f) => f.estimatedHeight,
+    'fb-d-age': (f) => f.unavailable || f.ageClamped, 'fb-age-cap': (f) => f.ageClamped, 'fb-d-saba': (f) => f.medicationNote, 'fb-d-smoke': (f) => f.recentSmoke, 'fb-d-height': (f) => f.estimatedHeight,
     'fb-d-sex': (f) => f.sexAssumption, 'fb-d-vi': (f) => f.lowInspiredVolume, 'fb-d-glottic': (f) => f.glottic,
   };
   let checked = 0, withTrue = 0;

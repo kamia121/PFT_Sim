@@ -506,6 +506,10 @@ T('r-age',
   (p) => `The patient's age lies outside the range of the ${p.eq} equation, so ${p.what} could not be referenced.`,
   (p) => `${cap(p.what)} could not be referenced because the patient's age is outside the range of the ${p.eq} equation.`,
   (p) => `No reference value exists for ${p.what} at this age under the ${p.eq} equation.`);
+T('r-age-cap',
+  (p) => `The patient is older than the upper age limit of the ${p.eq} equation (${p.max} years), so the reference values for ${p.max} years were used for ${p.what}.`,
+  (p) => `For ${p.what} the ${p.eq} reference values at ${p.max} years, the upper limit of the equation, were applied because the patient is older.`,
+  (p) => `${cap(p.what)} was referenced at the equation's upper age limit of ${p.max} years (${p.eq}), since the patient is older than that.`);
 T('r-height',
   (p) => `Height of ${p.cm} cm was taken from ${p.source} and not measured directly; predicted values scale with height, so uncertainty in height carries into every z-score.`,
   (p) => `The height used for prediction, ${p.cm} cm, comes from ${p.source}, and because predicted values scale with height, any error in it shifts every z-score.`,
@@ -953,6 +957,8 @@ function referenceSection(ctx, P) {
   for (const [k, what] of [['tlc', 'lung volumes'], ['dlco', 'transfer factor']]) if (m[k] && m[k].available !== false && m[k].matched === false && m[k].fallbackReason === 'equation-derived-in-european-ancestry-only') fb.push({ what, eq: eqName(m[k].equationId) });
   if (fb.length) { const eqs = [...new Set(fb.map((x) => x.eq))]; out.push(sentence(P('r-fallback', { group, what: list(fb.map((x) => x.what)), eqs: `${list(eqs)} equation${eqs.length > 1 ? 's' : ''}`, was: eqs.length > 1 ? 'were' : 'was' }))); }
   for (const [k, what] of [['fev1', 'spirometry'], ['tlc', 'lung volumes'], ['dlco', 'transfer factor']]) if (m[k] && m[k].available === false && m[k].fallbackReason === 'age-outside-range') out.push(sentence(P('r-age', { what, eq: eqName(m[k].equationId) })));
+  const capped = [['fev1', 'spirometry'], ['tlc', 'lung volumes'], ['dlco', 'transfer factor']].filter(([k]) => m[k]?.ageClamped);
+  for (const [k, what] of capped) out.push(sentence(P('r-age-cap', { what, eq: eqName(m[k].equationId), max: m[k].ageUsed })));
   const sc = ctx.scen;
   if (sc?.height && sc.height.source && sc.height.source !== 'measured' && Number.isFinite(sc.height.statedCm)) {
     const SRC = { 'arm-span': 'arm span', ulna: 'ulna length', reported: 'the patient’s report' };
