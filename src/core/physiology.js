@@ -210,7 +210,7 @@ export function generatePhysiology(seed, d, datasets) {
   }
   ratio = Math.min(ratio, 0.98);
   const fev1 = fvc * ratio;
-  const erv = Math.min(at('erv', lat.zERV), 0.85 * vc);
+  const erv = Math.max(Math.min(at('erv', lat.zERV), 0.85 * vc), 0.12);
   const frc = rv + erv;
   const ic = vc - erv;
   const dlcoCorrected = at('dlco', lat.zDLCO);

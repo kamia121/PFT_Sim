@@ -36,7 +36,7 @@ test('exact constraints hold on every reported quantity', () => {
     if (s.post?.fev1 && s.post?.fvc) assert.ok(s.post.fev1 <= s.post.fvc + 1e-9);
     const v = c.volumes;
     assert.ok(Math.abs(v.tlc - (v.rv + v.vc)) < 1e-9, 'TLC = RV + VC');
-    assert.ok(Math.abs(v.frc - (v.rv + v.erv)) < 1e-9 || v.rv === 0.2, 'FRC = RV + ERV');
+    assert.ok(Math.abs(v.frc - (v.rv + v.erv)) < 1e-9, 'FRC = RV + ERV');
     assert.ok(Math.abs(v.ic - (v.tlc - v.frc)) < 1e-9, 'IC = TLC - FRC');
     assert.ok(v.rv > 0 && v.erv > 0 && v.ic > 0 && v.vc > 0);
     const d = c.dlco;

@@ -13,8 +13,8 @@ import { interpret, LLN_Z } from '../interpret/interpret.js';
 
 const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
 /** Loop shape from the true ratio: more scooped (smaller k) with more obstruction. */
-const shapeFor = (ratio) => clamp(0.55 + 0.6 * ratio, 0.6, 1.05);
-const durationFor = (ratio) => (ratio < 0.6 ? 15 : 12);
+export const shapeFor = (ratio) => clamp(0.55 + 0.6 * ratio, 0.6, 1.05);
+export const durationFor = (ratio) => (ratio < 0.6 ? 15 : 12);
 
 /**
  * @param {Partial<import('./descriptor.js').Descriptor> & { seed: number, archetype: string }} input
@@ -45,9 +45,10 @@ export function buildCase(input, datasets) {
   if (d.panel === 'full') {
     const rng = createStream(d.seed, 'volumes');
     const frc = truth.frc * Math.exp(0.03 * rng.normal());
-    const erv = truth.erv * Math.exp(0.08 * rng.normal());
+    // ERV cannot exceed FRC; the cap keeps RV = FRC - ERV positive so the identities stay exact.
+    const erv = Math.min(truth.erv * Math.exp(0.08 * rng.normal()), 0.85 * frc);
     const ic = truth.ic * Math.exp(0.04 * rng.normal());
-    volumes = { method: 'plethysmography', frc, erv, ic, tlc: frc + ic, rv: Math.max(frc - erv, 0.2), vc: ic + erv };
+    volumes = { method: 'plethysmography', frc, erv, ic, tlc: frc + ic, rv: frc - erv, vc: ic + erv };
   }
 
   // Single-breath diffusing capacity: measured DLCO is the hemoglobin-corrected truth uncorrected again.

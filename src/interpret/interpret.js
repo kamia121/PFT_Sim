@@ -28,8 +28,8 @@ export const PATTERNS = {
   'obstruction-low-fvc': 'Obstruction with low FVC (volumes needed)',
   restriction: 'Restriction',
   mixed: 'Mixed obstruction and restriction',
-  nonspecific: 'Preserved ratio, low FVC or FEV1, TLC not low (nonspecific)',
-  prism: 'Preserved ratio with low FVC or FEV1 (PRISm; volumes needed)',
+  nonspecific: 'Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)',
+  prism: 'Preserved ratio with low FVC or FEV₁ (PRISm; volumes needed)',
   indeterminate: 'Not interpretable',
 };
 
