@@ -5,6 +5,7 @@ import { loadDatasets } from '../src/reference/load.js';
 import { ARCHETYPES, TECHNIQUE_LEVELS } from '../src/core/descriptor.js';
 import { buildCase } from '../src/core/case.js';
 import { buildPleth, gradeFrc, repeatableGroup, spreadFraction, obstructionMeasure } from '../src/core/pleth.js';
+import { identityDescriptors, frozenHash } from './helpers/pleth-identity.mjs';
 
 const ds = await loadDatasets();
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -203,4 +204,16 @@ test('scenario-forced faults in the full set of ids never throw', () => {
     const p = pleth(c, { scenario: { ids } });
     assert.ok(p.reportedFrcL > 0);
   }
+});
+
+test('numerical identity: every non-resistance value of 2230 cases (220 seeds x 10 archetypes, plus scenarios) is unchanged', () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/pleth-identity-hashes.json', import.meta.url), 'utf8'));
+  const descriptors = identityDescriptors();
+  assert.equal(fixture.n, descriptors.length);
+  assert.ok(descriptors.length >= 2200);
+  const bad = [];
+  descriptors.forEach((d, i) => {
+    if (frozenHash(buildCase(d, ds)) !== fixture.hashes[i]) bad.push(`${d.seed}/${d.archetype}`);
+  });
+  assert.deepEqual(bad.slice(0, 5), [], `${bad.length} cases differ`);
 });

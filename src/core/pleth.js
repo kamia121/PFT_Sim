@@ -43,6 +43,117 @@ import { createStream } from './prng.js';
  * @property {number[]} eelDeviationL end-expiratory level of the last tidal breaths before closure, relative to the stable level, L
  */
 
+/**
+ * Volume-time record of one shutter-closure maneuver (new in the report-page redesign; `pleth.timeline.trials[k - 1]`).
+ * Volume is absolute thoracic gas volume in liters. The end-expiratory level at shutter closure is that trial's FRC
+ * read from the plotted arrays (`PlethTrial.frcL`); residual volume and total lung capacity at the ends of the record are
+ * the reported ones (`suggestedVolumes`), so the axis is anchored at the reported mean. Time is seconds from the start
+ * of the record. Segments, in order: tidal (quiet breathing before closure), closure (shutter closed: the pneumotach
+ * volume is flat while the subject pants), open-shutter (the shutter has opened and one quiet breath is taken),
+ * expiration (slow, to RV) and inspiration (slow, to TLC).
+ *
+ * @typedef {object} PlethTimelineSegment
+ * @property {'tidal'|'closure'|'open-shutter'|'expiration'|'inspiration'} id
+ * @property {string} label plain-language name for the figure
+ * @property {number} t0 start time, s
+ * @property {number} t1 end time, s
+ * @property {number} i0 index of the first sample in `t` and `v`
+ * @property {number} i1 index of the last sample (inclusive); the last sample of one segment is the first of the next
+ *
+ * Mouth-pressure lane of one trial. `t`, `pm` and `pbox` are the very arrays of `PlethTrial` (same objects, not resampled).
+ * Record time of sample j is `tStartS + t[j]`.
+ * @typedef {object} PlethTimelineLane
+ * @property {number} trial 1-based
+ * @property {number} tStartS record time at which the shutter closes, s
+ * @property {number[]} t seconds from shutter closure (verbatim)
+ * @property {number[]} pm mouth pressure, kPa (verbatim)
+ * @property {number[]} pbox box pressure signal, Pa, compression positive (verbatim)
+ * @property {number} panFreqHz
+ *
+ * @typedef {object} PlethTimelineLevels
+ * @property {number} reportedFrcL reported FRC (mean of the acceptable trials): the anchor of the axis
+ * @property {number} trialFrcL this trial's FRC from the plotted arrays; the volume at closure
+ * @property {number} closureOffsetL trialFrcL minus the stable end-expiratory level that precedes it; nonzero when the shutter closed away from the stable level
+ * @property {number} stableEelL stable end-expiratory level (the reported FRC for every trial)
+ * @property {number} rvL residual volume at the end of the slow expiration (reported FRC minus ERV)
+ * @property {number} tlcL total lung capacity at the end of the record (reported FRC plus IC)
+ * @property {number} ervL expiratory reserve volume from the stable level (case value)
+ * @property {number} icL inspiratory capacity from the stable level (case value)
+ * @property {number} tidalVolumeL mean tidal volume of the quiet breaths
+ *
+ * @typedef {object} PlethTimelineTrial
+ * @property {number} trial 1-based trial number
+ * @property {number[]} t seconds from the start of the record
+ * @property {number[]} v absolute volume, L, same length as `t`
+ * @property {PlethTimelineSegment[]} segments
+ * @property {number[]} eelL end-expiratory level of each quiet breath before closure, L (the last equals the closure level)
+ * @property {PlethTimelineLevels} levels
+ * @property {PlethTimelineLane} lane
+ * @property {boolean} offsetFromStable true when the closure level differs from the stable level by more than 0.05 L (unstable end-tidal level)
+ *
+ * @typedef {object} PlethTimeline
+ * @property {number} version
+ * @property {'tidal'} breathingMode breathing before closure
+ * @property {string} anchor statement of what the volume axis is anchored to
+ * @property {number} reportedFrcL
+ * @property {PlethTimelineTrial[]} trials one record per panting trial, in trial order
+ */
+
+/**
+ * Open-shutter airway resistance loop (new in the report-page redesign; `pleth.raw`). One continuous record of
+ * tidal breaths built from a single phase variable, so the flow and the shift signal have no jumps at flow reversals.
+ * The loop is flow (expiration positive) against shift signal; the x axis in the figures is the shift volume in mL,
+ * `shiftMl = pbox * freeBoxVolume / barometricPressure`, positive when alveolar gas is compressed (expiratory effort).
+ * sRaw is the least-squares slope of `pbox` on `flow` within |flow| <= `estimator.fitRangeLs`, recomputed from these arrays;
+ * Raw = sRaw divided by the reported FRC (mean of the acceptable trials). Earlier versions of the generator
+ * produced sRaw and Raw from a different loop (see docs/pleth-dlco-model.md, section 1.3).
+ *
+ * @typedef {object} PlethRawMorphology
+ * @property {'closed'|'golf-club'|'restriction'|'sigmoid'} id
+ * @property {string} label
+ * @property {string} appearance what the loop looks like, in words
+ * @property {{ text: string, tag: 'verified'|'secondary'|'MEM' }} source basis of the shape, graded as in docs/research/pleth-dlco.md
+ * @property {Record<string, number>} parameters shape parameters used for this case (all unverified teaching values)
+ *
+ * @typedef {object} PlethRawEstimator
+ * @property {'ls-slope-abs-flow'} id
+ * @property {string} label name printed next to sRaw
+ * @property {number} fitRangeLs flow window of the fit, L/s
+ * @property {number} nPoints samples inside the window
+ *
+ * @typedef {object} PlethRawBreathingMode
+ * @property {'tidal'} id
+ * @property {string} label
+ * @property {number} tidalVolumeL mean tidal volume of the recorded breaths
+ * @property {number} inspiratoryTimeS mean
+ * @property {number} expiratoryTimeS mean
+ * @property {number} ratePerMin
+ *
+ * @typedef {object} PlethRawLoop
+ * @property {number[]} t seconds
+ * @property {number[]} flow L/s, expiration positive
+ * @property {number[]} pbox box pressure signal, Pa, compression positive
+ * @property {number[]} shiftMl shift volume, mL (derived from pbox)
+ * @property {number[]} volumeL tidal volume above the end-expiratory level, L
+ * @property {number[]} phase cumulative breath phase, rad
+ * @property {number[]} breath 0-based breath index of each sample
+ * @property {PlethRawMorphology} morphology
+ * @property {PlethRawEstimator} estimator
+ * @property {PlethRawBreathingMode} breathingMode
+ * @property {number} fitSlopePaPerLs slope of the estimator, Pa per L/s
+ * @property {number} tangentSlopePaPerLs local slope through zero flow (|flow| <= 0.15 L/s), Pa per L/s
+ * @property {number} sRawKpaS
+ * @property {number} sGawPerKpaS 1 / sRaw
+ * @property {number} rawKpaSL sRaw / reported FRC
+ * @property {number} rawCmH2OSL
+ * @property {number} sRawCmH2OS
+ * @property {number} modelRawKpaSL physiological target the generator was calibrated to (before recomputation)
+ * @property {{ definition: string, frcL: number }} rawBasis Raw = sRaw divided by this FRC
+ * @property {{ sRtotKpaS: number }} alternativeEstimates sRtot: slope of the line between the points of maximal shift, which diverges from the fit in open loops
+ * @property {{ opening: number, sIndex: number, descriptor: string }} shape
+ * @property {{ sRawUpperKpaS: number, verification: string }} reference
+ */
+
 export const PLETH_MODEL = {
   version: 1,
   barometricMmHg: { value: 760, verification: 'convention' },
