@@ -17,9 +17,15 @@ export const QUALITY_SCENARIOS = [
       'Rounded, low-peak blows throughout; patient reports fear of coughing.',
     ],
     weight: 1.2,
-    effects: { maneuver: { effort: { fvc: [0.82, 0.92], fev1: [0.8, 0.9], r: [0.08, 0.14] } } },
+    // Peak flow is the effort-dependent quantity: a slower rise (r) lowers and delays the peak. FEV1 is largely effort independent after the peak, so it
+    // falls little. FVC falls when the lungs are normal; in airflow obstruction a gentler blow compresses the airways less and the FVC can rise (unverified sizes).
+    effects: { maneuver: { effort: { fvc: [0.9, 0.97], fev1: [0.93, 0.98], r: [0.16, 0.3], fvcObstructed: [0.98, 1.06] } } },
+    finalize: (fx, d) => {
+      const { fvcObstructed, ...effort } = fx.maneuver.effort;
+      return { ...fx, maneuver: { ...fx.maneuver, effort: OBSTRUCTIVE.includes(d.archetype) ? { ...effort, fvc: fvcObstructed } : effort } };
+    },
     caveats: [
-      { id: 'submaximal-effort-mimics', weight: 'major', text: 'Consistently low effort lowers FEV1, FVC and peak flow together and can mimic restriction or more severe disease. Repeatability can remain good when the effort is consistently low, so a good grade does not exclude it; a low, rounded peak flow with a normal descent of the loop is the clue.' },
+      { id: 'submaximal-effort-mimics', weight: 'major', text: 'Consistently low effort lowers peak flow most and delays and rounds the peak. FEV1 is relatively effort independent after the peak, so it falls less than peak flow. FVC may fall, which can mimic restriction, or in airflow obstruction may even rise because a gentler blow compresses the airways less. Repeatability can remain good when the effort is consistently low, so a good grade does not exclude it; a low, late, rounded peak flow is the clue.' },
     ],
     decoyCaveats: [{ id: 'decoy-submax-restriction', text: 'The reduced FVC with a preserved ratio establishes restriction.' }],
     confidence: 'medium', source: 'QS-02; S1; S25',
@@ -36,7 +42,7 @@ export const QUALITY_SCENARIOS = [
     vars: BLOWS('slow-start'),
     verifiedNumbers: ['5', '0.100'],
     caveats: [
-      { id: 'slow-start-bev-hides-obstruction', weight: 'major', text: 'A slow start enlarges the back-extrapolated volume. When it exceeds 5% of the FVC or 0.100 L, whichever is greater, the FEV1 is neither acceptable nor usable. A large back-extrapolated volume inflates the FEV1 by counting part of the early volume, which can hide obstruction.' },
+      { id: 'slow-start-bev-fev1-unusable', weight: 'major', text: 'A slow start enlarges the back-extrapolated volume. When it exceeds 5% of the FVC or 0.100 L, whichever is greater, the FEV1 is neither acceptable nor usable. The error in the FEV1 has no fixed direction, so it cannot be assumed to mask or to exaggerate obstruction; the loop shows a delayed, rounded rise.' },
     ],
     decoyCaveats: [{ id: 'decoy-slow-start-fvc', text: 'The slow start makes the FVC unusable.' }],
     confidence: 'high', source: 'QS-01; S1',
@@ -231,6 +237,7 @@ export const QUALITY_SCENARIOS = [
       'Incomplete inhalation on the diffusing capacity test: inspired volume {vi}% of VC.',
     ],
     weight: 1.2,
+    // The scenario draws VI/VC and forces the fault; src/core/dlco-trace.js alone turns it into VA and DLCO (docs/scenarios-model.md).
     effects: { dlco: { viFraction: [0.7, 0.86] }, traceFaults: { dlco: ['incomplete-inhalation'] } },
     vars: (fx) => ({ vi: String(Math.round(fx.dlco.viFraction * 100)) }),
     caveats: [
@@ -247,7 +254,8 @@ export const QUALITY_SCENARIOS = [
       'Valsalva noted on the diffusing capacity maneuver.',
     ],
     weight: 0.8,
-    effects: { dlco: { mult: [0.84, 0.95] }, traceFaults: { dlco: ['valsalva'] } },
+    // The tracing applies the fall in DLCO (valsalvaDlcoFall in dlco-trace.js, unverified); the scenario adds no multiplier of its own.
+    effects: { traceFaults: { dlco: ['valsalva'] } },
     caveats: [
       { id: 'dlco-valsalva', weight: 'major', text: 'Straining during the breath-hold reduces pulmonary capillary blood flow and volume and lowers the measured DLCO. The 2017 standard requires no evidence of a Valsalva or Mueller maneuver, so the maneuver is not acceptable.' },
     ],
@@ -262,7 +270,8 @@ export const QUALITY_SCENARIOS = [
       'Mueller maneuver noted on the diffusing capacity test.',
     ],
     weight: 0.6,
-    effects: { dlco: { mult: [1.05, 1.16] }, traceFaults: { dlco: ['mueller'] } },
+    // The tracing applies the rise in DLCO (muellerDlcoRise in dlco-trace.js, unverified); the scenario adds no multiplier of its own.
+    effects: { traceFaults: { dlco: ['mueller'] } },
     caveats: [
       { id: 'dlco-mueller', weight: 'major', text: 'Inspiratory effort against a closed glottis raises capillary blood volume and spuriously raises the measured DLCO, which could mask interstitial disease or emphysema. The 2017 standard does not accept the maneuver.' },
     ],
@@ -324,9 +333,10 @@ export const QUALITY_SCENARIOS = [
       'IC maneuver limited by poor effort; TLC derived from FRC plus a short IC.',
     ],
     weight: 1,
-    effects: { volumes: { icMult: [0.82, 0.92], vaFollowsTlc: true } },
+    // The plethysmographic IC error lowers IC, VC and TLC; RV (FRC minus ERV) is unchanged, so RV/TLC rises. The single-breath VA comes from a separate maneuver and does not follow the artifactual TLC.
+    effects: { volumes: { icMult: [0.82, 0.92] } },
     caveats: [
-      { id: 'pleth-ic-short-tlc-low', weight: 'major', text: 'TLC is the sum of FRC and inspiratory capacity, so a linked maneuver that does not reach total lung capacity lowers IC, VC and TLC. A TLC below the lower limit may be a technique artifact.' },
+      { id: 'pleth-ic-short-tlc-low', weight: 'major', text: 'TLC is the sum of FRC and inspiratory capacity, so a linked maneuver that does not reach total lung capacity lowers IC, VC and TLC. RV is unchanged, so RV/TLC rises artifactually. The single-breath VA comes from a separate maneuver and does not share the error, so an unusually high VA relative to the plethysmographic TLC points to the TLC as the low measurement. A TLC below the lower limit may be a technique artifact.' },
     ],
     decoyCaveats: [{ id: 'decoy-ic-short-frc', text: 'The short inspiratory capacity lowers the FRC.' }],
     confidence: 'medium', source: 'PLE-06; S3; effect mem',

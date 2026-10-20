@@ -3,7 +3,7 @@
  *
  * @typedef {object} Caveat
  * @property {string} id @property {string} text @property {'major'|'minor'} weight
- * @property {'dlco'|'volumes'|'post'} [requires] the caveat applies only when the case contains that test
+ * @property {'dlco'|'volumes'|'post'|'sexSame'} [requires] the caveat applies only when the case contains that test (or, for sexSame, when the sex choice changes no label)
  *
  * @typedef {object} Scenario
  * @property {string} id
@@ -23,6 +23,11 @@
  * @property {boolean} noncontributory true when the scenario changes no data and its caveat says so
  * @property {(fx: object, c: object) => Record<string, string>} vars placeholder values for the templates
  * @property {string} [deviation] short operator-record phrase for the pre-test notes
+ * @property {(fx: object, d: object, u: number[]) => object} [finalize] derives dependent effects from the drawn ones (for example a
+ *   bronchodilator shift from the hours since the dose); runs after the ranges are resolved and may use u[15], which no effect range reads
+ *
+ * A caveat's `requires` is 'dlco', 'volumes' or 'post' (the case contains that test) or 'sexSame' (the classification is the same under both
+ * reference sexes). A decoy caveat's `unless: 'sexSame'` drops the decoy when the statement it makes would be true for the case.
  */
 
 /** @param {Partial<Scenario> & { id: string, category: string, variants: string[], caveats: Caveat[], confidence: string, source: string }} o @returns {Scenario} */

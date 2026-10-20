@@ -171,7 +171,7 @@ function pickFaults(d, technique, scenario) {
  * @param {object|null} args.volumes case volumes (vc, rv used)
  * @param {{ weightKg?: number, barometricMmHg?: number }} [args.patient]
  * @param {'good'|'fair'|'poor'} [args.technique]
- * @param {object} [args.scenario]
+ * @param {object} [args.scenario] { ids: DLC-01 to DLC-06 force faults; viOverVc: the VI/VC fraction a forced DLC-01 uses }
  * @param {number} [args.ratioZ] true FEV1/FVC z-score if known; otherwise approximated from the truth
  */
 export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ } = {}) {
@@ -189,7 +189,8 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
 
   // Inspiration and dead space.
   const r0 = 0.93 + 0.07 * d[4];
-  const rActual = has('low-vi') ? (scenario?.ids?.includes('DLC-01') ? 0.74 + 0.06 * d[5] : 0.72 + 0.16 * d[5]) : r0;
+  // A scenario that forces DLC-01 may state the fraction (scenario.viOverVc, VI/VC); the intake text and the tracing then agree.
+  const rActual = has('low-vi') ? (scenario?.viOverVc !== undefined && scenario?.ids?.includes('DLC-01') ? scenario.viOverVc : scenario?.ids?.includes('DLC-01') ? 0.74 + 0.06 * d[5] : 0.72 + 0.16 * d[5]) : r0;
   const vi0 = r0 * vcL, vi = rActual * vcL;
   const weight = patient.weightKg ?? 70;
   const vdRaw = clamp(DLCO_MODEL.anatomicDeadSpaceMlPerKg.value * weight / 1000, 0.12, 0.3) + DLCO_MODEL.apparatusDeadSpaceL.value;

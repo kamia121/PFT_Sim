@@ -7,7 +7,12 @@ import { SPIROMETRY_2019 as S } from './standards.js';
  */
 export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };
 
-/** Report labels for the maneuver faults the generator can record. */
+/**
+ * Readable wording for every maneuver fault id the generator can record (technique faults in maneuver.js, scenario faults in
+ * SCENARIO_FAULTS, and the set-wide submaximal-effort marker). Consumers (report comments, the maneuver table, the app) look the id up
+ * here and never print a bare id; tests/quality.test.mjs checks that every id the generator emits has an entry in all three tables.
+ */
+/** Report labels. */
 export const FAULT_LABELS = {
   'slow-start': 'slow start',
   'early-termination': 'early termination',
@@ -20,6 +25,37 @@ export const FAULT_LABELS = {
   'submaximal-effort': 'submaximal effort',
   'no-plateau': 'no plateau at end of expiration',
 };
+/** Phrases for the technologist comment of a maneuver set ("<phrase> (maneuver 2)"). */
+export const FAULT_TEXT = {
+  'slow-start': 'hesitant start',
+  'early-termination': 'early termination of expiration',
+  'variable-effort': 'variable effort',
+  cough: 'cough in the first second',
+  'glottic-closure': 'abrupt cessation of flow, probable glottic closure',
+  leak: 'air leak at the lips',
+  'mouthpiece-obstruction': 'tongue or teeth in front of the mouthpiece',
+  'pause-at-TLC': 'pause at full inspiration before the blast',
+  'submaximal-effort': 'submaximal effort',
+  'no-plateau': 'expiration stopped before a plateau',
+};
+/** Short wording for the per-maneuver table. */
+export const FAULT_SHORT = {
+  'slow-start': 'slow start',
+  'early-termination': 'early stop',
+  'variable-effort': 'variable effort',
+  cough: 'cough',
+  'glottic-closure': 'glottic closure',
+  leak: 'leak',
+  'mouthpiece-obstruction': 'mouthpiece obstruction',
+  'pause-at-TLC': 'pause at TLC',
+  'submaximal-effort': 'submaximal effort',
+  'no-plateau': 'no plateau',
+};
+/** @param {string} id @param {'text'|'short'|'label'} [form] readable wording for a fault id; an unknown id is spelled out, not printed raw */
+export function faultWording(id, form = 'text') {
+  const table = form === 'short' ? FAULT_SHORT : form === 'label' ? FAULT_LABELS : FAULT_TEXT;
+  return table[id] ?? String(id).replace(/[-_]/g, ' ').toLowerCase();
+}
 
 /**
  * Acceptability, usability, repeatability and grading for a set of forced maneuvers, following

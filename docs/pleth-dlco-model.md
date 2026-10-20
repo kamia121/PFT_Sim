@@ -73,7 +73,7 @@ If the tracer cannot dilute below (VI - VD) for the case VC (VA below (VI - VD)/
 
 | Fault | Trace | Effect on printed numbers | Numeric effect status |
 |---|---|---|---|
-| Low VI/VC (0.72 to 0.88; scenario DLC-01 0.74 to 0.80) | smaller volume step | VA falls by the volume deficit; DLCO falls as (VA ratio)^0.5, so KCO rises | direction S1/MEM; exponent unverified |
+| Low VI/VC (0.72 to 0.88; scenario DLC-01 0.74 to 0.80 when forced alone; when the encounter layer forces it, `scenario.viOverVc` supplies the VI/VC stated in the intake text, 0.70 to 0.86) | smaller volume step | VA falls by the volume deficit; DLCO falls as (VA ratio)^0.5, so KCO rises | direction S1/MEM; exponent unverified |
 | Slow inspiration (7 to 9 s; 85% of VI after 4 s) | long ramp | none | visual and grading (noted) |
 | Short hold (5 to 7.4 s) or long hold (12.8 to 16 s) | hold of that length | none, because the Krogh equation corrects for time | visual and grading; the note says tracer mixing and sample position shift, which this model does not apply |
 | Leak | measured volume falls 0.25 to 0.55 L during the hold | none | visual and grading only; direction is not predictable in the sources |

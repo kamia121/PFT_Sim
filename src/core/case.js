@@ -66,7 +66,11 @@ export function buildCase(input, datasets) {
   // The plethysmograph tracings decide the reported FRC (the mean of the acceptable trials); ERV and IC are kept, and TLC, RV and VC follow.
   // Scenario trace faults (src/scenarios names) are translated to the ids the tracing builders force (docs/pleth-dlco-model.md).
   const TRACE_IDS = { pleth: { 'thermal-drift': 'PLE-01', 'pant-too-fast': 'PLE-02' }, dlco: { 'incomplete-inhalation': 'DLC-01', valsalva: 'DLC-04', mueller: 'DLC-05', leak: 'DLC-06' } };
-  const traceScenario = plan ? { ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)) } : null;
+  // The scenario forces the fault; for faults the tracing models (incomplete inhalation, Valsalva, Mueller) the tracing alone sets the numbers.
+  // The inspired-volume fraction stated in the intake text is the one the tracing uses.
+  const traceScenario = plan
+    ? { ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)), ...(plan.merged.dlco.viFraction !== undefined ? { viOverVc: plan.merged.dlco.viFraction } : {}) }
+    : null;
   const trueRatioZ = resolveReference('fev1_fvc', { age: d.age, sex: d.sex, heightCm: d.heightCm, group: ANCHOR.group, measured: truth.ratio }, ANCHOR.spirometry).z;
   let pleth = null;
   if (volumes) {
@@ -85,7 +89,7 @@ export function buildCase(input, datasets) {
       const raw = corrected / factor;
       dlco = { raw, hbGdl: d.hbGdl, hbFactor: factor, adjusted: corrected, va, kco: corrected / va };
     } else {
-      ({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: volumes.tlc, vc: volumes.vc, tlcRatio: volumes.tlc / tlcBeforeScenario }));
+      ({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: volumes.tlc, tlcRatio: volumes.tlc / tlcBeforeScenario }));
       // The measured value follows the patient's own hemoglobin and birth sex; the laboratory adjusts with the sex and hemoglobin it has on file.
       const raw = corrected / hbFactor(d.hbGdl, d.sex, d.age);
       const factor = lab.hbGdl === null ? 1 : hbFactor(lab.hbGdl, lab.sex, d.age);
@@ -122,7 +126,7 @@ export function buildCase(input, datasets) {
   let scenario = emptyScenario(d);
   if (plan) {
     // Caveat ids travel with the report so that interpret() carries them into the key (key.caveatIds).
-    report.caveatIds = plan.caveatsFor({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }).map((c) => c.id);
+    report.caveatIds = plan.caveatsFor(plan.caveatFlags({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }, report, resolveReference)).map((c) => c.id);
     scenario = plan.describe({ report, pre, post, volumes, dlco, resolve: resolveReference });
   }
   const anchorKey = interpret(report, resolveReference, ANCHOR.spirometry);
