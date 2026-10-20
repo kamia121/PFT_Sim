@@ -93,6 +93,39 @@ try {
   check(await page.locator('#panel-method').isVisible(), 'method tab opens');
   await page.click('[data-tab=practice]');
 
+  // Lab report tab: opens, tables render, nothing from the key before answers are checked, exports are non-empty.
+  await page.click('#new-case');
+  await page.waitForSelector('#pre-maneuvers');
+  await page.click('[data-tab=report]');
+  await page.waitForSelector('.pft-report');
+  check(await page.locator('#panel-report').isVisible(), 'report tab opens');
+  check((await page.locator('.pft-report table.rpt-table').count()) >= 2, 'report tables render');
+  check((await page.locator('.pft-report [data-copy-table]').count()) === (await page.locator('.pft-report table.rpt-table').count()), 'each report table has a copy button');
+  const reportBefore = await page.locator('.pft-report').innerText();
+  check(!/FEV1\s*-\s*[A-FU]\b|ATS\/ERS repeatability|Accept\./.test(reportBefore) && /grades are shown after the answers are checked/.test(reportBefore), 'report withholds grades and acceptability before answers are checked');
+  check(await page.locator('#report-interp').isDisabled(), 'interpretation toggle is disabled before checking');
+  const [csvDownload] = await Promise.all([page.waitForEvent('download'), page.click('#report-csv')]);
+  const csvText = await new Promise((res, rej) => { let t = ''; csvDownload.createReadStream().then((st) => { st.on('data', (d) => (t += d)); st.on('end', () => res(t)); st.on('error', rej); }, rej); });
+  check(csvText.startsWith('\uFEFFsection,table,row,column,value,unit') && csvText.split('\n').length > 40, 'CSV export is non-empty and tidy');
+  check(/^pft-report-[0-9a-z]{7}\.csv$/.test(csvDownload.suggestedFilename()), `CSV file name carries the case code (${csvDownload.suggestedFilename()})`);
+  const [htmlDownload] = await Promise.all([page.waitForEvent('download'), page.click('#report-html')]);
+  check(/\.html$/.test(htmlDownload.suggestedFilename()), 'report HTML downloads');
+  await page.click('.pft-report [data-copy-table="spirometry"]');
+  await page.waitForFunction(() => /Copied|Copy failed/.test(document.querySelector('.pft-report [data-copy-table="spirometry"]').textContent));
+  check((await page.locator('.pft-report [data-copy-table="spirometry"]').innerText()) === 'Copied', 'Copy table reports success');
+  await page.click('[data-tab=practice]');
+  await page.click('#show-key');
+  await page.waitForSelector('#reveal');
+  await page.click('[data-tab=report]');
+  check(/FEV1\s*-\s*[A-FU]\b/.test(await page.locator('.pft-report').innerText()), 'grades appear after answers are checked');
+  await page.check('#report-interp');
+  check(!/to be entered by the reader/.test(await page.locator('.pft-report .rpt-interp').innerText()), 'interpretation statement can be added after checking');
+  await page.emulateMedia({ media: 'print' });
+  check(!(await page.locator('.masthead').isVisible()) && (await page.locator('.pft-report').isVisible()), 'print view hides the page chrome and keeps the report');
+  await page.emulateMedia({ media: 'screen' });
+  check(problems.length === 0, `no console or page errors in the report view${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);
+  await page.click('[data-tab=practice]');
+
   // Themes and phone width.
   for (const theme of ['light', 'dark']) {
     await page.click('#theme-toggle');
