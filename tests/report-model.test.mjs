@@ -166,9 +166,14 @@ test('lung volume and DLCO tables carry the specified rows and respect the panel
 });
 
 test('a plethysmography replicate table appears only when caseData.pleth exists', () => {
-  const base = buildCase({ seed: 12, archetype: 'obstruction' }, ds);
+  const real = buildCase({ seed: 12, archetype: 'obstruction' }, ds);
+  const base = { ...real, pleth: null };
   const interp = interpret(base.report, resolveReference, 'GLIglobal');
   assert.equal(table(buildReportModel(base, interp, { resolve: resolveReference }), 'pleth'), undefined);
+  // A case from buildCase carries real replicates; the table lists them and the footnote mean is the reported FRC.
+  const rt = table(buildReportModel(real, interp, { resolve: resolveReference }), 'pleth');
+  assert.equal(rt.rows.length, real.pleth.replicateTable.length);
+  assert.match(rt.footnote, new RegExp(`Mean FRCpleth ${real.pleth.reportedFrcL.toFixed(2).replace('.', '\\.')} L`));
   const c = { ...base, pleth: { grade: 'A', replicates: [{ frc: 3.1, pantHz: 0.8, acceptable: true }, { frc: 3.2, pantHz: 0.9, acceptable: true }, { frc: 3.0, pantHz: 1.0, acceptable: true }] } };
   const t = table(buildReportModel(c, interp, { resolve: resolveReference }), 'pleth');
   assert.equal(t.rows.length, 3);

@@ -10,6 +10,8 @@ import { selectScenarios, applyScenarios, emptyScenario } from '../scenarios/app
 import { generateManeuvers } from './maneuver.js';
 import { createStream } from './prng.js';
 import { createReference } from '../reference/gli.js';
+import { buildPleth } from './pleth.js';
+import { buildDlcoTrace } from './dlco-trace.js';
 import { interpret, LLN_Z } from '../interpret/interpret.js';
 
 const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
@@ -61,6 +63,17 @@ export function buildCase(input, datasets) {
     volumes = { method: 'plethysmography', frc, erv, ic, tlc: frc + ic, rv: frc - erv, vc: ic + erv };
   }
 
+  // The plethysmograph tracings decide the reported FRC (the mean of the acceptable trials); ERV and IC are kept, and TLC, RV and VC follow.
+  // Scenario trace faults (src/scenarios names) are translated to the ids the tracing builders force (docs/pleth-dlco-model.md).
+  const TRACE_IDS = { pleth: { 'thermal-drift': 'PLE-01', 'pant-too-fast': 'PLE-02' }, dlco: { 'incomplete-inhalation': 'DLC-01', valsalva: 'DLC-04', mueller: 'DLC-05', leak: 'DLC-06' } };
+  const traceScenario = plan ? { ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)) } : null;
+  const trueRatioZ = resolveReference('fev1_fvc', { age: d.age, sex: d.sex, heightCm: d.heightCm, group: ANCHOR.group, measured: truth.ratio }, ANCHOR.spirometry).z;
+  let pleth = null;
+  if (volumes) {
+    pleth = buildPleth({ seed: d.seed, truth: { ...truth, frc: volumes.frc }, volumes, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    volumes = pleth.suggestedVolumes;
+  }
+
   // Single-breath diffusing capacity: measured DLCO is the hemoglobin-corrected truth uncorrected again.
   let dlco = null;
   if (d.panel === 'full') {
@@ -79,6 +92,18 @@ export function buildCase(input, datasets) {
       // With the patient's own sex and hemoglobin the adjustment returns the corrected value exactly.
       const adjusted = lab.hbGdl !== null && lab.sex === d.sex ? corrected : raw * factor;
       dlco = { raw, hbGdl: lab.hbGdl, hbFactor: factor, adjusted, va, kco: adjusted / va };
+    }
+  }
+
+  // The single-breath tracing is built from the case values. When a technical fault changes the physics (low inspired volume,
+  // Valsalva, Mueller, a poor sample) the laboratory reports what the test measured, so the tracing's recomputed values replace them.
+  let dlcoTrace = null;
+  if (dlco) {
+    dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    if (dlcoTrace && dlcoTrace.reproducesCase === false && dlcoTrace.values) {
+      const scale = dlcoTrace.values.dlcoMlMinMmHg / dlco.raw;
+      const va = Math.min(dlcoTrace.values.vaL, 0.99 * volumes.tlc);
+      dlco = { ...dlco, raw: dlcoTrace.values.dlcoMlMinMmHg, adjusted: dlco.adjusted * scale, va, kco: (dlco.adjusted * scale) / va };
     }
   }
 
@@ -108,6 +133,8 @@ export function buildCase(input, datasets) {
     spirometry: { pre, post },
     volumes,
     dlco,
+    pleth,
+    dlcoTrace,
     report,
     anchorKey,
     scenario,

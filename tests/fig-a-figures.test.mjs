@@ -90,8 +90,7 @@ test('axes carry units, legends are present, markers are annotated', () => {
 });
 
 test('acceptability is hidden unless showQuality is set', () => {
-  const c = buildCase({ seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor' }, ds);
-  c.scenario = { ids: ['PLE-01', 'DLC-04'] };
+  const c = buildCase({ seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] }, ds);
   const shutter = plethShutter.dataFor(c), dlco = dlcoTrace.dataFor(c);
   assert.ok(!/acceptable|rejected|usable|Grade/.test(plethShutter.render(shutter, { palette: PALETTES.dark }).replace('mean of the acceptable trials', '')));
   assert.ok(/rejected|usable/.test(plethShutter.render(shutter, { palette: PALETTES.dark, showQuality: true })));
@@ -118,11 +117,16 @@ test('dataFor returns null without the test, uses stored data when present, and 
   for (const fig of FIGS) assert.equal(fig.dataFor(null), null);
   const c = buildCase({ seed: 7, archetype: 'mixed', technique: 'fair' }, ds);
   const d = c.descriptor;
+  // A case from buildCase carries its own tracings; the figures use them as stored.
+  assert.equal(plethShutter.dataFor(c), c.pleth);
+  assert.equal(dlcoTrace.dataFor(c), c.dlcoTrace);
+  // Without stored tracings the figures build them from the case.
+  const bare = { ...c, pleth: undefined, dlcoTrace: undefined };
   const expectedPleth = buildPleth({ seed: d.seed, truth: c.truth, volumes: c.volumes, technique: d.technique, scenario: null });
-  assert.deepEqual(plethShutter.dataFor(c), expectedPleth);
-  assert.deepEqual(plethRaw.dataFor(c), expectedPleth);
+  assert.deepEqual(plethShutter.dataFor(bare), expectedPleth);
+  assert.deepEqual(plethRaw.dataFor(bare), expectedPleth);
   const expectedTrace = buildDlcoTrace({ seed: d.seed, truth: c.truth, dlco: c.dlco, volumes: c.volumes, patient: d, technique: d.technique, scenario: null });
-  assert.deepEqual(dlcoTrace.dataFor(c), expectedTrace);
+  assert.deepEqual(dlcoTrace.dataFor(bare), expectedTrace);
   const stored = { pleth: { marker: 1 }, dlcoTrace: { marker: 2 } };
   assert.equal(plethShutter.dataFor(stored), stored.pleth);
   assert.equal(plethRaw.dataFor(stored), stored.pleth);

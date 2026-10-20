@@ -112,14 +112,15 @@ function derivedComments(caseData, includeGrades) {
   return out;
 }
 
-/** Plethysmography replicates; tolerant of the field names the FIG-A thread may use. */
+/** Plethysmography replicates from case.pleth.replicateTable (src/core/pleth.js); other field names are accepted for tests. */
 function plethRows(pleth) {
-  const list = pleth?.replicates ?? pleth?.trials ?? pleth?.efforts ?? pleth?.determinations ?? null;
+  const list = pleth?.replicateTable ?? pleth?.replicates ?? pleth?.trials ?? pleth?.efforts ?? pleth?.determinations ?? null;
   if (!Array.isArray(list) || !list.length) return null;
-  const val = (t) => t.frc ?? t.frcPleth ?? t.tgv ?? t.value ?? null;
-  const hz = (t) => t.pantHz ?? t.panHz ?? t.frequencyHz ?? t.hz ?? null;
+  const val = (t) => t.frcL ?? t.frc ?? t.frcPleth ?? t.tgv ?? t.value ?? null;
+  const hz = (t) => t.panFreqHz ?? t.pantHz ?? t.panHz ?? t.frequencyHz ?? t.hz ?? null;
   const vals = list.map(val).filter((v) => Number.isFinite(v));
-  const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  // The reported FRC is the mean of the acceptable trials, which the plethysmography model supplies.
+  const mean = Number.isFinite(pleth?.reportedFrcL) ? pleth.reportedFrcL : vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   return { list, val, hz, mean, vals };
 }
 

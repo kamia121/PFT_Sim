@@ -23,7 +23,9 @@ test('technique changes the recorded maneuvers but never the patient or the true
     const g = buildCase({ seed, archetype, technique: 'good' }, ds), p = buildCase({ seed, archetype, technique: 'poor' }, ds);
     assert.deepEqual(g.report.patient, p.report.patient);
     assert.deepEqual(g.truth, p.truth);
-    assert.deepEqual(g.volumes, p.volumes);
+    // The plethysmography replicates depend on technique, so FRC, TLC and RV may differ; ERV and IC are measured separately.
+    assert.equal(g.volumes.erv, p.volumes.erv);
+    assert.equal(g.volumes.ic, p.volumes.ic);
   }
 });
 
