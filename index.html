@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="./fonts.css">
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./src/report/report.css">
   <script type="module" src="./src/app/main.js"></script>
 </head>
 <body>
@@ -19,7 +20,7 @@
   <h1>Simulated pulmonary function reports</h1>
   <p class="lede">Read the report, write an interpretation, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.</p>
   <p class="warn"><strong>Educational use only.</strong> Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.</p>
-  <nav class="tabs" role="tablist" aria-label="Sections"><button type="button" role="tab" data-tab="practice" aria-selected="true">Practice</button><button type="button" role="tab" data-tab="method" aria-selected="false">Method and limits</button></nav>
+  <nav class="tabs" role="tablist" aria-label="Sections"><button type="button" role="tab" data-tab="practice" aria-selected="true">Practice</button><button type="button" role="tab" data-tab="report" aria-selected="false">Lab report</button><button type="button" role="tab" data-tab="method" aria-selected="false">Method and limits</button></nav>
   <div id="panel-practice" class="panel" role="tabpanel">
     <div class="toolbar">
       <button type="button" class="primary" id="new-case">New case</button>
@@ -30,6 +31,19 @@
     </div>
     <p id="tally" class="muted" aria-live="polite"></p>
     <div id="case" aria-live="polite"><p class="muted">Loading reference tables…</p></div>
+  </div>
+  <div id="panel-report" class="panel" role="tabpanel" hidden>
+    <div class="toolbar rpt-toolbar">
+      <button type="button" class="primary" id="report-print">Print or save as PDF</button>
+      <button type="button" class="secondary" id="report-csv">Download CSV</button>
+      <button type="button" class="secondary" id="report-csv-wide">Download CSV (wide)</button>
+      <button type="button" class="secondary" id="report-html">Download report HTML</button>
+      <label class="field">Spirometry reference<select id="report-eq"><option value="GLIglobal">GLI Global 2022</option><option value="GLI2012">GLI-2012</option></select></label>
+      <label><input type="checkbox" id="report-interp" disabled> Add the interpretation statement</label>
+      <label><input type="checkbox" id="report-dark"> Dark figure panels (screen only)</label>
+    </div>
+    <p class="muted" id="report-hint">Quality grades, per-maneuver acceptability and the interpretation statement appear after you check your answers on the Practice tab.</p>
+    <div id="report-root" aria-live="polite"></div>
   </div>
   <div id="panel-method" class="panel" role="tabpanel" hidden><div id="method"></div></div>
 </main>
