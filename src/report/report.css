@@ -103,23 +103,26 @@
 .pft-report .rpt-gen { font-size: 8pt; color: var(--rpt-muted); font-weight: 400; }
 
 /* Screen-only controls */
+.pft-report .rpt-open { margin: 0 0 8px; font-size: 9.5pt; }
+.pft-report .rpt-open a { color: #0e2b73; font-weight: 600; }
 .pft-report .rpt-copy { font: inherit; font-size: 8.5pt; padding: 1px 8px; border: 1px solid var(--rpt-rule); background: #fff; color: #000; border-radius: 3px; cursor: pointer; }
 .pft-report .rpt-copy:hover { background: var(--rpt-shade); }
 .pft-report .rpt-copy:focus-visible { outline: 2px solid #0e2b73; outline-offset: 1px; }
 
+/* Narrow-window rules below apply to the practice-page preview and the saved file; the report page (.rp-page) scales its fixed pages instead. */
 /* A standalone saved file sits on a plain page */
 body.rpt-standalone { margin: 0; background: #e8e8e8; }
 body.rpt-standalone .pft-report { margin: 12px auto; }
 
 @media (max-width: 760px) {
-  .pft-report .rpt-pair { grid-template-columns: 1fr; }
+  .pft-report:not(.rp-page) .rpt-pair { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .pft-report { padding: 8px; font-size: 9.5pt; }
-  .pft-report .rpt-fields { grid-template-columns: repeat(2, 1fr); }
-  .pft-report .rpt-fields > div.wide { grid-column: span 2; }
-  .pft-report .rpt-figs, .pft-report .rpt-boxes { grid-template-columns: 1fr; }
-  .pft-report .rpt-table-scroll, .pft-report .rpt-block { overflow-x: auto; }
+  .pft-report:not(.rp-page) { padding: 8px; font-size: 9.5pt; }
+  .pft-report:not(.rp-page) .rpt-fields { grid-template-columns: repeat(2, 1fr); }
+  .pft-report:not(.rp-page) .rpt-fields > div.wide { grid-column: span 2; }
+  .pft-report:not(.rp-page) .rpt-figs, .pft-report:not(.rp-page) .rpt-boxes { grid-template-columns: 1fr; }
+  .pft-report:not(.rp-page) .rpt-table-scroll, .pft-report:not(.rp-page) .rpt-block { overflow-x: auto; }
 }
 
 @media print {

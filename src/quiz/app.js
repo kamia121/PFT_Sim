@@ -128,6 +128,9 @@ function updatePracticeStatus() {
   $('#p-status').textContent = t.cases || t.max ? `Items scored this session: ${num(t.total, 1)} of ${t.max}.` : '';
 }
 
+/** Address of the report page (student copy) for a case; the code is the opaque one used on the practice page. */
+const reportUrl = (descriptor, equation) => `./report.html?c=${encodeCase(serializeDescriptor(descriptor))}&eq=${equation}`;
+
 function updatePracticeSummary() {
   const done = P.items.filter((it) => P.feedback[it.id]);
   const box = $('#p-summary');
@@ -137,7 +140,7 @@ function updatePracticeSummary() {
   const learnerUrl = `./?c=${encodeCase(serializeDescriptor(P.prep.caseData.descriptor))}`;
   box.innerHTML = `<h3>This case: ${num(sum.total, 1)} of ${sum.max}</h3>${rubricTable(sum.bySkill)}
     <p class="muted">Session rubric, all cases checked so far:</p>${rubricTable(P.tally.bySkill)}
-    <p><a href="${esc(learnerUrl)}">Open this case on the case practice page</a>, which also shows the ground truth and the equation comparison.</p>`;
+    <p><a href="${esc(learnerUrl)}">Open this case on the case practice page</a>, which also shows the ground truth and the equation comparison. <a href="${esc(reportUrl(P.prep.caseData.descriptor, P.equation))}">Open the laboratory report for this case</a> (student copy, three printable pages).</p>`;
 }
 
 function checkPracticeItem(fs) {
@@ -289,7 +292,7 @@ function renderExamReview() {
   $('#exam-root').innerHTML = `<div class="examBar"><div><strong>Review: case ${i + 1} of ${full.length}</strong> · ${num(E.result.summary.perCase[i].score, 1)} of ${E.result.summary.perCase[i].max}</div><div><button type="button" class="secondary" id="e-back-results">Back to results</button></div></div>${nav}
     ${renderChart(c.prep, { adapters: app.adapters, index: i, idPrefix: 'rv-' })}
     <section class="card" aria-labelledby="h-qr"><h2 id="h-qr">Questions with feedback</h2>${itemsHtml(c.items.map(publicItem), { caseIndex: i, orderSeed: orderSeedFor(E.def, E.learnerSeed), responses: responses[i], locked: true, feedback })}</section>
-    <p class="muted">Case ${i + 1} was generated as ${esc(c.descriptor.archetype)} with ${esc(c.descriptor.technique)} technique.</p>`;
+    <p class="muted">Case ${i + 1} was generated as ${esc(c.descriptor.archetype)} with ${esc(c.descriptor.technique)} technique. <a href="${esc(reportUrl(c.descriptor, E.def.equation))}">Open the laboratory report for this case</a>.</p>`;
   window.scrollTo?.({ top: 0 });
 }
 
