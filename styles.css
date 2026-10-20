@@ -66,3 +66,5 @@ table.data td.l,table.data th.l{text-align:left}
 details{margin:.5em 0}
 summary{cursor:pointer;font-weight:600}
 @media (max-width:640px){html{font-size:16px}.result-row{grid-template-columns:1fr}}
+
+figure svg{max-width:100%;height:auto;display:block}

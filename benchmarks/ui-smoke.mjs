@@ -28,7 +28,7 @@ try {
   page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector('#pre-maneuvers');
-  const nFig = await page.locator('svg.fig').count();
+  const nFig = await page.locator('figure[data-figure]').count();
   check(nFig >= 3, `at least three figures render (${nFig}): loop, volume-time, z-score strip`);
   check((await page.locator('details.fig-dl').count()) === nFig, 'every figure has a Download SVG control');
   check((await page.locator('details.fig-dl button[data-act=download]').count()) === 4 * nFig, 'each control offers four SVG variants');
