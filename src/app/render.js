@@ -6,6 +6,7 @@ import { FIGURES } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
 import { archetypeNote } from '../core/physiology.js';
+import { faultWording } from '../core/quality.js';
 
 const bmi = (p) => p.weightKg / (p.heightCm / 100) ** 2;
 
@@ -35,7 +36,7 @@ export function renderManeuvers(set, title, { revealed, id }) {
   const best = (key) => summary[key];
   const rows = maneuvers.map((m, i) => {
     const ev = summary.evaluations[i];
-    const comments = m.faults.map((f) => ({ 'slow-start': 'slow start', 'early-termination': 'early termination', 'variable-effort': 'variable effort', cough: 'cough in first second', 'glottic-closure': 'glottic closure' }[f])).join(', ');
+    const comments = m.faults.map((f) => faultWording(f, 'label')).join(', ');
     const verdict = (k) => (ev[k].acceptable ? 'acceptable' : ev[k].usable ? 'usable' : 'not usable');
     return `<tr><th scope="row">${i + 1}</th><td>${num(m.fvc)}</td><td>${num(m.fev1)}</td><td>${num(m.fev1 / m.fvc, 3)}</td><td>${num(m.pef, 1)}</td><td>${num(m.fef2575, 2)}</td><td>${num(m.fet, 1)}</td><td>${num(m.bev, 3)}</td><td>${num(m.plateau, 3)}</td><td class="l">${esc(comments || '—')}</td>${revealed ? `<td class="l" title="${esc(reasonText(ev, 'fev1'))}">${verdict('fev1')}</td><td class="l" title="${esc(reasonText(ev, 'fvc'))}">${verdict('fvc')}</td>` : ''}</tr>`;
   }).join('');
@@ -147,11 +148,18 @@ export function renderAnswerForm(c, answers, locked) {
 
 const STATUS_TEXT = { correct: ['ok', 'Correct'], 'other-equation': ['ok', 'Accepted: matches the other reference equation'], incorrect: ['miss', 'Differs from the key'], unanswered: ['miss', 'Not answered'] };
 
+/** Archetype description for the reveal; a few are reworded where the stored wording goes beyond the sources or contradicts the case. */
+function groundTruthNote(c, truth) {
+  if (truth.archetype === 'anemia' && c.dlco && !hbKnown(c.dlco)) return 'Low measured DLCO with anemia; no hemoglobin was available to the laboratory, so the DLCO is reported without adjustment.';
+  return ARCHETYPE_NOTE_OVERRIDES[truth.archetype] ?? archetypeNote(truth.archetype);
+}
+
 export function renderReveal(c, interp, cmp, scores, scored) {
   const k = interp.key;
   const tally = scored ? scores.filter((s) => s.status === 'correct' || s.status === 'other-equation').length : null;
   const rows = scores.map((s) => {
     const [cls, base] = STATUS_TEXT[s.status];
+    s = { ...s, label: questionLabel(c, QUESTIONS.find((q) => q.id === s.id)) };
     const text = s.status === 'other-equation' ? s.otherLabel : base;
     return `<div class="result-row"><div class="head">${esc(s.label)}</div><div>${scored ? `You: ${esc(answerLabel(s.id, s.answer))}` : ''}</div><div>Key: <strong>${esc(answerLabel(s.id, s.expected))}</strong>${s.other !== s.expected ? ` <span class="muted">(other equation: ${esc(answerLabel(s.id, s.other))})</span>` : ''}${scored ? ` <span class="${cls}">${text}</span>` : ''}</div></div>`;
   }).join('');
@@ -194,7 +202,7 @@ export function renderReveal(c, interp, cmp, scores, scored) {
   <div class="scroll"><table class="data"><caption>Spirometry under GLI-2012 (group on requisition: ${esc(c.report.patient.group)}) and GLI Global 2022</caption><thead><tr><th class="l">Measure</th><th>Value</th><th>z, GLI-2012</th><th class="l">Label</th><th>z, GLI Global</th><th class="l">Label</th><th class="l">Reclassified</th></tr></thead><tbody>${cmpRows}</tbody></table></div>
   <p>${cmp.patternChanged ? `<span class="flag">The pattern changes:</span> ${esc(PATTERNS[cmp.a.pattern])} under GLI-2012 and ${esc(PATTERNS[cmp.b.pattern])} under GLI Global.` : `The pattern is the same under both equations (${esc(PATTERNS[cmp.b.pattern])}).`}${cmp.bronchodilatorChanged ? ' The 2022 bronchodilator result also changes, because it uses the predicted value.' : ''} Volumes and diffusing capacity use the same equations in both columns, so every change shown comes from the spirometry equation.</p>
   <h3>How this case was built</h3>
-  <p><strong>Ground truth:</strong> ${truth.bdVariant ? `Obstruction with air trapping and a discordant bronchodilator response; this case is the ${truth.bdVariant === 'volume' ? 'volume-response' : 'post-bronchodilator technique-artifact'} variant.` : esc(ARCHETYPE_NOTE_OVERRIDES[truth.archetype] ?? archetypeNote(truth.archetype))}${truth.phenotype && !truth.bdVariant ? ` Phenotype: ${esc(truth.phenotype)}.` : ''} Technique: ${esc(c.descriptor.technique)}.</p>
+  <p><strong>Ground truth:</strong> ${truth.bdVariant ? `Obstruction with air trapping and a discordant bronchodilator response; this case is the ${truth.bdVariant === 'volume' ? 'volume-response' : 'post-bronchodilator technique-artifact'} variant.` : esc(groundTruthNote(c, truth))}${truth.phenotype && !truth.bdVariant ? ` Phenotype: ${esc(truth.phenotype)}.` : ''} Technique: ${esc(c.descriptor.technique)}.</p>
   <p>${esc(ANCHOR_TEXT)}</p></section>`;
 }
 

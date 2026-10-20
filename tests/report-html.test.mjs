@@ -71,7 +71,9 @@ test('the layout follows the lab report: header grid, comment and interpretation
   assert.ok(html.includes('Technologist comments'));
   assert.ok(html.includes('Interpretation to be entered by the reader.'));
   assert.ok(html.includes(model.footer.disclaimer));
-  assert.ok(html.includes('Interpreting physician signature'));
+  assert.ok(html.includes('Simulated interpreting physician (not signed)'));
+  assert.ok(!html.includes('Interpreting physician signature'));
+  assert.ok(html.includes('class="rpt-watermark"') && html.includes('SIMULATED REPORT - educational use only'));
   assert.ok(html.includes('generator version'));
   assert.ok(html.includes(`counter(page)`), 'page numbers come from the @page rule');
   const withText = renderReportHtml({ ...model, interpretation: 'First paragraph.\n\nSecond <b>paragraph</b>.' });

@@ -61,7 +61,7 @@ test('TSV, wide CSV, clipboard HTML and the page HTML carry the same numbers as 
     for (const t of allTables(model)) {
       const expect = modelNumbers(t).map((e) => e.text);
 
-      const tsv = toTsv(t).trimEnd().split('\n').slice(1).flatMap((l) => l.split('\t').slice(1)).filter(isNumeric);
+      const tsv = toTsv(t).trimEnd().split('\n').slice(2).flatMap((l) => l.split('\t').slice(1)).filter(isNumeric);
       assert.deepEqual(tsv, expect, `TSV ${t.id}`);
 
       const wide = parseCsv(toCsvWide(t)).slice(1).flatMap((r) => r.slice(1)).filter(isNumeric);
@@ -113,7 +113,8 @@ test('CSV escaping keeps commas, quotes and line breaks inside one field', () =>
 test('long rows include the header, comments, reference note, footnotes and the case code', () => {
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   const rows = longRows(model);
-  assert.ok(rows.some((r) => r[0] === 'header' && r[2] === 'ID' && r[4] === model.meta.caseCode));
+  assert.ok(rows.some((r) => r[0] === 'header' && r[2] === 'ID' && r[4] === model.meta.patientId));
+  assert.ok(model.meta.patientId.startsWith('SIM-'));
   assert.ok(rows.some((r) => r[3] === 'footnote' && r[1] === 'spirometry'));
   assert.ok(rows.some((r) => r[1] === 'reference-equation-note'));
   assert.ok(rows.some((r) => r[0] === 'footer' && r[2] === 'case code' && r[4] === model.meta.caseCode));
@@ -124,7 +125,8 @@ test('wide CSV of the whole report lists each table caption and footnote', () =>
   const text = toCsv(model, { layout: 'wide' });
   const parsed = parseCsv(text);
   for (const t of allTables(model)) { assert.ok(parsed.some((r) => r.length === 1 && r[0] === t.caption), t.caption); assert.ok(parsed.some((r) => r.length === 1 && r[0] === t.footnote), t.id); }
-  assert.ok(text.startsWith('Case code,'));
+  assert.ok(text.startsWith('SIMULATED REPORT - educational use only'));
+  assert.ok(text.includes('\r\nCase code,'));
 });
 
 test('file names include the case code', () => {

@@ -4,6 +4,7 @@
  * label, and the correct answer is the candidate that changes the most.
  */
 import { interpret } from '../interpret/interpret.js';
+import { sexUndisclosed } from '../app/format.js';
 
 const SPIRO = ['fev1', 'fvc', 'fev1_fvc'];
 
@@ -37,7 +38,8 @@ export function analyzeSensitivity(prep, ctx) {
   const sc = c.scenario ?? null;
   const flipsWith = (patch) => flipCount(a, interpret({ ...c.report, patient: { ...c.report.patient, ...patch } }, ctx.resolve, prep.equation));
   const candidates = [{ id: 'equation', flips: cmp.labelChanges.length + (cmp.patternChanged ? 1 : 0) }];
-  if (sc?.referenceSex && sc.referenceSex.used !== sc.referenceSex.birth) candidates.push({ id: 'sex', flips: flipsWith({ sex: sc.referenceSex.birth }) });
+  // The sex assumption is offered only when the birth sex may be shown; for a patient who declined to give a sex, the option would reveal it.
+  if (sc?.referenceSex && sc.referenceSex.used !== sc.referenceSex.birth && !sexUndisclosed(sc)) candidates.push({ id: 'sex', flips: flipsWith({ sex: sc.referenceSex.birth }) });
   if (sc?.height && Number.isFinite(sc.height.trueCm) && sc.height.trueCm !== c.report.patient.heightCm) candidates.push({ id: 'height', flips: flipsWith({ heightCm: sc.height.trueCm }) });
   const h = c.report.patient.heightCm;
   candidates.push({ id: 'height-rounding', flips: Math.max(flipsWith({ heightCm: h + 1 }), flipsWith({ heightCm: h - 1 })) });

@@ -64,7 +64,7 @@ export function caseFacts(prep) {
     bdVariant: c.groundTruth.bdVariant ?? null,
     // Scenario facts the chart shows to the learner.
     medicationNote: Boolean(sc?.ids?.some((id) => id.startsWith('med-'))) || Number.isFinite(sc?.preTest?.lastSabaHours) || Number.isFinite(sc?.preTest?.lastLabaHours),
-    recentSmoke: Number.isFinite(sc?.preTest?.lastSmokingHours) && sc.preTest.lastSmokingHours < 1,
+    recentSmoke: [sc?.preTest?.lastSmokingHours, sc?.preTest?.lastVapingHours].some((h) => Number.isFinite(h) && h < 1),
     estimatedHeight: Boolean(sc?.height) && sc.height.source !== 'measured',
     sexAssumption: showBirthSex(sc) || sexUndisclosed(sc),
     lowInspiredVolume: Number.isFinite(trace?.inspired?.viOverVc) && trace.inspired.viOverVc < 0.9,
@@ -167,6 +167,7 @@ export function claimsFrom(prep) {
     hyperinflation: a.flags.some((x) => x.id === 'hyperinflation'),
     dlco: a.dlco ? a.dlco.category : null,
     dlcoSubtype: a.dlco?.subtype ?? null,
+    hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
     bd: a.bd ? (a.bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     equation: cmp.labelChanges.length > 0 || cmp.patternChanged ? 'dependent' : 'silent',
     hasVolumes: Boolean(c.volumes),
@@ -198,11 +199,12 @@ export function renderClaims(k, v = 0) {
   s.push(text);
   if (k.dlco) {
     const sub = k.dlco === 'reduced' && k.dlcoSubtype ? SUBTYPE_TEXT[k.dlcoSubtype] ?? '' : '';
-    s.push(k.dlco === 'reduced' ? `The hemoglobin-adjusted DLCO is reduced${sub}.` : k.dlco === 'raised' ? 'The hemoglobin-adjusted DLCO is above its upper limit of normal.' : 'The hemoglobin-adjusted DLCO is within its reference range.');
+    const name = k.hbMissing ? 'DLCO, classified without hemoglobin adjustment because no hemoglobin was available,' : 'hemoglobin-adjusted DLCO';
+    s.push(k.dlco === 'reduced' ? `The ${name} is reduced${sub}.` : k.dlco === 'raised' ? `The ${name} is above its upper limit of normal.` : `The ${name} is within its reference range.`);
   }
   if (k.bd) s.push(k.bd === 'significant' ? 'The bronchodilator response is significant by the 2022 criterion.' : 'The bronchodilator response is not significant by the 2022 criterion.');
   if (k.equation === 'dependent') s.push('Because a spirometry classification changes between GLI-2012 and GLI Global, the result is borderline and the reference equation used should be stated.');
-  if (k.equation === 'independent') s.push('The classification is the same under every reference equation and does not depend on the equation chosen.');
+  if (k.equation === 'silent' || k.equation === 'independent') s.push('The spirometry classification is the same under GLI-2012 and GLI Global, so the result does not depend on the reference equation chosen.');
   if (k.equation === 'false-dependent') s.push('Because the spirometry classification changes between GLI-2012 and GLI Global, the result is borderline and the reference equation used should be stated.');
   return s.join(' ');
 }

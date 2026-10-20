@@ -4,6 +4,7 @@ import { build, sweep } from './quiz-helpers.mjs';
 import { publicItem, displayOptions, ITEM_ORDER } from '../src/quiz/items.js';
 import { caseFacts, fallbackStatements, INTAKE_POOL, fallbackCaveats } from '../src/quiz/fallbacks.js';
 import { scoreAnswers } from '../src/app/answers.js';
+import { hbLow } from '../src/app/format.js';
 import { flipCount } from '../src/quiz/sensitivity.js';
 import { interpret } from '../src/interpret/interpret.js';
 import { resolve } from './quiz-helpers.mjs';
@@ -76,18 +77,25 @@ test('option order depends on the seed, keeps the same set, and keeps "none" and
   assert.ok(new Set(Array.from({ length: 20 }, (_, s) => displayOptions(pat, s + 1, 0)[0].id)).size > 3);
 });
 
-test('decoy caveats are never applicable and true caveats follow the case', () => {
-  const applicable = {
-    'fb-d-cough': (f) => f.cough, 'fb-d-early': (f) => f.early, 'fb-d-slow': (f) => f.slow, 'fb-d-variable': (f) => f.variable,
-    'fb-d-hb': (f) => f.hasDlco && f.hb < 11, 'fb-d-obesity': (f) => f.bmi >= 30, 'fb-d-postearly': (f) => Boolean(f.post) && (f.bdVariant === 'artifact' || f.postEarly),
-    'fb-d-european': (f) => f.europeanApplied, 'fb-d-novol': (f) => !f.hasVolumes, 'fb-d-age': (f) => f.unavailable,
+test('decoy caveats are true statements whose subject is absent from the case, and true caveats follow the case', () => {
+  const relevant = {
+    'fb-quality': (f, a) => a.qualityLimited, 'fb-early': (f) => f.early, 'fb-cough': (f) => f.cough, 'fb-slow': (f) => f.slow, 'fb-variable': (f) => f.variable,
+    'fb-equation': (f) => f.equationFlip, 'fb-borderline': (f) => f.borderline, 'fb-volumes-needed': (f) => !f.hasVolumes, 'fb-european': (f) => f.europeanApplied,
+    'fb-hb': (f) => f.hasDlco && hbLow(f.hb), 'fb-hb-missing': (f) => f.hbMissing, 'fb-erv': (f) => f.lowErv,
+    'fb-bd-artifact': (f) => Boolean(f.post) && (f.bdVariant === 'artifact' || f.postEarly), 'fb-bd-volume': (f) => Boolean(f.post) && f.bdVariant === 'volume',
+    'fb-bd-rules': (f, a) => Boolean(a.bd) && !a.bd.rulesAgree,
+    'fb-d-age': (f) => f.unavailable, 'fb-d-saba': (f) => f.medicationNote, 'fb-d-smoke': (f) => f.recentSmoke, 'fb-d-height': (f) => f.estimatedHeight,
+    'fb-d-sex': (f) => f.sexAssumption, 'fb-d-vi': (f) => f.lowInspiredVolume, 'fb-d-glottic': (f) => f.glottic,
   };
   let checked = 0, withTrue = 0;
   for (const d of sweep(8)) {
     const { prep } = build(d);
     const f = caseFacts(prep);
     const { caveats, decoyCaveats } = fallbackCaveats(prep);
-    for (const dc of decoyCaveats) { assert.equal(applicable[dc.id](f), false, `${dc.id} must not apply (${d.archetype}, seed ${d.seed})`); checked++; }
+    for (const dc of decoyCaveats) { assert.equal(Boolean(relevant[dc.id](f, prep.a)), false, `${dc.id} must not apply (${d.archetype}, seed ${d.seed})`); assert.ok(dc.why || dc.why === '', dc.id); checked++; }
+    // The same words are never both a true statement and a distractor, and no subject appears on both sides.
+    const topics = new Set(caveats.map((c) => c.topic));
+    for (const dc of decoyCaveats) assert.ok(!topics.has(dc.topic), `${dc.id} shares a subject with a true statement`);
     assert.equal(caveats.some((c) => c.id === 'fb-quality'), prep.a.qualityLimited);
     assert.equal(caveats.some((c) => c.id === 'fb-equation'), prep.cmp.labelChanges.length > 0 || prep.cmp.patternChanged);
     if (caveats.length) withTrue++;

@@ -4,9 +4,9 @@
  * checked against their primary statement are flagged in the same words as on the learner page.
  * Values appear in tables, not in prose, and nothing here advises treatment.
  */
-import { esc, num, MEASURES, EQUATION_NAMES } from '../app/format.js';
-import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, LOW_ERV_TEXT } from '../app/explain.js';
-import { label as answerLabel } from '../app/answers.js';
+import { esc, num, MEASURES, EQUATION_NAMES, hbKnown, hbLow } from '../app/format.js';
+import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, LOW_ERV_TEXT, bdArtifactText } from '../app/explain.js';
+import { label as answerLabel, OTHER_EQUATION_LABEL } from '../app/answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
 import * as R from '../app/render.js';
 import { otherEquation } from './prepare.js';
@@ -15,7 +15,7 @@ import { ITEM_NAMES } from './items.js';
 
 const STATUS = {
   correct: ['ok', 'Correct'],
-  'other-equation': ['ok', 'Correct for the other reference equation'],
+  'other-equation': ['ok', 'Accepted: matches the other reference equation'],
   partial: ['miss', 'Partly correct'],
   incorrect: ['miss', 'Differs from the key'],
   unanswered: ['miss', 'Not answered'],
@@ -66,17 +66,18 @@ function explainBd(item, prep) {
   const b = prep.a.bd;
   const c = prep.caseData;
   const rows = `<tr><th scope="row" class="l">2022 rule: change above 10% of predicted</th><td class="l">${b.rule2022.significant ? 'significant' : 'not significant'}</td></tr><tr><th scope="row" class="l">Earlier rule: at least 12% of baseline and 200 mL</th><td class="l">${b.rule2005.significant ? 'significant' : 'not significant'}</td></tr>`;
-  const extra = c.groundTruth.bdVariant === 'volume' ? paras([BD_TEXT.volume]) : c.groundTruth.bdVariant === 'artifact' ? paras([BD_TEXT.artifact]) : '';
+  const extra = c.groundTruth.bdVariant === 'volume' ? paras([BD_TEXT.volume]) : c.groundTruth.bdVariant === 'artifact' ? paras([bdArtifactText(b)]) : '';
   return `<p>${esc(BD_TEXT.rules)}</p><div class="scroll"><table class="data"><caption>Bronchodilator response under both rules</caption><tbody>${rows}</tbody></table></div>${extra}
     <p>The 10%-of-predicted threshold comes from secondary summaries of the 2022 statement, and whether the boundary is inclusive has not been checked against it.${prep.cmp.bronchodilatorChanged ? ' Because the 2022 rule uses the predicted value, the result also changes with the spirometry equation.' : ''}</p>`;
 }
 
 function explainDlco(item, prep) {
   const d = prep.a.dlco, c = prep.caseData;
-  const out = [`<p>${esc(DLCO_TEXT[d.category])}</p>`];
+  const known = hbKnown(c.dlco);
+  const out = [`<p>${esc(known ? DLCO_TEXT[d.category] : DLCO_TEXT.unadjusted)}</p>`];
   if (d.subtype) out.push(`<p>${esc(DLCO_TEXT.subtype[d.subtype])}</p>`);
-  if (c.dlco.hbGdl < 11) out.push(`<p>${esc(DLCO_TEXT.hb)}</p>`);
-  out.push('<p class="note">The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard.</p>');
+  if (hbLow(c.dlco.hbGdl)) out.push(`<p>${esc(DLCO_TEXT.hb)}</p>`);
+  if (known) out.push('<p class="note">The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard.</p>');
   return out.join('');
 }
 
@@ -86,7 +87,7 @@ function explainLimitations(item, prep, result) {
   const decoys = opts.filter((o) => !o.truth && o.id !== 'none');
   const picked = new Set(Array.isArray(result.response) ? result.response : []);
   const li = (o, extra = '') => `<li>${picked.has(o.id) ? '<strong>Selected: </strong>' : ''}${esc(o.text)}${extra}</li>`;
-  const intro = '<p>A careful interpretation states what the data cannot support as well as what they show. Quality problems, borderline values near a limit, tests that were not done, and reference equations applied outside the population in which they were derived each change how firmly a classification can be stated.</p>';
+  const intro = '<p>A careful interpretation states what the data cannot support as well as what they show. Quality problems, borderline values near a limit, tests that were not done, and reference populations that represent the patient less well each change how firmly a classification can be stated. Each statement offered is true in general; it applies to this case only when the fact it names is present in the chart.</p>';
   if (!truth.length) return `${intro}<p>No qualifying statement applies to this case, so “none of these” is the key. Each statement offered describes a limitation that is absent here:</p><ul>${decoys.map((o) => li(o, o.why ? ` <span class="muted">${esc(o.why)}</span>` : '')).join('')}</ul>`;
   return `${intro}<h4>Statements that apply</h4><ul>${truth.map((o) => li(o, o.weight === 2 ? ' <span class="muted">(major)</span>' : '')).join('')}</ul>${decoys.length ? `<h4>Statements that do not apply</h4><ul>${decoys.map((o) => li(o, o.why ? ` <span class="muted">${esc(o.why)}</span>` : '')).join('')}</ul>` : ''}`;
 }
@@ -128,10 +129,11 @@ const show = (item, v) => (Array.isArray(v) ? (v.length ? v.map((x) => esc(optLa
  */
 export function feedbackHtml(item, prep, result, opts = {}) {
   const o = { idPrefix: '', ...opts };
-  const [cls, text] = STATUS[result.status] ?? STATUS.incorrect;
+  const [cls, base] = STATUS[result.status] ?? STATUS.incorrect;
+  const text = result.status === 'other-equation' ? (OTHER_EQUATION_LABEL[item.key.altEquation] ?? base) : base;
   const pts = result.status === 'unanswered' ? '' : ` (${num(result.score, result.score % 1 ? 2 : 0)} of 1)`;
   const detail = result.detail
-    ? `<p class="muted">Precision ${num(result.detail.precision * 100, 0)}%, weighted recall ${num(result.detail.recall * 100, 0)}%. The score is their harmonic mean.</p>` : '';
+    ? `<p class="muted">You selected ${num(result.detail.recall * 100, 0)}% of the applicable statements (weighted) and ${num(result.detail.falseRate * 100, 0)}% of the statements that do not apply. The score is the first share minus the second, and not below 0, so selecting every statement scores 0.</p>` : '';
   const key = item.key.correct;
   const alt = item.key.alt ? `<span class="muted"> (other equation: ${esc(optLabel(item, item.key.alt))})</span>` : '';
   const body = EXPLAINERS[item.id]?.(item, prep, result, o) ?? '';

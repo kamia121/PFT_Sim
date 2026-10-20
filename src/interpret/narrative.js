@@ -78,7 +78,7 @@ const NOUN = {
   nonspecific: 'a nonspecific pattern',
   prism: 'preserved ratio impaired spirometry (PRISm)',
 };
-const CAVEAT_NO_EFFECT = /does not change the interpretation/i;
+const CAVEAT_NO_EFFECT = /(?:does|do) not change the interpretation/i;
 
 /** Text of a caveat without the closing "does not change the interpretation" clause and trailing period. */
 export const caveatCore = (text) => {
@@ -99,8 +99,8 @@ export const CAVEAT_PARAPHRASE = {
   'saba-baseline-raised': 'a short-acting beta-agonist taken inside its withholding window can raise the baseline FEV1 and FVC and narrow the bronchodilator increment',
   'saba-deviation-recorded': 'the drug, dose and time of the last bronchodilator dose are recorded as a deviation from the preparation list',
   'laba-baseline-raised': 'a long-acting beta-agonist taken inside its withholding window leaves the airways partly dilated and blunts the bronchodilator increment',
-  'lama-baseline-raised': 'a long-acting antimuscarinic taken inside its withholding window lowers airway tone and leaves little room for a bronchodilator increment',
-  'on-treatment-context': 'the study was done on current inhaled therapy, so baseline airflow reflects treatment and a small bronchodilator response does not exclude reversibility',
+  'lama-baseline-raised': 'a long-acting antimuscarinic taken inside its withholding window lowers vagal tone in the airways and leaves little room for a bronchodilator increment',
+  'on-treatment-context': 'the study was done on the usual maintenance medication, so baseline airflow reflects it and a small bronchodilator response does not exclude reversibility',
   'ics-today-no-change': 'a daily inhaled corticosteroid or leukotriene-modifier dose taken today does not change the interpretation',
   'allergy-meds-no-change': 'a nasal spray or an antihistamine does not change the interpretation',
   'smoking-acute-airflow': 'smoke or vapor inhaled shortly before testing can cause acute bronchoconstriction and cough, so mild obstruction may be exaggerated',
@@ -117,7 +117,7 @@ export const CAVEAT_PARAPHRASE = {
   'mi-contraindication-effort': 'a recent myocardial infarction limits effort, so the flows may not represent the patient’s best',
   'surgery-splinting-restriction': 'recent abdominal or thoracic surgery can limit inspiration through pain and splinting and give a restrictive-looking pattern from reduced effort',
   'uri-transient-narrowing': 'a current respiratory infection can cause transient bronchial narrowing and cough, so the values may overstate chronic impairment',
-  'serial-decline-best-early': 'the FEV1 fell across successive maneuvers, so the best values come from the early blows and maneuver-induced airway narrowing is possible',
+  'serial-decline-best-early': 'the FEV1 fell across successive maneuvers, so the best values come from the early blows and maneuver-induced narrowing of the airways is possible',
   'syncope-fvc-understated': 'effort was eased late in expiration, so the maneuver was not maximal and the FVC is understated',
   'kyphoscoliosis-standing-height': 'standing height understates skeletal height in kyphoscoliosis, so arm span is the usual substitute',
   'height-estimated-armspan-error': 'height was estimated from arm span with a fixed ratio, an estimate whose error of several centimeters shifts every predicted value and z-score',
@@ -126,8 +126,8 @@ export const CAVEAT_PARAPHRASE = {
   'height-estimated-ulna-error': 'height was estimated from ulna length, and the error of that estimate moves the predicted values and z-scores',
   'halfspan-less-precise': 'a doubled half-span is less precise than a full arm span',
   'chart-height-too-tall': 'a height carried over from an old record is likely to be too tall, which raises predicted values and can make normal values look low',
-  'sex-birth-used-default': 'predicted values follow sex assigned at birth, the default of the standard, which gives no rule for hormone therapy, nonbinary or intersex patients',
-  'sex-evidence-limited': 'the evidence on which sex fits patients receiving hormone therapy is limited, and the sex used can move z-scores across the lower limit without a change in the lungs',
+  'sex-birth-used-default': 'predicted values follow sex assigned at birth, the default of the standard, which gives no rule for patients taking hormones, nonbinary patients or intersex patients',
+  'sex-evidence-limited': 'the evidence on which sex fits patients taking hormones is limited, and the sex used can move z-scores across the lower limit without a change in the lungs',
   'sex-identity-used-nondefault': 'the reference sex is the sex the patient identifies with and not the sex assigned at birth that the standard specifies, so z-scores and classification can differ',
   'sex-default-applied': 'sex was not disclosed, so the predicted values rest on the laboratory default and shift with the alternative',
   'race-field-default-group': 'a missing or other group on the requisition selects the composite GLI-2012 set, so a classification that differs between GLI-2012 and GLI Global reflects the equation and not the lungs',
@@ -138,14 +138,19 @@ export const CAVEAT_PARAPHRASE = {
   'dentures-ok-no-change': 'well-fitting dentures left in place do not change the interpretation',
   'facial-weakness-leak': 'facial weakness can cause a leak at the lips and slow the rise to peak flow, which makes affected maneuvers unreliable',
   'coop-submaximal-unreliable': 'difficulty following directions can produce submaximal and variable results, so the ratio is unreliable',
-  'anxiety-variable-effort': 'anxiety can cause hesitant starts, early stops and variable effort, so the values may reflect technique and not airway disease',
+  'anxiety-variable-effort': 'anxiety can cause hesitant starts, early stops and variable effort, so the values may reflect technique and not lung disease',
   'pain-limits-inspiration': 'pain on deep inspiration can limit inflation and lower the FVC and FEV1 with a preserved ratio, which does not establish a low TLC',
   'altitude-dlco-unadjusted': 'the DLCO depends on the inspired oxygen tension, and an unadjusted value may sit higher at altitude, with limited evidence',
   'obesity-low-erv-not-restriction': 'obesity lowers ERV and FRC with a preserved TLC, so a low ERV is not restriction and a low FVC with a normal ratio needs a TLC',
   'anemia-dlco-adjusted': 'low hemoglobin lowers the measured DLCO and KCO, and the reported DLCO is adjusted for hemoglobin',
   'hb-missing-dlco-unadjusted': 'the DLCO is reported without hemoglobin adjustment, so an abnormal value cannot be attributed to the lung until the hemoglobin is known',
   'submaximal-effort-mimics': 'consistently low effort can mimic restriction or more severe disease even when repeatability is good',
-  'slow-start-bev-hides-obstruction': 'a slow start enlarges the back-extrapolated volume, which can inflate the FEV1 and hide obstruction',
+  'slow-start-bev-fev1-unusable': 'a slow start enlarges the back-extrapolated volume, which can make the FEV1 unusable, with no fixed direction of error',
+  'vaping-acute-airway-irritation': 'vapor inhaled shortly before testing can irritate the airways and provoke cough, with an effect of uncertain size',
+  'vaping-little-cohb': 'an e-cigarette delivers little carbon monoxide, so no carboxyhemoglobin adjustment of the DLCO is expected from this history alone',
+  'height-ulna-measurement': 'an ulna-based height depends on a reproducible forearm measurement and on a conversion equation whose coefficients vary with sex, age and ancestry',
+  'sex-choice-no-change': 'under the other reference sex the pattern and every label are unchanged, although the z-scores shift',
+  'weakness-true-low-fvc': 'facial weakness may accompany generalized neuromuscular weakness that itself lowers the FVC, so a low FVC is not attributed to the leak alone',
   'early-termination-fvc-low': 'early termination lowers the FVC and raises the ratio, which can mimic restriction or mask obstruction',
   'no-plateau-eofe': 'without an end-of-forced-expiration indicator the FVC is not acceptable and the ratio is overestimated',
   'cough-first-second': 'a cough in the first second makes the FEV1 unreliable while the FVC may remain acceptable',
@@ -1322,7 +1327,7 @@ export function extractFacts(text) {
   if (/bronchodilator/i.test(text)) f.add('bd:mentioned');
 
   for (const c of clauses) {
-    if (!/DLCO|diffusing capacity/.test(c)) continue;
+    if (!/DLCO|diffusing capacity/.test(c) || /% of predicted/.test(c)) continue;
     const cat = /\bonly marginally reduced\b|\breduced\b/.test(c) ? 'reduced' : /\braised\b|\bonly marginally raised\b/.test(c) ? 'raised' : /within the reference range/.test(c) ? 'normal' : null;
     if (!cat) continue;
     if (/no hemoglobin (?:was )?available/i.test(c)) { f.add(`dlco:${cat}`); f.add('dlco:hb-unavailable'); }

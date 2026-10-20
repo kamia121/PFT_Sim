@@ -43,7 +43,7 @@ export const coHbMeasured = (scenario) => scenario?.coHbMeasured === true && Num
 export const coHbUnmeasured = (scenario) => scenario?.coHbMeasured !== true && Number.isFinite(scenario?.coHbPercent) && scenario.coHbPercent > 0;
 
 /** The patient declined to give sex, so the birth sex is not shown before the answers are checked. */
-export const sexUndisclosed = (scenario) => Array.isArray(scenario?.ids) && scenario.ids.includes('sex-not-recorded');
+export const sexUndisclosed = (scenario) => scenario?.referenceSex?.birthDisclosed === false || (Array.isArray(scenario?.ids) && scenario.ids.includes('sex-not-recorded'));
 
 /** The reference sex differs from the birth sex and the birth sex may be shown. */
 export const showBirthSex = (scenario) => Boolean(scenario?.referenceSex) && scenario.referenceSex.birth !== scenario.referenceSex.used && !sexUndisclosed(scenario);

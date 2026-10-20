@@ -7,7 +7,8 @@ import { buildCase } from '../src/core/case.js';
 import { createStream } from '../src/core/prng.js';
 import { interpret, compareEquations } from '../src/interpret/interpret.js';
 import { createReference } from '../src/reference/gli.js';
-import { composeNarrative, extractFacts, applicableFlaws, sentenceTypes, caveatCore, FLAWS, BANNED_PHRASES } from '../src/interpret/narrative.js';
+import { composeNarrative, extractFacts, applicableFlaws, sentenceTypes, caveatCore, FLAWS, BANNED_PHRASES, CAVEAT_PARAPHRASE } from '../src/interpret/narrative.js';
+import { SCENARIOS } from '../src/scenarios/library.js';
 
 const ds = await loadDatasets();
 const { resolveReference } = createReference(ds);
@@ -23,12 +24,22 @@ const allText = (n) => [n.finalStatement, ...n.sections.map((s) => s.text), ...n
 const has = (facts, ...tokens) => tokens.every((t) => facts.includes(t));
 const lacks = (facts, re) => !facts.some((t) => re.test(t));
 
+const NO_EFFECT = /(?:does|do) not change the interpretation/i;
+const REAL = (() => {
+  const seen = new Map();
+  for (const sc of Object.values(SCENARIOS)) for (const c of sc.caveats) if (!seen.has(c.id)) seen.set(c.id, c);
+  const all = [...seen.values()];
+  return {
+    major: all.filter((c) => c.weight === 'major' && !NO_EFFECT.test(c.text)),
+    minor: all.filter((c) => c.weight === 'minor' && !NO_EFFECT.test(c.text)),
+    noEffect: all.filter((c) => NO_EFFECT.test(c.text)),
+  };
+})();
 const POOL = {
-  major: ['Height was estimated from arm span and not measured', 'The patient smoked 30 minutes before testing', 'Albuterol was taken 2 hours before testing', 'The patient could not take a full inspiration before several maneuvers', 'Barometric pressure was not recorded for the diffusing capacity'],
-  minor: ['The patient reported a recent cold', 'Ambient temperature was recorded at 22 C', 'Dentures were left in place'],
-  noEffect: ['The patient wore a loose cardigan; this does not change the interpretation', 'A different technologist ran the second half of the session, which does not change the interpretation'],
   decoy: ['Decoy: testing was performed supine', 'Decoy: supplemental oxygen was in use'],
 };
+/** What the narrative writes for a caveat: the paraphrase, never the caveat text. */
+const stated = (cv) => caveatCore(CAVEAT_PARAPHRASE[cv.id]);
 
 /** Scenario object following the contract in docs/ARCHITECTURE-NEXT.md; the scenario module is not on this branch. */
 function synthScenario(c, seed, level) {
@@ -36,11 +47,14 @@ function synthScenario(c, seed, level) {
   const rng = createStream(seed, 'test-scenario');
   const take = (arr, n) => { const a = arr.slice(); const out = []; while (out.length < n && a.length) out.push(a.splice(rng.int(0, a.length - 1), 1)[0]); return out; };
   const nMajor = { light: 0, moderate: 1, heavy: rng.int(2, 3) }[level];
+  // A caveat that talks about a bronchodilator belongs only to a case with a bronchodilator study.
+  const hasPost = Boolean(c.report.spirometry.post);
+  const fits = (cv) => hasPost || !/bronchodilator|inhaled therapy/i.test(CAVEAT_PARAPHRASE[cv.id]);
   const caveats = [
-    ...take(POOL.major, nMajor).map((text, i) => ({ id: `maj${i}`, text, weight: 'major' })),
-    ...take(POOL.minor, level === 'light' ? 1 : rng.int(1, 2)).map((text, i) => ({ id: `min${i}`, text, weight: 'minor' })),
-    ...(level === 'light' ? [] : take(POOL.noEffect, 1).map((text, i) => ({ id: `ne${i}`, text, weight: 'minor' }))),
-  ];
+    ...take(REAL.major.filter(fits), nMajor),
+    ...take(REAL.minor.filter(fits), level === 'light' ? 1 : rng.int(1, 2)),
+    ...(level === 'light' ? [] : take(REAL.noEffect.filter(fits), 1)),
+  ].map((c) => ({ id: c.id, text: c.text, weight: c.weight }));
   const heavy = level === 'heavy';
   return {
     level, ids: caveats.map((x) => x.id), statements: [], technologistComments: [], caveats,
@@ -49,6 +63,7 @@ function synthScenario(c, seed, level) {
     height: heavy ? { statedCm: c.report.patient.heightCm, trueCm: c.report.patient.heightCm + 4, source: ['arm-span', 'ulna', 'reported'][seed % 3], note: 'stated height differs from true height' } : null,
     referenceSex: heavy && seed % 2 ? { used: c.report.patient.sex === 'M' ? 'F' : 'M', birth: c.report.patient.sex, note: '' } : null,
     coHbPercent: heavy ? 4 + (seed % 5) : null,
+    coHbMeasured: heavy && seed % 4 === 1,
   };
 }
 
@@ -123,9 +138,10 @@ function assertFinalMatchesKey({ c, cmp, interp }, final, label, { caveats = tru
   // caveats
   const sc = caveats ? c.scenario : null;
   for (const cv of sc?.caveats ?? []) {
-    const core = caveatCore(cv.text);
-    if (cv.weight === 'major' && !/does not change the interpretation/i.test(cv.text)) assert.ok(final.includes(core), tag(`major caveat missing: ${core}`));
-    if (/does not change the interpretation/i.test(cv.text)) assert.ok(final.includes(core) && f.includes('caveat:no-effect'), tag(`no-effect caveat: ${core}`));
+    const core = stated(cv);
+    assert.ok(!final.includes(cv.text) && !final.includes(caveatCore(cv.text)), tag('the caveat text is quoted'));
+    if (cv.weight === 'major' && !NO_EFFECT.test(cv.text)) assert.ok(final.includes(core), tag(`major caveat missing: ${core}`));
+    if (NO_EFFECT.test(cv.text)) assert.ok(final.includes(core) && f.includes('caveat:no-effect'), tag(`no-effect caveat: ${core}`));
   }
   return f;
 }
@@ -141,7 +157,7 @@ test('every sentence type has at least three phrasing variants', () => {
 test('output has the contracted shape, ordered sections and a bounded final statement', () => {
   const x = makeCase(5);
   const n = composeNarrative({ caseData: x.c, interp: x.interp, cmp: x.cmp, seed: 3 });
-  assert.deepEqual(Object.keys(n).sort(), ['distractors', 'finalStatement', 'findings', 'sections']);
+  assert.deepEqual(Object.keys(n).sort(), ['distractors', 'finalStatement', 'findings', 'notes', 'sections']);
   const ids = n.sections.map((s) => s.id);
   assert.deepEqual(ids, SECTION_ORDER.filter((id) => ids.includes(id)));
   assert.equal(ids[0], 'quality');
@@ -211,18 +227,23 @@ test('600 random cases: final statements agree with the key, name the caveats an
     // limitations section: major first, then minor, no-effect items stated as such
     const lim = n.sections.find((s) => s.id === 'limitations').text;
     const cav = c.scenario?.caveats ?? [];
-    const majors = cav.filter((v) => v.weight === 'major' && !/does not change/i.test(v.text)).map((v) => caveatCore(v.text));
-    const minors = cav.filter((v) => v.weight === 'minor' && !/does not change/i.test(v.text)).map((v) => caveatCore(v.text));
+    const majors = cav.filter((v) => v.weight === 'major' && !NO_EFFECT.test(v.text)).map(stated);
+    const minors = cav.filter((v) => v.weight === 'minor' && !NO_EFFECT.test(v.text)).map(stated);
     for (const t of majors) assert.ok(lim.includes(t), `${label}: major caveat missing from limitations`);
-    for (const t of minors) assert.ok(lim.includes(t), `${label}: minor caveat missing from limitations`);
+    for (const t of minors) assert.ok(lim.includes(t), `${label}: minor caveat missing from limitations: ${t} | ${lim}`);
     if (majors.length && minors.length) assert.ok(lim.indexOf(majors[0]) < lim.indexOf(minors[0]), `${label}: major caveats come first`);
-    if (cav.some((v) => /does not change the interpretation/i.test(v.text))) assert.match(lim, /do not change the interpretation/);
+    if (cav.some((v) => NO_EFFECT.test(v.text))) assert.match(lim, /do not change the interpretation/);
 
     // assumptions stated in the reference section
     const ref = n.sections.find((s) => s.id === 'reference').text;
     if (c.scenario?.height && c.scenario.height.source !== 'measured') assert.ok(ref.includes(`${c.scenario.height.statedCm} cm`), `${label}: height assumption`);
     if (c.scenario?.referenceSex && c.scenario.referenceSex.used !== c.scenario.referenceSex.birth) assert.match(ref, /differs from the sex recorded at birth|not the (?:male|female) sex recorded at birth|differs from the recorded sex at birth/);
-    if (Number.isFinite(c.scenario?.coHbPercent) && interp.dlco) assert.match(n.sections.find((s) => s.id === 'dlco').text, /[Cc]arboxyhemoglobin/);
+    if (Number.isFinite(c.scenario?.coHbPercent) && interp.dlco) {
+      assert.match(n.sections.find((s) => s.id === 'dlco').text, /[Cc]arboxyhemoglobin/);
+      // A carboxyhemoglobin value appears only when co-oximetry was done.
+      const shown = /[Cc]arboxyhemoglobin[^.]*?\d+\.\d%/.test(text) || /[Cc]arboxyhemoglobin \d+\.\d%/.test(text);
+      assert.equal(shown, c.scenario.coHbMeasured === true, `${label}: carboxyhemoglobin value shown only when measured`);
+    }
 
     // sections: every present test appears, none invented
     const ids = n.sections.map((s) => s.id);
@@ -287,6 +308,7 @@ function assertContradicts(x, d, correctFacts) {
   const why = `${d.flaw} [${d.id}]\n${d.text}`;
   switch (d.flaw) {
     case 'wrong-severity': {
+      assert.ok(key.severity, `${why}\nseverity is graded for obstruction only`);
       const sev = f.filter((t) => /^severity:(mild|moderate|severe)$/.test(t));
       assert.equal(sev.length, 1, why);
       assert.notEqual(sev[0], `severity:${key.severity}`, why);
@@ -304,9 +326,11 @@ function assertContradicts(x, d, correctFacts) {
       assert.ok(f.includes('quality:adequate') && !f.includes('quality:qualified'), why);
       break;
     }
-    case 'omits-major-caveat': {
-      const majors = (c.scenario?.caveats ?? []).filter((v) => v.weight === 'major').map((v) => caveatCore(v.text));
-      assert.ok(majors.length > 0 && majors.every((t) => !d.text.includes(t)), why);
+    case 'wrong-pattern': {
+      const claim = f.filter((t) => t.startsWith('pattern:'));
+      assert.equal(claim.length, 1, why);
+      assert.notEqual(claim[0], `pattern:${FAMILY[key.pattern]}`, why);
+      if (['pattern:restriction', 'pattern:mixed'].includes(claim[0])) assert.ok(m.tlc && m.tlc.available !== false, why);
       break;
     }
     case 'ignores-equation-change':
@@ -315,7 +339,8 @@ function assertContradicts(x, d, correctFacts) {
       break;
     case 'wrong-bronchodilator-rule':
       assert.ok(interp.bd && !interp.bd.rulesAgree, why);
-      assert.ok(lacks(f, /^bd:2022:/), why);
+      // the earlier criterion's result is given under the 2022 label
+      assert.ok(f.includes(`bd:2022:${interp.bd.rule2005.significant ? 'significant' : 'not-significant'}`), why);
       assert.ok(f.includes(`bd:earlier:${interp.bd.rule2005.significant ? 'significant' : 'not-significant'}`), why);
       assert.notEqual(interp.bd.rule2005.significant, interp.bd.rule2022.significant, why);
       assert.equal(key.bronchodilator, interp.bd.rule2022.significant ? 'significant' : 'not-significant', why);
@@ -493,26 +518,23 @@ const GOLDEN = [
       fev1: 3.0, fvc: 5.0, volumes: null, dlco: null,
       scenario: {
         level: 'heavy', ids: [],
-        caveats: [
-          { id: 'a', text: 'Ambient temperature was recorded at 22 C', weight: 'minor' },
-          { id: 'b', text: 'Height was estimated from ulna length and not measured', weight: 'major' },
-          { id: 'c', text: 'The patient smoked 30 minutes before testing', weight: 'major' },
-          { id: 'd', text: 'A second technologist ran the last maneuvers; this does not change the interpretation', weight: 'minor' },
-        ],
+        caveats: ['pleth-thermal-drift', 'height-estimated-ulna-error', 'smoking-acute-airflow', 'dentures-ok-no-change'].map((id) => {
+          const c = REAL.major.concat(REAL.minor, REAL.noEffect).find((x) => x.id === id);
+          return { id: c.id, text: c.text, weight: c.weight };
+        }),
         decoyCaveats: [{ id: 'x', text: 'Decoy: testing was performed supine' }],
         height: { statedCm: 178, trueCm: 183, source: 'ulna', note: '' },
         referenceSex: { used: 'F', birth: 'M', note: '' },
-        coHbPercent: 6,
+        coHbPercent: 6, coHbMeasured: true,
       },
     }),
-    final: [/height was estimated from ulna length and not measured; the patient smoked 30 minutes before testing/, /do not change the interpretation/, /second technologist/],
-    forbid: [/supine/, /ambient temperature/],
+    final: [/height was estimated from ulna length, and the error of that estimate[^;]*; smoke or vapor inhaled shortly before testing/, /do not change the interpretation/, /well-fitting dentures/],
+    forbid: [/supine/, /thermal drift/],
     key: { pattern: 'obstruction', severity: 'mild' },
     sections: {
       reference: [/178 cm[^.]*ulna length/, /differs from the sex recorded at birth|recorded sex at birth|sex recorded at birth/],
-      limitations: [/ambient temperature was recorded at 22 C/],
+      limitations: [/thermal drift makes the FRC unstable/],
     },
-    flaws: ['omits-major-caveat'],
   },
 ];
 
@@ -547,7 +569,7 @@ test('golden: a borderline value is never called clearly abnormal and a flip nam
   assert.match(sens, /FEV1\/FVC ratio is below the lower limit of normal under GLI-2012 \(z-score −1\.88, borderline\) but within the reference range under GLI Global \(2022\) \(z-score −1\.38, borderline\)/);
   assert.match(sens, /the pattern is airflow obstruction under GLI-2012 but normal spirometry under GLI Global \(2022\)/);
   assert.ok(n.findings.some((f) => f.id === 'equation-change'));
-  assert.ok(n.distractors.some((d) => d.flaw === 'ignores-equation-change' && /unchanged by the choice of reference equation|does not depend on the reference equation/.test(d.text)));
+  assert.ok(n.distractors.some((d) => d.flaw === 'ignores-equation-change' && /the same(?: way)? under both reference equations/.test(d.text)));
 });
 
 test('golden: severity is stated only for obstruction patterns and the statement says when it is not graded', () => {
