@@ -14,7 +14,7 @@ need <- c("pred_GLI", "LLN_GLI", "zscore_GLI", "pred_GLIgl", "LLN_GLIgl", "zscor
 missing <- need[!vapply(need, exists, logical(1))]
 if (length(missing)) stop("rspiro is missing: ", paste(missing, collapse = ", "), ". Check the package version and the documentation.")
 
-ages    <- c(5, 8, 12, 15, 18, 20, 25, 30, 40, 50, 60, 70, 80, 90)
+ages    <- c(5, 7.5, 8, 12, 12.25, 15, 18, 20, 25, 33.4, 40, 50, 61.75, 70, 80, 90)   # fractional ages test spline interpolation
 heights <- c(1.10, 1.30, 1.50, 1.60, 1.70, 1.80, 1.90)          # meters
 params  <- c("FEV1", "FVC", "FEV1FVC")
 grid    <- expand.grid(age = ages, height = heights, gender = 1:2, param = params, stringsAsFactors = FALSE)
