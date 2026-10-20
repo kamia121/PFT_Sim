@@ -48,6 +48,9 @@ function slowStartShape({ fvc, fev1, k, r, T }) {
   return Math.min(kk, 2.6);
 }
 
+/** Every fault id a maneuver can carry: technique faults, scenario faults, and the set-wide submaximal-effort marker. */
+export const ALL_FAULT_IDS = [...new Set(['slow-start', 'early-termination', 'variable-effort', 'cough', 'glottic-closure', ...Object.keys(SCENARIO_FAULTS), 'submaximal-effort'])];
+
 // The order in which scenario faults are applied is fixed so that a case is a pure function of its descriptor.
 const SCENARIO_FAULT_ORDER = Object.keys(SCENARIO_FAULTS);
 

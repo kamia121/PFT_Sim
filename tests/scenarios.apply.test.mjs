@@ -258,19 +258,29 @@ test('new maneuver faults: leak, mouthpiece obstruction, pause at TLC and submax
   }
 });
 
-test('submaximal effort lowers FEV1, FVC and the peak flow on every blow while repeatability stays good', () => {
-  const f = [], pef = [];
-  let good = 0, n = 0;
-  for (const seed of seeds(80)) {
-    const p = plain(seed, 'normal'), c = build(seed, 'normal', ['qs-submaximal-effort']);
-    assert.ok(c.spirometry.pre.maneuvers.every((m) => m.faults.includes('submaximal-effort')));
-    f.push(c.report.spirometry.fev1 / p.report.spirometry.fev1);
-    pef.push(c.spirometry.pre.summary.pef / p.spirometry.pre.summary.pef);
-    n++;
-    if (['A', 'B'].includes(c.spirometry.pre.summary.grades.fev1)) good++;
-  }
-  assert.ok(mean(f) < 0.92 && mean(pef) < 0.9);
-  assert.ok(good / n > 0.8, 'consistently low effort remains repeatable');
+test('submaximal effort lowers the peak flow most, leaves FEV1 relatively effort independent, and can raise FVC in obstruction while repeatability stays good', () => {
+  const ratios = (archetype) => {
+    const r = { fev1: [], fvc: [], pef: [] };
+    let good = 0, n = 0;
+    for (const seed of seeds(80)) {
+      const p = plain(seed, archetype), c = build(seed, archetype, ['qs-submaximal-effort']);
+      assert.ok(c.spirometry.pre.maneuvers.every((m) => m.faults.includes('submaximal-effort')));
+      r.fev1.push(c.report.spirometry.fev1 / p.report.spirometry.fev1);
+      r.fvc.push(c.report.spirometry.fvc / p.report.spirometry.fvc);
+      r.pef.push(c.spirometry.pre.summary.pef / p.spirometry.pre.summary.pef);
+      n++;
+      if (['A', 'B'].includes(c.spirometry.pre.summary.grades.fev1)) good++;
+    }
+    assert.ok(good / n > 0.8, 'consistently low effort remains repeatable');
+    return { fev1: mean(r.fev1), fvc: mean(r.fvc), pef: mean(r.pef) };
+  };
+  const normal = ratios('normal');
+  assert.ok(normal.pef < 0.85, `PEF ratio ${normal.pef}`);
+  assert.ok(normal.fev1 > normal.pef + 0.1, 'FEV1 falls much less than the peak flow');
+  assert.ok(normal.fvc < 0.97);
+  const obstruction = ratios('obstruction');
+  assert.ok(obstruction.pef < 0.8);
+  assert.ok(obstruction.fvc > 1.0, `FVC ratio ${obstruction.fvc}: less effort can raise the FVC in obstruction`);
 });
 
 test('a slow start can push the back-extrapolated volume over the 2019 limit', () => {

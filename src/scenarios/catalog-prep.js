@@ -4,8 +4,12 @@
  * spirometry statement (Table 2). Rows refer to docs/research/scenarios.md.
  */
 import { scenario, BMI, hasBdStudy, fullPanel, byArchetype } from './define.js';
+import { SCENARIO_CONSTANTS as C, bronchodilatorBaselineShift } from './constants.js';
 
 const NO_DISCORDANT = (d) => d.archetype !== 'bd-discordant';
+const PEAK = C.bronchodilatorWashout.peakShift;
+/** Baseline shift from the hours since the dose: the drawn value is the shift at the moment of the dose, and it decays over the withholding window. */
+const shiftFromDose = (kind, hoursKey) => (fx) => ({ ...fx, physiology: { ...fx.physiology, baselineShiftToPost: bronchodilatorBaselineShift(kind, fx.preTest[hoursKey], fx.physiology.baselineShiftToPost) } });
 
 export const PREP_SCENARIOS = [
   scenario({
@@ -17,7 +21,8 @@ export const PREP_SCENARIOS = [
     ],
     applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),
     weight: byArchetype({ obstruction: 4, mixed: 3 }, 1),
-    effects: { preTest: { lastSabaHours: [1, 3.5] }, physiology: { baselineShiftToPost: [0.35, 0.8] }, report: { forcePostBd: true } },
+    effects: { preTest: { lastSabaHours: [1, 3.5] }, physiology: { baselineShiftToPost: PEAK }, report: { forcePostBd: true } },
+    finalize: shiftFromDose('saba', 'lastSabaHours'),
     deviation: 'short-acting bronchodilator taken inside the withholding window',
     vars: (fx) => ({ h: fx.hours(fx.preTest.lastSabaHours) }),
     verifiedNumbers: ['4', '6'],
@@ -37,7 +42,8 @@ export const PREP_SCENARIOS = [
     ],
     applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),
     weight: byArchetype({ obstruction: 3, mixed: 2 }, 1),
-    effects: { preTest: { lastLabaHours: [8, 20] }, physiology: { baselineShiftToPost: [0.5, 0.9] }, report: { forcePostBd: true } },
+    effects: { preTest: { lastLabaHours: [8, 20] }, physiology: { baselineShiftToPost: PEAK }, report: { forcePostBd: true } },
+    finalize: shiftFromDose('laba', 'lastLabaHours'),
     deviation: 'long-acting beta-agonist taken inside the withholding window',
     vars: (fx) => ({ h: fx.hours(fx.preTest.lastLabaHours) }),
     verifiedNumbers: ['24', '36'],
@@ -56,14 +62,15 @@ export const PREP_SCENARIOS = [
     ],
     applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),
     weight: byArchetype({ obstruction: 3, mixed: 2 }, 1),
-    effects: { preTest: { lastLamaHours: [14, 34] }, physiology: { baselineShiftToPost: [0.5, 0.9] }, report: { forcePostBd: true } },
+    effects: { preTest: { lastLamaHours: [14, 34] }, physiology: { baselineShiftToPost: PEAK }, report: { forcePostBd: true } },
+    finalize: shiftFromDose('lama', 'lastLamaHours'),
     deviation: 'long-acting antimuscarinic taken inside the withholding window',
     vars: (fx) => ({ h: fx.hours(fx.preTest.lastLamaHours) }),
     verifiedNumbers: ['36', '48'],
     caveats: [
       { id: 'lama-baseline-raised', weight: 'major', text: 'A long-acting antimuscarinic inside its withholding window (36 to 48 h, ATS/ERS 2019, Table 8) lowers vagal airway tone for the whole day. Baseline airflow is higher than off treatment and the bronchodilator increment is small.' },
     ],
-    decoyCaveats: [{ id: 'decoy-lama-ics', text: 'The anticholinergic inhaler raises the DLCO, so the diffusing capacity is overestimated.' }],
+    decoyCaveats: [{ id: 'decoy-lama-dlco', text: 'The anticholinergic inhaler raises the DLCO, so the diffusing capacity is overestimated.' }],
     confidence: 'medium', source: 'PRE-02; S1 Table 8 footnote',
   }),
   scenario({
@@ -75,7 +82,8 @@ export const PREP_SCENARIOS = [
     ],
     applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d) && ['obstruction', 'mixed', 'normal'].includes(d.archetype),
     weight: byArchetype({ obstruction: 3, mixed: 2 }, 0.5),
-    effects: { preTest: { lastLabaHours: [4, 14] }, physiology: { baselineShiftToPost: [0.15, 0.45] }, report: { forcePostBd: true } },
+    effects: { preTest: { lastLabaHours: [4, 14] }, physiology: { baselineShiftToPost: PEAK }, report: { forcePostBd: true } },
+    finalize: shiftFromDose('laba', 'lastLabaHours'), // same curve as med-laba-recent: the same hours since the dose give the same shift
     deviation: 'tested on usual therapy by request, not a deviation',
     vars: (fx) => ({ h: fx.hours(fx.preTest.lastLabaHours) }),
     caveats: [
@@ -120,8 +128,8 @@ export const PREP_SCENARIOS = [
     id: 'sub-smoked-within-hour', category: 'Smoking', exclusive: 'smoking',
     variants: [
       'Smoked a cigarette about {min} min before arrival.',
-      'Pt vaped in the parking lot {min} min ago.',
-      'Intake: last cigarette {min} min ago (water pipe session before leaving home).',
+      'Intake: last cigarette {min} min ago, in the parking lot.',
+      'Water pipe (hookah) session about {min} min before the appointment.',
     ],
     weight: byArchetype({ obstruction: 2, mixed: 2 }, 1),
     effects: {
@@ -130,15 +138,39 @@ export const PREP_SCENARIOS = [
       maneuver: { faultProb: { cough: 0.3 } },
       dlco: { coHbPercent: [4, 9] },
     },
-    deviation: 'inhaled smoke or vapor inside the 1 h exclusion',
+    deviation: 'inhaled smoke inside the 1 h exclusion',
     vars: (fx) => ({ min: String(Math.round((fx.preTest.lastSmokingHours * 60) / 5) * 5) }),
     verifiedNumbers: ['1'],
     caveats: [
       { id: 'smoking-acute-airflow', weight: 'major', text: 'Inhaled smoke or vapor within 1 h of testing (ATS/ERS 2019) can cause acute bronchoconstriction and cough, lowering FEV1, FVC and peak flow. Mild obstruction may be exaggerated, and a repeat after abstinence would separate the acute effect from chronic disease.' },
-      { id: 'smoking-cohb-dlco', weight: 'major', requires: 'dlco', text: 'Carboxyhemoglobin from recent smoking competes with the test gas for hemoglobin and raises the back-pressure of CO, so a measured DLCO is lower than the value without carboxyhemoglobin. The report does not adjust for carboxyhemoglobin.' },
+      { id: 'smoking-cohb-dlco', weight: 'major', requires: 'dlco', text: 'Combustion of tobacco, by cigarette or water pipe, produces carbon monoxide. The resulting carboxyhemoglobin competes with the test gas for hemoglobin and raises the back-pressure of CO, so a measured DLCO is lower than the value without carboxyhemoglobin. The report does not adjust for carboxyhemoglobin.' },
     ],
     decoyCaveats: [{ id: 'decoy-smoking-volumes', text: 'Recent smoking lowers the plethysmographic TLC, so a low TLC is unreliable.' }],
-    confidence: 'medium', source: 'PRE-05; S1 (1 h); DLCO part S2 search summary',
+    confidence: 'medium', source: 'PRE-05; S1 (1 h); DLCO part S2 search summary; water pipe produces carbon monoxide (mem)',
+  }),
+  scenario({
+    id: 'sub-vaped-within-hour', category: 'Smoking', exclusive: 'smoking',
+    variants: [
+      'Pt vaped in the parking lot {min} min ago.',
+      'Used an e-cigarette about {min} min before arrival.',
+      'Intake: vaping pen used {min} min before the test; no tobacco today.',
+    ],
+    weight: byArchetype({ obstruction: 1.5, mixed: 1.5 }, 0.8),
+    // Unverified minor effect: airway irritation and cough only. No carboxyhemoglobin: an e-cigarette does not burn tobacco and delivers little carbon monoxide.
+    effects: {
+      preTest: { lastVapingHours: [0.25, 0.75] },
+      physiology: { fev1Mult: [0.97, 1.0] },
+      maneuver: { faultProb: { cough: 0.2 } },
+    },
+    deviation: 'inhaled vapor inside the 1 h exclusion',
+    vars: (fx) => ({ min: String(Math.round((fx.preTest.lastVapingHours * 60) / 5) * 5) }),
+    verifiedNumbers: ['1'],
+    caveats: [
+      { id: 'vaping-acute-airway-irritation', weight: 'minor', text: 'Inhaled vapor within 1 h of testing (ATS/ERS 2019) can irritate the airways and provoke cough, so a small fall in FEV1 and a cough in the first second are possible. The size of the effect is not established, and a repeat after abstinence would separate it from chronic disease.' },
+      { id: 'vaping-little-cohb', weight: 'minor', requires: 'dlco', text: 'An e-cigarette does not burn tobacco and delivers little carbon monoxide, so carboxyhemoglobin is not expected to rise and no carboxyhemoglobin adjustment of the DLCO is called for on this history alone.' },
+    ],
+    decoyCaveats: [{ id: 'decoy-vaping-cohb', text: 'Vaping raises carboxyhemoglobin enough to lower the measured DLCO.' }],
+    confidence: 'low', source: 'PRE-05 (vape named); S1 (1 h, smoke or vapor); no COHb effect (e-cigarettes burn no tobacco; mem, unverified)',
   }),
   scenario({
     id: 'sub-smoked-hours-ago', category: 'Smoking', exclusive: 'smoking',
@@ -169,7 +201,7 @@ export const PREP_SCENARIOS = [
     effects: { preTest: { lastSmokingHours: [1.5, 5] }, dlco: { coHbPercent: [5, 12], coHbMeasured: true } },
     vars: (fx) => ({ h: fx.hours(fx.preTest.lastSmokingHours), cohb: fx.dlco.coHbPercent.toFixed(1) }),
     caveats: [
-      { id: 'cohb-measured-unadjusted', weight: 'major', text: 'The measured carboxyhemoglobin is above the endogenous level that the reference data already contain. The reported DLCO is not adjusted for it, so the DLCO and KCO are lower than they would be with a normal carboxyhemoglobin. The size of the adjustment is not settled in the sources reviewed.' },
+      { id: 'cohb-measured-unadjusted', weight: 'major', text: 'The measured carboxyhemoglobin is above the endogenous level that the reference data already contain. The reported DLCO is not adjusted for it, so the DLCO and KCO are lower than they would be with a normal carboxyhemoglobin. Earlier standards gave a correction for carboxyhemoglobin; this project has not verified the current one, so none is applied here.' },
     ],
     decoyCaveats: [{ id: 'decoy-cohb-va', text: 'The raised carboxyhemoglobin lowers the VA.' }],
     confidence: 'medium', source: 'SPEC-22; S2 search summary; S22',
@@ -225,7 +257,7 @@ export const PREP_SCENARIOS = [
     caveats: [
       { id: 'exercise-airway-lability', weight: 'minor', text: 'Vigorous exercise within 1 h of testing (ATS/ERS 2019) can lower FEV1 in people with exercise-sensitive airways and otherwise changes little. A short rest before the test is part of preparation.' },
     ],
-    decoyCaveats: [{ id: 'decoy-exercise-dlco', text: 'The recent exercise raised the lung volumes.' }],
+    decoyCaveats: [{ id: 'decoy-exercise-volumes', text: 'The recent exercise raised the lung volumes.' }],
     confidence: 'low', source: 'PRE-08; S1 (1 h); effect mem',
   }),
   scenario({
