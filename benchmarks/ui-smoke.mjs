@@ -29,18 +29,18 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.waitForSelector('#pre-maneuvers');
   const nFig = await page.locator('figure[data-figure]').count();
-  check(nFig >= 3, `at least three figures render (${nFig}): loop, volume-time, z-score strip`);
+  check(nFig >= 3, `at least three figures render (${nFig}): spirometry panel, plethysmography panel, DLCO panel, z-score strip`);
   check((await page.locator('details.fig-dl').count()) === nFig, 'every figure has a Download SVG control');
   check((await page.locator('details.fig-dl button[data-act=download]').count()) === 4 * nFig, 'each control offers four SVG variants');
   check((await page.locator('details.fig-dl button[data-act=copy]').count()) === 4 * nFig, 'each control offers Copy SVG');
-  const firstSvg = await page.locator('figure[data-figure=flow-volume] svg.fig').first().evaluate((el) => el.outerHTML);
+  const firstSvg = await page.locator('figure[data-figure=panel-spirometry] svg.fig').first().evaluate((el) => el.outerHTML);
   check(!firstSvg.includes('#6A7572') && !/Not acceptable/.test(firstSvg), 'before checking, no maneuver is drawn as rejected');
 
   // A downloaded variant parses as SVG.
   const variantIds = ['transparent-dark-ink', 'transparent-light-ink', 'dark', 'white'];
-  await page.locator('figure[data-figure=flow-volume] details.fig-dl summary').click();
+  await page.locator('figure[data-figure=panel-spirometry] details.fig-dl summary').click();
   for (const pal of variantIds) {
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator(`figure[data-figure=flow-volume] button[data-act=download][data-pal=${pal}]`).click()]);
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator(`figure[data-figure=panel-spirometry] button[data-act=download][data-pal=${pal}]`).click()]);
     const text = fs.readFileSync(await dl.path(), 'utf8');
     const parsed = await page.evaluate((xml) => {
       const doc = new DOMParser().parseFromString(xml, 'image/svg+xml');
