@@ -65,11 +65,11 @@ test('carboxyhemoglobin: no value appears anywhere when co-oximetry was not done
   assert.ok(seen >= 10);
 });
 
-test('carboxyhemoglobin: a measured value is reported and stated as uncorrected', () => {
+test('carboxyhemoglobin: a measured value is reported; the key is read without a COHb correction and the COHb-adjusted reference is supplementary', () => {
   const x = make({ seed: 9, archetype: 'obstruction', scenarioIds: ['sub-cohb-measured'] });
   assert.ok(coHbMeasured(x.c.scenario));
   const pct = x.c.scenario.coHbPercent.toFixed(1);
-  assert.match(x.model.sections.find((s) => s.id === 'dlco').tables[0].footnote, new RegExp(`COHb ${pct.replace('.', '\\.')}%; DLCO is not adjusted for COHb`));
+  assert.match(x.model.sections.find((s) => s.id === 'dlco').tables[0].footnote, new RegExp(`COHb ${pct.replace('.', '\\.')}%\\.[^]*read on the Hb-adjusted reference only`));
   assert.ok(x.narrative.sections.find((s) => s.id === 'dlco').text.includes(`${pct}%`));
   const { prep } = build({ seed: 9, archetype: 'obstruction', technique: 'good', panel: 'full', scenarioLevel: 'none', scenarioIds: ['sub-cohb-measured'] }, { adapters });
   prep.caseData = x.c;

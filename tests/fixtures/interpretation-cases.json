@@ -208,7 +208,7 @@
   },
   {
    "branch": "S1",
-   "name": "Low ratio with FEV1 within normal limits is mild obstruction",
+   "name": "Low ratio with FEV1 within normal limits is obstruction that is not graded (2022 Table 1 defines no band above -1.645)",
    "report": {
     "patient": {
      "age": 50,
@@ -232,7 +232,7 @@
    },
    "expect": {
     "pattern": "obstruction",
-    "severity": "mild",
+    "severity": "fev1-normal",
     "fev1WithinLimits": true
    }
   },

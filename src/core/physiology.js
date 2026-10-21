@@ -39,7 +39,7 @@ const ARCHETYPE_NOTES = {
 };
 export const archetypeNote = (a) => ARCHETYPE_NOTES[a];
 
-/** Cotes hemoglobin correction. Verification state: UNVERIFIED against ATS/ERS 2017 (see standards.js). */
+/** Cotes hemoglobin correction factor on the MEASURED value, the reciprocal of the standard's multiplier on the predicted value (ATS/ERS 2017 eqs 31 and 32, read 2026-10-21). */
 export function hbFactor(hb, sex, age) {
   const c = sex === 'M' && age >= 15 ? 10.22 : 9.38;
   return (c + hb) / (1.7 * hb);
@@ -320,20 +320,37 @@ export function generatePhysiology(seed, d, datasets) {
 export { GROUP_TO_GLI2012 };
 
 /**
- * Carboxyhemoglobin and the measured DLCO. A raised COHb competes with the test gas for hemoglobin and
- * adds CO back-pressure, so the measured DLCO falls. The rule of about 1% of DLCO per 1% of COHb above
- * the endogenous level is quoted in the research catalog as not verified; both constants are
- * UNVERIFIED teaching values (see src/scenarios/constants.js and docs/scenarios-model.md).
+ * Carboxyhemoglobin and the measured DLCO. Three concepts, which are not interchangeable (ATS/ERS 2017, Graham et al., Eur Respir J
+ * 2017;49:1600016, section "Adjustment for carboxyhaemoglobin concentration and carbon monoxide back-pressure", text read on 2026-10-21):
+ *   - endogenous COHb is 1 to 2% in the healthy non-smokers from whom the prediction equations come;
+ *   - an adjustment for interpretation is recommended only when COHb is known to be elevated or is suspected to exceed 2%; the standard gives
+ *     it on the predicted value, eq. 37: DLCO[predicted for COHb] = DLCO[predicted] x (102% - COHb%), "1% for each percentage point of COHb > 2%";
+ *   - the simulation's effect on the measured value, which is a teaching choice below: 1% of DLCO per percentage point above 1.5%.
+ * The simulation's slope lies inside the standard's "about 0.8-1% per 1% COHb"; its 1.5% baseline lies inside the endogenous 1-2% but is not the standard's 2%.
+ * The generator keeps these two constants, because changing them would change every case with a COHb scenario under the same descriptor version.
+ * The newer finding of about 2% per 1% COHb with measured back-pressure (eq. 38) is not simulated.
  */
 export const COHB = {
-  referencePercent: { value: 1.5, verification: 'unverified' },
-  dlcoFractionPerPercent: { value: 0.01, verification: 'unverified' },
+  referencePercent: { value: 1.5, verification: 'teaching baseline inside the standard\'s endogenous range of 1-2%' },
+  dlcoFractionPerPercent: { value: 0.01, verification: 'teaching slope inside the standard\'s 0.8-1% per 1% COHb (eq. 37 uses 1%)' },
+  /** ATS/ERS 2017: adjust the predicted value for COHb only above this level (known or suspected). */
+  adjustAbovePercent: { value: 2, verification: 'ATS/ERS 2017 (text and eq. 37)' },
 };
 
 /** Multiplier on the measured DLCO for a carboxyhemoglobin of `cohbPercent` (1 at or below the endogenous level). */
 export function cohbDlcoFactor(cohbPercent) {
   const excess = Math.max(0, cohbPercent - COHB.referencePercent.value);
   return Math.max(0.5, 1 - COHB.dlcoFractionPerPercent.value * excess);
+}
+
+/** ATS/ERS 2017 eq. 37: multiplier on the PREDICTED DLCO for COHb above 2%; null at or below 2% or when COHb is not a number. */
+export function cohbReferenceMultiplier(cohbPercent) {
+  return Number.isFinite(cohbPercent) && cohbPercent > COHB.adjustAbovePercent.value ? (102 - cohbPercent) / 100 : null;
+}
+
+/** ATS/ERS 2017 eqs 31 and 32: multiplier on the PREDICTED DLCO for hemoglobin (g/dL); 1.7Hb/(10.22+Hb) for males of 15 years and older, 1.7Hb/(9.38+Hb) otherwise. Eq. 33 with Hbref = 14.6 or 13.4 is the same. */
+export function hbReferenceMultiplier(hb, sex, age) {
+  return 1 / hbFactor(hb, sex, age);
 }
 
 /**

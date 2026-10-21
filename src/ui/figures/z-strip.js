@@ -32,7 +32,7 @@
  * it passes `{ ...caseData, interp, resolve }`. Post-bronchodilator rows appear only when
  * `report.spirometry.post` exists and a resolver is available, because a post z-score is computed with the same equation as the pre values.
  */
-import { interpret, LLN_Z, borderlineOf } from '../../interpret/interpret.js';
+import { interpret, LLN_Z, borderlineOf, TWO_SIDED } from '../../interpret/interpret.js';
 import { wrapSvg, line, text, tickValues, resolvePalette, DASH, fix, r1 } from './svg.js';
 import { starEl, starPoints, Z_AXIS } from './z-inline.js';
 
@@ -43,8 +43,7 @@ const ORDER = [
   ['dlco', 'DLCO', 'dlco'], ['va', 'VA', 'dlco'], ['kco', 'KCO', 'dlco'],
 ];
 const POST_IDS = new Set(['fvc', 'fev1', 'fev1_fvc']);
-/** Indices read on both sides by the interpretation engine. */
-export const TWO_SIDED = new Set(['tlc', 'rv', 'rv_tlc', 'dlco', 'kco']);
+export { TWO_SIDED };
 const EQUATION = { GLI2012: 'GLI-2012', GLIglobal: 'GLI Global', GLI2021vol: 'GLI-2021 volumes', GLI2017tlco: 'GLI-2017 TLCO' };
 
 function dataFor(c, _interp, opts = {}) {

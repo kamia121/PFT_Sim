@@ -21,7 +21,7 @@
  */
 import { createStream } from '../core/prng.js';
 import { hbKnown, coHbMeasured, coHbUnmeasured, sexUndisclosed } from '../app/format.js';
-import { bdPctPredText, bdPctPredQualifier } from './precision.js';
+import { bdPctPredText, bdPctPredQualifier, bdPctBaseText, bdMlText } from './precision.js';
 
 export const NARRATIVE_VERSION = 2;
 
@@ -317,6 +317,10 @@ T('p-severity-scored',
   (p) => `On the ${p.mz}, against cut-points at ${MINUS}2.5 and ${MINUS}4.0, the obstruction is of ${p.w} severity${p.within}.`,
   (p) => `Severity of obstruction is graded from the FEV1 z-score; at ${zf(p.z)} the obstruction is of ${p.w} severity${p.within}.`,
   (p) => `Grading by FEV1 z-score, with cut-points at ${MINUS}2.5 and ${MINUS}4.0, gives an obstruction of ${p.w} severity${p.within}.`);
+T('p-severity-fev1-normal',
+  (p) => `The ${p.mz} lies within the reference range of the 2022 scale, so the obstruction, which the ratio establishes, is not graded for severity.`,
+  (p) => `Severity bands of the 2022 scale apply below the lower limit of normal, and the ${p.mz} is above it, so the obstruction is not graded for severity.`,
+  (p) => `With the ${p.mz} within the reference range, no severity grade is defined for this obstruction, which rests on the ratio alone.`);
 T('p-severity-unscored',
   () => 'Severity is not graded for this pattern.',
   () => 'No severity grade is assigned to this pattern, so severity is not graded.',
@@ -639,6 +643,7 @@ function makeContext(caseData, interp, cmp, { finalCaveats = true } = {}) {
     rawCat, rawDlco, hbOk, hbFactor, hbMaterial, bmi, finalCaveats, cmp: cmpOk ? cmp : null, flips, borderMeasures, eqSensitive,
     limited: tier === 'limited',
     sevScored: Boolean(interp.severity?.scored),
+    sevNotGraded: Boolean(interp.severity?.notGraded),
     sevWord: interp.severity?.scored ? interp.severity.id : null,
   };
 }
@@ -655,6 +660,7 @@ const gradesClause = (ctx) => {
 function severityClause(ctx, s) {
   if (!s || s.kind === 'none') return '';
   if (s.kind === 'unscored') return ', with severity not graded for this pattern';
+  if (s.kind === 'fev1-normal') return ', with severity not graded because the FEV1 lies within the reference range';
   if (s.bare || !ctx.has('fev1')) return `, of ${s.word} severity`;
   const within = ctx.m.fev1.label !== 'low';
   return `, of ${s.word} severity, graded on ${ctx.mz('fev1')}${within ? ', which itself lies within the reference range' : ''}`;
@@ -773,7 +779,7 @@ function dlcoCatPhrase(ctx, cat) {
 
 function correctClaims(ctx) {
   let severity = { kind: 'none' };
-  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') severity = ctx.sevScored ? { kind: 'scored', word: ctx.sevWord } : { kind: 'unscored' };
+  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') severity = ctx.sevScored ? { kind: 'scored', word: ctx.sevWord } : ctx.sevNotGraded ? { kind: 'fev1-normal' } : { kind: 'unscored' };
   return {
     quality: 'tier',
     pattern: { id: ctx.pattern, synthetic: false },
@@ -795,11 +801,11 @@ function bdWhy(ctx) {
   if (bd.rule2022.significant) {
     const v = bd.rule2022.which[0]; const k = v.toLowerCase();
     const d = k === 'fev1' ? bd.dFev1 : bd.dFvc;
-    const fail = bd.pctBase[k] < 12 ? `${pct1(bd.pctBase[k])} of the baseline value, under the 12% the earlier criterion requires` : `${Math.round(d * 1000)} mL, under the 200 mL the earlier criterion requires`;
+    const fail = bd.pctBase[k] < 12 ? `${bdPctBaseText(bd.pctBase[k])}% of the baseline value, under the 12% the earlier criterion requires` : `${bdMlText(d)} mL, under the 200 mL the earlier criterion requires`;
     return `the ${v} change is ${pctPred(bd.pctPred[k])} of the predicted value, above the 10% the 2022 criterion requires, but ${fail}`;
   }
   const v = bd.rule2005.which[0]; const k = v.toLowerCase();
-  return `the ${v} change is ${pct1(bd.pctBase[k])} of a low baseline value and at least 200 mL, which meets the earlier criterion, but only ${pctPred(bd.pctPred[k])} of the predicted value, under the 10% the 2022 criterion requires`;
+  return `the ${v} change is ${bdPctBaseText(bd.pctBase[k])}% of a low baseline value and at least 200 mL, which meets the earlier criterion, but only ${pctPred(bd.pctPred[k])} of the predicted value, under the 10% the 2022 criterion requires`;
 }
 
 function equationDetail(ctx) {
@@ -984,7 +990,8 @@ function patternSection(ctx, P) {
   if (ctx.has('fev1') && ctx.has('fvc') && ctx.has('fev1_fvc')) out.push(P('p-values', { fev1: ctx.val('fev1'), fvc: ctx.val('fvc'), ratio: ctx.val('fev1_fvc') }));
   if (sevState.kind === 'scored') {
     out.push(P('p-severity-scored', { mz: ctx.mz('fev1'), z: m.fev1.z, w: sevState.word, within: m.fev1.label !== 'low' ? ', although the FEV1 itself lies within the reference range' : '' }));
-  } else if (sevState.kind === 'unscored') out.push(P('p-severity-unscored', {}));
+  } else if (sevState.kind === 'fev1-normal') out.push(P('p-severity-fev1-normal', { mz: ctx.mz('fev1') }));
+  else if (sevState.kind === 'unscored') out.push(P('p-severity-unscored', {}));
   return out.join(' ');
 }
 
@@ -1091,7 +1098,7 @@ function buildFindings(ctx) {
   }
   add('confidence', `Confidence in the technique: ${ctx.tier === 'good' ? 'adequate' : ctx.tier === 'moderate' ? 'reduced' : ctx.tier === 'limited' ? 'qualified' : 'unknown'}.`);
   add('pattern', ctx.pattern === 'indeterminate' ? 'Pattern: cannot be interpreted.' : `Pattern: consistent with ${NOUN[ctx.pattern]}.`);
-  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on FEV1 z-score).` : 'Severity: not graded for this pattern.');
+  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on FEV1 z-score).` : ctx.sevNotGraded ? 'Severity: not graded, because the FEV1 is within the reference range.' : 'Severity: not graded for this pattern.');
   for (const k of ctx.borderMeasures) add(`borderline-${k}`, `Borderline: ${ctx.mz(k)}.`);
   if (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc') add('volumes-needed', 'Lung volumes are needed to classify this pattern.');
   if (ctx.hasVol && ctx.m.tlc.label === 'high') add('hyperinflation', 'TLC above the upper limit of normal: consistent with hyperinflation.');
@@ -1227,13 +1234,14 @@ function buildDistractors(ctx, P) {
  */
 function notesFor(ctx) {
   const n = [];
-  if (ctx.sevScored) n.push('Severity of obstruction is graded from the FEV1 z-score with cut-points at −2.5 and −4.0; these cut-points come from secondary summaries of the 2022 ERS/ATS statement and have not been checked against it.');
+  if (ctx.sevScored) n.push('Severity of obstruction is graded from the FEV1 z-score with cut-points at −2.5 and −4.0 (2022 ERS/ATS Table 1 and the Figure 7 caption; the text prints the edges as −2.51 and −4.1, read here as reporting precision).');
+  else if (ctx.sevNotGraded) n.push('The 2022 ERS/ATS statement calls a z-score above −1.645 normal and defines no severity grade for an obstruction whose FEV1 is within normal limits, so none is assigned; severity of impairment is not disease severity.');
   else if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') n.push('Severity is graded for obstruction only in this simulation; the 2022 grading rule for the other patterns has not been checked against the statement.');
   if (ctx.hasDlco && ctx.dl?.category === 'reduced') n.push('The degree of DLCO reduction is not scored in this simulation because the grading rule has not been checked against the 2022 statement.');
-  if (ctx.bd) n.push('The bronchodilator criterion of a change above 10% of the predicted value is taken from secondary summaries of the 2022 statement, and whether the boundary is inclusive has not been checked.');
+  if (ctx.bd) n.push('The bronchodilator criterion is a change above 10% of the predicted value in FEV1 or FVC (2022 ERS/ATS Table 1; the comparison is strict, as the statement prints it).');
   if (ctx.hasVol && (ctx.m.tlc?.label === 'high' || ['rv', 'rv_tlc'].some((k) => ctx.has(k) && ctx.m[k].label === 'high'))) n.push('The definitions of hyperinflation (TLC above the upper limit) and air trapping (RV or RV/TLC above the upper limit) used here have not been checked against the statement.');
-  if (ctx.hasDlco && ctx.hbOk) n.push('The hemoglobin adjustment of the DLCO follows the Cotes formula, which has not been checked against the 2017 ERS/ATS standard.');
-  if (coHbMeasured(ctx.scen) || coHbUnmeasured(ctx.scen)) n.push('No numerical correction for carboxyhemoglobin is applied, and the size of such a correction is not settled in the sources reviewed.');
+  if (ctx.hasDlco && ctx.hbOk) n.push('The hemoglobin adjustment follows the 2017 ERS/ATS standard (eqs 31 and 32), which the 2022 statement recommends applying to the reference value; the key is read against the hemoglobin-adjusted reference.');
+  if (coHbMeasured(ctx.scen) || coHbUnmeasured(ctx.scen)) n.push('The key is read against the hemoglobin-adjusted reference without a carboxyhemoglobin correction; the 2017 ERS/ATS standard recommends one for interpretation only when carboxyhemoglobin is known or suspected to exceed 2% (eq. 37, predicted x (102% − COHb%)), and the report shows that adjustment as a separate, supplementary line when COHb was measured above 2%.');
   if (['tlc', 'dlco'].some((k) => ctx.m[k] && ctx.m[k].available !== false && ctx.m[k].matched === false)) n.push('The statement that the 2023 ATS statement advises against race adjustment of volumes and DLCO is taken from a search summary and has not been checked against the primary text.');
   n.push('The wording of this interpretation is rule-based and has not been reviewed by a clinician.');
   return n;

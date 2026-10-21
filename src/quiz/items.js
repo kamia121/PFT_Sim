@@ -52,7 +52,7 @@ const LABELS = {
 };
 
 const GRADE_ORDER = ['A', 'B', 'C', 'D', 'E'];
-const SEVERITY_ORDER = ['mild', 'moderate', 'severe'];
+const SEVERITY_ORDER = ['fev1-normal', 'mild', 'moderate', 'severe'];
 export const NONE_ID = 'none';
 export const NONE_LABEL = 'None of these statements applies.';
 

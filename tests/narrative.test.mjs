@@ -103,7 +103,8 @@ function assertFinalMatchesKey({ c, cmp, interp }, final, label, { caveats = tru
 
   // severity: stated only where the engine scores it
   const sevTokens = f.filter((t) => t.startsWith('severity:'));
-  if (key.severity) assert.deepEqual(sevTokens, [`severity:${key.severity}`], tag('severity scored'));
+  if (key.severity === 'fev1-normal') assert.deepEqual(sevTokens, ['severity:not-graded'], tag('obstruction with a normal FEV1 is not graded'));
+  else if (key.severity) assert.deepEqual(sevTokens, [`severity:${key.severity}`], tag('severity scored'));
   else if (key.pattern === 'normal' || key.pattern === 'indeterminate') assert.deepEqual(sevTokens, [], tag('no severity'));
   else assert.deepEqual(sevTokens, ['severity:not-graded'], tag('severity unscored'));
 

@@ -88,7 +88,7 @@ test('height scenarios: the lab uses the estimated height, the lungs come from t
       assert.deepEqual(c.volumes, p.volumes, 'lung volumes come from the true height');
       assert.equal(c.report.spirometry.fev1, p.report.spirometry.fev1, 'spirometry comes from the true lungs');
       // The key is a function of what the lab entered.
-      const again = interpret(c.report, resolveReference, 'GLIglobal');
+      const again = interpret(c.report, resolveReference, 'GLIglobal', { generatorKey: true });
       assert.deepEqual(again.key, c.anchorKey.key);
       if (h.statedCm !== h.trueCm) differs++;
       const zStated = c.anchorKey.measures.fev1.z, zTrue = interpret(p.report, resolveReference, 'GLIglobal').measures.fev1.z;

@@ -16,8 +16,9 @@
  * default, as on a real report); the learner page passes false until answers are checked.
  */
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
-import { bdPctPredDp, bdPctPredQualifier } from '../interpret/precision.js';
+import { bdPctPredDp, bdPctPredQualifier, bdPctBaseText, BD_2005_PCT_BASE, BD_2005_LITERS } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
+import { cohbReferenceMultiplier } from '../core/physiology.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { createStream } from '../core/prng.js';
 import { serializeDescriptor } from '../core/descriptor.js';
@@ -403,6 +404,14 @@ export function buildReportModel(caseData, interp, options = {}) {
         row.changePct = round((100 * row.change) / row.pre, 1);
         // The change as a percent of the predicted value is the quantity of the 2022 decision, so it comes from the unrounded values, as in
         // interpret(), and not from the printed ones: 1.59 and 1.91 L can print as a change that crosses 10% of predicted when the unrounded change does not.
+        // The same for the earlier rule: where the printed change or percent of baseline reads as meeting its threshold and the unrounded one does not (or the
+        // reverse), the cell prints the unrounded value with the digits that show the side, and says so.
+        const bd = interp?.bd;
+        if (bd) {
+          const rawL = id === 'fev1' ? bd.dFev1 : bd.dFvc, rawB = bd.pctBase[id];
+          if ((row.changePct >= BD_2005_PCT_BASE) !== (rawB >= BD_2005_PCT_BASE)) row.changePct = `${rawB >= 0 ? '+' : ''}${bdPctBaseText(rawB)}`;
+          if ((row.change >= BD_2005_LITERS) !== (rawL >= BD_2005_LITERS)) row.change = `${rawL < 0 ? '' : '+'}${rawL.toFixed(4)} (${rawL >= BD_2005_LITERS ? 'at or above' : 'below'} 0.200 L)`;
+        }
         const raw = interp?.bd?.pctPred?.[id] ?? (100 * (pv - r.value)) / r.predicted;
         row.changePctPred = round(raw, 1);
         // Within a rounding step of the 10% threshold the printed value would hide the side the change is on, so it takes the digits that show it.
@@ -522,21 +531,44 @@ export function buildReportModel(caseData, interp, options = {}) {
     ];
     const hbOk = hbKnown(dl);
     const trace = caseData.dlcoTrace ?? null;
+    // The 2022 statement recommends adjusting the REFERENCE value for the measured hemoglobin, and the 2017 standard gives the factor on the predicted
+    // value (eqs 31 and 32: x 1.7 Hb / (10.22 + Hb) for males of 15 years and older, 1.7 Hb / (9.38 + Hb) for females and children). The measured DLCO and KCO are
+    // therefore printed as measured, against a reference and LLN scaled by 1/f (f the stored factor that the interpretation applies to the measured value). The z-score
+    // and %Pred are the stored ones: the LMS z-score depends on the measured value over the reference only, so the two placements give the same z-score, and none is recomputed.
+    const f = hbOk && Number.isFinite(dl.hbFactor) && dl.hbFactor > 0 ? dl.hbFactor : 1;
+    const onRef = (row, scale) => ({ ...row, lln: row.lln === null ? null : round(m[row.id].lln * scale, row.dp) });
+    const dlRow = refRow('dlco', hbOk ? 'DLCO, measured' : 'DLCO, measured (Hb not available; reference not adjusted)', 'mL/min/mmHg', 1);
+    const kcoRow = refRow('kco', 'KCO, measured', 'mL/min/mmHg/L', 2);
     const rows = [
-      plain('dlco-raw', hbOk ? 'DLCO, unadjusted' : 'DLCO, measured (no Hb adjustment)', 'mL/min/mmHg', 1, dl.raw),
       hbOk ? plain('hb', 'Hemoglobin', 'g/dL', 1, dl.hbGdl) : { id: 'hb', index: 'Hemoglobin', unit: 'g/dL', dp: 1, result: 'not available', lln: null, z: null, pct: null },
-      ...(hbOk ? [plain('hb-factor', 'Hb adjustment factor', '', 3, dl.hbFactor)] : []),
-      refRow('dlco', hbOk ? 'DLCO, Hb-adjusted' : 'DLCO, unadjusted (Hb not available)', 'mL/min/mmHg', 1),
+      ...(hbOk ? [plain('hb-factor', 'Reference multiplier for Hb', '', 3, 1 / f)] : []),
+      hbOk ? { ...onRef(dlRow, 1 / f), result: round(dl.raw, 1) } : dlRow,
       refRow('va', 'VA', 'L', 2),
-      refRow('kco', 'KCO', 'mL/min/mmHg/L', 2),
+      hbOk && kcoRow.result !== null ? { ...onRef(kcoRow, 1 / f), result: round(dl.kco / f, 2) } : kcoRow,
       ...(Number.isFinite(trace?.inspired?.viOverVc) ? [plain('vi-vc', 'VI/VC', '%', 0, 100 * trace.inspired.viOverVc)] : []),
       ...(Number.isFinite(trace?.breathHold?.seconds) ? [plain('breath-hold', 'Breath-hold time', 's', 1, trace.breathHold.seconds)] : []),
     ];
-    // Carboxyhemoglobin is reported only when it was measured; otherwise the line says that it was not.
-    const coHbLine = coHbMeasured(scenario) ? `COHb ${scenario.coHbPercent.toFixed(1)}%; DLCO is not adjusted for COHb.`
+    // Carboxyhemoglobin: the 2017 standard recommends an adjustment for interpretation only when COHb is known to be elevated or is suspected to exceed 2%
+    // (endogenous COHb is 1 to 2% in the subjects of the reference equations), and gives it on the predicted value (eq. 37: x (102% - COHb%)). It is shown as a
+    // separate line when COHb was measured and exceeds 2%, together with the data used; the classification the key reads stays on the Hb-adjusted reference.
+    const cohbPct = coHbMeasured(scenario) ? scenario.coHbPercent : null;
+    const cohbG = cohbReferenceMultiplier(cohbPct);
+    let cohbFlip = '';
+    if (cohbG && hbOk && typeof resolve === 'function' && m.dlco && m.dlco.available !== false) {
+      const r = resolve('dlco', { ...patient, measured: dl.adjusted / cohbG }, equation);
+      if (r?.available && Number.isFinite(r.z)) {
+        const at = rows.findIndex((x) => x.id === 'dlco');
+        rows.splice(at + 1, 0, { id: 'dlco-cohb', index: 'DLCO, supplementary: reference also adjusted for COHb (not the scored basis)', unit: 'mL/min/mmHg', dp: 1, result: round(dl.raw, 1), lln: round((m.dlco.lln / f) * cohbG, 1), z: round(r.z, 2), pct: round(m.dlco.percentPredicted / cohbG, 0) });
+        const was = m.dlco.z < LLN_Z ? 'below' : 'within', now = r.z < LLN_Z ? 'below' : 'within';
+        if (was !== now) cohbFlip = ` Against the COHb-adjusted reference the DLCO is ${now === 'below' ? 'below' : 'within'} the LLN (z ${r.z.toFixed(2)}), not ${was} it (z ${m.dlco.z.toFixed(2)}); the classification above is read on the Hb-adjusted reference.`;
+      }
+    }
+    const coHbLine = coHbMeasured(scenario) ? (cohbG
+      ? `COHb ${cohbPct.toFixed(1)}%. The supplementary line applies ATS/ERS 2017 eq. 37, predicted x (102 - COHb%)/100 = x ${cohbG.toFixed(2)}, to the Hb-adjusted reference (an interpretive adjustment, recommended when COHb exceeds 2%). The classification, the practice question and the key are read on the Hb-adjusted reference only.${cohbFlip}`
+      : `COHb ${cohbPct.toFixed(1)}%, within the endogenous range of up to 2% that the reference equations include; no COHb adjustment is applied.`)
       : coHbUnmeasured(scenario) ? 'COHb was not measured; the DLCO may be underestimated if smoking was recent.' : null;
     const foot = [
-      `Reference values: ${eqName(tlcoEq)}${fallbackText(tlcoMatched)}. LLN, z-score and %Pred refer to the ${hbOk ? 'Hb-adjusted DLCO (Cotes formula, not yet checked against the 2017 ERS/ATS standard)' : 'DLCO without hemoglobin adjustment, because no hemoglobin was available'}.`,
+      `Reference values: ${eqName(tlcoEq)}${fallbackText(tlcoMatched)}. LLN, z-score and %Pred refer to the measured DLCO and KCO against ${hbOk ? `reference values adjusted for the hemoglobin (ATS/ERS 2017, eqs 31 and 32: predicted x 1.7Hb/(c+Hb), with c = 10.22 for males of 15 years and older and 9.38 for females and children; the multiplier is shown)` : 'reference values without hemoglobin adjustment, because no hemoglobin was available'}.`,
       ambient?.pressureMmHg !== undefined ? `Pb: ${ambient.pressureMmHg} mmHg.` : null,
       coHbLine,
       trace ? 'Inspired volume (VI/VC) and breath-hold time are simulated from the tracing; replicate tests are not simulated.' : 'Replicate tests are not simulated.',

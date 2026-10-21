@@ -31,3 +31,44 @@ export function bdPctPredText(x) {
   const q = bdPctPredQualifier(x);
   return `${x.toFixed(bdPctPredDp(x))}${q ? ` (${q} ${BD_PCT_PRED_THRESHOLD})` : ''}`;
 }
+
+/* ---------------------------------------------------------------------------------- the 2005 rule */
+
+/** Thresholds of the earlier rule (at least 12% of baseline and at least 0.200 L, as coded in interpret.js; `>=` on the unrounded values). */
+export const BD_2005_PCT_BASE = 12;
+export const BD_2005_LITERS = 0.2;
+
+/** Whether a value printed with `dp` decimals would read as meeting `threshold` (printed >= threshold) while the value itself does not, or the reverse. */
+const hides = (x, threshold, dp) => (Number(x.toFixed(dp)) >= threshold) !== (x >= threshold);
+
+/**
+ * Decimals for a decision quantity of the earlier rule: `dp` normally; one or two more when rounding to `dp` would put the printed value on the other
+ * side of the threshold from the value (11.96% printing as 12.0%, 199.6 mL as 200). Display only.
+ * @returns {number}
+ */
+export function nearDp(x, threshold, dp) {
+  if (!Number.isFinite(x)) return dp;
+  let d = dp;
+  while (d < dp + 3 && hides(x, threshold, d)) d += 1;
+  return d;
+}
+
+/** Side qualifier when even `dp + 3` decimals hide the side; otherwise null. */
+export function nearQualifier(x, threshold, dp) {
+  return Number.isFinite(x) && hides(x, threshold, dp + 3) ? (x >= threshold ? 'at or above' : 'below') : null;
+}
+
+/** The change in percent of baseline with the digits (or the qualifier) that show its side of 12%. @param {number} x */
+export function bdPctBaseText(x) {
+  if (!Number.isFinite(x)) return '';
+  const q = nearQualifier(x, BD_2005_PCT_BASE, 1);
+  return `${x.toFixed(nearDp(x, BD_2005_PCT_BASE, 1))}${q ? ` (${q} ${BD_2005_PCT_BASE})` : ''}`;
+}
+
+/** The change in liters as milliliters, with the digits (or the qualifier) that show its side of 200 mL. @param {number} liters */
+export function bdMlText(liters) {
+  if (!Number.isFinite(liters)) return '';
+  const ml = liters * 1000, t = BD_2005_LITERS * 1000;
+  const q = nearQualifier(ml, t, 0);
+  return `${ml.toFixed(nearDp(ml, t, 0))}${q ? ` (${q} ${t})` : ''}`;
+}

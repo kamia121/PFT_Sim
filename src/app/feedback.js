@@ -68,9 +68,14 @@ export function scoreAll({ caseData, interp, interpOther, equation, responses, i
     expected: answerLabel(s.id, s.expected),
     other: s.other !== s.expected ? answerLabel(s.id, s.other) : null,
     status: s.status,
-    note: s.status === 'other-equation' ? s.otherLabel : '',
+    note: s.status === 'other-equation' ? s.otherLabel : (s.note ?? ''),
     why: '',
   }));
+  // A COHb-adjusted reference printed on the report is supplementary: the diffusing capacity question is scored on the hemoglobin-adjusted reference only.
+  if (caseData?.scenario?.coHbMeasured === true && caseData.scenario.coHbPercent > 2) {
+    const d = rows.find((r) => r.kind === 'structured' && r.id === 'dlco');
+    if (d) d.note = `${d.note ? `${d.note} ` : ''}Scored on the hemoglobin-adjusted reference. The line adjusted also for COHb (${caseData.scenario.coHbPercent.toFixed(1)}%, ATS/ERS 2017 eq. 37) is supplementary and is not the basis of the key.`;
+  }
   if (scoreChallenge) {
     for (const item of items) {
       const answer = answerFor(item, responses);

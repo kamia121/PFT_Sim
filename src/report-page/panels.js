@@ -9,6 +9,7 @@
  * page; every other figure is drawn at half width (a pair is two halves).
  */
 import { FIGURES } from '../ui/figures/index.js';
+import { TWO_SIDED } from '../interpret/interpret.js';
 
 /** @type {Record<string, { chain: (string|string[])[], onlyWithoutInline?: boolean }>} */
 export const SLOTS = {
@@ -79,8 +80,8 @@ export async function loadZInline() {
   }
 }
 
-/** Indices with a two-sided reference range, which get an upper limit line at z = +1.645 in the inline graphic. */
-export const TWO_SIDED = new Set(['tlc', 'rv', 'rv_tlc']);
+/** Indices with a two-sided reference range, which get an upper limit line at z = +1.645 in the inline graphic (the engine's own set). */
+export { TWO_SIDED };
 /** Size of the inline z-score graphic in the tables: 1.3 in by 0.17 in at 96 px per inch. */
 export const INLINE_SIZE = { width: 125, height: 16 };
 

@@ -151,6 +151,7 @@ export function fallbackCaveats(prep) {
 // Final interpretation statements
 
 const SEVERITIES = ['mild', 'moderate', 'severe'];
+const SEVERITY_KEYS_ALL = ['fev1-normal', ...SEVERITIES];
 const SUBTYPE_TEXT = {
   'low-kco-preserved-va': ' with a low KCO and a preserved alveolar volume, which points to a defect intrinsic to the lung',
   'low-va-high-kco': ' with a small alveolar volume and a raised KCO, as when expansion is incomplete and the gas-exchanging tissue is intact',
@@ -238,6 +239,7 @@ export function fallbackDistractors(prep, variant = 0) {
     const other = SEVERITIES.filter((x) => x !== k.severity);
     push('fb-n-severity', { ...k, severity: other[(variant + (k.severity === 'mild' ? 1 : 0)) % other.length] }, 'States the wrong severity band: severity of obstruction follows the FEV₁ z-score.');
   }
+  if (!k.severity && prep.a.severity?.notGraded && k.pattern === 'obstruction') push('fb-n-severity-normal-fev1', { ...k, severity: 'mild' }, 'Grades an obstruction as mild although the FEV₁ z-score is within the normal range of the 2022 scale, which defines no grade there.');
   for (const [i, [pattern, flaw]] of (WRONG_PATTERN[k.pattern] ?? []).entries()) {
     const sev = ['obstruction', 'obstruction-low-fvc'].includes(pattern) ? 'moderate' : null;
     const noTlc = !k.hasVolumes && ['mixed', 'restriction'].includes(pattern);

@@ -129,7 +129,7 @@ export function buildCase(input, datasets) {
     report.caveatIds = plan.caveatsFor(plan.caveatFlags({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }, report, resolveReference)).map((c) => c.id);
     scenario = plan.describe({ report, pre, post, volumes, dlco, resolve: resolveReference });
   }
-  const anchorKey = interpret(report, resolveReference, ANCHOR.spirometry);
+  const anchorKey = interpret(report, resolveReference, ANCHOR.spirometry, { generatorKey: true });
   return {
     descriptor: d,
     groundTruth: { archetype: d.archetype, phenotype: truth.phenotype, bdVariant: truth.bdVariant, note: truth.note, anchor: ANCHOR, severityTarget: d.severity },
