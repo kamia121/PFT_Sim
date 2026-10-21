@@ -15,6 +15,8 @@
  *   R7  the Lab report view and the report page print the summary identity, tables, last comment and "Page 1" footer on one sheet.
  *   R8  the z-score graphic does not name the area above the ULN "within limits".
  *   R9  the details z-score graphic carries the post-bronchodilator rows.
+ *   Q1  the quality review level: the default is one study-level question; the advanced level is an explicit opt-in that survives reload
+ *       and the report page; a change applies only while the answers are open; nothing of the verdict is in the source before the key.
  *
  * PDF text is read with pdftotext when it is installed; the print checks are skipped, and said to be skipped, when it is not.
  *
@@ -30,7 +32,7 @@ import { createReference } from '../src/reference/gli.js';
 import { buildCase } from '../src/core/case.js';
 import { parseDescriptor } from '../src/core/descriptor.js';
 import { interpret, compareEquations } from '../src/interpret/interpret.js';
-import { buildChallenges } from '../src/challenges/index.js';
+import { buildChallenges, studyJudgement } from '../src/challenges/index.js';
 import { buildRtReport } from '../src/core/rt-report.js';
 import { interpretationFor } from '../src/report/statement.js';
 
@@ -93,7 +95,7 @@ try {
   {
     const { items } = keyFor(POOR);
     const rowItems = items.filter((i) => Array.isArray(i.rows));
-    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
     await page.waitForSelector('#answer-form');
     for (const item of rowItems) {
       check((await page.locator(`[data-item="${item.id}"] fieldset.row-q`).count()) === item.rows.length, `R1: ${item.id} renders a group for each of its ${item.rows.length} rows`);
@@ -423,7 +425,7 @@ try {
   /* --------------------------------------------------- R3: phone width, size, keyboard and pointer, persistence */
   {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
     await page.waitForSelector('#answer-form');
     await page.waitForTimeout(400);
     const geometry = () => page.evaluate(() => {
@@ -470,6 +472,75 @@ try {
     await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"][value="yes"]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(tmp, 'phone-rows.png') });
     await page.setViewportSize({ width: 1280, height: 900 });
+  }
+
+  // ---- Q1: basic (study-level) and advanced (maneuver-level) quality review ----
+  {
+    const rtQ = buildRtReport(buildCase(parseDescriptor(POOR), ds));
+    const studyItem = buildChallenges(buildCase(parseDescriptor(POOR), ds), { rt: rtQ, review: 'basic' })[0];
+    const study = studyJudgement(rtQ).key;
+    const rows = () => page.locator('fieldset.row-item').count();
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'basic', 'Q1: a link without qd opens at the basic (study-level) review');
+    check((await page.locator('#qd option').allInnerTexts()).join('|') === 'Study level (basic)|Maneuver level (advanced)', 'Q1: the toolbar offers the two levels, with no Varies');
+    check(await rows() === 0 && await page.locator('fieldset[data-item="studyInterpretable"] input[type=radio]').count() === 3, 'Q1: basic shows one study-level question with three options and no per-maneuver rows');
+    check(await page.locator('#answer-form fieldset[data-item]').count() === 1, 'Q1: the study question is the only quality item');
+    const src1 = await page.content();
+    check(!src1.includes(studyItem.why) && !/ch:(acceptableManeuvers|grade|representativeLoopOk|rtConsistent|dlcoAcceptable|plethAcceptable|bdInterpretable)/.test(src1), 'Q1: stage 1 source holds no explanation and no maneuver, grade, loop or statement item');
+    // Keyboard: Tab to the group, Space to choose, arrows to move.
+    await page.locator('fieldset[data-item="studyInterpretable"] input[type=radio]').first().focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
+    check(await page.locator('input[name="ch:studyInterpretable"][value="limited"]').isChecked(), 'Q1: the study question is operable by keyboard');
+    await page.locator('input[name="ch:studyInterpretable"][value="' + study + '"]').check();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobile = await page.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, r: document.querySelector('input[name="ch:studyInterpretable"]').getBoundingClientRect().width }));
+    check(mobile.over <= 1 && mobile.r >= 20, `Q1: the study question fits a 390 px screen (overflow ${mobile.over}, radio ${mobile.r})`);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Stage 2: the answer locks and is kept; the statement item is not part of the basic review.
+    await page.click('#show-statement');
+    check(await page.locator('input[name="ch:studyInterpretable"]:checked').count() === 1 && await page.locator('input[name="ch:studyInterpretable"]:disabled').count() === 3, 'Q1: stage 2 locks the study answer and keeps it');
+    check(await page.locator('fieldset[data-item="rtConsistent"]').count() === 0 && !(await page.locator('#check-answers').isDisabled()), 'Q1: no statement adjudication in the basic review, and the check is available');
+    // A change of the toolbar setting after the statement is shown waits for the next case.
+    await page.selectOption('#qd', 'advanced');
+    check(await rows() === 0 && !page.url().includes('qd=adv') && /fixed once the statement is shown/.test(await page.locator('#status').innerText()), 'Q1: after the statement a level change does not apply to this case, and says so');
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(/Quality of the study/.test(await page.locator('#reveal').innerText()), 'Q1: the checked answers include the study-level item');
+    await page.click('#new-case');
+    await page.waitForSelector('#answer-form');
+    check(await rows() > 0 && page.url().includes('qd=adv'), 'Q1: the next case uses the chosen advanced level and the address records it');
+    check(/Advanced review: maneuver-level questions\./.test(await page.locator('#review-note').innerText()), 'Q1: the advanced level says what it is');
+    // Reload and navigation keep the level.
+    await page.reload();
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'advanced' && await rows() > 0, 'Q1: reload keeps the advanced level');
+    await page.click('[data-tab=report]');
+    await page.waitForSelector('#report-root .sheet');
+    const rhref = await page.locator('#report-root a', { hasText: 'Open the printable report page' }).getAttribute('href');
+    check(new URL(rhref, base).searchParams.get('qd') === 'adv', 'Q1: the link to the printable report page carries the level');
+    await page.goto(new URL(rhref, base).href);
+    await page.waitForSelector('#rp-back');
+    check(new URL(await page.locator('#rp-back').getAttribute('href'), page.url()).searchParams.get('qd') === 'adv', 'Q1: the way back to the practice page keeps the level');
+    // Open the practice page again at the basic level: a fresh attempt, answers of the other level do not carry.
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
+    await page.waitForSelector('#answer-form');
+    await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"][value="yes"]').check();
+    await page.locator('input[name=pattern]').first().check();
+    await page.selectOption('#qd', 'basic');
+    check(await rows() === 0 && !page.url().includes('qd=') && await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"]').count() === 0, 'Q1: a change at stage 1 swaps the items and drops qd from the address');
+    check(await page.locator('input[name=pattern]:checked').count() === 1 && await page.locator('input[name="ch:studyInterpretable"]:checked').count() === 0, 'Q1: the change keeps the ordinary interpretation answers and starts the quality items afresh');
+    await page.selectOption('#qd', 'advanced');
+    check(await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"]:checked').count() === 0, 'Q1: the earlier maneuver answers were cleared and do not return');
+    // Invalid values fall back to basic.
+    await page.goto(`${base}?${POOR}&qd=junk`);
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'basic' && await rows() === 0, 'Q1: an invalid level opens at basic');
+    // Challenge off with the advanced level: the page says the answers are printed.
+    await page.goto(`${base}?${POOR}&qd=adv`);
+    await page.waitForSelector('#answer-form');
+    check(/quality challenge is off, so the grades and the acceptability/.test(await page.locator('#review-note').innerText()), 'Q1: advanced with the challenge off states that the answers are printed on page 2');
   }
 
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);

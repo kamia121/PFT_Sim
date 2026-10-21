@@ -16,12 +16,12 @@ import { fitPages, scalePages } from './fit.js';
 import { fitSheetContent } from '../sheets/summary.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, stage: 1, confirmed: false };
+const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, stage: 1, review: 'basic', confirmed: false };
 
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags, stage: state.stage });
+    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags, stage: state.stage, review: state.review });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -68,7 +68,7 @@ async function render() {
   $('#rp-qc').checked = state.qualityChallenge;
   $('#rp-stagesel').value = String(state.stage);
   $('#rp-stagesel').disabled = !state.qualityChallenge;
-  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags });
+  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags, review: state.review });
   setUrl();
   if (state.copy === 'instructor' && !state.confirmed) { gate(); return; }
   $('#rp-print').disabled = false;
@@ -103,6 +103,7 @@ async function boot() {
   state.copy = state.link.copy;
   state.flags = state.link.flags;
   state.qualityChallenge = state.link.qualityChallenge;
+  state.review = state.link.review;
   state.stage = state.link.stage;
   try {
     const datasets = await loadDatasets();

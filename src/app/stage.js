@@ -15,14 +15,31 @@
  * @typedef {object} StageState
  * @property {1|2|3} stage
  * @property {boolean} qualityChallenge
+ * @property {'basic'|'advanced'} review quality review level: one study-level judgement (basic) or the per-maneuver items (advanced); independent of the disclosure setting `qualityChallenge`
  * @property {boolean} scored whether the answers were scored (false when the key was shown without scoring)
  * @property {boolean} detailsOpened page 2 was opened at some time before the answers were checked
  */
 
 /** @param {{ qualityChallenge?: boolean }} [opts] @returns {StageState} */
-export function createStage({ qualityChallenge = false } = {}) {
-  return { stage: 1, qualityChallenge: Boolean(qualityChallenge), scored: false, detailsOpened: false };
+export function createStage({ qualityChallenge = false, review = 'basic' } = {}) {
+  return { stage: 1, qualityChallenge: Boolean(qualityChallenge), review: normalizeReview(review), scored: false, detailsOpened: false };
 }
+
+/** Any value other than 'advanced' (missing, misspelled, from an old link) is the basic level. */
+export const normalizeReview = (r) => (r === 'advanced' ? 'advanced' : 'basic');
+
+/**
+ * Change the review level of the case on the page. Only while the answers are open and nothing has been released (stage 1):
+ * later, the statement has been seen and the quality answers are fixed, so the setting waits for the next case. A change starts a
+ * fresh attempt at the quality items; the caller clears their answers (`canSetReview` tells it whether the change applies).
+ */
+export function setReview(s, review) {
+  const r = normalizeReview(review);
+  return s.stage !== 1 || s.review === r ? s : { ...s, review: r };
+}
+
+/** Whether a change of review level would apply to the case on the page. */
+export const canSetReview = (s) => s.stage === 1;
 
 /** Release the technologist's statement. Only the quality challenge has this step, and only from stage 1. */
 export function showStatement(s) {

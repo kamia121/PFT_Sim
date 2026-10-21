@@ -14,7 +14,7 @@ import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadRep
 import { interpretationFor } from '../report/statement.js';
 import { PALETTES } from '../ui/palettes.js';
 import { loadOptionalModules } from './modules.js';
-import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, fallbackVisibility } from './stage.js';
+import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, setReview, canSetReview, fallbackVisibility } from './stage.js';
 import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
@@ -57,7 +57,7 @@ function randomCase(options) {
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = buildSearch({ query: serializeDescriptor(state.case.descriptor), mode: state.mode, equation: state.spirometryEquation, qualityChallenge: state.stage.qualityChallenge, flags: state.flags });
+    url.search = buildSearch({ query: serializeDescriptor(state.case.descriptor), mode: state.mode, equation: state.spirometryEquation, qualityChallenge: state.stage.qualityChallenge, flags: state.flags, review: state.stage.review });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -75,10 +75,10 @@ const visibilityNow = () => (state.mods.visibility ?? fallbackVisibility)({ qual
 /** Challenge items for the case under the displayed equation; recomputed only when the case, equation or challenge setting changes. */
 function itemsNow(a) {
   if (!state.mods.buildChallenges || !state.rt) return [];
-  const key = `${state.spirometryEquation}|${state.stage.qualityChallenge}`;
+  const key = `${state.spirometryEquation}|${state.stage.qualityChallenge}|${state.stage.review}`;
   if (state.itemsCache?.case === state.case && state.itemsCache.key === key) return state.itemsCache.items;
   let items = [];
-  try { items = state.mods.buildChallenges(state.case, { rt: state.rt, interp: a, qualityChallenge: state.stage.qualityChallenge }) ?? []; } catch { items = []; }
+  try { items = state.mods.buildChallenges(state.case, { rt: state.rt, interp: a, qualityChallenge: state.stage.qualityChallenge, review: state.stage.review }) ?? []; } catch { items = []; }
   state.itemsCache = { case: state.case, key, items };
   return items;
 }
@@ -114,7 +114,7 @@ function practiceContext() {
     : null;
   return {
     caseData: c, interp: a, cmp, equation: state.spirometryEquation, flags: state.flags,
-    qualityChallenge: state.stage.qualityChallenge, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
+    qualityChallenge: state.stage.qualityChallenge, review: state.stage.review, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
     vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
     model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
     palette: PALETTES.white, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
@@ -210,7 +210,7 @@ function renderDetailsOnly() {
   if (focus) $(focus)?.focus?.({ preventScroll: true });
 }
 
-function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = {}) {
+function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false, review = 'basic' } = {}) {
   state.case = buildCase(descriptorLike, state.datasets);
   state.mode = mode;
   state.rt = null;
@@ -218,7 +218,7 @@ function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = 
   state.figView = {};
   state.responses = emptyResponses();
   // The quality challenge needs the technologist's report; without it the page runs as with the challenge off.
-  state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt) });
+  state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt), review });
   state.detailsOpen = false;
   state.feedback = null;
   state.itemsCache = null;
@@ -234,8 +234,30 @@ function chosenQualityChallenge() {
   return v === 'on' || (v === 'varies' && randomUint32() / 4294967296 < 0.5);
 }
 
+/** The review level chosen in the toolbar; anything but advanced is basic. It carries from case to case. */
+const chosenReview = () => ($('#qd').value === 'advanced' ? 'advanced' : 'basic');
+
 function newCase() {
-  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }), { qualityChallenge: chosenQualityChallenge() });
+  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }), { qualityChallenge: chosenQualityChallenge(), review: chosenReview() });
+}
+
+/**
+ * A change of the review level. While the answers are open and nothing has been released (stage 1) it applies to the case on the page and
+ * starts a fresh attempt at the quality items: their answers are cleared, the structured answers and the impression are kept. Once the
+ * technologist's statement has been shown or the answers checked, the case keeps its level (disclosure has already happened) and the
+ * toolbar setting applies to the next case.
+ */
+function changeReview(value) {
+  if (!state.case) return;
+  const next = setReview(state.stage, value);
+  if (!canSetReview(state.stage)) { announce('The review level of this case is fixed once the statement is shown. The setting applies to the next case.'); return; }
+  if (next === state.stage) return;
+  state.stage = next;
+  state.responses = { ...state.responses, challenge: {} };
+  state.itemsCache = null;
+  setUrl();
+  render({ focus: '#qd' });
+  announce(`${next.review === 'advanced' ? 'Maneuver-level' : 'Study-level'} quality review. The quality answers were cleared.`);
 }
 
 function checkAnswers(scored) {
@@ -266,7 +288,7 @@ function toggleDetails() {
 }
 
 /** The page settings that ride in the address of the printable report page: the quality challenge as set for the case, and the flags. */
-const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, flags: state.flags, stage: state.stage.qualityChallenge ? state.stage.stage : 1 });
+const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, review: state.stage.review, flags: state.flags, stage: state.stage.qualityChallenge ? state.stage.stage : 1 });
 
 /** Lab report view: the same case and spirometry equation as the summary and details sheets, for printing and download. Nothing from the key appears before the visibility rule releases it. */
 function renderReportView() {
@@ -364,9 +386,10 @@ async function boot() {
   state.flags = addr.flags;
   $('#flags').value = state.flags;
   if (addr.kind) $('#qc').value = addr.qualityChallenge ? 'on' : 'off';
+  $('#qd').value = addr.review;
   try {
-    if (addr.kind === 'code') loadCase(parseDescriptor(decodeCase(addr.code)), { mode: 'code', qualityChallenge: addr.qualityChallenge });
-    else if (addr.kind === 'plain') loadCase(parseDescriptor(addr.plainQuery), { mode: 'plain', qualityChallenge: addr.qualityChallenge });
+    if (addr.kind === 'code') loadCase(parseDescriptor(decodeCase(addr.code)), { mode: 'code', qualityChallenge: addr.qualityChallenge, review: addr.review });
+    else if (addr.kind === 'plain') loadCase(parseDescriptor(addr.plainQuery), { mode: 'plain', qualityChallenge: addr.qualityChallenge, review: addr.review });
     else newCase();
   } catch (e) {
     const msg = String(e.message).replace(/[<>&"']/g, '');
@@ -408,6 +431,7 @@ async function boot() {
       // On and Off apply to the case on the page until its answers are checked; Varies is drawn at the next new case.
       if (t.value !== 'varies' && state.case) { state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render(); }
     }
+    else if (t.id === 'qd') changeReview(t.value);
     else if (t.id === 'schematic') { state.showSchematic = t.checked; render(); }
     else if (t.dataset?.figView) {
       const id = t.dataset.figView;

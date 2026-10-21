@@ -25,6 +25,53 @@ const sameGrades = (a, b) => Boolean(a) && Boolean(b) && a.fev1 === b.fev1 && a.
 const gradesOnSummary = (rt) => sameGrades(rt.stated.pre, rt.truth.pre) && (!rt.truth.post || sameGrades(rt.stated.post, rt.truth.post));
 const word = (t) => (t ? (t.acceptable ? 'acceptable' : 'not-acceptable') : null);
 
+// ---- the study as a whole (basic review level) ---------------------------------------------------------------------
+
+/** Grades at which a spirometry set carries a quality limitation: the set of src/interpret/interpret.js (`qualityLimited`). F is handled before it, as no value exists. */
+const LIMITING_GRADES = ['D', 'E', 'U', 'F'];
+
+/**
+ * The study-level judgement, from the computed quality truth only (never from the technologist's statement, the technique preset or a scenario).
+ * Insufficient: the baseline FEV₁ or FVC could not be reported (grade F, no usable maneuver), which is the case in which the engine returns the
+ * pattern 'indeterminate'. Limited: a reported value rests on a grade D, E or U (the engine's `qualityLimited`), or a test that was performed
+ * beside the baseline (post-bronchodilator set, single-breath DLCO, plethysmography) is not acceptable; a poor optional test limits that test
+ * and never invalidates a usable baseline. No threshold is introduced: the grades, the acceptability and the missing-value rule are the engine's.
+ * @returns {{ key: 'interpretable'|'limited'|'insufficient', limits: string[] }}
+ */
+export function studyJudgement(rt) {
+  const pre = rt.truth.pre;
+  if (pre.fev1 === 'F' || pre.fvc === 'F') return { key: 'insufficient', limits: [] };
+  const limits = [];
+  if (LIMITING_GRADES.some((g) => g === pre.fev1 || g === pre.fvc)) limits.push('the baseline spirometry');
+  if (rt.truth.post && ['fev1', 'fvc'].some((k) => LIMITING_GRADES.includes(rt.truth.post[k]))) limits.push('the post-bronchodilator spirometry');
+  if (rt.truth.dlco && !rt.truth.dlco.acceptable) limits.push('the single-breath diffusing capacity');
+  if (rt.truth.pleth && !rt.truth.pleth.acceptable) limits.push('the plethysmographic lung volumes');
+  return { key: limits.length ? 'limited' : 'interpretable', limits };
+}
+
+const joinList = (xs) => (xs.length < 3 ? xs.join(' and ') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+function studyItem(c, rt) {
+  const { key, limits } = studyJudgement(rt);
+  const pre = rt.truth.pre;
+  const whichF = ['fev1', 'fvc'].filter((k) => pre[k] === 'F').map((k) => VAR[k]);
+  const outcome = {
+    interpretable: 'Here every test that was performed meets the criteria on which its values rest, so the study can be interpreted as recorded.',
+    limited: `Here the study can be interpreted, with the limits that attach to ${joinList(limits)}; values from tests that meet the criteria are not made unusable by them.`,
+    insufficient: `Here no usable maneuver yielded a ${joinList(whichF)}, so the baseline spirometry cannot be classified (the ratio and the pattern need both values) and the study cannot be interpreted as recorded; a diffusing capacity or lung volume that was acceptable is still a result of its own.`,
+  }[key];
+  return {
+    id: 'studyInterpretable',
+    stage: 1,
+    title: 'Quality of the study',
+    prompt: 'Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with stated limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable.',
+    options: [['interpretable', 'Interpretable'], ['limited', 'Interpretable with limitations'], ['insufficient', 'Insufficient to interpret']],
+    key,
+    why: `Each reported value is the largest acceptable value of its own variable, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The grouping is the simulator's, built on the grades and acceptability of ATS/ERS 2019 (grades A to F and U) and ATS/ERS 2017 (DLCO); neither statement sets a cut point for interpretability.`,
+    needsDetails: true,
+  };
+}
+
 // ---- acceptability of each maneuver --------------------------------------------------------------------------------
 
 function acceptabilityItem(c, set) {
@@ -224,11 +271,14 @@ function plethItem(rt) {
 
 /**
  * @param {object} caseData
- * @param {{ rt: import('../core/rt-report.js').RtReport, interp?: object, interpOther?: object, qualityChallenge?: boolean }} context
+ * @param {{ rt: import('../core/rt-report.js').RtReport, interp?: object, interpOther?: object, qualityChallenge?: boolean, review?: 'basic'|'advanced' }} context review: 'basic' gives the one study-level item; any other value gives the full per-maneuver list, so a caller that does not pass it keeps the earlier behavior
  * @returns {import('./index.js').Challenge[]}
  */
-export function buildChallengeList(caseData, { rt, interp, interpOther, qualityChallenge = false }) {
+export function buildChallengeList(caseData, { rt, interp, interpOther, qualityChallenge = false, review = 'advanced' }) {
   const c = caseData;
+  // Basic review: one study-level judgement. No per-maneuver acceptability, letter grades, loop faults, statement adjudication or
+  // optional-test items; those belong to the advanced review. The two-sided key does not depend on the equation.
+  if (review === 'basic') return [studyItem(c, rt)];
   return [
     acceptabilityItem(c, 'pre'),
     acceptabilityItem(c, 'post'),

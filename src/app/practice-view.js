@@ -90,11 +90,23 @@ function comparisonHtml(ctx) {
 }
 
 /**
+ * Which review level the quality items are at, and, for the advanced level with the challenge off, that the answers are printed on page 2.
+ * Static text: it depends on the two settings and never on the case, so it cannot carry the key.
+ */
+function reviewNoteHtml(review, qualityChallenge) {
+  if (review === 'basic') return '<p class="muted" id="review-note">Study-level review: one judgement about the whole study. Maneuver-level questions are in the advanced review (Quality review in the toolbar).</p>';
+  if (review === 'advanced') {
+    return `<p class="muted" id="review-note">Advanced review: maneuver-level questions.${qualityChallenge ? '' : ' The quality challenge is off, so the grades and the acceptability of each maneuver are already printed on page 2 and the statement is on page 1; these questions then check how the report is read, not an independent judgement. Turn the quality challenge on to withhold them.'}</p>`;
+  }
+  return '';
+}
+
+/**
  * The interpretation box: structured questions, challenge items, the optional impression, and the actions.
  * @param {object} ctx see renderPractice
  */
 export function interpretationBoxHtml(ctx) {
-  const { caseData, responses, items = [], stage, qualityChallenge, vis, canCheck } = ctx;
+  const { caseData, responses, items = [], stage, qualityChallenge, vis, canCheck, review } = ctx;
   const locked = stage === 3;
   const qualityLocked = qualityChallenge && stage >= 2;
   const first = items.filter((i) => !isStatementItem(i));
@@ -105,6 +117,7 @@ export function interpretationBoxHtml(ctx) {
 
   if (items.length) {
     parts.push(`<h3 id="h-quality-items">Test quality${statementItems.length ? ' and the technologist’s statement' : ''}</h3>`);
+    parts.push(reviewNoteHtml(review, qualityChallenge));
     if (qualityChallenge && stage === 1) parts.push('<p class="muted">The technologist’s statement is withheld. Judge the tests from the maneuvers on page 2, then ask for the statement; the answers in this section are then fixed.</p>');
     if (first.length) parts.push(`<div class="answers">${first.map((i) => itemFieldsetHtml(i, responses, locked || qualityLocked)).join('')}</div>`);
     if (qualityChallenge && stage === 1) {
@@ -118,7 +131,7 @@ export function interpretationBoxHtml(ctx) {
   else parts.push(`<div class="impression"><label for="impression"><strong>Your impression</strong> <span class="muted">(optional; not scored)</span></label><textarea id="impression" name="impression" rows="4">${esc(responses.impression)}</textarea></div>`);
 
   parts.push('</form>');
-  const hint = !locked && !canCheck ? '<span class="muted" id="check-hint">Show the technologist’s statement and answer the last question before checking.</span>' : '';
+  const hint = !locked && !canCheck ? `<span class="muted" id="check-hint">Show the technologist’s statement${items.some(isStatementItem) ? ' and answer the last question' : ''} before checking.</span>` : '';
   parts.push(`<div class="toolbar"><button type="button" class="primary" id="check-answers" ${locked || !canCheck ? 'disabled' : ''}${hint ? ' aria-describedby="check-hint"' : ''}>Check answers</button><button type="button" class="secondary" id="show-key" ${locked ? 'disabled' : ''}>Show the key without scoring</button>${hint}</div></section>`);
   return parts.join('');
 }
@@ -170,6 +183,7 @@ export function detailsAreaHtml(ctx) {
  * @property {'GLIglobal'|'GLI2012'} equation
  * @property {'lln'|'none'} flags
  * @property {boolean} qualityChallenge
+ * @property {'basic'|'advanced'} [review] quality review level; absent in callers that predate it, which then show no level note
  * @property {1|2|3} stage
  * @property {boolean} scored
  * @property {boolean} detailsOpen

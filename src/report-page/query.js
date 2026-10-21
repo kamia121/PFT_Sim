@@ -31,7 +31,7 @@ const sentence = (s) => { const t = String(s).replace(/[\r\n]+/g, ' ').trim(); r
 
 /**
  * @param {string} search the query string, with or without the leading ?
- * @returns {{ descriptor: object, token: string, equation: 'GLIglobal'|'GLI2012', copy: 'student'|'instructor', qualityChallenge: boolean, flags: 'lln'|'none', stage: 1|2|3 }}
+ * @returns {{ descriptor: object, token: string, equation: 'GLIglobal'|'GLI2012', copy: 'student'|'instructor', qualityChallenge: boolean, flags: 'lln'|'none', stage: 1|2|3, review: 'basic'|'advanced' }}
  * @throws {ReportLinkError}
  */
 export function parseReportQuery(search) {
@@ -61,17 +61,18 @@ export function parseReportQuery(search) {
     if (e instanceof RangeError) throw new ReportLinkError(`This case link cannot be read: ${sentence(e.message)}`);
     throw new ReportLinkError('This case link cannot be read: the case code is damaged or incomplete.');
   }
-  return { descriptor, token: p.has('c') ? p.get('c') : encodeCase(serializeDescriptor(descriptor)), equation, copy, qualityChallenge: qc === '1', flags, stage };
+  return { descriptor, token: p.has('c') ? p.get('c') : encodeCase(serializeDescriptor(descriptor)), equation, copy, qualityChallenge: qc === '1', flags, stage, review: p.get('qd') === 'adv' ? 'advanced' : 'basic' };
 }
 
-const settings = ({ qualityChallenge = false, flags = DEFAULT_FLAGS }) => `${qualityChallenge ? '&qc=1' : ''}${flags === DEFAULT_FLAGS ? '' : `&flags=${flags}`}`;
+/** `qd=adv` is the practice page's advanced quality review. The report page prints the same either way; it only carries the setting so that the way back to the practice page keeps it. */
+const settings = ({ qualityChallenge = false, flags = DEFAULT_FLAGS, review = 'basic' }) => `${qualityChallenge ? '&qc=1' : ''}${flags === DEFAULT_FLAGS ? '' : `&flags=${flags}`}${review === 'advanced' ? '&qd=adv' : ''}`;
 /** The stage rides only with the quality challenge, and only above 1. */
 const stageSetting = ({ qualityChallenge = false, stage = 1 }) => (qualityChallenge && stage > 1 && STAGES.includes(stage) ? `&st=${stage}` : '');
 
 /** Query string of the report page for a case. The defaults (student copy, quality challenge off, LLN flags) are left out. */
-export const reportQuery = ({ token, equation = DEFAULT_EQUATION, copy = 'student', qualityChallenge = false, flags = DEFAULT_FLAGS, stage = 1 }) =>
-  `?c=${encodeURIComponent(token)}&eq=${equation}${copy === 'student' ? '' : `&copy=${copy}`}${settings({ qualityChallenge, flags })}${stageSetting({ qualityChallenge, stage })}`;
+export const reportQuery = ({ token, equation = DEFAULT_EQUATION, copy = 'student', qualityChallenge = false, flags = DEFAULT_FLAGS, stage = 1, review = 'basic' }) =>
+  `?c=${encodeURIComponent(token)}&eq=${equation}${copy === 'student' ? '' : `&copy=${copy}`}${settings({ qualityChallenge, flags, review })}${stageSetting({ qualityChallenge, stage })}`;
 
 /** Address of the same case on the practice page. */
-export const practiceHref = ({ token, equation = DEFAULT_EQUATION, qualityChallenge = false, flags = DEFAULT_FLAGS }) =>
-  `./?c=${encodeURIComponent(token)}&eq=${equation}${settings({ qualityChallenge, flags })}`;
+export const practiceHref = ({ token, equation = DEFAULT_EQUATION, qualityChallenge = false, flags = DEFAULT_FLAGS, review = 'basic' }) =>
+  `./?c=${encodeURIComponent(token)}&eq=${equation}${settings({ qualityChallenge, flags, review })}`;
