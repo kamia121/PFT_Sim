@@ -68,6 +68,21 @@ function pdfPages(file) {
   const n = Number(/Pages:\s+(\d+)/.exec(info)[1]);
   return Array.from({ length: n }, (_, i) => spawnSync('pdftotext', ['-raw', '-f', String(i + 1), '-l', String(i + 1), file, '-']).stdout.toString());
 }
+/** Words of one printed page with their boxes (pdftotext -bbox). */
+function pdfWords(file, n) {
+  const html = spawnSync('pdftotext', ['-bbox', '-f', String(n), '-l', String(n), file, '-']).stdout.toString();
+  return [...html.matchAll(/<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">([^<]*)<\/word>/g)].map((m) => ({ x0: +m[1], y0: +m[2], x1: +m[3], y1: +m[4], t: m[5] }));
+}
+/** Nothing but the footer line itself lies in the footer band of the first printed sheet; returns the offending words. */
+function footerIntrusions(file) {
+  const words = pdfWords(file, 1).filter((w) => w.y1 - w.y0 < 12);
+  const mark = words.filter((w) => w.t === 'record.').sort((a, b) => b.y0 - a.y0)[0];
+  if (!mark) return ['no footer line'];
+  const band = words.filter((w) => w.y1 > mark.y0 + 0.5 && w.y0 < mark.y1 - 0.5);
+  const footerWords = new Set('SIMULATED REPORT - educational use only. PFT Sim, generator version 2. Case Not a patient record. Page 1'.split(' '));
+  return band.filter((w) => !footerWords.has(w.t) && !/^[0-9A-Z]{7}\.?$/.test(w.t)).map((w) => w.t);
+}
+const squash = (t) => t.replace(/\s+/g, '');
 const sel = (name, value) => `input[name="${name}"][value="${value}"]`;
 
 try {
@@ -158,14 +173,15 @@ try {
     await page.check('#report-interp');
     const shown = await page.locator('.sheet-interp-full').innerText();
     check(shown.replace(/\s+/g, ' ').includes(statement.text.replace(/\s+/g, ' ')), 'R5: with the toggle on, the full composed statement is in the report');
-    check(/follows on the next sheet/.test(await page.locator('.sheet-interp-body').innerText()), 'R5: the sheet\'s interpretation box points to it');
+    check(/follows the detailed report/.test(await page.locator('.sheet-interp-body').innerText()), 'R5: the sheet\'s interpretation box points to it');
     if (haveText) {
       const file = path.join(tmp, 'lab-interp.pdf');
       await page.emulateMedia({ media: 'print' });
       await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
       await page.emulateMedia({ media: 'screen' });
       const pages = pdfPages(file);
-      check(pages[1].replace(/\s+/g, ' ').includes(statement.text.slice(0, 80)) && pages[1].replace(/\s+/g, ' ').includes(statement.text.slice(-60)), 'R5: the statement is in the printed PDF, whole, on the sheet after the summary');
+      const after = pages.slice(1).join(' ').replace(/\s+/g, ' ');
+      check(after.includes(statement.text.slice(0, 80)) && after.includes(statement.text.slice(-60)), 'R5: the statement is in the printed PDF, whole, after the summary sheet');
       check(!pages[0].includes(statement.text.slice(0, 40)), 'R5: and not cut into the summary sheet');
     } else skip('R5: PDF text (pdftotext is not installed)');
     await page.uncheck('#report-interp');
@@ -224,7 +240,7 @@ try {
   /* ------------------------------------------------------ R7: both print paths, one sheet for the summary */
   if (haveText) {
     const closing = /Official interpretation to follow|Interpretation to follow/;
-    for (const [name, query] of [['long reference note', 'v=2&s=20&a=normal&t=poor'], ['post-bronchodilator, poor session', POOR], ['obstruction', 'v=2&s=1&a=obstruction&t=fair'], ['spirometry only', 'v=2&s=44&a=mixed&t=fair&p=spirometry']]) {
+    for (const [name, query] of [['heavy notes, poor session (floor overflow)', 'v=2&s=5&a=obstruction&t=poor&sc=heavy'], ['long reference note', 'v=2&s=20&a=normal&t=poor'], ['post-bronchodilator, poor session', POOR], ['obstruction', 'v=2&s=1&a=obstruction&t=fair'], ['spirometry only', 'v=2&s=44&a=mixed&t=fair&p=spirometry']]) {
       // The Lab report view.
       await page.goto(`${base}?${query}`);
       await page.waitForSelector('#answer-form');
@@ -239,9 +255,11 @@ try {
       const lab = pdfPages(labFile);
       const first = lab[0];
       const fit = await page.locator('.sheet-summary').evaluate((e) => ({ over: Number(e.dataset.overflow), fit: Number(e.dataset.fit) }));
-      check(/PFT Sim Pulmonary Function Laboratory/.test(first) && /SPIROMETRY/.test(first) && /TECHNOLOGIST COMMENTS/i.test(first) && closing.test(first) && /Page 1\b/.test(first), `R7: Lab report, ${name}: identity, tables, comments, closing line and "Page 1" on the first sheet`);
-      check(!/TECHNOLOGIST COMMENTS/i.test(lab[1] ?? '') && !/Page 1\b/.test(lab[1] ?? ''), `R7: Lab report, ${name}: nothing of the summary on the second sheet`);
-      check(fit.over === 0 && fit.fit >= 0.9, `R7: Lab report, ${name}: the content fits its sheet (scale ${fit.fit})`);
+      check(/PFT Sim Pulmonary Function Laboratory/.test(first) && /SPIROMETRY/.test(first) && /TECHNOLOGIST COMMENTS/i.test(first) && /Page 1\b/.test(first), `R7: Lab report, ${name}: identity, tables, comments, closing line and "Page 1" on the first sheet`);
+      check(!/TECHNOLOGIST COMMENTS\n/i.test(lab[1] ?? '') && !/Page 1\b/.test(lab[1] ?? ''), `R7: Lab report, ${name}: no second copy of the summary on the second sheet`);
+      check(fit.over === 0 && fit.fit >= 0.95, `R7: Lab report, ${name}: the content fits its sheet (scale ${fit.fit})`);
+      const comments = await page.evaluate(() => [...document.querySelectorAll('.sheet-comments li:not(.sheet-cont-ref), .sheet-continuation li')].map((l) => l.textContent));
+      check(footerIntrusions(labFile).length === 0 && comments.every((t) => squash(lab.join(' ')).includes(squash(t))), `R7: Lab report, ${name}: every comment is printed and none touches the footer (${footerIntrusions(labFile).join(',')})`);
       check(!/Quality grades, per-maneuver acceptability/.test(first), `R7: Lab report, ${name}: the screen hint is not printed`);
       // The report page.
       await page.goto(`${base}report.html?${query}`);
@@ -251,10 +269,23 @@ try {
       await page.pdf({ path: repFile, preferCSSPageSize: true, printBackground: true });
       await page.emulateMedia({ media: 'screen' });
       const rep = pdfPages(repFile);
-      check(/TECHNOLOGIST COMMENTS/i.test(rep[0]) && closing.test(rep[0]) && /Page 1\b/.test(rep[0]), `R7: report page, ${name}: the same first sheet`);
+      const repComments = await page.evaluate(() => [...document.querySelectorAll('.sheet-comments li:not(.sheet-cont-ref), .sheet-continuation li')].map((l) => l.textContent));
+      check(/TECHNOLOGIST COMMENTS/i.test(rep[0]) && /Page 1\b/.test(rep[0]) && footerIntrusions(repFile).length === 0 && repComments.every((t) => squash(rep.join(' ')).includes(squash(t))), `R7: report page, ${name}: first sheet clear of the footer, every comment printed (${footerIntrusions(repFile).join(',')})`);
       check(lab[0].replace(/\s+/g, ' ').includes('SPIROMETRY') === rep[0].replace(/\s+/g, ' ').includes('SPIROMETRY'), `R7: ${name}: both paths carry the same summary content`);
     }
   } else skip('R7: printed pages (pdftotext is not installed)');
+  {
+    // The fit leaves nothing over, whatever the case: heavy technologist notes, poor sessions, both equations.
+    const arch = ['normal', 'obstruction', 'restriction-parenchymal', 'mixed', 'nonspecific', 'low-dlco', 'anemia', 'obesity-low-erv', 'bd-discordant', 'restriction-extraparenchymal'];
+    const bad = [];
+    for (let seed = 1; seed <= 40; seed++) {
+      await page.goto(`${base}report.html?v=2&s=${seed}&a=${arch[seed % 10]}&t=poor&sc=heavy&eq=${seed % 2 ? 'GLIglobal' : 'GLI2012'}`);
+      await page.waitForSelector('body[data-ready="1"]');
+      const o = await page.locator('.sheet-summary').evaluate((e) => ({ over: Number(e.dataset.overflow), fit: Number(e.dataset.fit) }));
+      if (o.over !== 0 || o.fit < 0.95) bad.push(`${seed}:${o.over}/${o.fit}`);
+    }
+    check(bad.length === 0, `R7: 40 heavy-note cases leave no overflow and never zoom below 0.95${bad.length ? ` (${bad.join(' ')})` : ''}`);
+  }
 
   /* --------------------------------------------------- R3: phone width, size, keyboard and pointer, persistence */
   {

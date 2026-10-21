@@ -93,11 +93,12 @@ test('R4: the digits of the percent of predicted show which side of 10 the value
   assert.equal(bdPctPredText(9.964683635804136), '9.96');
   assert.equal(bdPctPredText(10.03132925090867), '10.03');
   assert.equal(bdPctPredText(9.99), '9.99');
-  assert.equal(bdPctPredText(10.0004), '10.0004');
-  assert.equal(bdPctPredText(9.9996), '9.9996');
+  assert.equal(bdPctPredText(10.0004), '10.00 (above 10)', 'two decimals cannot show the side, so it is named');
+  assert.equal(bdPctPredText(10.000001), '10.00 (above 10)');
+  assert.equal(bdPctPredText(9.9996), '10.00 (below 10)');
   assert.equal(bdPctPredText(10), '10.0', 'exactly 10 is not above the threshold and prints as such');
   assert.equal(bdPctPredDp(NaN), 1);
-  for (const x of [9.951, 9.96, 9.99, 9.9996, 10.0004, 10.01, 10.049]) assert.notEqual(Number(bdPctPredText(x)), 10, `${x}`);
+  for (const x of [9.951, 9.96, 9.99, 10.01, 10.049]) assert.notEqual(Number(bdPctPredText(x)), 10, `${x}`);
 });
 
 test('R4: wherever a post study exists, the printed decision quantity and the engine agree on the side of 10', () => {

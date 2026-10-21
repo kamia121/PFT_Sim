@@ -245,7 +245,7 @@ function renderReportView() {
     const link = model.meta.caseToken ? `<p class="no-print"><a href="${esc(reportPageHref(model, linkSettings()))}">Open the printable report page</a></p>` : '';
     const statement = state.mods.interpretationSectionHtml?.(model) ?? '';
     // The print rules are the report page's: edge-to-edge summary sheet, then flowing pages with margins and a page number.
-    $('#report-root').innerHTML = `${link}<div class="sheet-wrap">${summary}<div class="report-flow pft-report rp-flow">${statement}${details}</div></div><style>${pageRulesCss(model, 'Student copy')}</style>`;
+    $('#report-root').innerHTML = `${link}<div class="sheet-wrap">${summary}<div class="report-flow pft-report rp-flow">${details}${statement}</div></div><style>${pageRulesCss(model, 'Lab report view')}</style>`;
   } else {
     $('#report-root').innerHTML = renderReportHtml(model, { interactive: true, settings: linkSettings() });
   }

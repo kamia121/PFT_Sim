@@ -21,7 +21,7 @@
  */
 import { createStream } from '../core/prng.js';
 import { hbKnown, coHbMeasured, coHbUnmeasured, sexUndisclosed } from '../app/format.js';
-import { bdPctPredText } from './precision.js';
+import { bdPctPredText, bdPctPredQualifier } from './precision.js';
 
 export const NARRATIVE_VERSION = 2;
 
@@ -54,7 +54,7 @@ const list = (a) => (a.length <= 1 ? (a[0] ?? '') : a.length === 2 ? `${a[0]} an
 const mL = (liters) => `${liters >= 0 ? '+' : MINUS}${Math.round(Math.abs(liters) * 1000)} mL`;
 const pct1 = (x) => `${x.toFixed(1)}%`;
 /** The change as a percent of predicted, with the digits that show which side of the 10% threshold it is on. */
-const pctPred = (x) => `${bdPctPredText(x)}%`;
+const pctPred = (x) => (bdPctPredQualifier(x) ? `just ${bdPctPredQualifier(x)} 10%` : `${bdPctPredText(x)}%`);
 
 const EQ_NAMES = { GLIglobal: 'GLI Global (2022)', GLI2012: 'GLI-2012', GLI2021vol: 'GLI-2021', GLI2017tlco: 'GLI-2017', NHANES3: 'NHANES III' };
 const eqName = (id) => EQ_NAMES[id] ?? String(id);

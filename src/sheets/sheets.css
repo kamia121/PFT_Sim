@@ -97,10 +97,10 @@
 .sheet-interp-ref { font-style: italic; color: var(--sheet-muted); }
 
 /* The interpretation statement, once released: a flowing section after the summary sheet (src/sheets/summary.js, interpretationSectionHtml). */
-.sheet-interp-full { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: #000; background: #fff; border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 6px 10px 8px; margin: 0 auto 14px; max-width: 816px; }
+.sheet-interp-full { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--sheet-ink, #000); background: var(--sheet-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 6px 10px 8px; margin: 0 auto 14px; max-width: 816px; }
 .sheet-interp-full .sheet-statement p { margin: 0 0 6px; font-size: 10pt; line-height: 1.35; }
 .sheet-interp-full .sheet-simnotes h3 { font-size: 8.5pt; margin: 6px 0 2px; }
-.sheet-interp-full .sheet-simnotes ul { margin: 0; padding-left: 16px; font-size: 8.5pt; color: #3d3d3d; }
+.sheet-interp-full .sheet-simnotes ul { margin: 0; padding-left: 16px; font-size: 8.5pt; color: var(--sheet-muted, #3d3d3d); }
 .sheet-interp-full .sheet-sign { margin-top: 10px; }
 .sheet-sign { display: flex; gap: 18px; font-size: 6.5pt; color: var(--sheet-muted); }
 .sheet-sign > div { flex: 1 1 auto; }
@@ -154,4 +154,13 @@
   .sheet-live .sheet-interp .rows { grid-template-columns: minmax(0, 1fr); }
   .sheet-live .sheet-interp textarea { width: 100%; font-size: 16px; }
   .sheet-live .sheet-interp button { min-height: 44px; font-size: 15px; }
+}
+
+/* Comments or the reference note that did not fit the fixed summary sheet at the smallest legible size (summary.js, fitSheetContent). */
+.sheet-cont-ref { list-style: none; margin-left: -14px; font-style: italic; color: var(--sheet-muted, #3d3d3d); }
+.sheet-continuation { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--rpt-ink, #000); background: var(--rpt-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 8px 12px; margin: 0 auto 14px; max-width: 816px; font-size: 9pt; }
+.sheet-continuation h2 { font-size: 9pt; margin: 6px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
+.sheet-continuation ul { margin: 0; padding-left: 16px; }
+@media print {
+  .sheet-continuation { page: cont; break-before: page; break-after: page; border: 0; margin: 0; padding: 0; max-width: none; }
 }

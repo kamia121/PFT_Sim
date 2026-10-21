@@ -256,7 +256,7 @@ function curves(caseData, rt, palette) {
 /* ---------------------------------------------------------------------------------------------- interpretation */
 
 /** Line in the sheet's interpretation box once the statement has been released: the box holds about a hundred pixels, a statement runs to a paragraph. */
-export const INTERPRETATION_POINTER = 'The interpretation statement follows on the next sheet.';
+export const INTERPRETATION_POINTER = 'The interpretation statement follows the detailed report.';
 
 const interpParagraphs = (text) => String(text).split(/\n{2,}/).map((p) => p.trim()).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('');
 
@@ -328,47 +328,130 @@ export function fitSheetScale(root, maxScale = 1.25) {
   return s;
 }
 
+/** Smallest zoom of the summary content (about 7.1 pt for the 7.5 pt comments); what does not fit at this size moves to a continuation section. */
+export const FIT_FLOOR = 0.95;
+
+/** Sheets whose comments or reference note were moved, so that a second fit starts from the original markup. */
+const MOVED = new WeakMap();
+
+function restoreMoved(sheet) {
+  const m = MOVED.get(sheet);
+  if (!m) return;
+  m.pointer?.remove();
+  for (const li of m.items) m.list.append(li);
+  if (m.refnote) { m.refnote.node.textContent = m.refnote.text; }
+  m.section.remove();
+  MOVED.delete(sheet);
+}
+
 /**
  * Browser helper for the fixed summary sheets (the Lab report view and the report page; never the live sheet of the practice page,
  * which grows). The sheet is laid out at 816 by 1056 px, and a long reference note, a post-bronchodilator column or a long comment
- * list can make its content taller than the space between the sheet's margins, which would put the last comment and the footer on
- * top of each other or past the edge of the printed page. The content is then zoomed down by the least amount that makes it fit
- * (never below `floor`). It is zoomed rather than transformed so that its layout height, which is what the printer paginates, shrinks
- * with it; the offsets and the size of its box are given in the zoomed units, so that the box still spans the sheet's margins. The
- * result is written to data-fit (the zoom) and data-overflow (px left over, 0 when it fits) on the sheet.
+ * list can make its content taller than the space between the sheet's margins, which would put the last comment under the footer.
+ * Two steps, in order. (1) The content is zoomed down, never below `floor`, which keeps the type legible; the offsets and the size of
+ * its box are given in the zoomed units, so that the box still spans the margins. The step is skipped where CSS zoom is not supported.
+ * (2) What still does not fit at the floor is moved, not shrunk: trailing comments first, then the reference note, go to a labelled
+ * continuation section placed after the sheet's frame (a flowing page with margins when printed), and the sheet keeps a pointer line.
+ * The result is written to data-fit (the zoom), data-moved (the number of items moved) and data-overflow (px left over, 0 when it fits).
  * @param {ParentNode} root @param {number} [floor]
- * @returns {{ scale: number, overflowPx: number }[]}
+ * @returns {{ scale: number, overflowPx: number, moved: number }[]}
  */
-export function fitSheetContent(root, floor = 0.9) {
+export function fitSheetContent(root, floor = FIT_FLOOR) {
   const out = [];
+  const zoomOk = typeof CSS === 'undefined' || !CSS.supports || CSS.supports('zoom', '1');
   for (const sheet of root.querySelectorAll('.sheet-summary')) {
     const c = sheet.querySelector('.sheet-content');
     if (!c || sheet.closest('.sheet-live')) continue;
+    restoreMoved(sheet);
+    sheet.querySelector('.sheet-boxes')?.style.removeProperty('min-height');
     for (const p of ['zoom', 'transform', 'transform-origin', 'left', 'top', 'width', 'height', 'right', 'bottom']) c.style.removeProperty(p);
     const cs = getComputedStyle(c);
     const left = parseFloat(cs.left), top = parseFloat(cs.top);
     const w = c.clientWidth, h = c.clientHeight;
     let k = 1;
     const over = () => c.scrollHeight - c.clientHeight;
-    if (over() > 0) {
+    const apply = (z) => {
+      c.style.zoom = String(z);
+      c.style.left = `${left / z}px`;
+      c.style.top = `${top / z}px`;
+      c.style.width = `${w / z}px`;
+      c.style.height = `${h / z}px`;
+    };
+    if (over() > 0 && zoomOk) {
       // The first zoom comes from the overflow measured before the box is released from its insets (released, it would size itself to its content).
       k = Math.max(floor, Math.floor((1000 * h) / (h + over())) / 1000);
       c.style.right = 'auto';
       c.style.bottom = 'auto';
       for (let i = 0; i < 40; i++) {
-        c.style.zoom = String(k);
-        c.style.left = `${left / k}px`;
-        c.style.top = `${top / k}px`;
-        c.style.width = `${w / k}px`;
-        c.style.height = `${h / k}px`;
+        apply(k);
         if (over() <= 0 || k <= floor) break;
         k = Math.max(floor, Math.round((k - 0.005) * 1000) / 1000);
       }
     }
+    let movedCount = 0;
+    if (over() > 0) {
+      if (zoomOk && k === 1) { c.style.right = 'auto'; c.style.bottom = 'auto'; apply(k); }
+      movedCount = moveExcess(sheet, c, over, zoomOk ? apply : null, k);
+    }
     const rest = Math.max(0, Math.round(over() * k));
     sheet.dataset.fit = String(k);
+    sheet.dataset.moved = String(movedCount);
     sheet.dataset.overflow = String(rest);
-    out.push({ scale: k, overflowPx: rest });
+    out.push({ scale: k, overflowPx: rest, moved: movedCount });
   }
   return out;
+}
+
+/** Step 2 of fitSheetContent. Returns how many items were moved. */
+function moveExcess(sheet, c, over) {
+  const list = c.querySelector('.sheet-comments ul');
+  const refnote = c.querySelector('.sheet-refnote');
+  const doc = sheet.ownerDocument;
+  const items = [];
+  const section = doc.createElement('section');
+  section.className = 'sheet-continuation';
+  section.setAttribute('aria-label', 'Continuation of the summary sheet');
+  const state = { list, items, section, pointer: null, refnote: null };
+  let moved = 0;
+  if (list) {
+    const pointer = doc.createElement('li');
+    pointer.className = 'sheet-cont-ref';
+    pointer.textContent = 'Comments continue on the next sheet.';
+    list.append(pointer);
+    state.pointer = pointer;
+    const lis = () => [...list.querySelectorAll('li:not(.sheet-cont-ref)')];
+    while (over() > 0 && lis().length > 1) {
+      const li = lis().pop();
+      items.unshift(li);
+      li.remove();
+      moved += 1;
+    }
+    if (!moved) { pointer.remove(); state.pointer = null; }
+  }
+  if (over() > 0 && refnote) {
+    state.refnote = { node: refnote, text: refnote.textContent };
+    refnote.textContent = 'The note on the reference values continues on the next sheet.';
+    moved += 1;
+  }
+  // Last, the interpretation box may be shorter than its usual hundred pixels: it is the learner's writing space, not content.
+  const boxes = c.querySelector('.sheet-boxes');
+  if (over() > 0 && boxes) boxes.style.minHeight = '72px';
+  if (!moved) return 0;
+  const head = (t) => { const h = doc.createElement('h2'); h.textContent = t; return h; };
+  if (items.length) {
+    section.append(head('Technologist comments (continued)'));
+    const ul = doc.createElement('ul');
+    for (const li of items) ul.append(li);
+    section.append(ul);
+  }
+  if (state.refnote) {
+    section.append(head('Reference equation note'));
+    const p = doc.createElement('p');
+    p.textContent = state.refnote.text;
+    section.append(p);
+  }
+  const frame = sheet.closest('.rp-box') ?? sheet.closest('.sheet-frame');
+  frame.after(section);
+  MOVED.set(sheet, state);
+  return moved;
 }

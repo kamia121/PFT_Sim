@@ -16,7 +16,7 @@
  * default, as on a real report); the learner page passes false until answers are checked.
  */
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
-import { bdPctPredDp } from '../interpret/precision.js';
+import { bdPctPredDp, bdPctPredQualifier } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { createStream } from '../core/prng.js';
@@ -408,6 +408,9 @@ export function buildReportModel(caseData, interp, options = {}) {
         // Within a rounding step of the 10% threshold the printed value would hide the side the change is on, so it takes the digits that show it.
         const dpPred = bdPctPredDp(raw);
         if (dpPred > 1) { row.changePctPred = round(raw, dpPred); row.changePctPredDp = dpPred; }
+        // Where even two decimals print 10.00 the cell is a string that names the side.
+        const side = bdPctPredQualifier(raw);
+        if (side) row.changePctPred = `+${raw.toFixed(2)} (${side} 10)`;
       }
     }
     return row;

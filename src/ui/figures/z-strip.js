@@ -278,7 +278,7 @@ function renderAts(data, opts = {}) {
 
   const twoSided = data.rows.some((r) => r.twoSided);
   const caps = [`Bands apply to all measures: severe, z below ${fix(Z_SEVERITY.severe, 1)}; moderate, ${fix(Z_SEVERITY.severe, 1)} to ${fix(Z_SEVERITY.moderate, 1)}; mild, ${fix(Z_SEVERITY.moderate, 1)} to the LLN (${fix(llnZ, 3)}); not reduced above the LLN. The star marks the result.`,
-    ...(twoSided ? [`For the indices read on both sides, within limits means between the LLN and the ULN (+${fix(-llnZ, 3)}); a value above the ULN is marked above ULN and is not graded by severity.`] : []),
+    ...(twoSided ? [`For the indices read on both sides, within limits means between the LLN and the ULN (+${fix(-llnZ, 3)}); a value above the ULN is marked above ULN and is not graded by severity. For the other indices, within limits means at or above the LLN.`] : []),
     'Severity of impairment is not necessarily disease severity.'];
   const maxChars = Math.floor(W / 3.9);
   const capLines = [];
