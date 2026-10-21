@@ -82,8 +82,8 @@ export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal', quest
     let status;
     if (!answer) status = 'unanswered';
     else if (answer === expected) status = 'correct';
+    else if (q.id === 'severity' && (keyA.severityAlso ?? []).includes(answer)) status = 'correct'; // at a cut point of the 2022 scale, to the precision of its rounding: checked before the other equation's key
     else if (answer === other) status = 'other-equation';
-    else if (q.id === 'severity' && (keyA.severityAlso ?? []).includes(answer)) status = 'correct'; // at a cut point of the 2022 scale, to the precision of its rounding
     else status = 'incorrect';
     return { id: q.id, label: q.label, answer, expected, status, other, otherLabel, ...(status === 'correct' && answer !== expected ? { note: 'The z-score is at a cut point of the 2022 scale, so the adjacent band is accepted.' } : {}) };
   });

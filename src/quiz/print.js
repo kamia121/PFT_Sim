@@ -41,7 +41,8 @@ export function keySheetHtml(def, code, cases) {
       const letters = keys.map((k) => opts.find((o) => o.id === k)?.letter).filter(Boolean).sort().join(', ');
       const text = keys.map((k) => opts.find((o) => o.id === k)?.label).filter(Boolean).join(' / ');
       const alt = it.key.alt ? `${opts.find((o) => o.id === it.key.alt)?.letter ?? ''}: ${opts.find((o) => o.id === it.key.alt)?.label ?? ''} (${EQUATION_NAMES[it.key.altEquation] ?? 'other equation'})` : '';
-      return `<tr><th scope="row" class="l">${esc(ITEM_NAMES[it.id])}</th><td class="l"><strong>${esc(letters)}</strong></td><td class="l">${esc(text)}</td><td class="l">${esc(alt)}</td></tr>`;
+      const also = (it.key.also ?? []).map((a) => `${opts.find((o) => o.id === a)?.letter ?? ''}: ${opts.find((o) => o.id === a)?.label ?? ''} (at a cut point)`).join('; ');
+      return `<tr><th scope="row" class="l">${esc(ITEM_NAMES[it.id])}</th><td class="l"><strong>${esc(letters)}</strong></td><td class="l">${esc(text)}</td><td class="l">${esc([alt, also].filter(Boolean).join('; '))}</td></tr>`;
     }).join('');
     const d = c.descriptor;
     return `<section class="sheet-case"><h2>Case ${i + 1}</h2><p class="muted">Archetype ${esc(d.archetype)}; technique ${esc(d.technique)}; panel ${esc(d.panel)}; severity ${d.severity}.</p>

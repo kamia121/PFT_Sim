@@ -48,6 +48,8 @@ export function scoreItem(item, response) {
   }
   if (response === undefined || response === null || response === '') return { ...base, score: 0, status: 'unanswered', expected: k.correct };
   if (response === k.correct) return { ...base, score: 1, status: 'correct', expected: k.correct };
+  // At a cut point of the 2022 scale the adjacent band is accepted in full, before the other equation's key and before partial credit.
+  if (Array.isArray(k.also) && k.also.includes(response)) return { ...base, score: 1, status: 'correct', expected: k.correct };
   if (k.alt !== null && k.alt !== undefined && response === k.alt) return { ...base, score: 1, status: 'other-equation', expected: k.correct };
   const order = item.id === 'severity' ? SEVERITY_ORDER : item.id === 'gradeFev1' || item.id === 'gradeFvc' ? GRADE_ORDER : null;
   if (order && (adjacent(order, response, k.correct) || (k.alt && adjacent(order, response, k.alt)))) return { ...base, score: PARTIAL, status: 'partial', expected: k.correct };

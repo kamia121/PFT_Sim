@@ -68,6 +68,7 @@ export function classSummary(cases, results) {
         const picks = Array.isArray(res.response) ? res.response : res.response ? [res.response] : [];
         const keySet = new Set([].concat(it.key.correct));
         if (it.key.alt) keySet.add(it.key.alt);
+        for (const a of it.key.also ?? []) keySet.add(a);
         for (const p of picks) if (!keySet.has(p)) dist.set(p, (dist.get(p) ?? 0) + 1);
       }
       const wrong = [...dist.entries()].sort((x, y) => y[1] - x[1]).map(([id, count]) => ({ id, label: labelOf(it, id), count }));

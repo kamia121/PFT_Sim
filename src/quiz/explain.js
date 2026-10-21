@@ -138,7 +138,8 @@ export function feedbackHtml(item, prep, result, opts = {}) {
   const detail = result.detail
     ? `<p class="muted">You selected ${num(result.detail.recall * 100, 0)}% of the applicable statements (weighted) and ${num(result.detail.falseRate * 100, 0)}% of the statements that do not apply. The score is the first share minus the second, and not below 0, so selecting every statement scores 0.</p>` : '';
   const key = item.key.correct;
-  const alt = item.key.alt ? `<span class="muted"> (other equation: ${esc(optLabel(item, item.key.alt))})</span>` : '';
+  const alt = (item.key.alt ? `<span class="muted"> (other equation: ${esc(optLabel(item, item.key.alt))})</span>` : '')
+    + (item.key.also?.length ? `<span class="muted"> (also accepted, the z-score being at a cut point: ${item.key.also.map((a) => esc(optLabel(item, a))).join(', ')})</span>` : '');
   const body = EXPLAINERS[item.id]?.(item, prep, result, o) ?? '';
   const lines = item.id === 'limitations' || item.id === 'final' ? '' : `<p>Your answer: ${show(item, result.response ?? '')}</p><p>Key: <strong>${show(item, key)}</strong>${alt}</p>`;
   return `<div class="feedback"><p><span class="${cls}">${text}${pts}</span></p>${lines}${detail}${body}</div>`;
