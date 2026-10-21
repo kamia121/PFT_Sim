@@ -9,6 +9,7 @@
  * Usage: node benchmarks/mobile-layout-smoke.mjs [screenshotDir]   (PFT_BROWSER = chromium | firefox | webkit)
  */
 import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
+import { svgInkCollisions } from './lib/svg-ink.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -63,27 +64,6 @@ function glyphReport() {
         if (r.right > vw + 1 || r.left < -1 || (hb && (r.right > hb.right + 1 || r.left < hb.left - 1))) { out.push(`${el.tagName.toLowerCase()}.${String(el.getAttribute('class') ?? '').split(' ')[0]} "${n.textContent.trim().slice(0, 24)}" ${Math.round(r.left)}..${Math.round(r.right)} in ${hb ? `${Math.round(hb.left)}..${Math.round(hb.right)}` : vw}`); break; }
       }
     }
-  }
-  return out;
-}
-
-/**
- * Runs in the page. Text that collides inside the visible charts of the summary sheet: two labels whose boxes overlap by more than 1 px
- * across and by 30% of the shorter label's height, or a label that leaves its SVG by more than 2 px (descenders of a baseline caption).
- */
-function svgTextCollisions() {
-  const out = [];
-  for (const s of document.querySelectorAll('#summary-slot .sheet svg')) {
-    const sb = s.getBoundingClientRect();
-    if (!sb.width) continue;
-    const fig = s.closest('figure')?.dataset.figureId ?? '?';
-    const T = [...s.querySelectorAll('text')].map((t) => { const b = t.getBoundingClientRect(); return { t: t.textContent.trim().slice(0, 24), l: b.left, r: b.right, tp: b.top, bt: b.bottom }; }).filter((b) => b.r - b.l > 0.5);
-    for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) {
-      const a = T[i], b = T[j];
-      const iw = Math.min(a.r, b.r) - Math.max(a.l, b.l), ih = Math.min(a.bt, b.bt) - Math.max(a.tp, b.tp);
-      if (iw > 1 && ih > 0.3 * Math.min(a.bt - a.tp, b.bt - b.tp)) out.push(`${fig}: "${a.t}" x "${b.t}" ${iw.toFixed(1)}x${ih.toFixed(1)}`);
-    }
-    for (const b of T) { const ov = Math.max(sb.left - b.l, b.r - sb.right, sb.top - b.tp, b.bt - sb.bottom); if (ov > 2) out.push(`${fig}: "${b.t}" outside its svg by ${ov.toFixed(1)}`); }
   }
   return out;
 }
@@ -249,21 +229,35 @@ try {
     await ctx.close();
   }
 
-  // Chart text collisions on a full panel (spirometry, volumes, DLCO, quality challenge, heavy notes) at each phone width. The "10" tick against "Time (s)" in the
-  // DLCO tracing is not new: the tracing draws it the same way on main (2.6 x 5.7 px in sheet units) and in print, so it is the one entry that is named, not filtered by pattern.
-  const KNOWN_DLCO = /^rep-dlco: "10" x "Time \(s\)" /;
+  // Chart text collisions on a full panel (spirometry, volumes, DLCO, quality challenge, heavy notes) at each phone width, measured on glyph ink (lib/svg-ink.mjs).
+  // Two controls first: a descender over a capital that overlap in ink (Source Sans 3, 20 px, baselines 30 and 46.9) must be reported, and the same pair 50 px apart must not.
   for (const w of PHONES) {
     const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     await page.goto(`${base}?v=2&s=485924449&a=obstruction&t=poor&sc=heavy`);
     await page.waitForSelector('#answer-form');
+    await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(600);
-    const all = await page.evaluate(svgTextCollisions);
-    const fresh = all.filter((x) => !KNOWN_DLCO.test(x));
-    check(!fresh.length, `${w} px: full panel: no chart label overlaps another or leaves its figure${fresh.slice(0, 3).join('; ')}${all.length - fresh.length ? ` (known and unchanged: ${all.length - fresh.length} DLCO tick/axis-title overlap)` : ''}`);
+    const control = await page.evaluate((fn) => {
+      const run = new Function(`return (${fn})`)();
+      const add = (id, y2) => {
+        const f = document.createElement('figure');
+        f.dataset.figureId = id;
+        f.innerHTML = `<svg viewBox="0 0 200 100" width="200" height="100" style="font-family:'Source Sans 3',sans-serif;overflow:visible"><text x="10" y="30" font-size="20">g</text><text x="10" y="${y2}" font-size="20">T</text></svg>`;
+        document.querySelector('#summary-slot .sheet').append(f);
+        return f;
+      };
+      const hit = add('control-overlap', 46.9), clear = add('control-apart', 80);
+      const all = run().filter((x) => x.startsWith('control-'));
+      hit.remove(); clear.remove();
+      return all;
+    }, svgInkCollisions.toString());
+    check(control.some((x) => x.startsWith('control-overlap')) && !control.some((x) => x.startsWith('control-apart')), `${w} px: ink control: an overlapping g/T pair is reported and the same pair 50 px apart is not (${control.join('; ') || 'none reported'})`);
+    const found = await page.evaluate(svgInkCollisions);
+    check(!found.length, `${w} px: full panel: no chart label's ink overlaps another or leaves its figure${found.slice(0, 3).join('; ')}`);
     await ctx.close();
   }
-  } finally {
+} finally {
   await browser.close();
   server.kill();
 }

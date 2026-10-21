@@ -201,5 +201,5 @@
   .sheet-live .sheet-box { font-size: 12px; padding: 4px 8px 6px; }
   .sheet-live .sheet-z:not(.sheet-z-narrow) { display: none; }
   .sheet-live .sheet-z-narrow { display: block; }
-  .sheet-live .sheet-z-narrow svg { width: 100%; }
+  .sheet-live .sheet-z-narrow svg { width: 100%; overflow: visible; }
 }
