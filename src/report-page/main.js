@@ -11,15 +11,16 @@ import { esc } from '../report/table.js';
 import { parseReportQuery, reportQuery, practiceHref, ReportLinkError } from './query.js';
 import { assembleReport } from './assemble.js';
 import { loadZInline } from './panels.js';
+import { loadSheetModules } from './modules.js';
 import { fitPages, scalePages } from './fit.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { link: null, caseData: null, resolve: null, zInline: null, equation: 'GLIglobal', copy: 'student', confirmed: false };
+const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, confirmed: false };
 
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy });
+    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -28,6 +29,14 @@ function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
   $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+}
+
+/** The summary sheet brings its own stylesheet; it is linked only when that module exists. */
+function addStylesheet(href) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
 }
 
 function showError(message) {
@@ -50,12 +59,14 @@ function gate() {
 async function render() {
   $('#rp-eq').value = state.equation;
   $('#rp-copy').value = state.copy;
-  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation });
+  $('#rp-flags').value = state.flags;
+  $('#rp-qc').checked = state.qualityChallenge;
+  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags });
   setUrl();
   if (state.copy === 'instructor' && !state.confirmed) { gate(); return; }
   $('#rp-print').disabled = false;
   const stage = $('#rp-stage');
-  const out = assembleReport({ caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline });
+  const out = assembleReport({ caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline, flags: state.flags, qualityChallenge: state.qualityChallenge, sheets: state.sheets });
   stage.innerHTML = out.html;
   document.title = out.title;
   try { await document.fonts?.ready; } catch { /* fonts are a refinement */ }
@@ -82,11 +93,15 @@ async function boot() {
   }
   state.equation = state.link.equation;
   state.copy = state.link.copy;
+  state.flags = state.link.flags;
+  state.qualityChallenge = state.link.qualityChallenge;
   try {
     const datasets = await loadDatasets();
     state.resolve = createReference(datasets).resolveReference;
     state.caseData = buildCase(state.link.descriptor, datasets);
     state.zInline = await loadZInline();
+    state.sheets = await loadSheetModules();
+    if (state.sheets.summarySheetHtml) addStylesheet('./src/sheets/sheets.css');
   } catch (e) {
     showError(`The case could not be built: ${String(e?.message ?? e).slice(0, 200)}`);
     return;
@@ -106,6 +121,8 @@ async function boot() {
   document.addEventListener('change', (e) => {
     if (e.target.id === 'rp-eq') { state.equation = e.target.value; render(); }
     else if (e.target.id === 'rp-copy') { state.copy = e.target.value; render(); }
+    else if (e.target.id === 'rp-flags') { state.flags = e.target.value; render(); }
+    else if (e.target.id === 'rp-qc') { state.qualityChallenge = e.target.checked; render(); }
     else if (e.target.id === 'rp-confirm') $('#rp-show-instructor').disabled = !e.target.checked;
   });
   let pending = 0;

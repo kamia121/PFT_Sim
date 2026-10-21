@@ -92,7 +92,7 @@ test('airway-resistance rows: present with limits when the loop exists, absent o
   assert.equal(resistanceRows({ raw: { sRawKpaS: 1, reference: { sRawUpperKpaS: 1.5 } } }).rows[0].uln, 1.5);
 });
 
-test('spirometry-only cases have no airway-resistance rows and a two-page report', () => {
+test('spirometry-only cases have no airway-resistance rows; the fallback page 1 adds a sheet of tables only when volumes or DLCO exist', () => {
   const out = asm(SPIRO_ONLY);
   assert.equal(out.pageCount, 2);
   assert.ok(!out.model.sections.some((s) => s.id === 'volumes'));
@@ -100,10 +100,11 @@ test('spirometry-only cases have no airway-resistance rows and a two-page report
   assert.equal(asm(FULL).pageCount, 3);
 });
 
-test('the student copy is well formed (two fixed sheets with volumes, one without, then the continuation), and carries no answer-key text', () => {
+test('the student copy is well formed (page 1, then the flowing details), and carries no answer-key text with the quality challenge on or off', () => {
   for (const input of [FULL, { seed: 5, archetype: 'normal' }, { seed: 31, archetype: 'restriction-parenchymal' }, { seed: 8, archetype: 'bd-discordant', technique: 'poor' }, SPIRO_ONLY, { seed: 90, archetype: 'mixed', scenarioLevel: 'heavy' }]) {
     const c = build(input);
-    const out = assembleReport({ caseData: c, resolve: resolveReference, copy: 'student' });
+    for (const qualityChallenge of [false, true]) {
+    const out = assembleReport({ caseData: c, resolve: resolveReference, copy: 'student', qualityChallenge });
     assertBalanced(out.html);
     assert.equal((out.html.match(/class="rp-box/g) ?? []).length, out.pageCount);
     assert.doesNotMatch(out.html, /data-page="appendix"/);
@@ -113,12 +114,14 @@ test('the student copy is well formed (two fixed sheets with volumes, one withou
     for (const phrase of [PATTERNS[c.anchorKey.pattern], stmt.text.slice(0, 50), ...stmt.notes.map((n) => n.slice(0, 40)), 'Answer key', 'Instructor appendix', 'Interpretation statement', 'Notes on this simulation', 'Computed from the reported values']) {
       assert.ok(!text.includes(phrase), `student copy contains "${phrase}"`);
     }
-    assert.doesNotMatch(text, /\b(FEV1|FVC) - [A-FU]\b|grade [A-F]\b|Accept\./);
+    // Grades are the technologist's report and print with the challenge off; with it on, no grade or acceptability text is in the markup.
+    if (qualityChallenge) assert.doesNotMatch(out.html, /\b(FEV1|FVC) - [A-FU]\b|[Gg]rade [A-F]\b|Accept\.|[Aa]cceptab|Test quality|withheld|Criteria not met/);
+    else assert.match(text, /\b(FEV1|FVC) - [A-FU]\b/);
     assert.match(text, /Student copy/);
-    assert.match(text, /Interpretation to be entered by the reader/);
     assert.equal(out.fullModel, null);
     assert.equal(out.model.quality, null);
     assert.equal(out.model.interpretation, null);
+    }
   }
 });
 
@@ -191,10 +194,9 @@ function slotChecks() {
     delete FIGURES['panel-spirometry'];
   }
   assert.ok(SLOTS.spirometry.chain[0] === 'panel-spirometry');
-  // A case without volumes or DLCO has no plethysmography or DLCO slot.
+  // The plethysmography and DLCO panels belong to the details sheet; the page slots hold only the fallback page 1 figures.
   const sp = assembleReport({ caseData: build(SPIRO_ONLY), resolve: resolveReference });
-  assert.equal(sp.slots.pleth, null);
-  assert.equal(sp.slots.dlco, null);
+  assert.deepEqual(Object.keys(sp.slots).sort(), ['spirometry', 'zstrip']);
 }
 
 test('the inline z-score column appears when zInline exists and the strip fills in when it does not', () => {
