@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { stubRtReport, stubChallenges } from './helpers/rt-stub.mjs';
-import { visibility } from '../src/challenges/visibility.js';
-import { visibility as visibilityFromIndex } from '../src/challenges/index.js';
+import { buildCase, interpret, resolveReference, ds } from './helpers/rt-cases.mjs';
+import { buildRtReport } from '../src/core/rt-report.js';
+import { buildChallenges } from '../src/challenges/index.js';
 
 const HONESTY = ['accurate', 'software', 'generic', 'optimistic', 'pessimistic', 'stale', 'silent'];
 
@@ -38,14 +39,27 @@ test('stub challenges have the frozen Challenge shape and distinct ids', () => {
   }
 });
 
-test('visibility: quality challenge off shows everything from the start', () => {
-  for (const stage of [1, 2, 3]) assert.deepEqual(visibility({ qualityChallenge: false, stage }), { showQualityLines: true, showGradeColumns: true, showStatementInSummary: true });
+const REAL_CASE = { seed: 8, archetype: 'bd-discordant', technique: 'poor', scenarioLevel: 'moderate' };
+
+test('the stub report has the keys of a real report', () => {
+  const real = buildRtReport(buildCase(REAL_CASE, ds));
+  const stub = stubRtReport();
+  assert.deepEqual(Object.keys(stub).sort(), Object.keys(real).sort());
+  for (const part of ['stated', 'truth', 'representative']) assert.deepEqual(Object.keys(stub[part]).sort(), Object.keys(real[part]).sort(), part);
+  assert.deepEqual(Object.keys(stub.truth.pre), Object.keys(real.truth.pre));
+  assert.deepEqual(Object.keys(stub.truth.dlco), Object.keys(real.truth.dlco));
+  assert.deepEqual(Object.keys(stub.representative.pre), Object.keys(real.representative.pre));
 });
 
-test('visibility: quality challenge on stages the statement and the grade columns', () => {
-  assert.deepEqual(visibility({ qualityChallenge: true, stage: 1 }), { showQualityLines: false, showGradeColumns: false, showStatementInSummary: false });
-  assert.deepEqual(visibility({ qualityChallenge: true, stage: 2 }), { showQualityLines: true, showGradeColumns: false, showStatementInSummary: true });
-  assert.deepEqual(visibility({ qualityChallenge: true, stage: 3 }), { showQualityLines: true, showGradeColumns: true, showStatementInSummary: true });
-  assert.throws(() => visibility({ qualityChallenge: true, stage: 4 }), RangeError);
-  assert.equal(visibilityFromIndex, visibility);
+test('the stub challenges have the ids and fields of real challenges', () => {
+  const c = buildCase(REAL_CASE, ds);
+  const items = buildChallenges(c, { rt: buildRtReport(c), interp: interpret(c.report, resolveReference, 'GLIglobal'), qualityChallenge: true });
+  const stub = stubChallenges();
+  assert.deepEqual(stub.map((i) => i.id).sort(), items.map((i) => i.id).sort());
+  for (const real of items) {
+    const s = stub.find((i) => i.id === real.id);
+    for (const f of ['id', 'title', 'prompt', 'options', 'key', 'why', 'needsDetails', 'stage']) assert.equal(typeof s[f], typeof real[f], `${real.id}.${f}`);
+    assert.equal(Boolean(s.rows), Boolean(real.rows), `${real.id} rows`);
+    if (real.rows && !/^acceptable/.test(real.id)) assert.deepEqual(s.rows.map((r) => r.id).sort(), real.rows.map((r) => r.id).sort(), `${real.id} row ids`);
+  }
 });

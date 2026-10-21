@@ -6,7 +6,10 @@
  * Contract: docs/REPORT-FIRST-PLAN.md ("Challenges").
  */
 
+import { buildChallengeList } from './items.js';
+
 export { visibility } from './visibility.js';
+export { scoreChallenge } from './score.js';
 
 /**
  * @typedef {object} ChallengeRow one answer row of a per-maneuver item
@@ -43,21 +46,11 @@ export { visibility } from './visibility.js';
 
 /**
  * @param {object} caseData a case from buildCase
- * @param {{ rt: import('../core/rt-report.js').RtReport, interp: object, qualityChallenge: boolean, interpOther?: object }} context
- *   `interp` is the interpretation under the displayed equation; `interpOther` (optional) the one under the other equation
- * @returns {Challenge[]}
+ * @param {{ rt: import('../core/rt-report.js').RtReport, interp?: object, qualityChallenge?: boolean, interpOther?: object }} context
+ *   `interp` is the interpretation under the displayed equation (without it the bronchodilator item is omitted); `interpOther`
+ *   (optional) the one under the other equation, which lets the bronchodilator item return 'other-equation'
+ * @returns {Challenge[]} items for which the case holds data, in presentation order
  */
 export function buildChallenges(caseData, context) {
-  void caseData; void context;
-  throw new Error('buildChallenges: not implemented yet; develop against tests/helpers/rt-stub.mjs');
-}
-
-/**
- * @param {Challenge} item
- * @param {string|Record<string, string>|null|undefined} answer an option value, or for a row item a map from row id to option value
- * @returns {ChallengeResult}
- */
-export function scoreChallenge(item, answer) {
-  void item; void answer;
-  throw new Error('scoreChallenge: not implemented yet; develop against tests/helpers/rt-stub.mjs');
+  return buildChallengeList(caseData, context);
 }
