@@ -144,8 +144,16 @@ try {
       const sizes = await page.evaluate(effectiveSizes);
       const small = sizes.rows.filter((r) => r.px < FLOOR_PX);
       check(sizes.rows.length > 20 && !small.length, `${tag}: report text renders at ${FLOOR_PX} px or more (smallest ${Math.min(...sizes.rows.map((r) => r.px)).toFixed(1)} px over ${sizes.rows.length} elements${small.length ? `; e.g. ${[...new Map(small.map((r) => [r.el, r])).values()].slice(0, 6).map((r) => `${r.el} ${r.px.toFixed(1)}`).join(', ')}` : ''})`);
-      const z = sizes.svgs.filter((s) => s.fig === 'z-strip-ats-narrow');
+      const z = sizes.svgs.filter((x) => x.fig === 'z-strip-ats-narrow');
       check(z.length === 1 && z[0].min >= 7.5, `${tag}: the stacked z-score graphic shows its labels at ${z[0] ? z[0].min.toFixed(1) : '?'} px or more (floor 7.5)`);
+      const smallCharts = sizes.svgs.filter((x) => x.min < (x.fig === 'z-strip-ats-narrow' ? 7.5 : 8));
+      check(sizes.svgs.length >= 3 && !smallCharts.length, `${tag}: every visible chart label (${sizes.svgs.length} figures; smallest ${Math.min(...sizes.svgs.map((x) => x.min)).toFixed(1)} px) renders at 8 px or more (the z-score graphic at 7.5)${smallCharts.map((x) => ` ${x.fig} ${x.min.toFixed(1)}`).join(',')}`);
+      const aspects = await page.evaluate(() => [...document.querySelectorAll('.sheet-fig-narrow')].map((n) => {
+        const base = n.parentElement.querySelector(`[data-figure-id="${n.dataset.figureId.replace('-narrow', '')}"]`);
+        const a = (f) => { const v = f.querySelector('svg').viewBox.baseVal; return v.height / v.width; };
+        return Math.abs(a(n) - a(base)) / a(base);
+      }));
+      check(aspects.length >= 2 && aspects.every((d) => d < 0.03), `${tag}: the narrow curves keep the aspect of the 336 px ones (largest difference ${(Math.max(...aspects) * 100).toFixed(1)}%), so the page is no taller`);
       const zv = await page.evaluate(() => { const d = (id) => { const f = document.querySelector(`[data-figure-id="${id}"]`); return f ? getComputedStyle(f).display : 'absent'; }; return { wide: d('z-strip-ats'), narrow: d('z-strip-ats-narrow') }; });
       check(zv.wide === 'none' && zv.narrow !== 'none' && zv.narrow !== 'absent', `${tag}: the phone shows the stacked z-score graphic and not the 744 px one`);
 

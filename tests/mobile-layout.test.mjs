@@ -17,6 +17,8 @@ test('the stacked z-score graphic and the focusable table regions are emitted on
   const live = html({ narrowZ: true });
   assert.equal((live.match(/data-figure-id="z-strip-ats-narrow"/g) ?? []).length, 1);
   assert.equal((live.match(/data-figure-id="z-strip-ats"/g) ?? []).length, 1, 'the 744 px graphic is kept');
+  assert.ok((live.match(/data-figure-id="rep-[a-z-]+-narrow"/g) ?? []).length >= 2, 'the curves are also drawn 260 px wide');
+  assert.doesNotMatch(fixed, /-narrow"/);
   assert.ok((live.match(/role="region" tabindex="0" aria-label="[^"]+ table; scrolls sideways/g) ?? []).length >= 1, 'each table block is a labelled, focusable scroll region');
 });
 
