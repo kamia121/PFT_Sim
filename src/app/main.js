@@ -1,20 +1,35 @@
 import { loadDatasets } from '../reference/load.js';
 import { createReference } from '../reference/gli.js';
 import { buildCase } from '../core/case.js';
-import { ARCHETYPES, serializeDescriptor, parseDescriptor } from '../core/descriptor.js';
-import { encodeCase, decodeCase } from '../core/code.js';
+import { serializeDescriptor, parseDescriptor } from '../core/descriptor.js';
+import { decodeCase } from '../core/code.js';
 import { interpret, compareEquations } from '../interpret/interpret.js';
-import { scoreAnswers } from './answers.js';
 import * as R from './render.js';
 import { bindFigureDownloads } from './figure-downloads.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { buildReportModel, allTables } from '../report/model.js';
-import { renderReportHtml } from '../report/html.js';
+import { renderReportHtml, reportPageHref } from '../report/html.js';
 import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadReportHtml } from '../report/export.js';
 import { interpretationFor } from '../report/statement.js';
+import { PALETTES } from '../ui/palettes.js';
+import { loadOptionalModules } from './modules.js';
+import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, fallbackVisibility } from './stage.js';
+import { parseAddress, buildSearch } from './address.js';
+import { emptyResponses, applyChange } from './collect.js';
+import { buildFeedback, addToTally } from './feedback.js';
+import { renderPractice } from './practice-view.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { datasets: null, resolve: null, case: null, spirometryEquation: 'GLIglobal', answers: {}, revealed: false, scored: false, showSchematic: false, figView: {}, reportModel: null, reportDark: false, reportInterp: false, printing: false, tally: { answered: 0, matched: 0, items: 0 } };
+const state = {
+  datasets: null, resolve: null, mods: null,
+  case: null, mode: 'code', rt: null,
+  spirometryEquation: 'GLIglobal', flags: 'lln',
+  stage: createStage(), responses: emptyResponses(), detailsOpen: false, feedback: null,
+  showSchematic: false, figView: {},
+  modelCache: null, itemsCache: null,
+  reportModel: null, reportDark: false, reportInterp: false, printing: false,
+  tally: { answered: 0, matched: 0, items: 0 },
+};
 
 /** Practice mix: weights are teaching choices, not prevalence. */
 const MIX = [['normal', 14], ['obstruction', 22], ['restriction-parenchymal', 10], ['restriction-extraparenchymal', 6], ['mixed', 8], ['nonspecific', 8], ['low-dlco', 7], ['anemia', 4], ['obesity-low-erv', 7], ['bd-discordant', 8]];
@@ -37,13 +52,10 @@ function randomCase(options) {
   return { seed: randomUint32(), archetype, severity: 1 + Math.floor(u() * 3), technique, panel, ...old, ...(level && level !== 'none' ? { scenarioLevel: level } : {}) };
 }
 
-function currentQuery() {
-  return serializeDescriptor(state.case.descriptor);
-}
-function setUrl(query, mode) {
+function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = mode === 'plain' ? `?${query}` : `?c=${encodeCase(query)}`;
+    url.search = buildSearch({ query: serializeDescriptor(state.case.descriptor), mode: state.mode, equation: state.spirometryEquation, qualityChallenge: state.stage.qualityChallenge, flags: state.flags });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -56,88 +68,151 @@ function interpretations() {
   return { a, b, cmp };
 }
 
-function render() {
+const visibilityNow = () => (state.mods.visibility ?? fallbackVisibility)({ qualityChallenge: state.stage.qualityChallenge, stage: state.stage.stage });
+
+/** Challenge items for the case under the displayed equation; recomputed only when the case, equation or challenge setting changes. */
+function itemsNow(a) {
+  if (!state.mods.buildChallenges || !state.rt) return [];
+  const key = `${state.spirometryEquation}|${state.stage.qualityChallenge}`;
+  if (state.itemsCache?.case === state.case && state.itemsCache.key === key) return state.itemsCache.items;
+  let items = [];
+  try { items = state.mods.buildChallenges(state.case, { rt: state.rt, interp: a, qualityChallenge: state.stage.qualityChallenge }) ?? []; } catch { items = []; }
+  state.itemsCache = { case: state.case, key, items };
+  return items;
+}
+
+/** Report model for the sheets, rebuilt only when the case, equation, grade visibility or palette changes. */
+function modelNow(a, vis, { palette = PALETTES.white, interpretation = null } = {}) {
+  const key = `${state.spirometryEquation}|${vis.showGradeColumns}|${palette.id}|${interpretation?.text ?? ''}`;
+  if (state.modelCache?.case === state.case && state.modelCache.key === key) return state.modelCache.model;
+  const model = buildReportModel(state.case, a, {
+    equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve, palette,
+    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [],
+  });
+  state.modelCache = { case: state.case, key, model };
+  return model;
+}
+
+function announce(text) {
+  const el = $('#status');
+  if (el) el.textContent = text;
+}
+
+/** Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. */
+function render({ focus = null } = {}) {
+  if (!$('#panel-report').hidden) { renderReportView(); return; }
   const c = state.case;
   const { a, b, cmp } = interpretations();
-  const revealed = state.revealed;
-  const spiroNames = ['fev1', 'fvc', 'fev1_fvc'];
-  const eqOptions = [['GLIglobal', 'GLI Global 2022 (group-neutral)'], ['GLI2012', 'GLI-2012 (selected by the group on the requisition)']]
-    .map(([v, l]) => `<label><input type="radio" name="eq" value="${v}" ${state.spirometryEquation === v ? 'checked' : ''}> ${l}</label>`).join(' ');
-  const html = [
-    R.renderPatient(c),
-    `<section class="card" aria-labelledby="h-spiro"><h2 id="h-spiro">Spirometry</h2>
-      ${R.renderManeuvers(c.spirometry.pre, 'Pre-bronchodilator forced maneuvers', { revealed, id: 'pre-maneuvers' })}
-      <p><fieldset class="inline"><legend class="muted">Reference equation for spirometry</legend>${eqOptions}</fieldset></p>
-      ${R.renderReport(a, spiroNames, 'Reported spirometry', 'spiro-table')}
-      <label><input type="checkbox" id="schematic" ${state.showSchematic ? 'checked' : ''}> Show the constructed predicted flow-volume curve</label>
-      <div id="figs">${R.renderFigures(c, a, { revealed, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve })}</div></section>`,
-    R.renderBronchodilator(c, a),
-    R.renderVolumes(c, a),
-    R.renderDlco(c, a),
-    R.renderAnswerForm(c, state.answers, state.scored),
-    revealed ? R.renderReveal(c, a, cmp, scoreAnswers(state.answers, a.key, b.key, state.spirometryEquation), state.scored) : '',
-  ].join('');
-  $('#case').innerHTML = html;
+  const vis = visibilityNow();
+  const stage = state.stage.stage;
+  const sheetsWanted = Boolean(state.mods.summarySheetHtml || state.mods.detailsSheetHtml);
+  const model = sheetsWanted ? modelNow(a, vis) : null;
+  const items = itemsNow(a);
+  state.feedback = stage === 3
+    ? buildFeedback({ caseData: c, interp: a, interpOther: b, equation: state.spirometryEquation, responses: state.responses, items, scoreChallenge: state.mods.scoreChallenge, rt: state.rt, detailsOpened: state.stage.detailsOpened })
+    : null;
+  $('#case').innerHTML = renderPractice({
+    caseData: c, interp: a, cmp, equation: state.spirometryEquation, flags: state.flags,
+    qualityChallenge: state.stage.qualityChallenge, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
+    vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
+    model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
+    palette: PALETTES.white, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
+  });
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
-  if (!$('#panel-report').hidden) renderReportView();
+  if (focus) $(focus)?.focus?.({ preventScroll: true });
 }
 
-/** Redraws only the figure cards (a view or chip change), so the answer form and the scroll position stay as they are. */
-function renderFiguresOnly() {
-  const el = $('#figs');
-  if (el) el.innerHTML = R.renderFigures(state.case, interpretations().a, { revealed: state.revealed, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve });
+/** Redraws only the page-2 area (a figure view or chip change, or opening it), so the answers and the scroll position stay as they are. */
+function renderDetailsOnly() {
+  const slot = $('#details-slot');
+  if (!slot) return render();
+  const { a } = interpretations();
+  const vis = visibilityNow();
+  const figs = $('#figs');
+  if (figs && !state.mods.detailsSheetHtml) { figs.innerHTML = R.renderFigures(state.case, a, { revealed: vis.showGradeColumns, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve }); return; }
+  render({ focus: document.activeElement?.id ? `#${CSS.escape(document.activeElement.id)}` : null });
 }
 
-function loadCase(descriptorLike, mode = 'code') {
+function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = {}) {
   state.case = buildCase(descriptorLike, state.datasets);
+  state.mode = mode;
+  state.rt = null;
+  if (state.mods.buildRtReport) { try { state.rt = state.mods.buildRtReport(state.case); } catch { state.rt = null; } }
   state.figView = {};
-  state.answers = {};
-  state.revealed = false;
-  state.scored = false;
-  setUrl(currentQuery(), mode);
+  state.responses = emptyResponses();
+  // The quality challenge needs the technologist's report; without it the page runs as with the challenge off.
+  state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt) });
+  state.detailsOpen = false;
+  state.feedback = null;
+  state.itemsCache = null;
+  setUrl();
   render();
+  announce('A new case is ready.');
   $('#case').scrollIntoView?.({ block: 'start' });
 }
 
-function newCase() {
-  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }));
+/** The quality challenge for a new case: the toolbar setting, with Varies drawn at random. */
+function chosenQualityChallenge() {
+  const v = $('#qc').value;
+  return v === 'on' || (v === 'varies' && randomUint32() / 4294967296 < 0.5);
 }
 
-function check(scored) {
-  if (scored) {
-    const form = new FormData($('#answer-form'));
-    for (const [k, v] of form.entries()) state.answers[k] = v;
-  }
-  state.scored = scored;
-  state.revealed = true;
-  if (scored) {
-    const { a, b } = interpretations();
-    const s = scoreAnswers(state.answers, a.key, b.key, state.spirometryEquation);
-    state.tally.answered += 1;
-    state.tally.items += s.length;
-    state.tally.matched += s.filter((x) => x.status === 'correct' || x.status === 'other-equation').length;
-  }
+function newCase() {
+  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }), { qualityChallenge: chosenQualityChallenge() });
+}
+
+function checkAnswers(scored) {
+  const next = checkStage(state.stage, { scored });
+  if (next === state.stage) return;
+  state.stage = next;
   render();
+  if (scored) {
+    state.tally = addToTally(state.tally, state.feedback);
+    $('#tally').textContent = `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.`;
+    announce(`Answers checked: ${state.feedback.matched} of ${state.feedback.total} matched the key.`);
+  } else announce('The key is shown.');
   $('#reveal')?.scrollIntoView?.({ block: 'start' });
 }
 
-/** Lab report view: the same case and spirometry equation, laid out as a standardized report. Nothing from the key appears until answers are checked. */
+function releaseStatement() {
+  const next = showStatement(state.stage);
+  if (next === state.stage) return;
+  state.stage = next;
+  render({ focus: '#statement-note' });
+  announce('The technologist’s statement is shown in the comment box on page 1.');
+}
+
+function toggleDetails() {
+  state.detailsOpen = !state.detailsOpen;
+  if (state.detailsOpen) state.stage = openDetails(state.stage);
+  render({ focus: '#toggle-details' });
+}
+
+/** Lab report view: the same case and spirometry equation as the summary and details sheets, for printing and download. Nothing from the key appears before the visibility rule releases it. */
 function renderReportView() {
   if (!state.case) return;
   const { a, cmp } = interpretations();
-  const revealed = state.revealed;
+  const vis = visibilityNow();
+  const revealed = state.stage.stage === 3;
   const interpretation = revealed && state.reportInterp ? interpretationFor(state.case, a, cmp) : null;
+  const sheets = state.mods.summarySheetHtml || state.mods.detailsSheetHtml;
+  const palette = state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white;
   const model = buildReportModel(state.case, a, {
-    equation: state.spirometryEquation,
-    includeGrades: revealed,
-    resolve: state.resolve,
-    palette: state.reportDark && !state.printing ? 'dark' : 'white',
-    interpretationText: interpretation?.text ?? null,
-    interpretationNotes: interpretation?.notes ?? [],
+    equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve,
+    palette: sheets ? palette : (state.reportDark && !state.printing ? 'dark' : 'white'),
+    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [],
   });
   state.reportModel = model;
-  $('#report-root').innerHTML = renderReportHtml(model, { interactive: true });
+  if (sheets) {
+    const common = { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette };
+    const summary = state.mods.summarySheetHtml ? state.mods.summarySheetHtml(model, { ...common, flags: state.flags, showQualityLines: vis.showQualityLines }) : `<p class="muted">${'Summary sheet not available in this build.'}</p>`;
+    const details = state.mods.detailsSheetHtml ? state.mods.detailsSheetHtml(model, { ...common, showGrades: vis.showGradeColumns, view: state.figView }) : `<p class="muted">${'Details sheet not available in this build.'}</p>`;
+    const link = model.meta.caseToken ? `<p class="no-print"><a href="${reportPageHref(model)}">Open the printable report page</a></p>` : '';
+    $('#report-root').innerHTML = `${link}<div class="sheet-wrap">${summary}${details}</div>`;
+  } else {
+    $('#report-root').innerHTML = renderReportHtml(model, { interactive: true });
+  }
   $('#report-eq').value = state.spirometryEquation;
   $('#report-interp').disabled = !revealed;
   $('#report-interp').checked = revealed && state.reportInterp;
@@ -148,13 +223,24 @@ function showTab(name) {
   for (const t of document.querySelectorAll('.tabs [role=tab]')) t.setAttribute('aria-selected', String(t.dataset.tab === name));
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== `panel-${name}`;
   document.body.classList.toggle('report-active', name === 'report');
-  if (name === 'report') renderReportView();
+  // The sheets of the practice and report views are never in the page together, so that figure definitions with the same ids do not collide.
+  if (name === 'report') { $('#case').innerHTML = ''; renderReportView(); }
+  else { $('#report-root').innerHTML = ''; if (state.case) render(); }
 }
 
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
   $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+}
+
+function addSheetStyles() {
+  if (document.querySelector('link[data-sheets-css]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = './src/sheets/sheets.css';
+  link.dataset.sheetsCss = '1';
+  document.head.appendChild(link);
 }
 
 async function boot() {
@@ -168,15 +254,26 @@ async function boot() {
   $('#method').innerHTML = R.renderMethod(GENERATOR_VERSION);
   state.datasets = await loadDatasets();
   state.resolve = createReference(state.datasets).resolveReference;
-  bindFigureDownloads($('#case'), () => R.figureCaseData(state.case, interpretations().a, state));
-  // The practice page and the report page share the equation in the address.
+  // The sheets, the technologist's report and the challenge list come from other modules; a build without one still works.
+  state.mods = await loadOptionalModules({
+    summary: () => import('../sheets/summary.js'),
+    details: () => import('../sheets/details.js'),
+    rt: () => import('../core/rt-report.js'),
+    challenges: () => import('../challenges/index.js'),
+    visibility: () => import('../challenges/visibility.js'),
+  });
+  if (state.mods.summarySheetHtml || state.mods.detailsSheetHtml) addSheetStyles();
+  bindFigureDownloads($('#case'), () => R.figureCaseData(state.case, interpretations().a, { revealed: state.stage.stage === 3, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve }));
 
-  const params = new URLSearchParams(location.search);
+  // The practice page and the report page share the equation in the address; the quality challenge and the flag setting ride beside the case.
+  const addr = parseAddress(location.search);
+  if (addr.equation) state.spirometryEquation = addr.equation;
+  state.flags = addr.flags;
+  $('#flags').value = state.flags;
+  if (addr.kind) $('#qc').value = addr.qualityChallenge ? 'on' : 'off';
   try {
-    const eq = params.get('eq');
-    if (eq === 'GLI2012' || eq === 'GLIglobal') state.spirometryEquation = eq;
-    if (params.has('c')) loadCase(parseDescriptor(decodeCase(params.get('c'))), 'code');
-    else if (params.has('s')) loadCase(parseDescriptor(params.toString()), 'plain');
+    if (addr.kind === 'code') loadCase(parseDescriptor(decodeCase(addr.code)), { mode: 'code', qualityChallenge: addr.qualityChallenge });
+    else if (addr.kind === 'plain') loadCase(parseDescriptor(addr.plainQuery), { mode: 'plain', qualityChallenge: addr.qualityChallenge });
     else newCase();
   } catch (e) {
     const msg = String(e.message).replace(/[<>&"']/g, '');
@@ -187,8 +284,10 @@ async function boot() {
     const t = e.target.closest('button');
     if (!t) return;
     if (t.id === 'new-case') newCase();
-    else if (t.id === 'check-answers') check(true);
-    else if (t.id === 'show-key') check(false);
+    else if (t.id === 'check-answers') checkAnswers(true);
+    else if (t.id === 'show-key') checkAnswers(false);
+    else if (t.id === 'show-statement') releaseStatement();
+    else if (t.id === 'toggle-details') toggleDetails();
     else if (t.id === 'theme-toggle') setTheme(document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches) ? 'light' : 'dark');
     else if (t.id === 'copy-link') navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy case link'), 1500); }).catch(() => $('#caseCode').select());
     else if (t.dataset.tab) showTab(t.dataset.tab);
@@ -201,24 +300,36 @@ async function boot() {
       copyTable(table).then((how) => { t.textContent = how ? 'Copied' : 'Copy failed'; setTimeout(() => (t.textContent = 'Copy table'), 1500); });
     }
   });
+  document.addEventListener('submit', (e) => e.preventDefault());
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'impression') state.responses = applyChange(state.responses, { name: 'impression', value: e.target.value });
+  });
   document.addEventListener('change', (e) => {
-    if (e.target.id === 'report-eq') { state.spirometryEquation = e.target.value; render(); }
-    else if (e.target.id === 'report-interp') { state.reportInterp = e.target.checked; renderReportView(); }
-    else if (e.target.id === 'report-dark') { state.reportDark = e.target.checked; renderReportView(); }
-    else if (e.target.name === 'eq') { state.spirometryEquation = e.target.value; render(); }
-    else if (e.target.id === 'schematic') { state.showSchematic = e.target.checked; render(); }
-    else if (e.target.dataset?.figView) {
-      const id = e.target.dataset.figView;
-      state.figView[id] = { ...state.figView[id], view: e.target.value };
-      renderFiguresOnly();
-    } else if (e.target.dataset?.figChip) {
-      const id = e.target.dataset.figChip;
+    const t = e.target;
+    if (t.id === 'report-eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: '#report-eq' }); }
+    else if (t.id === 'report-interp') { state.reportInterp = t.checked; renderReportView(); }
+    else if (t.id === 'report-dark') { state.reportDark = t.checked; renderReportView(); }
+    else if (t.name === 'eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: `input[name=eq][value=${t.value}]` }); }
+    else if (t.id === 'flags') { state.flags = t.value === 'none' ? 'none' : 'lln'; setUrl(); render(); }
+    else if (t.id === 'qc') {
+      // On and Off apply to the case on the page until its answers are checked; Varies is drawn at the next new case.
+      if (t.value !== 'varies' && state.case) { state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render(); }
+    }
+    else if (t.id === 'schematic') { state.showSchematic = t.checked; render(); }
+    else if (t.dataset?.figView) {
+      const id = t.dataset.figView;
+      state.figView[id] = { ...state.figView[id], view: t.value };
+      renderDetailsOnly();
+    } else if (t.dataset?.figChip) {
+      const id = t.dataset.figChip;
       const boxes = [...document.querySelectorAll(`input[data-fig-chip="${id}"]`)];
       const selected = boxes.filter((b) => b.checked).map((b) => Number(b.value));
-      state.figView[id] = { ...state.figView[id], selected: selected.length ? selected : [Number(e.target.value)] };
-      renderFiguresOnly();
+      state.figView[id] = { ...state.figView[id], selected: selected.length ? selected : [Number(t.value)] };
+      renderDetailsOnly();
+    } else if (t.closest?.('#answer-form') && t.name) {
+      const checkedValues = t.type === 'checkbox' ? [...document.querySelectorAll(`#answer-form input[name="${CSS.escape(t.name)}"]:checked`)].map((x) => x.value) : [];
+      state.responses = applyChange(state.responses, { name: t.name, type: t.type, value: t.value, checkedValues });
     }
-    else if (e.target.closest?.('#answer-form')) state.answers[e.target.name] = e.target.value;
   });
 }
 

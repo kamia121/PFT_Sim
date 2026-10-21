@@ -29,6 +29,13 @@ export const QUESTIONS = [
   ] },
 ];
 
+/**
+ * Questions of the practice page. The two grade questions are not among them: grading belongs to the challenge list
+ * (src/challenges), which asks about the maneuvers and the technologist's statement. The quiz still draws on QUESTIONS
+ * (src/quiz/items.js) and keeps its own grade items.
+ */
+export const PRACTICE_QUESTIONS = QUESTIONS.filter((q) => q.id !== 'gradeFev1' && q.id !== 'gradeFvc');
+
 /** Question label for a case: the diffusing capacity question drops "hemoglobin-adjusted" when no hemoglobin was available. */
 export function questionLabel(caseData, q) {
   if (q.id === 'dlco' && caseData?.dlco && !hbKnown(caseData.dlco)) return 'Diffusing capacity (no hemoglobin adjustment: hemoglobin not available)';
@@ -60,11 +67,12 @@ export const OTHER_EQUATION_LABEL = {
  * @param {object} keyA key under the displayed equation
  * @param {object} keyB key under the other equation, for borderline tolerance
  * @param {'GLIglobal'|'GLI2012'} [equationA] the equation of keyA; the default key is GLI Global
+ * @param {{ id: string, label: string, options: string[][] }[]} [questions] the questions to score; the default is all of QUESTIONS
  * @returns {{ id: string, label: string, answer: string|null, expected: string, status: 'correct'|'other-equation'|'incorrect'|'unanswered', other: string, otherLabel: string }[]}
  */
-export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal') {
+export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal', questions = QUESTIONS) {
   const otherLabel = OTHER_EQUATION_LABEL[equationA === 'GLI2012' ? 'GLIglobal' : 'GLI2012'];
-  return QUESTIONS.map((q) => {
+  return questions.map((q) => {
     const expected = norm(keyA, q.id);
     const other = norm(keyB, q.id);
     const answer = answers[q.id] ?? null;
