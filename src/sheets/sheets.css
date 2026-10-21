@@ -174,7 +174,7 @@
    Scaling the 816 px Letter layout to a 360 px screen drew its 10 px text at about 4.5 px, beside a form that is counter-scaled to full
    size. Here --sheet-s is reset to 1 on the frame itself, which also makes the frame width, the zoom and the form's counter-zoom 1.
    The fixed sheets (Lab report view, report page, print) are not touched: the rules are scoped to .sheet-live and to screen media. */
-.sheet-live .sheet-z-narrow, .sheet-live .sheet-fig-narrow { display: none; }
+.sheet-live .sheet-z-narrow { display: none; }
 @media screen and (max-width: 700px) {
   .sheet-live .sheet-frame { --sheet-s: 1; width: auto; max-width: 100%; margin-bottom: 10px; }
   .sheet-live .sheet { width: auto; min-height: 0; font-size: 12px; }
@@ -201,7 +201,5 @@
   .sheet-live .sheet-box { font-size: 12px; padding: 4px 8px 6px; }
   .sheet-live .sheet-z:not(.sheet-z-narrow) { display: none; }
   .sheet-live .sheet-z-narrow { display: block; }
-  .sheet-live .sheet-fig:not(.sheet-fig-narrow) { display: none; }
-  .sheet-live .sheet-fig-narrow { display: block; width: 100%; max-width: 340px; align-self: center; }
   .sheet-live .sheet-z-narrow svg { width: 100%; }
 }

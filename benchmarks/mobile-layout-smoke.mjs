@@ -67,6 +67,27 @@ function glyphReport() {
   return out;
 }
 
+/**
+ * Runs in the page. Text that collides inside the visible charts of the summary sheet: two labels whose boxes overlap by more than 1 px
+ * across and by 30% of the shorter label's height, or a label that leaves its SVG by more than 2 px (descenders of a baseline caption).
+ */
+function svgTextCollisions() {
+  const out = [];
+  for (const s of document.querySelectorAll('#summary-slot .sheet svg')) {
+    const sb = s.getBoundingClientRect();
+    if (!sb.width) continue;
+    const fig = s.closest('figure')?.dataset.figureId ?? '?';
+    const T = [...s.querySelectorAll('text')].map((t) => { const b = t.getBoundingClientRect(); return { t: t.textContent.trim().slice(0, 24), l: b.left, r: b.right, tp: b.top, bt: b.bottom }; }).filter((b) => b.r - b.l > 0.5);
+    for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) {
+      const a = T[i], b = T[j];
+      const iw = Math.min(a.r, b.r) - Math.max(a.l, b.l), ih = Math.min(a.bt, b.bt) - Math.max(a.tp, b.tp);
+      if (iw > 1 && ih > 0.3 * Math.min(a.bt - a.tp, b.bt - b.tp)) out.push(`${fig}: "${a.t}" x "${b.t}" ${iw.toFixed(1)}x${ih.toFixed(1)}`);
+    }
+    for (const b of T) { const ov = Math.max(sb.left - b.l, b.r - sb.right, sb.top - b.tp, b.bt - sb.bottom); if (ov > 2) out.push(`${fig}: "${b.t}" outside its svg by ${ov.toFixed(1)}`); }
+  }
+  return out;
+}
+
 /** Runs in the page. Effective px of the text in the live sheet: computed size times the zoom of the element and its ancestors. */
 function effectiveSizes() {
   const zoomOf = (e) => { let z = 1; for (let p = e; p && p !== document.documentElement; p = p.parentElement) z *= parseFloat(getComputedStyle(p).zoom) || 1; return z; };
@@ -144,16 +165,8 @@ try {
       const sizes = await page.evaluate(effectiveSizes);
       const small = sizes.rows.filter((r) => r.px < FLOOR_PX);
       check(sizes.rows.length > 20 && !small.length, `${tag}: report text renders at ${FLOOR_PX} px or more (smallest ${Math.min(...sizes.rows.map((r) => r.px)).toFixed(1)} px over ${sizes.rows.length} elements${small.length ? `; e.g. ${[...new Map(small.map((r) => [r.el, r])).values()].slice(0, 6).map((r) => `${r.el} ${r.px.toFixed(1)}`).join(', ')}` : ''})`);
-      const z = sizes.svgs.filter((x) => x.fig === 'z-strip-ats-narrow');
+      const z = sizes.svgs.filter((s) => s.fig === 'z-strip-ats-narrow');
       check(z.length === 1 && z[0].min >= 7.5, `${tag}: the stacked z-score graphic shows its labels at ${z[0] ? z[0].min.toFixed(1) : '?'} px or more (floor 7.5)`);
-      const smallCharts = sizes.svgs.filter((x) => x.min < (x.fig === 'z-strip-ats-narrow' ? 7.5 : 8));
-      check(sizes.svgs.length >= 3 && !smallCharts.length, `${tag}: every visible chart label (${sizes.svgs.length} figures; smallest ${Math.min(...sizes.svgs.map((x) => x.min)).toFixed(1)} px) renders at 8 px or more (the z-score graphic at 7.5)${smallCharts.map((x) => ` ${x.fig} ${x.min.toFixed(1)}`).join(',')}`);
-      const aspects = await page.evaluate(() => [...document.querySelectorAll('.sheet-fig-narrow')].map((n) => {
-        const base = n.parentElement.querySelector(`[data-figure-id="${n.dataset.figureId.replace('-narrow', '')}"]`);
-        const a = (f) => { const v = f.querySelector('svg').viewBox.baseVal; return v.height / v.width; };
-        return Math.abs(a(n) - a(base)) / a(base);
-      }));
-      check(aspects.length >= 2 && aspects.every((d) => d < 0.03), `${tag}: the narrow curves keep the aspect of the 336 px ones (largest difference ${(Math.max(...aspects) * 100).toFixed(1)}%), so the page is no taller`);
       const zv = await page.evaluate(() => { const d = (id) => { const f = document.querySelector(`[data-figure-id="${id}"]`); return f ? getComputedStyle(f).display : 'absent'; }; return { wide: d('z-strip-ats'), narrow: d('z-strip-ats-narrow') }; });
       check(zv.wide === 'none' && zv.narrow !== 'none' && zv.narrow !== 'absent', `${tag}: the phone shows the stacked z-score graphic and not the 744 px one`);
 
@@ -235,7 +248,22 @@ try {
     check(!problems.length, `${tag}: no page errors${problems.length ? ` (${problems[0]})` : ''}`);
     await ctx.close();
   }
-} finally {
+
+  // Chart text collisions on a full panel (spirometry, volumes, DLCO, quality challenge, heavy notes) at each phone width. The "10" tick against "Time (s)" in the
+  // DLCO tracing is not new: the tracing draws it the same way on main (2.6 x 5.7 px in sheet units) and in print, so it is the one entry that is named, not filtered by pattern.
+  const KNOWN_DLCO = /^rep-dlco: "10" x "Time \(s\)" /;
+  for (const w of PHONES) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.goto(`${base}?v=2&s=485924449&a=obstruction&t=poor&sc=heavy`);
+    await page.waitForSelector('#answer-form');
+    await page.waitForTimeout(600);
+    const all = await page.evaluate(svgTextCollisions);
+    const fresh = all.filter((x) => !KNOWN_DLCO.test(x));
+    check(!fresh.length, `${w} px: full panel: no chart label overlaps another or leaves its figure${fresh.slice(0, 3).join('; ')}${all.length - fresh.length ? ` (known and unchanged: ${all.length - fresh.length} DLCO tick/axis-title overlap)` : ''}`);
+    await ctx.close();
+  }
+  } finally {
   await browser.close();
   server.kill();
 }

@@ -38,7 +38,6 @@ export const SHEET = { width: 816, height: 1056 };
 const CURVE_BUDGET = 490;
 const CURVE_WEIGHT = { 'rep-flow-volume': 1.6, 'rep-volume-time': 1, 'rep-pleth-loop': 1, 'rep-dlco': 1 };
 const CURVE_WIDTH = 336;
-const NARROW_CURVE_WIDTH = 260;
 const POST_IDS = new Set(['fvc', 'fev1', 'fev1_fvc']);
 
 const byId = (model, id) => model.sections.flatMap((s) => s.tables).find((t) => t.id === id) ?? null;
@@ -244,17 +243,15 @@ function zData(model, interp, caseData) {
 
 /* ------------------------------------------------------------------------------------------------- curves */
 
-function curves(caseData, rt, palette, { narrow = false } = {}) {
+function curves(caseData, rt, palette) {
   const avail = REPRESENTATIVE_FIGURES.map((f) => ({ f, data: f.dataFor(caseData, rt) })).filter((x) => x.data);
   const total = avail.reduce((s, x) => s + CURVE_WEIGHT[x.f.id], 0) || 1;
   const budget = avail.length <= 2 ? CURVE_BUDGET * 0.72 : CURVE_BUDGET;
-  const draw = (width, cls, suffix) => avail.map(({ f, data }) => {
-    const height = Math.round(((budget * CURVE_WEIGHT[f.id]) / total) * (width / CURVE_WIDTH));
-    const svg = f.render(data, { palette, width, height });
-    return `<figure class="${cls}" data-figure-id="${esc(f.id)}${suffix}">${svg}</figure>`;
+  return avail.map(({ f, data }) => {
+    const height = Math.round((budget * CURVE_WEIGHT[f.id]) / total);
+    const svg = f.render(data, { palette, width: CURVE_WIDTH, height });
+    return `<figure class="sheet-fig" data-figure-id="${esc(f.id)}">${svg}</figure>`;
   }).join('');
-  // narrow: the same curves drawn 260 px wide (same aspect), which the practice page shows on a phone; scaled down from 336 px their ticks and legends fall to 6.6 px.
-  return draw(CURVE_WIDTH, 'sheet-fig', '') + (narrow ? draw(NARROW_CURVE_WIDTH, 'sheet-fig sheet-fig-narrow', '-narrow') : '');
 }
 
 /* ---------------------------------------------------------------------------------------------- interpretation */
@@ -314,7 +311,7 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
   return `<div class="sheet-frame"><article class="sheet sheet-summary" data-page="1" aria-label="Summary sheet, case ${esc(model.meta.caseCode)}">`
     + `<div class="sheet-mark" aria-hidden="true">${esc(model.meta.marker)}</div>`
     + `<div class="sheet-content">${identity(model, caseData, interp)}`
-    + `<div class="sheet-main"><div class="sheet-tables">${tables}${solo ? commentsBox : ''}</div><div class="sheet-curves">${curves(caseData, rt, pal, { narrow: narrowZ })}</div></div>`
+    + `<div class="sheet-main"><div class="sheet-tables">${tables}${solo ? commentsBox : ''}</div><div class="sheet-curves">${curves(caseData, rt, pal)}</div></div>`
     + (zsvg ? `<figure class="sheet-z" data-figure-id="z-strip-ats">${zsvg}</figure>` : '')
     + (zsvgNarrow ? `<figure class="sheet-z sheet-z-narrow" data-figure-id="z-strip-ats-narrow">${zsvgNarrow}</figure>` : '')
     + (model.referenceNote?.length ? `<p class="sheet-refnote">${model.referenceNote.map((l) => esc(l)).join(' ')}</p>` : '')
