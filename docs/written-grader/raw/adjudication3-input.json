@@ -1,0 +1,237 @@
+[
+ {
+  "id": "B01",
+  "scenario": "T4",
+  "text": "OVD + RVD. DLCO ↓. BD (-)"
+ },
+ {
+  "id": "B02",
+  "scenario": "T1",
+  "text": "Could be consistent with moderate obstruction if the ratio is truly below the LLN; BD response appears significant though I would confirm with a repeat; DLCO reduced."
+ },
+ {
+  "id": "B03",
+  "scenario": "T4",
+  "text": "Mixed obstructive-restrictive defect. KCO reduced. No significant BD response."
+ },
+ {
+  "id": "B04",
+  "scenario": "T5",
+  "text": "Normal spirometry and volumes. KCO normal, VA normal."
+ },
+ {
+  "id": "B05",
+  "scenario": "T6",
+  "text": "Patient is a 34 yo teacher with episodic wheeze since childhood, worse in spring and with cold air, and she notes that symptoms flare when the classroom is cleaned with a particular spray. She had two courses of oral steroids last year, uses her rescue inhaler about three times a week, and wakes at night roughly once a week. Her mother and brother have hay fever, she has a cat at home, and she is planning to move to a new apartment in the fall that she hopes will have fewer carpets. She jogs on weekends but stops at about two miles because of chest tightness. PFT: obstruction, reversible."
+ },
+ {
+  "id": "B06",
+  "scenario": "T5",
+  "text": "Normal pulmonary function study."
+ },
+ {
+  "id": "B07",
+  "scenario": "T7",
+  "text": "Pattern no specific, lung volume normal. Diffusion is increase. Not done the bronchodilatator."
+ },
+ {
+  "id": "B08",
+  "scenario": "T4",
+  "text": "Mixed pattern. Diffusion capacity normal. No reversible."
+ },
+ {
+  "id": "B09",
+  "scenario": "T7",
+  "text": "Maybe restriction, maybe nonspecific - TLC is normal, so probably nonspecific? DLCO seems high, could be obesity or polycythemia."
+ },
+ {
+  "id": "B10",
+  "scenario": "T7",
+  "text": "Nonspecific pattern. KCO increased, VA reduced."
+ },
+ {
+  "id": "B11",
+  "scenario": "T2",
+  "text": "FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D"
+ },
+ {
+  "id": "B12",
+  "scenario": "T5",
+  "text": "WNL spiro, TLC, DLCO. no BD done."
+ },
+ {
+  "id": "B13",
+  "scenario": "T1",
+  "text": "Moderate airflow obstruction with a significant bronchodilator response. Lung volumes are normal. Diffusing capacity, corrected for hemoglobin, is reduced."
+ },
+ {
+  "id": "B14",
+  "scenario": "T3",
+  "text": "Restriction possible, need TLC. Bronchodilator response is negative. DLCO normal."
+ },
+ {
+  "id": "B15",
+  "scenario": "T5",
+  "text": "All the test are normal, the diffusion also normal. Bronchodilator was not did."
+ },
+ {
+  "id": "B16",
+  "scenario": "T1",
+  "text": "Moderate obstruction, the bronchodilator test is positive, the DLCO is in normal."
+ },
+ {
+  "id": "B17",
+  "scenario": "T4",
+  "text": "mixed obstr + restr (↓ratio, ↓TLC). BD neg. DLCO ↓."
+ },
+ {
+  "id": "B18",
+  "scenario": "T3",
+  "text": "nl ratio, ↓FVC → ?restriction, need lung vols. no BD. DLCO nl."
+ },
+ {
+  "id": "B19",
+  "scenario": "T2",
+  "text": "severe COPD pattern, ↓↓FEV1"
+ },
+ {
+  "id": "B20",
+  "scenario": "T3",
+  "text": "Spirometry shows a reduced FVC and FEV1 with a normal ratio."
+ },
+ {
+  "id": "B21",
+  "scenario": "T2",
+  "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO."
+ },
+ {
+  "id": "B22",
+  "scenario": "T1",
+  "text": "FEV1/FVC ↓, FEV1 62% (mod), FVC nl. TLC nl. +BD resp. DLCOc ↓."
+ },
+ {
+  "id": "B23",
+  "scenario": "T3",
+  "text": "Mild obstruction, no BD study, normal DLCO."
+ },
+ {
+  "id": "B24",
+  "scenario": "T5",
+  "text": "Spirometry, lung volumes and diffusing capacity are within normal limits. A bronchodilator study was not performed."
+ },
+ {
+  "id": "B25",
+  "scenario": "T6",
+  "text": "obstr (FEV1 nl), BD +, DLCO WNL"
+ },
+ {
+  "id": "B26",
+  "scenario": "T2",
+  "text": "v severe OVD. BD (-). DLCO WNL. quality D."
+ },
+ {
+  "id": "B27",
+  "scenario": "T1",
+  "text": "Efforts poor, interpret with caution. Moderate obstruction, +BD, low DLCO."
+ },
+ {
+  "id": "B28",
+  "scenario": "T2",
+  "text": "OVD sev, BD neg, DLCO nl"
+ },
+ {
+  "id": "B29",
+  "scenario": "T2",
+  "text": "No evidence against severe obstruction. BD response is not absent."
+ },
+ {
+  "id": "B30",
+  "scenario": "T1",
+  "text": "Mixed obstr/restr, mod, BD neg, DLCO ↓"
+ },
+ {
+  "id": "B31",
+  "scenario": "T4",
+  "text": "mixed defect, severe obstr component. BD -, DLCO ↓"
+ },
+ {
+  "id": "B32",
+  "scenario": "T4",
+  "text": "Restriction with reduced DLCO; no BD response."
+ },
+ {
+  "id": "B33",
+  "scenario": "T6",
+  "text": "ratio 0.65 (z -2.1), FEV1 92%, post-BD +14% 300 mL, DLCO 98%"
+ },
+ {
+  "id": "B34",
+  "scenario": "T6",
+  "text": "The impression is the impression is the impression."
+ },
+ {
+  "id": "B35",
+  "scenario": "T1",
+  "text": "COPD. ↓DLCO."
+ },
+ {
+  "id": "B36",
+  "scenario": "T6",
+  "text": "mod obstr, +BD"
+ },
+ {
+  "id": "B37",
+  "scenario": "T4",
+  "text": "Reported as mixed defect; agree, both obstruction and restriction are present. BD response not significant as flagged. DLCO reduced."
+ },
+ {
+  "id": "B38",
+  "scenario": "T6",
+  "text": "Ratio not not low. FEV1 not reduced. BD response isn't insignificant."
+ },
+ {
+  "id": "B39",
+  "scenario": "T6",
+  "text": "Ratio is a bit low, maybe obstruction? FEV1 is fine. Some BD response, possibly significant."
+ },
+ {
+  "id": "B40",
+  "scenario": "T2",
+  "text": "Severe airflow obstruction without a significant bronchodilator response. Diffusing capacity is within normal limits. Spirometry efforts did not meet acceptability criteria (grade D), so the severity may be overestimated."
+ },
+ {
+  "id": "B41",
+  "scenario": "T6",
+  "text": "Software flagged ratio < LLN; reported as obstruction with significant BD response. I'd call it mild."
+ },
+ {
+  "id": "B42",
+  "scenario": "T1",
+  "text": "There is obstructive defect of moderate grade, after bronchodilatator the patient is responding significant. Difusion capacity is decrease."
+ },
+ {
+  "id": "B43",
+  "scenario": "T6",
+  "text": "↓ratio w/ nl FEV1 → obstr, FEV1 preserved. +BD. DLCO nl."
+ },
+ {
+  "id": "B44",
+  "scenario": "T7",
+  "text": "Tech says FVC submaximal effort possible. Reported as nonspecific pattern with high DLCO."
+ },
+ {
+  "id": "B45",
+  "scenario": "T7",
+  "text": "Restriction - no, TLC is normal, so nonspecific pattern. DLCO high."
+ },
+ {
+  "id": "B46",
+  "scenario": "T2",
+  "text": "Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think."
+ },
+ {
+  "id": "B47",
+  "scenario": "T2",
+  "text": "Severe obstruction... on reflection I'd call it moderate, since effort was poor and FEV1 is likely underestimated. No BD response. DLCO nl."
+ }
+]

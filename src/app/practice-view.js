@@ -115,7 +115,7 @@ export function interpretationBoxHtml(ctx) {
   }
 
   if (locked) parts.push(comparisonHtml(ctx));
-  else parts.push(`<div class="impression"><label for="impression"><strong>Your impression</strong> <span class="muted">(optional; checked for the statements it makes when you check the answers; no score; stays in this page)</span></label><textarea id="impression" name="impression" rows="4">${esc(responses.impression)}</textarea></div>`);
+  else parts.push(`<div class="impression"><label for="impression"><strong>Your impression</strong> <span class="muted">${ctx.writtenEnabled ? '(optional; experimental and unreliable, not for assessment: checked for the statements it makes when you check the answers; no score; stays in this page)' : '(optional; not scored)'}</span></label><textarea id="impression" name="impression" rows="4">${esc(responses.impression)}</textarea></div>`);
 
   parts.push('</form>');
   const hint = !locked && !canCheck ? '<span class="muted" id="check-hint">Show the technologist’s statement and answer the last question before checking.</span>' : '';

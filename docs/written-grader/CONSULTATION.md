@@ -40,3 +40,14 @@ Would not ship: a numeric score; fuzzy matching on value words; detecting the 20
 | Accessibility and privacy sentinel tests across location, storage, console, exports and `announce` | Accepted | |
 
 Pre-existing issues surfaced and left alone (outside this feature's scope): the structured bronchodilator key defect above, and `concise.js` printing "COHb was not measured; recent smoking could lower the DLCO" in the composed summary after checking.
+
+## Departures from the consultation and later decisions (recorded for honesty)
+
+The consultation was held once, before any grading code. These later decisions were made on evidence from the phrasing sets, blind adjudication and the independent Codex review, and were not put back to Opus:
+
+- "Suggests" and "consistent with" are treated as soft wording (credited only when they agree with the key; never contradictory) instead of as hedges, as the consultation advised for "suggests". Reason: standard report language; the effect on false credit is bounded because a disagreement abstains.
+- A text that contradicts itself, or that states and then doubts the same pattern, goes to Needs review rather than to Contradicts the key (owner preference for abstention over accusation).
+- A correct pattern is not credited when the same text hedges a different pattern or says volumes are needed although TLC was reported (blind adjudication of the first set).
+- "No bronchodilator response" where no post study exists abstains; a positive response claimed there is still contradicted.
+- Hyperinflation, air trapping and a high TLC are separate findings and are never scored; a condition ("If TLC shows …") never creates a limitation claim.
+- After set 3 failed, the feature was made opt-in and disabled by default instead of being tuned further.

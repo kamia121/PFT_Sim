@@ -19,8 +19,7 @@ import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
 import { renderPractice, detailsBodyHtml } from './practice-view.js';
-import { takeSnapshot, visibleSnapshot } from '../written/session.js';
-import { writtenFeedbackHtml, writtenAnnouncement } from '../written/view.js';
+import { writtenEnabled } from '../written/enable.js';
 import { pageRulesCss } from '../report-page/pages.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -34,6 +33,7 @@ const state = {
   reportModel: null, reportDark: false, reportInterp: false, printing: false,
   tally: { answered: 0, matched: 0, items: 0 }, fitContent: null,
   written: null, // snapshot of the written-impression check: made only by an explicit scored check, retired by a new case (src/written/session.js)
+  writtenOn: false, writtenMods: null, // the experimental written check: off unless the address says written=1; its modules load only then
 };
 
 /** Practice mix: weights are teaching choices, not prevalence. */
@@ -128,7 +128,8 @@ function practiceContext() {
 function render({ focus = null } = {}) {
   if (!$('#panel-report').hidden) { renderReportView(); return; }
   const ctx = practiceContext();
-  ctx.writtenHtml = writtenFeedbackHtml(visibleSnapshot(state.written, { caseData: state.case, stage: state.stage }), { currentEquation: state.spirometryEquation });
+  ctx.writtenEnabled = state.writtenOn;
+  ctx.writtenHtml = state.writtenOn && state.writtenMods ? state.writtenMods.writtenFeedbackHtml(state.writtenMods.visibleSnapshot(state.written, { caseData: state.case, stage: state.stage }), { currentEquation: state.spirometryEquation }) : '';
   $('#case').innerHTML = renderPractice(ctx);
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
@@ -247,16 +248,16 @@ function checkAnswers(scored) {
   const next = checkStage(state.stage, { scored });
   if (next === state.stage) return;
   state.stage = next;
-  if (scored) {
+  if (scored && state.writtenOn && state.writtenMods) {
     // The only place the written impression is graded: an explicit scored check, once, on the case and equation on the page.
     const { a, b } = interpretations();
-    try { state.written = takeSnapshot({ scored, stage: next.stage, text: state.responses.impression, caseData: state.case, interp: a, interpOther: b, equation: state.spirometryEquation }); } catch { state.written = null; }
+    try { state.written = state.writtenMods.takeSnapshot({ scored, stage: next.stage, text: state.responses.impression, caseData: state.case, interp: a, interpOther: b, equation: state.spirometryEquation }); } catch { state.written = null; }
   }
   render();
   if (scored) {
     state.tally = addToTally(state.tally, state.feedback);
     $('#tally').textContent = `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.`;
-    announce(`Answers checked: ${state.feedback.matched} of ${state.feedback.total} matched the key. ${writtenAnnouncement(visibleSnapshot(state.written, { caseData: state.case, stage: state.stage }))}`.trim());
+    announce(`Answers checked: ${state.feedback.matched} of ${state.feedback.total} matched the key. ${state.writtenOn && state.writtenMods ? state.writtenMods.writtenAnnouncement(state.writtenMods.visibleSnapshot(state.written, { caseData: state.case, stage: state.stage })) : ''}`.trim());
   } else announce('The key is shown.');
   $('#reveal')?.scrollIntoView?.({ block: 'start' });
 }
@@ -353,6 +354,10 @@ async function boot() {
   $('#theme-toggle').textContent = dark ? 'Light mode' : 'Dark mode';
   $('#version').textContent = String(GENERATOR_VERSION);
   $('#method').innerHTML = R.renderMethod(GENERATOR_VERSION);
+  state.writtenOn = writtenEnabled(location.search);
+  if (state.writtenOn) {
+    try { state.writtenMods = { ...(await import('../written/session.js')), ...(await import('../written/view.js')) }; } catch { state.writtenOn = false; }
+  }
   state.datasets = await loadDatasets();
   state.resolve = createReference(state.datasets).resolveReference;
   // The sheets, the technologist's report and the challenge list come from other modules; a build without one still works.

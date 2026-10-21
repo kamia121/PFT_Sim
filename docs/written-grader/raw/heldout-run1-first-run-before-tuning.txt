@@ -1,0 +1,45 @@
+{
+ "items": 144,
+ "judgments": 720,
+ "falseCredit": 10,
+ "falseContradiction": 16,
+ "falseMissing": 5,
+ "creditRecall": "178/248",
+ "contradictionRecall": "34/41",
+ "abstainedOnClear": "37/289",
+ "reviewedOnUnclear": "34/52"
+}
+--- falseCredit
+H005 pattern gold uncertain | Mild obstruction; cannot exclude a coexisting restrictive process.
+H017 pattern gold uncertain | Obstruction on spirometry; lung volumes are needed to exclude a restrictive component.
+H020 dlco gold uncertain | Mild obstruction without bronchodilator response. DLCO normal but not adjusted for hemoglobin, so interpret carefully.
+H022 dlco gold uncertain | It would be wrong to say there is no obstruction; the response to bronchodilator is not a significant one; DLCO is not abnormal; severity is
+H027 pattern gold uncertain | Moderate obstruction. The reduced FVC likely reflects restriction.
+H034 pattern gold uncertain | If TLC shows hyperinflation then this is obstruction with air trapping. Obstruction is moderate. BD positive.
+H068 pattern gold uncertain | Restriction on spirometry (normal ratio, low FVC); lung volumes needed to confirm.
+H094 pattern gold uncertain | Not an abnormal study; not a good quality study, grade limited.
+H094 quality gold uncertain | Not an abnormal study; not a good quality study, grade limited.
+H139 pattern gold uncertain | Borderline obstruction, FEV1 normal.
+--- falseContradiction
+H035 bd gold uncertain | Moderate obstruction. Significant bronchodilator response. No significant bronchodilator response.
+H036 severity gold correct | Mild obstruction... correction, moderate obstruction by FEV1. BD response significant. TLC not available, DLCO not done.
+H045 pattern gold correct | Yesterday was my first day back after the conference and I am still catching up on a mountain of emails, most of which are about parking per
+H055 pattern gold correct | No obstruction. Not normal either: restrictive pattern with low TLC. No BD testing done. Gas transfer reduced.
+H060 pattern gold uncertain | Restriction present. No restriction, TLC normal. DLCO reduced.
+H061 pattern gold correct | Obstructive... sorry, restrictive pattern with low TLC. DLCO reduced. No BD done.
+H083 pattern gold uncertain | Normal study. Obstruction is present. Poor effort.
+H084 pattern gold correct | Mild restriction -- scratch that, normal; efforts poor.
+H103 pattern gold correct | No obstruction. Low FVC with normal ratio; restriction not confirmed without volumes.
+H107 pattern gold uncertain | Restriction confirmed. Cannot confirm restriction, no TLC.
+H108 pattern gold correct | Restriction -- no wait, I cannot say restriction without volumes; nonspecific pattern.
+H112 pattern gold correct | Low FVC, normal FEV1/FVC. Not diagnostic of restriction without TLC. No BD done.
+H131 pattern gold uncertain | Obstruction present. No obstruction. FEV1 normal.
+H132 severity gold correct | Mild obstruction. Correction: FEV1 is preserved so the obstruction cannot be graded; BD no response.
+H133 severity gold correct | Report grades mild obstruction but FEV1 is normal so I would not grade it.
+H139 severity gold correct | Borderline obstruction, FEV1 normal.
+--- falseMissing
+H026 pattern gold correct | mod obstr, sig BDR, no TLC
+H026 severity gold correct | mod obstr, sig BDR, no TLC
+H032 bd gold correct | Moderat obstuction, low FVC; TLC not mesured; signifcant bronchodilater responce; no DLCO done
+H079 quality gold correct | No obstruction, no restriction, no diffusion defect. Not a high-quality test.
+H119 pattern gold correct | LOW FVC NORMAL RATIO NEED LUNG VOLUMES NO BD NO DLCO

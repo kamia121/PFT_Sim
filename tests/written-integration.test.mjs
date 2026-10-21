@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { setup, CASES } from './helpers/written-cases.mjs';
 import { takeSnapshot, visibleSnapshot } from '../src/written/session.js';
+import { writtenEnabled } from '../src/written/enable.js';
 import { writtenFeedbackHtml, writtenAnnouncement } from '../src/written/view.js';
 import { renderPractice } from '../src/app/practice-view.js';
 import { createStage, check } from '../src/app/stage.js';
@@ -38,11 +39,21 @@ test('only the scored check calls the grader, and nothing outside the practice p
   assert.equal(calls, 1);
   const fn = main.slice(main.indexOf('function checkAnswers('), main.indexOf('function releaseStatement('));
   assert.ok(fn.includes('takeSnapshot('), 'the one call is inside checkAnswers');
-  assert.match(fn, /if \(scored\) \{[\s\S]*takeSnapshot/, 'and only on the scored branch');
+  assert.match(fn, /if \(scored && state\.writtenOn && state\.writtenMods\) \{[\s\S]*takeSnapshot/, 'and only on the scored branch with the switch on');
   for (const f of [...walk('src/quiz'), ...walk('src/report'), ...walk('src/report-page'), ...walk('src/challenges'), ...walk('src/core'), ...walk('src/interpret')].filter((x) => x.endsWith('.js'))) {
     assert.ok(!/written\//.test(read(f)), `${f} must not import the written grader`);
   }
   for (const f of ['quiz.html', 'report.html']) assert.ok(!/written/.test(read(f)), `${f} does not load it`);
+});
+
+test('the check is off by default and on only for written=1', () => {
+  for (const q of ['', '?', '?c=abc', '?written=0', '?written=true', '?written=', '?Written=1', '?written=1x', undefined, null]) assert.equal(writtenEnabled(q), false, String(q));
+  assert.equal(writtenEnabled('?written=1'), true);
+  assert.equal(writtenEnabled('?c=abc&written=1&eq=GLI2012'), true);
+  // nothing outside the opt-in path loads the grader: main.js has no static import of it
+  const main = read('src/app/main.js');
+  assert.ok(!/^import .*written\/(session|view|index)\.js/m.test(main), 'only the switch is imported statically');
+  assert.match(main, /import\('\.\.\/written\/session\.js'\)/);
 });
 
 test('quiz scope: the quiz neither grades free text nor shows the written check', () => {
@@ -100,7 +111,7 @@ test('the snapshot is graded under the displayed equation, with the other equati
   assert.notEqual(g.interp.key.pattern, l.interp.key.pattern);
 });
 
-function ctxFor(stageN, { scored = true, writtenHtml = '<section class="written-feedback">WRITTEN-MARK</section>', text = 'Mild obstruction' } = {}) {
+function ctxFor(stageN, { writtenEnabled: on = true, scored = true, writtenHtml = '<section class="written-feedback">WRITTEN-MARK</section>', text = 'Mild obstruction' } = {}) {
   const caseData = buildCase(CASES.mild, ds);
   const equation = 'GLIglobal';
   const interp = interpret(caseData.report, resolveReference, equation);
@@ -111,15 +122,18 @@ function ctxFor(stageN, { scored = true, writtenHtml = '<section class="written-
   if (stageN === 3) st = check(st, { scored });
   const vis = stub.visibility({ qualityChallenge: false, stage: st.stage });
   const responses = { ...emptyResponses(), impression: text };
-  return { caseData, interp, cmp, equation, flags: 'lln', qualityChallenge: false, stage: st.stage, scored: st.scored, detailsOpen: false, vis, canCheck: true, rt, items, responses, model: null, sheets: { summarySheetHtml: null, detailsSheetHtml: null }, palette: {}, figView: {}, showSchematic: false, resolve: resolveReference, feedback: null, writtenHtml };
+  return { caseData, interp, cmp, equation, flags: 'lln', qualityChallenge: false, stage: st.stage, scored: st.scored, detailsOpen: false, vis, canCheck: true, rt, items, responses, model: null, sheets: { summarySheetHtml: null, detailsSheetHtml: null }, palette: {}, figView: {}, showSchematic: false, resolve: resolveReference, feedback: null, writtenHtml, writtenEnabled: on };
 }
 
 test('page markup: the feedback is absent before the check, and present only in the compare block after it', () => {
   const before = renderPractice(ctxFor(1));
   assert.ok(!before.includes('WRITTEN-MARK') && !before.includes('written-feedback'));
   assert.match(before, /id="impression"/);
-  assert.match(before, /no score; stays in this page/);
+  assert.match(before, /experimental and unreliable, not for assessment[^<]*no score; stays in this page/);
   assert.doesNotMatch(before, /optional; not scored/);
+  // with the switch off the label is the original one
+  const off = renderPractice(ctxFor(1, { writtenEnabled: false }));
+  assert.match(off, /\(optional; not scored\)/); assert.doesNotMatch(off, /experimental/);
   const after = renderPractice(ctxFor(3));
   assert.equal(after.split('WRITTEN-MARK').length - 1, 1);
   assert.ok(after.indexOf('WRITTEN-MARK') > after.indexOf('Composed summary') - 100000 && after.indexOf('WRITTEN-MARK') < after.indexOf('Interpreting physician'));
@@ -161,7 +175,7 @@ test('too-long, blank and abstained results render honestly and carry no score',
   assert.match(html, /No interpretation statements could be recognized/);
   assert.doesNotMatch(html, /\d+\s*%|out of|score of|grade of/i);
   assert.match(html, /no score|gives no score/);
-  assert.match(html, /not a validated assessment/);
+  assert.match(html, /not a validated assessment/); assert.match(html, /Experimental and unreliable; not for trainee assessment/);
 });
 
 test('the markup separates the four groups with headings and status words', () => {

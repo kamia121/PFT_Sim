@@ -9,6 +9,8 @@
  */
 import { startServer, launchBrowser } from './lib/harness.mjs';
 import { serializeDescriptor } from '../src/core/descriptor.js';
+import { buildCase } from '../src/core/case.js';
+import { loadDatasets } from '../src/reference/load.js';
 import fs from 'node:fs';
 
 const port = 5207;
@@ -19,7 +21,8 @@ const browser = await launchBrowser();
 let failures = 0;
 const check = (ok, msg) => { if (!ok) { failures++; console.error('FAIL', msg); } else console.log('ok  ', msg); };
 const base = `http://127.0.0.1:${port}/`;
-const caseUrl = `${base}?${serializeDescriptor({ seed: 1, archetype: 'obstruction', severity: 1, technique: 'good', panel: 'full' })}`;
+const caseOff = `${base}?${serializeDescriptor(buildCase({ seed: 1, archetype: 'obstruction', severity: 1, technique: 'good', panel: 'full' }, await loadDatasets()).descriptor)}`;
+const caseUrl = `${caseOff}&written=1`; // the experimental check is opt-in
 const TEXT = `Mild obstruction ${SENT}, no significant bronchodilator response, DLCO normal.`;
 
 try {
@@ -31,9 +34,20 @@ try {
   page.on('pageerror', (e) => consoleMsgs.push(`pageerror: ${e.message}`));
   await context.route('**/*', (route) => { const u = route.request().url(); if (!u.startsWith(base)) { foreign.push(u); return route.abort(); } return route.continue(); });
 
-  const fresh = async () => { await page.goto(caseUrl); await page.waitForSelector('#answer-form'); };
+  const fresh = async (url = caseUrl) => { await page.goto(url); try { await page.waitForSelector('#answer-form', { timeout: 8000 }); } catch (e) { console.error('page did not render the form', page.url(), (await page.locator('#case').innerText()).slice(0, 300)); throw e; } };
   const written = () => page.locator('.written-feedback');
   const status = () => page.locator('#status').innerText();
+
+  // ---- switch off (the default): the page is as before and the feature is never loaded
+  await fresh(caseOff);
+  check((await page.locator('.impression label').innerText()).includes('optional; not scored'), 'switch off: the impression label is the original one');
+  await page.fill('#impression', TEXT);
+  await page.click('#check-answers');
+  await page.waitForSelector('.impression-compare');
+  check((await written().count()) === 0, 'switch off: a scored check shows no written feedback');
+  check(requests.every((r) => !/\/src\/written\/(session|view|index|extract|evaluate|rubric|lexicon)\.js/.test(r.url)), 'switch off: no grader module is requested');
+  check(!/Written impression checked/.test(await status()), 'switch off: the status line is unchanged');
+  requests.length = 0;
 
   // ---- before any check: nothing of the feature shows, typing sends nothing
   await fresh();
@@ -42,7 +56,7 @@ try {
   check((await written().count()) === 0, 'before the check there is no written feedback in the page');
   check(!(await page.content()).includes('Written impression: formative check'), 'the feedback heading is not in the page source before the check');
   check(requests.length === reqAfterLoad, 'typing the impression makes no request');
-  check(/checked for the statements it makes[^<]*no score/.test(await page.locator('.impression label').innerText()) || /no score/.test(await page.locator('.impression label').innerText()), 'the impression label says it is checked and carries no score');
+  check(/experimental and unreliable[^)]*no score/.test(await page.locator('.impression label').innerText()), 'the impression label says it is experimental, checked and carries no score');
 
   // ---- Show the key without scoring: stage 3, never graded
   await page.click('#show-key');

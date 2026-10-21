@@ -1,0 +1,371 @@
+[
+ {
+  "id": "A01",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A02",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction correct, but says restriction cannot be excluded despite measured normal TLC; hedged and partly inconsistent."
+ },
+ {
+  "id": "A03",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "correct",
+  "overall_note": "Explicit self-correction to normal; graded on the final statement."
+ },
+ {
+  "id": "A04",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "uncertain",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Bronchodilator response stated as both significant and not significant."
+ },
+ {
+  "id": "A05",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "correct",
+  "overall_note": "Calls the study normal and also states obstruction is present."
+ },
+ {
+  "id": "A06",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "correct",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "Double negatives for obstruction, DLCO and severity; bronchodilator statement is a plain negative."
+ },
+ {
+  "id": "A07",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A08",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "Lists values only without naming a pattern or interpreting DLCO."
+ },
+ {
+  "id": "A09",
+  "pattern": "correct",
+  "severity": "wrong",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A10",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction correct, but claims lung volumes are needed although TLC was measured and normal."
+ },
+ {
+  "id": "A11",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A12",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Restriction named, but says lung volumes are needed although TLC was measured and low."
+ },
+ {
+  "id": "A13",
+  "pattern": "absent",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "No interpretation given; text is an instruction to the grader, not clinical content."
+ },
+ {
+  "id": "A14",
+  "pattern": "correct",
+  "severity": "wrong",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A15",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Explicit self-correction to nonspecific pattern pending volumes; graded on the final statement."
+ },
+ {
+  "id": "A16",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "correct",
+  "quality": "correct",
+  "overall_note": ""
+ },
+ {
+  "id": "A17",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A18",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "correct",
+  "overall_note": "KCO statement does not count toward DLCO."
+ },
+ {
+  "id": "A19",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "Explicit self-correction to restrictive; graded on the final statement."
+ },
+ {
+  "id": "A20",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "Explicit self-correction to moderate; graded on the final statement."
+ },
+ {
+  "id": "A21",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "DLCO called normal but wrongly said unadjusted for hemoglobin, with a caution to interpret carefully."
+ },
+ {
+  "id": "A22",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A23",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "States restriction confirmed and then not confirmable."
+ },
+ {
+  "id": "A24",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "correct",
+  "overall_note": "Normality stated only as a double negative."
+ },
+ {
+  "id": "A25",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction described only as borderline."
+ },
+ {
+  "id": "A26",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "Grades restriction severity, which the severity domain (obstruction only) does not cover."
+ },
+ {
+  "id": "A27",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "correct",
+  "quality": "correct",
+  "overall_note": ""
+ },
+ {
+  "id": "A28",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction correct, but attributes low FVC to likely restriction without lung volumes."
+ },
+ {
+  "id": "A29",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "uncertain",
+  "overall_note": "Claims poor effort limits quality when quality was acceptable."
+ },
+ {
+  "id": "A30",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A31",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A32",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A33",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A34",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A35",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A36",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "wrong",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "A37",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Explicit self-correction to ungraded severity; graded on the final statement."
+ },
+ {
+  "id": "A38",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "uncertain",
+  "overall_note": "Raises poor effort as a possible cause though quality was acceptable; hedged rather than claimed."
+ },
+ {
+  "id": "A39",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "States obstruction present and absent."
+ },
+ {
+  "id": "A40",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "States restriction present and absent, with TLC called normal."
+ },
+ {
+  "id": "A41",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction attributed to the report rather than stated by the trainee."
+ }
+]
