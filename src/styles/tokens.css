@@ -23,6 +23,11 @@
   --axis: #56615E;
 
   --flag: #9A6B12;             /* outside reference range (text only, never a fill) */
+  /* z-score graphic (ATS 2017 sample): the one place where a color is a fill; see CLAUDE.md */
+  --z-severe: #C8553D;
+  --z-moderate: #E8A04C;
+  --z-mild: #F2D95C;
+  --z-ok: #CFE8CC;
   --flag-bg: #FBF4E6;
   --focus: #0E2B73;
   color-scheme: light;
@@ -47,6 +52,10 @@
     --axis: #9BA7A4;
     --flag: #E0B35F;
     --flag-bg: #2A2416;
+    --z-severe: #B5432F;
+    --z-moderate: #C27A2C;
+    --z-mild: #B79D2F;
+    --z-ok: #3E7F63;
     --focus: #9DB2EC;
     color-scheme: dark;
   }
@@ -70,6 +79,10 @@
   --axis: #9BA7A4;
   --flag: #E0B35F;
   --flag-bg: #2A2416;
+  --z-severe: #B5432F;
+  --z-moderate: #C27A2C;
+  --z-mild: #B79D2F;
+  --z-ok: #3E7F63;
   --focus: #9DB2EC;
   color-scheme: dark;
 }

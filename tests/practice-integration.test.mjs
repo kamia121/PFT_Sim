@@ -54,7 +54,7 @@ for (const input of CASES) {
     const html = renderPractice(ctx);
     for (const line of rt.qualityLines) assert.ok(!html.includes(line), `quality line in the source: ${line}`);
     assert.doesNotMatch(html, /FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/);
-    assert.doesNotMatch(html, />\s*(?:not )?(?:acceptable|usable)\s*</i);
+    assert.doesNotMatch(html, /<(?:td|li|b|strong|span)\b[^>]*>\s*(?:not )?(?:acceptable|usable)\s*</i); // answer options in the question labels are not results
     for (const item of items) if (item.why) assert.ok(!html.includes(item.why), `explanation of ${item.id} in the source`);
     assert.doesNotMatch(html, /details held/);
   });

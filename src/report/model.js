@@ -15,6 +15,7 @@
  * acceptability and comments derived from them are included only when `includeGrades` is true (the
  * default, as on a real report); the learner page passes false until answers are checked.
  */
+import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
 import { LLN_Z } from '../interpret/interpret.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { createStream } from '../core/prng.js';
@@ -30,7 +31,7 @@ import { faultWording } from '../core/quality.js';
  * Categories of the scenario catalog (src/scenarios/) whose technologist comment describes a fault of a maneuver, trial or test.
  * Those comments are technical notes (page 2 of the report); every other category states a condition of the patient or the
  * preparation that bears on interpretation (medication, smoking, hemoglobin, bronchodilator timing, effort, height, equation
- * coverage) and prints on page 1. A comment whose category is unknown counts as bearing on interpretation.
+ * coverage) and prints on page 1. The rule is the one the technologist report uses for page 1 (PAGE1_COMMENT_CATEGORIES in src/core/rt-report.js: medication, smoking, caffeine, exercise, meal, clothing, oxygen, altitude); every other comment, including one with an unknown category, prints on page 2 as a technical note, so no comment is lost. Height, sex and equation notes also print on page 1 in the identity block and the reference notes.
  */
 export const TECHNICAL_COMMENT_CATEGORIES = new Set(['Cough', 'Glottic closure', 'Leak', 'Interface', 'Mouthpiece obstruction', 'DLCO technique', 'End of test', 'Start of test', 'Repeatability', 'Plethysmography']);
 
@@ -168,7 +169,7 @@ export const qualityNotesFor = (caseData) => derivedComments(caseData, true).fil
 function scenarioComments(scenario) {
   const comments = scenario?.technologistComments ?? [];
   const statements = Array.isArray(scenario?.statements) ? scenario.statements : [];
-  return comments.map((text, i) => ({ text, kind: TECHNICAL_COMMENT_CATEGORIES.has(statements[i]?.category) ? 'technical' : 'interpretation' }));
+  return comments.map((text, i) => ({ text, kind: PAGE1_COMMENT_CATEGORIES.includes(statements[i]?.category) ? 'interpretation' : 'technical' }));
 }
 
 /**

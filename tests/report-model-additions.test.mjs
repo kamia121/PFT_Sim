@@ -78,7 +78,7 @@ test('the technologist comments split into those that bear on interpretation and
   }
 });
 
-test('scenario comments are split by the category of their statement; an unknown category bears on interpretation', () => {
+test('scenario comments are split by the category of their statement with the page-1 rule of the technologist report; every other category, an unknown one included, is a technical note on page 2', () => {
   const c2 = makeModel({ seed: 12, archetype: 'obstruction' });
   c2.c.scenario = {
     ...c2.c.scenario,
@@ -86,8 +86,9 @@ test('scenario comments are split by the category of their statement; an unknown
     technologistComments: ['Salbutamol 2 h ago.', 'Coughed on blow 2.', 'Smoked 30 min ago.', 'Hemoglobin not available.', 'Fair effort.', 'Unlisted.', 'Drift on the loops.'],
   };
   const m = buildReportModel(c2.c, c2.interp, { resolve: resolveReference, includeGrades: false });
-  assert.deepEqual(m.interpretationComments.slice(0, 5), ['Salbutamol 2 h ago.', 'Smoked 30 min ago.', 'Hemoglobin not available.', 'Fair effort.', 'Unlisted.']);
-  assert.deepEqual(m.technicalNotes.slice(0, 2), ['Coughed on blow 2.', 'Drift on the loops.']);
+  assert.deepEqual(m.interpretationComments.slice(0, 2), ['Salbutamol 2 h ago.', 'Smoked 30 min ago.']);
+  // Hemoglobin, effort and unlisted categories are not on page 1 through this list (the technologist report writes its own hemoglobin and effort lines); they print on page 2 so that nothing is lost.
+  assert.deepEqual(m.technicalNotes.slice(0, 5), ['Coughed on blow 2.', 'Hemoglobin not available.', 'Fair effort.', 'Unlisted.', 'Drift on the loops.']);
   assert.deepEqual(m.technologistComments.slice(0, 7), c2.c.scenario.technologistComments, 'flat list keeps the scenario order');
   // A scenario whose comments and statements disagree in length does not throw.
   c2.c.scenario = { ...c2.c.scenario, statements: [] };

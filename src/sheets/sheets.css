@@ -105,3 +105,6 @@
   .sheet-mark { color: rgba(0, 0, 0, .06); }
   .sheet-table td.flag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Notes on the reference values (fallbacks, height and sex used, age limits): small print under the z-score graphic. */
+.sheet-refnote { margin: 2px 0 0; font-size: 7pt; line-height: 1.25; color: var(--sheet-muted, #444); flex: 0 0 auto; }

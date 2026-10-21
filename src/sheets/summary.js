@@ -286,6 +286,7 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
     + `<div class="sheet-content">${identity(model, caseData, interp)}`
     + `<div class="sheet-main"><div class="sheet-tables">${tables}${solo ? commentsBox : ''}</div><div class="sheet-curves">${curves(caseData, rt, pal)}</div></div>`
     + (zsvg ? `<figure class="sheet-z" data-figure-id="z-strip-ats">${zsvg}</figure>` : '')
+    + (model.referenceNote?.length ? `<p class="sheet-refnote">${model.referenceNote.map((l) => esc(l)).join(' ')}</p>` : '')
     + `<div class="sheet-boxes${solo ? ' solo' : ''}">${solo ? '' : commentsBox}`
     + `<section class="sheet-box sheet-interp"><h2>Interpretation</h2><div id="sheet-interpretation" class="sheet-interp-body"></div>`
     + `<div class="sheet-sign"><div><span class="sheet-line"></span>${esc(foot.signatureLabel)}</div><div class="short"><span class="sheet-line"></span>${esc(foot.dateLabel)}</div></div></section></div>`

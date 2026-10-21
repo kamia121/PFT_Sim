@@ -11,8 +11,9 @@ import dlcoTrace from './dlco-trace.js';
 import panelSpirometry from './panel-spirometry.js';
 import panelPleth from './panel-pleth.js';
 import panelDlco from './panel-dlco.js';
+import { REPRESENTATIVE_FIGURES } from './representative.js';
 
-export const FIGURES = Object.fromEntries([panelSpirometry, panelPleth, panelDlco, flowVolume, volumeTime, zStrip, plethShutter, plethRaw, dlcoTrace].map((f) => [f.id, f]));
+export const FIGURES = Object.fromEntries([panelSpirometry, panelPleth, panelDlco, ...REPRESENTATIVE_FIGURES, flowVolume, volumeTime, zStrip, plethShutter, plethRaw, dlcoTrace].map((f) => [f.id, f]));
 /** Combined panels first (they are what a laboratory report shows), then the stand-alone plots they are built from. */
 export const PANEL_IDS = ['panel-spirometry', 'panel-pleth', 'panel-dlco'];
 export const FIGURE_ORDER = [...PANEL_IDS, 'z-strip', 'flow-volume', 'volume-time', 'pleth-shutter', 'pleth-raw', 'dlco-trace'];
