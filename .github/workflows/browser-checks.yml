@@ -53,6 +53,8 @@ jobs:
         run: timeout 300 node benchmarks/theme-smoke.mjs
       - name: Phone layout harness
         run: timeout 400 node benchmarks/mobile-layout-smoke.mjs
+      - name: Combined theme and review mode harness
+        run: timeout 300 node benchmarks/combined-ui-smoke.mjs
       - name: Keep what the run produced when it failed
         if: failure()
         uses: actions/upload-artifact@v4
