@@ -8,6 +8,12 @@
  *
  * Nothing from the key, the technologist's truth or the challenge answers is written into the markup before the answers are checked:
  * the challenge items contribute their title, prompt and option labels only. `visibility` decides what the sheets receive.
+ *
+ * Interpretation workspace (src/app/workspace.css). On a wide screen the same markup is laid out as a data column beside a sticky
+ * answer column; below that width each structured question carries the report values it is read from, and a disclosure hides or
+ * shows the tables and curves. The additions carry `data-ws-ui`, generate no box unless a screen rule shows them, and never print.
+ * The excerpts are copied from the summary sheet's own cells (text and flag), for a fixed set of rows per question that does not
+ * depend on the case's values, its key or the stage; they carry no footnote, no comment and no control.
  */
 import { esc } from './format.js';
 import { PRACTICE_QUESTIONS, hasData, questionLabel } from './answers.js';
@@ -41,12 +47,77 @@ function optionHtml({ name, type, value, label, checked, disabled }) {
   return `<label><input type="${type}" name="${esc(name)}" value="${esc(value)}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}> ${esc(label)}</label>`;
 }
 
-function structuredFieldsets(c, structured, locked) {
+function structuredFieldsets(c, structured, locked, excerpts = {}) {
   return PRACTICE_QUESTIONS.map((q) => {
     const na = !hasData(c, q.id);
     const opts = q.options.map(([v, l]) => optionHtml({ name: q.id, type: 'radio', value: v, label: l, checked: structured[q.id] === v, disabled: locked })).join('');
-    return `<fieldset><legend>${esc(questionLabel(c, q))}</legend>${na ? '<p class="muted">Not performed in this case.</p>' : ''}${opts}</fieldset>`;
+    return `<fieldset><legend>${esc(questionLabel(c, q))}</legend>${na ? '' : excerpts[q.id] ?? ''}${na ? '<p class="muted">Not performed in this case.</p>' : ''}${opts}</fieldset>`;
   }).join('');
+}
+
+/**
+ * Rows and columns of the summary sheet shown beside each structured question on a narrow screen. Fixed per question: the same
+ * cells for every case that has the test, whatever its values, key or stage.
+ */
+export const EXCERPTS = {
+  pattern: [['spirometry', ['fvc', 'fev1', 'fev1_fvc'], ['pre', 'lln', 'z']], ['volumes', ['tlc'], ['result', 'lln', 'z']]],
+  severity: [['spirometry', ['fev1'], ['pre', 'z', 'pct']]],
+  bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'post', 'change', 'changePct']]],
+  dlco: [['dlco', ['hb', 'dlco', 'kco', 'va'], ['result', 'lln', 'z']]],
+};
+const EXCERPT_TITLES = { spirometry: 'Spirometry', volumes: 'Lung volumes', dlco: 'Diffusing capacity' };
+const EXCERPT_HEADS = { pre: 'Pre', post: 'Post', lln: 'LLN', z: 'z', pct: '%Pred', change: 'Change', changePct: '%Chng', result: 'Result' };
+
+/**
+ * The cells of a summary sheet, read back from its markup: `{ [table]: { [row]: { label, cells: { [column]: { text, flag } } } } }`.
+ * Text and labels are the sheet's own escaped markup, so an excerpt cannot differ from the sheet.
+ * @param {string} sheetHtml output of summarySheetHtml
+ */
+export function sheetCells(sheetHtml) {
+  const out = {};
+  const row = (t, r) => ((out[t] ??= {})[r] ??= { label: '', cells: {} });
+  for (const m of sheetHtml.matchAll(/<th scope="row" class="l" data-t="([\w-]+)" data-r="([\w:-]+)" data-c="index">([\s\S]*?)<\/th>/g)) row(m[1], m[2]).label = m[3];
+  for (const m of sheetHtml.matchAll(/<td class="[^"]*" data-t="([\w-]+)" data-r="([\w:-]+)" data-c="(\w+)"(?: data-flag="(\w+)" title="([^"]*)")?>([^<]*)<\/td>/g)) {
+    row(m[1], m[2]).cells[m[3]] = { text: m[6], flag: m[4] ?? null, title: m[5] ?? '' };
+  }
+  return out;
+}
+
+/** The excerpt of one structured question, or '' when the sheet holds none of its rows. */
+export function excerptHtml(questionId, cells) {
+  const blocks = (EXCERPTS[questionId] ?? []).map(([t, rows, cols]) => {
+    const present = rows.filter((r) => cells[t]?.[r]);
+    const keep = cols.filter((k) => present.some((r) => cells[t][r].cells[k]?.text));
+    if (!present.length || !keep.length) return '';
+    // Without a bronchodilator study the sheet's one value column is the best value, not a pre-bronchodilator one.
+    const label = (k) => (k === 'pre' && !Object.values(cells[t]).some((x) => x.cells.post?.text) ? 'Best' : EXCERPT_HEADS[k]);
+    const head = `<tr><th scope="col"><span class="visually-hidden">Index</span></th>${keep.map((k) => `<th scope="col">${label(k)}</th>`).join('')}</tr>`;
+    const body = present.map((r) => `<tr><th scope="row">${cells[t][r].label}</th>${keep.map((k) => {
+      const cell = cells[t][r].cells[k];
+      return `<td data-ws-cell="${esc(`${t}/${r}/${k}`)}"${cell?.flag ? ` class="flag" title="${cell.title}"` : ''}>${cell?.text ?? ''}</td>`;
+    }).join('')}</tr>`).join('');
+    return `<table class="ws-ctx-table"><caption>${EXCERPT_TITLES[t]}</caption><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  }).join('');
+  return blocks ? `<div class="ws-ctx scroll" data-ws-ui>${blocks}</div>` : '';
+}
+
+/** Excerpts of every structured question from the summary sheet markup; empty without the sheet. */
+export function excerptsFor(sheetHtml) {
+  if (!sheetHtml) return {};
+  const cells = sheetCells(sheetHtml);
+  return Object.fromEntries(PRACTICE_QUESTIONS.map((q) => [q.id, excerptHtml(q.id, cells)]));
+}
+
+/**
+ * Screen controls of the workspace. Wide screens: two view buttons choose the report page shown in the data column beside the
+ * answers (page 1, the summary; page 2, the detailed report, which the first choice opens as the page-2 control does). Narrow
+ * screens: a disclosure hides or shows the report's tables and curves. Neither redraws the form, and neither changes what prints.
+ * @param {'summary'|'details'} [view] @param {'open'|'collapsed'} [chart]
+ */
+export function workspaceBarHtml(view = 'summary', chart = 'open') {
+  const tab = (v, label) => `<button type="button" class="ws-view" data-ws-view="${v}" aria-pressed="${view === v}" aria-controls="${v === 'details' ? 'details-slot' : 'summary-slot'}">${label}</button>`;
+  return `<div class="ws-bar no-print" data-ws-ui><div class="ws-views" role="group" aria-label="Report page beside the answers">${tab('summary', 'Page 1: summary')}${tab('details', 'Page 2: detailed maneuvers')}</div>`
+    + `<button type="button" class="secondary" id="ws-chart-toggle" aria-expanded="${chart !== 'collapsed'}" aria-controls="summary-slot">Report tables and curves</button></div>`;
 }
 
 /** One row of a row item: its own labelled radio group, with the item's options or the row's own list. */
@@ -107,14 +178,14 @@ function reviewNoteHtml(review, qualityChallenge) {
  * @param {object} ctx see renderPractice
  */
 export function interpretationBoxHtml(ctx) {
-  const { caseData, responses, items = [], stage, qualityChallenge, vis, canCheck, review } = ctx;
+  const { caseData, responses, items = [], stage, qualityChallenge, vis, canCheck, review, excerpts = {} } = ctx;
   const locked = stage === 3;
   const qualityLocked = qualityChallenge && stage >= 2;
   const first = items.filter((i) => !isStatementItem(i));
   const statementItems = vis.showQualityLines ? items.filter(isStatementItem) : [];
   const parts = [`<section class="interp-box" aria-labelledby="h-answers"><h2 id="h-answers">Interpretation</h2>
   <p class="muted">Answers are scored against the key for the selected spirometry equation; a classification that the other equation gives is accepted for values near a limit. Nothing is saved or sent.</p>
-  <form id="answer-form" autocomplete="off"><div class="answers">${structuredFieldsets(caseData, responses.structured, locked)}</div>`];
+  <form id="answer-form" autocomplete="off"><div class="answers">${structuredFieldsets(caseData, responses.structured, locked, excerpts)}</div>`];
 
   if (items.length) {
     parts.push(`<h3 id="h-quality-items">Test quality${statementItems.length ? ' and the technologist’s statement' : ''}</h3>`);
@@ -208,6 +279,8 @@ export function detailsAreaHtml(ctx) {
  * @property {boolean} showSchematic
  * @property {Function|null} resolve
  * @property {object|null} feedback result of buildFeedback; read at stage 3 only
+ * @property {'summary'|'details'} [wsView] report page beside the answers on a wide screen (screen only)
+ * @property {'open'|'collapsed'} [wsChart] narrow-screen disclosure of the report's tables and curves (screen only)
  */
 
 /**
@@ -216,10 +289,11 @@ export function detailsAreaHtml(ctx) {
  * @returns {string}
  */
 export function renderPractice(ctx) {
-  const box = interpretationBoxHtml(ctx);
-  const summary = ctx.sheets.summarySheetHtml && ctx.model
+  const sheet = ctx.sheets.summarySheetHtml && ctx.model
     ? ctx.sheets.summarySheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, flags: ctx.flags, showQualityLines: ctx.vis.showQualityLines, narrowZ: true })
-    : summaryFallbackHtml(ctx);
+    : null;
+  const box = interpretationBoxHtml({ ...ctx, excerpts: excerptsFor(sheet) });
+  const summary = sheet ?? summaryFallbackHtml(ctx);
   const reveal = ctx.stage === 3 ? R.renderReveal(ctx.caseData, ctx.interp, ctx.cmp, [], ctx.scored, ctx.feedback) : '';
-  return `${equationSelectorHtml(ctx.equation)}<div id="summary-slot" class="sheet-wrap sheet-live">${injectInterpretation(summary, box)}</div>${detailsAreaHtml(ctx)}${reveal}`;
+  return `${equationSelectorHtml(ctx.equation)}${sheet ? workspaceBarHtml(ctx.wsView, ctx.wsChart) : ''}<div id="summary-slot" class="sheet-wrap sheet-live">${injectInterpretation(summary, box)}</div>${detailsAreaHtml(ctx)}${reveal}`;
 }

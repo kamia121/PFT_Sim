@@ -5,6 +5,8 @@
  * Boxes that fit are left alone, and a box that stops overflowing loses the attributes this module added.
  */
 const SELECTOR = '.scroll, .sheet-wrap, .rpt-block';
+/** Boxes that scroll up and down: the answer column of the interpretation workspace on a wide screen (src/app/workspace.css). */
+const Y_SELECTOR = '#case[data-ws] .sheet-live .sheet-interp';
 
 /** @param {HTMLElement} box */
 function labelOf(box) {
@@ -24,6 +26,18 @@ export function markScrollRegions(root = document) {
       box.setAttribute('role', 'region');
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-label', labelOf(box));
+      box.setAttribute('data-scroll-region', '');
+    } else if (!over && ours) {
+      for (const a of ['role', 'tabindex', 'aria-label', 'data-scroll-region']) box.removeAttribute(a);
+    }
+  }
+  for (const box of root.querySelectorAll(Y_SELECTOR)) {
+    const over = box.scrollHeight > box.clientHeight + 1 && getComputedStyle(box).overflowY !== 'visible';
+    const ours = box.hasAttribute('data-scroll-region');
+    if (over && !box.hasAttribute('tabindex')) {
+      box.setAttribute('role', 'region');
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('aria-label', 'Interpretation answers, scroll up and down');
       box.setAttribute('data-scroll-region', '');
     } else if (!over && ours) {
       for (const a of ['role', 'tabindex', 'aria-label', 'data-scroll-region']) box.removeAttribute(a);

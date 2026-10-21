@@ -310,12 +310,15 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
   const foot = model.footer;
   return `<div class="sheet-frame"><article class="sheet sheet-summary" data-page="1" aria-label="Summary sheet, case ${esc(model.meta.caseCode)}">`
     + `<div class="sheet-mark" aria-hidden="true">${esc(model.meta.marker)}</div>`
-    + `<div class="sheet-content">${identity(model, caseData, interp)}`
+    // On the practice page (narrowZ) the identity block, the tables, the curves, the z-score graphic and the reference note sit in one
+    // wrapper. It is display: contents (sheets.css), so the sheet lays out and prints as without it; the interpretation workspace
+    // (src/app/workspace.css) makes it the data column on a wide screen.
+    + `<div class="sheet-content">${narrowZ ? '<div class="sheet-data">' : ''}${identity(model, caseData, interp)}`
     + `<div class="sheet-main"><div class="sheet-tables">${tables}${solo ? commentsBox : ''}</div><div class="sheet-curves">${curves(caseData, rt, pal)}</div></div>`
     + (zsvg ? `<figure class="sheet-z" data-figure-id="z-strip-ats">${zsvg}</figure>` : '')
     + (zsvgNarrow ? `<figure class="sheet-z sheet-z-narrow" data-figure-id="z-strip-ats-narrow">${zsvgNarrow}</figure>` : '')
     + (model.referenceNote?.length ? `<p class="sheet-refnote">${model.referenceNote.map((l) => esc(l)).join(' ')}</p>` : '')
-    + `<div class="sheet-boxes${solo ? ' solo' : ''}">${solo ? '' : commentsBox}`
+    + `${narrowZ ? '</div>' : ''}<div class="sheet-boxes${solo ? ' solo' : ''}">${solo ? '' : commentsBox}`
     + `<section class="sheet-box sheet-interp"><h2>Interpretation</h2><div id="sheet-interpretation" class="sheet-interp-body">${model.interpretation ? `<p class="sheet-interp-ref">${INTERPRETATION_POINTER}</p>` : ''}</div>`
     + `<div class="sheet-sign"><div><span class="sheet-line"></span>${esc(foot.signatureLabel)}</div><div class="short"><span class="sheet-line"></span>${esc(foot.dateLabel)}</div></div></section></div>`
     + `</div><div class="sheet-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record.</span><span>Page 1</span></div>`

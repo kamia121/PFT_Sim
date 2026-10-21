@@ -1,0 +1,86 @@
+/*
+ * Interpretation workspace of the practice page: the report data and the answers in view together. Screen only, and nothing here
+ * applies in print: Ctrl+P on the Practice tab prints the same boxes as before the workspace (benchmarks/print-parity.mjs), including
+ * the scale the printed sheet takes from the screen (--sheet-s), which this file never sets.
+ *
+ * The markup is the practice page's own (src/app/practice-view.js): the one answer form inside the summary sheet's interpretation box,
+ * page 2 after the sheet. The additions (the narrow-screen disclosure and the per-question excerpts) carry data-ws-ui and generate no
+ * box unless a screen rule below shows them. The summary sheet's data wrapper (.sheet-data) is display: contents in every medium
+ * (sheets.css) and gets a box only here.
+ *
+ * Wide screens (1200 px and up): the case area is a grid with fixed lines. Two view buttons choose the report page in the left column:
+ * page 1 (the sheet's data, its comments and footer) or page 2 (the detailed report, in the same rows). The right column holds the
+ * interpretation box, which spans those rows and sticks to the top of the window, bounded to the window height, scrolling inside itself
+ * only when the answers are taller. Page 1 keeps its printed layout at scale 1 (744 px of content). The page-2 control of the narrow
+ * layout is not shown here (the view button takes its place and opens page 2 the same way); it stays in the markup, which prints. The
+ * boxes between the case area and those items (the slot, the frame, the sheet, its content box and the comment/interpretation pair)
+ * generate no box on these screens.
+ *
+ * Narrow screens: the page keeps its layout; each structured question shows the report values it is read from, and a disclosure
+ * hides or shows the report's tables and curves.
+ *
+ * Colours are the theme tokens of src/styles/tokens.css through the sheet variables of sheets.css.
+ */
+#case [data-ws-ui] { display: none; }
+
+@media screen and (min-width: 1200px) {
+  main:has(> #panel-practice:not([hidden]) > #case[data-ws]) { max-width: 100rem; }
+  #case[data-ws] {
+    display: grid; grid-template-columns: 784px minmax(0, 1fr); column-gap: 20px; row-gap: 0; align-items: start;
+    /* 1 equation, 2 view buttons, 3 sheet data, 4 comments, 5 sheet footer (rows 3 to 5 hold page 2 instead in the page-2 view),
+       6 the page-2 control (not shown), 7 key and feedback */
+    grid-template-rows: repeat(7, auto); position: relative; isolation: isolate;
+  }
+  #case[data-ws] > fieldset.eq-select { grid-column: 1 / -1; grid-row: 1; }
+  #case[data-ws] #summary-slot, #case[data-ws] .sheet-live .sheet-frame, #case[data-ws] .sheet-live .sheet,
+  #case[data-ws] .sheet-live .sheet-content, #case[data-ws] .sheet-live .sheet-boxes { display: contents; }
+  /* Page 1 on its paper, at the printed size. */
+  #case[data-ws]::before { content: ""; grid-column: 1; grid-row: 3 / 6; align-self: stretch; z-index: -1; background: var(--sheet-paper); border: 1px solid var(--sheet-hair); }
+  #case[data-ws] .sheet-live .sheet-data { display: flex; flex-direction: column; gap: 6px; grid-column: 1; grid-row: 3; padding: 20px 20px 6px; min-width: 0; }
+  #case[data-ws] .sheet-live .sheet-comments { grid-column: 1; grid-row: 4; margin: 0 20px 8px; }
+  #case[data-ws] .sheet-live .sheet-foot { grid-column: 1; grid-row: 5; position: static; margin: 0 20px 14px; }
+  #case[data-ws] .sheet-live .sheet-mark { grid-column: 1; grid-row: 3 / 6; width: 100%; white-space: normal; }
+  #case[data-ws] > .details-bar { display: none; }
+  #case[data-ws] > #details-slot { grid-column: 1; grid-row: 3 / 6; min-width: 0; }
+  #case[data-ws] > #reveal { grid-column: 1 / -1; grid-row: 7; margin-top: 16px; }
+  /* The view buttons, drawn as tabs over the data column. */
+  #case[data-ws] > .ws-bar { display: flex; grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--border); margin: 0 0 8px; }
+  #case[data-ws] .ws-views { display: flex; gap: 2px; }
+  #case[data-ws] .ws-view { background: none; border: 0; border-bottom: 3px solid transparent; color: var(--text-muted); font: inherit; padding: 6px 14px; cursor: pointer; }
+  #case[data-ws] .ws-view[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent-bar); font-weight: 600; }
+  #case[data-ws] #ws-chart-toggle { display: none; }
+  #case[data-ws][data-ws-page="details"] .sheet-live :is(.sheet-data, .sheet-comments, .sheet-foot, .sheet-mark) { display: none; }
+  #case[data-ws][data-ws-page="details"]::before { display: none; }
+  #case[data-ws][data-ws-page="summary"] > #details-slot { display: none; }
+  /* The answers: beside every row of the data column, in view while the data scroll past, never taller than the window. Scroll
+     chaining is left on, so the wheel moves the page once the answers reach their end. */
+  #case[data-ws] .sheet-live .sheet-interp {
+    grid-column: 2; grid-row: 2 / 6; align-self: start; position: sticky; top: 8px; min-width: 0;
+    max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto;
+    background: var(--sheet-paper); padding: 8px 12px 12px; font-size: 14px;
+  }
+  /* The box's body keeps its height (the column scrolls instead), so that the signature lines follow the answers and never cover them. */
+  #case[data-ws] .sheet-live .sheet-interp-body { flex: none; }
+  #case[data-ws] .sheet-live .sheet-interp h2 { font-size: 13px; }
+  #case[data-ws] .sheet-live .sheet-interp fieldset { font-size: 14px; }
+  #case[data-ws] .sheet-live .sheet-interp legend, #case[data-ws] .sheet-live .sheet-interp h3 { font-size: 15px; }
+  #case[data-ws] .sheet-live .sheet-interp .answers p, #case[data-ws] .sheet-live .sheet-interp .prompt { font-size: 13px; }
+  #case[data-ws] .sheet-live .sheet-interp .answers { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); }
+}
+
+@media screen and (max-width: 1199.98px) {
+  #case[data-ws] > .ws-bar { display: flex; margin: 0 0 10px; }
+  #case[data-ws] .ws-views { display: none; }
+  #case[data-ws] #ws-chart-toggle::before { content: "\25BE\00A0"; }
+  #case[data-ws] #ws-chart-toggle[aria-expanded="false"]::before { content: "\25B8\00A0"; }
+  #case[data-ws][data-ws-chart="collapsed"] .sheet-live :is(.sheet-block, .sheet-curves, .sheet-z, .sheet-z-narrow, .sheet-refnote) { display: none; }
+  #case[data-ws][data-ws-chart="collapsed"] .sheet-live .sheet { min-height: 0; }
+  /* The values a question is read from, under its legend. */
+  #case[data-ws] .ws-ctx { display: block; margin: 2px 0 6px; max-width: 100%; }
+  #case[data-ws] .ws-ctx-table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .92em; margin: 0 0 4px; }
+  #case[data-ws] .ws-ctx-table caption { text-align: left; color: var(--text-muted); font-size: .9em; padding: 0 0 1px; }
+  #case[data-ws] .ws-ctx-table th, #case[data-ws] .ws-ctx-table td { padding: 1px 6px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-weight: 400; }
+  #case[data-ws] .ws-ctx-table thead th { color: var(--text-muted); font-weight: 600; }
+  #case[data-ws] .ws-ctx-table tbody th { text-align: left; white-space: normal; }
+  #case[data-ws] .ws-ctx-table td.flag { color: var(--sheet-flag, var(--flag)); font-weight: 700; }
+}

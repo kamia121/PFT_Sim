@@ -18,7 +18,7 @@ import { createStage, showStatement, canCheck, check as checkStage, openDetails,
 import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
-import { renderPractice, detailsBodyHtml } from './practice-view.js';
+import { renderPractice, detailsBodyHtml, detailsAreaHtml } from './practice-view.js';
 import { pageRulesCss } from '../report-page/pages.js';
 import { watchScrollRegions } from '../ui/scroll-regions.js';
 watchScrollRegions();
@@ -28,7 +28,7 @@ const state = {
   datasets: null, resolve: null, mods: null,
   case: null, mode: 'code', rt: null,
   spirometryEquation: 'GLIglobal', flags: 'lln',
-  stage: createStage(), responses: emptyResponses(), detailsOpen: false, feedback: null,
+  stage: createStage(), responses: emptyResponses(), detailsOpen: false, feedback: null, wsView: 'summary', wsChart: 'open',
   showSchematic: false, figView: {},
   modelCache: null, itemsCache: null,
   reportModel: null, reportInterp: false,
@@ -119,7 +119,7 @@ function practiceContext() {
     qualityChallenge: state.stage.qualityChallenge, review: state.stage.review, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
     vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
     model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
-    palette: PAGE_PALETTE, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
+    palette: PAGE_PALETTE, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback, wsView: state.wsView, wsChart: state.wsChart,
   };
 }
 
@@ -127,10 +127,43 @@ function practiceContext() {
 function render({ focus = null } = {}) {
   if (!$('#panel-report').hidden) { renderReportView(); return; }
   $('#case').innerHTML = renderPractice(practiceContext());
+  syncWorkspace();
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
   fitSheets();
   if (focus) $(focus)?.focus?.({ preventScroll: true });
+}
+
+/**
+ * View attributes of the interpretation workspace (src/app/workspace.css) on the case area, which is not redrawn: `data-ws` when the
+ * summary sheet is on the page, the report page beside the answers on a wide screen, and the narrow-screen disclosure of the tables
+ * and curves. They change the screen layout only; the view buttons' pressed state follows.
+ */
+function syncWorkspace() {
+  const c = $('#case');
+  const on = Boolean(c.querySelector('.ws-bar'));
+  c.toggleAttribute('data-ws', on);
+  if (on) { c.dataset.wsPage = state.wsView; c.dataset.wsChart = state.wsChart; } else { delete c.dataset.wsPage; delete c.dataset.wsChart; }
+  for (const b of c.querySelectorAll('[data-ws-view]')) b.setAttribute('aria-pressed', String(b.dataset.wsView === state.wsView));
+}
+
+/**
+ * Wide-screen choice of the report page beside the answers. Page 2 is opened the first time it is chosen, exactly as by the page-2
+ * control (it is then recorded as opened, and prints as opened); choosing page 1 again changes the view only.
+ */
+function selectView(view) {
+  if (view === 'details' && !state.detailsOpen) toggleDetails({ focus: null });
+  state.wsView = view === 'details' ? 'details' : 'summary';
+  syncWorkspace();
+  announce(state.wsView === 'details' ? 'Page 2, the detailed report, is beside the answers.' : 'Page 1, the summary, is beside the answers.');
+}
+
+/** The narrow-screen disclosure: a view change only, so the form, its answers and the focused control are left as they are. */
+function toggleChart(button) {
+  state.wsChart = state.wsChart === 'collapsed' ? 'open' : 'collapsed';
+  button.setAttribute('aria-expanded', String(state.wsChart === 'open'));
+  syncWorkspace();
+  announce(state.wsChart === 'open' ? 'The report tables and curves are shown.' : 'The report tables and curves are hidden; the values for each question are beside it.');
 }
 
 /** Scale the summary sheet (816 px wide) to the width of the page; the sheet grows downward with the interpretation form. */
@@ -139,6 +172,18 @@ async function fitSheets() {
   if (!el || !state.mods.summarySheetHtml) return;
   try { (await import('../sheets/summary.js')).fitSheetScale(el, 1); } catch { /* the sheet stays at full size */ }
 }
+/**
+ * A control that takes keyboard focus inside the wide-screen answer column, when the column scrolls, is brought wholly into the
+ * column's view (only the column scrolls, never the page), so that the answer being given is not cut off at the column's edge. Focus
+ * from a pointer is left alone: the control is already where the pointer is, and moving it under the pointer would misplace the click.
+ */
+document.addEventListener('focusin', (e) => {
+  const box = e.target instanceof Element ? e.target.closest('#case[data-ws] .sheet-interp') : null;
+  if (!box || box === e.target || box.scrollHeight <= box.clientHeight + 1 || !e.target.matches(':focus-visible')) return;
+  const b = box.getBoundingClientRect(), r = (e.target.closest('label, fieldset.row-q') ?? e.target).getBoundingClientRect(), pad = 8;
+  if (r.bottom > b.bottom - pad) box.scrollTop += Math.min(r.bottom - b.bottom + pad, r.top - b.top - pad);
+  else if (r.top < b.top + pad) box.scrollTop -= b.top + pad - r.top;
+});
 let fitPending = 0;
 window.addEventListener('resize', () => { cancelAnimationFrame(fitPending); fitPending = requestAnimationFrame(fitSheets); });
 
@@ -222,6 +267,8 @@ function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false, rev
   // The quality challenge needs the technologist's report; without it the page runs as with the challenge off.
   state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt), review });
   state.detailsOpen = false;
+  state.wsView = 'summary';
+  state.wsChart = 'open';
   state.feedback = null;
   state.itemsCache = null;
   setUrl();
@@ -284,14 +331,31 @@ function releaseStatement() {
   const next = showStatement(state.stage);
   if (next === state.stage) return;
   state.stage = next;
+  // The statement is printed in the comment box of page 1, so the wide-screen view returns to page 1 (page 2 stays open).
+  state.wsView = 'summary';
   render({ focus: '#statement-note' });
   announce('The technologist’s statement is shown in the comment box on page 1.');
 }
 
-function toggleDetails() {
+/**
+ * Open or close page 2. The page-2 control and its slot take what a full redraw would give them (detailsAreaHtml, which renderPractice
+ * also uses; nothing else on the page depends on whether page 2 is open): the control's expanded state, the slot's hidden state and
+ * content. The control keeps its node and focus, and the form keeps its node, its answers, the caret of the impression and its scroll.
+ */
+function toggleDetails({ focus = '#toggle-details' } = {}) {
   state.detailsOpen = !state.detailsOpen;
   if (state.detailsOpen) state.stage = openDetails(state.stage);
-  render({ focus: '#toggle-details' });
+  state.wsView = state.detailsOpen ? 'details' : 'summary';
+  const button = $('#toggle-details'), slot = $('#details-slot');
+  if (!button || !slot) { render({ focus }); return; }
+  const next = document.createElement('template');
+  next.innerHTML = detailsAreaHtml(practiceContext());
+  button.setAttribute('aria-expanded', next.content.querySelector('#toggle-details').getAttribute('aria-expanded'));
+  const fresh = next.content.querySelector('#details-slot');
+  slot.hidden = fresh.hidden;
+  slot.replaceChildren(...fresh.childNodes);
+  syncWorkspace();
+  if (focus && document.activeElement !== $(focus)) $(focus)?.focus({ preventScroll: true });
 }
 
 /** The page settings that ride in the address of the printable report page: the quality challenge as set for the case, and the flags. */
@@ -340,7 +404,7 @@ function showTab(name) {
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== `panel-${name}`;
   document.body.classList.toggle('report-active', name === 'report');
   // The sheets of the practice and report views are never in the page together, so that figure definitions with the same ids do not collide.
-  if (name === 'report') { $('#case').innerHTML = ''; renderReportView(); }
+  if (name === 'report') { $('#case').innerHTML = ''; syncWorkspace(); renderReportView(); }
   else { $('#report-root').innerHTML = ''; if (state.case) render(); }
 }
 
@@ -400,6 +464,8 @@ async function boot() {
     else if (t.id === 'show-key') checkAnswers(false);
     else if (t.id === 'show-statement') releaseStatement();
     else if (t.id === 'toggle-details') toggleDetails();
+    else if (t.id === 'ws-chart-toggle') toggleChart(t);
+    else if (t.dataset.wsView) selectView(t.dataset.wsView);
     else if (t.id === 'copy-link') navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy case link'), 1500); }).catch(() => $('#caseCode').select());
     else if (t.dataset.tab) showTab(t.dataset.tab);
     else if (t.id === 'report-print') printReport();

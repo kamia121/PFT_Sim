@@ -13,7 +13,7 @@
  * Usage: node benchmarks/ui-smoke.mjs [screenshotDir]
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
-import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
+import { startServer, launchBrowser, ENGINE, openPage2 } from './lib/harness.mjs';
 import fs from 'node:fs';
 
 const port = 5199;
@@ -47,11 +47,15 @@ try {
   check((await page.locator('#sheet-interpretation #answer-form').count()) === 1, 'the interpretation box is moved into the sheet element sheet-interpretation');
   check((await page.locator('#toggle-details').innerText()) === 'Page 2: detailed report' && (await page.locator('#toggle-details').getAttribute('aria-expanded')) === 'false', 'page 2 has a labelled control, closed at first');
   check(!(await page.locator('#details-slot').isVisible()), 'page 2 is not shown before it is opened');
-  const order = await page.evaluate(() => {
-    const y = (s) => document.querySelector(s).getBoundingClientRect().top;
-    return y('#summary-slot') < y('#answer-form') && y('#answer-form') < y('#toggle-details');
-  });
-  check(order, 'order on the page: summary, interpretation box, page 2 control');
+  // On a wide screen the interpretation workspace lays the same markup out as the data beside the answers, with page 1 and page 2
+  // chosen by view buttons (src/app/workspace.css); otherwise the summary, the interpretation box and the page 2 control follow down the page.
+  const wideLayout = await page.evaluate(() => getComputedStyle(document.querySelector('#case')).display === 'grid');
+  const order = await page.evaluate((wide) => {
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    return wide ? r('.sheet-data').right <= r('#answer-form').left && r('.ws-views').bottom <= r('.sheet-data').top + 1 : r('#summary-slot').top < r('#answer-form').top && r('#answer-form').top < r('#toggle-details').top;
+  }, wideLayout);
+  check(order, wideLayout ? 'wide layout: the report data beside the interpretation box, page 1 and page 2 chosen above the data' : 'order on the page: summary, interpretation box, page 2 control');
+  const page2Control = wideLayout ? 'button[data-ws-view="details"]' : '#toggle-details';
   check((await page.locator('#answer-form fieldset legend').allInnerTexts()).slice(0, 4).join('|').match(/Pattern.*Severity.*Bronchodilator.*Diffusing/s) !== null, 'structured questions: pattern, severity, bronchodilator, DLCO');
   check(!/FEV.? grade|FVC grade/.test(await page.locator('#answer-form').innerText()), 'the grade questions are not among the structured questions');
   check((await page.locator('#impression').count()) === 1 && /not scored/.test(await page.locator('label[for=impression]').innerText()), 'optional free-text impression, labelled as not scored');
@@ -61,10 +65,10 @@ try {
 
   // Keyboard: Enter on the page 2 control opens it and focus stays on the control.
   const before = await caseText();
-  await page.focus('#toggle-details');
+  await page.focus(page2Control);
   await page.keyboard.press('Enter');
   check((await page.locator('#toggle-details').getAttribute('aria-expanded')) === 'true' && (await page.locator('#details-slot').isVisible()), 'page 2 opens from the keyboard');
-  check(await page.evaluate(() => document.activeElement?.id === 'toggle-details'), 'focus stays on the page 2 control after it opens');
+  check(await page.evaluate((sel) => document.activeElement === document.querySelector(sel), page2Control), 'focus stays on the page 2 control after it opens');
   const nSvg = await page.locator('#details-slot svg').count();
   check(nSvg >= 2, `page 2 holds the figures (${nSvg} drawings; a spirometry-only case has the panel and the z-score graphic)`);
   const fallbackFigs = (await page.locator('figure[data-figure]').count()) > 0;
@@ -88,8 +92,8 @@ try {
       check(pal.startsWith('transparent') ? parsed.rects === 0 : parsed.rects === 1, `variant ${pal} ${pal.startsWith('transparent') ? 'has no background rectangle' : 'has a background rectangle'}`);
     }
   } else skip('figure download controls (the details sheet draws its own figures)');
-  await page.click('#toggle-details');
-  check(!(await page.locator('#details-slot').isVisible()), 'the control closes page 2 again');
+  await page.click(wideLayout ? 'button[data-ws-view="summary"]' : '#toggle-details');
+  check(!(await page.locator('#details-slot').isVisible()), wideLayout ? 'the page 1 button puts the summary back beside the answers' : 'the control closes page 2 again');
 
   // Answer and score.
   await page.check('input[name=pattern][value=normal]');
@@ -129,7 +133,7 @@ try {
     await page.click('#new-case');
     await page.waitForSelector('#answer-form');
     if (i % 3 === 0) { await page.click('#show-key'); await page.waitForSelector('#reveal'); }
-    if (i % 5 === 0) { await page.click('#toggle-details'); }
+    if (i % 5 === 0) { await openPage2(page); }
   }
   check(problems.length === 0, `no console or page errors over 60 cases${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);
 
@@ -148,7 +152,7 @@ try {
     check((await page.locator('#show-statement').count()) === 1 && (await page.locator('#check-answers').isDisabled()), 'stage 1 (advanced review): the statement is requested by a button, and a scored check waits');
     const stage1 = await page.content();
     check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1), 'stage 1: no grade statement in the page source');
-    await page.click('#toggle-details');
+    await openPage2(page);
     const stage1Open = await page.content();
     check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1Open) && !/<(?:td|li|b|strong|span)\b[^>]*>\s*(?:not )?acceptable\s*</i.test(stage1Open) && !/not usable/.test(stage1Open), 'stage 1 with page 2 open: no grade or acceptability text in the page source');
     await page.click('#show-statement');
@@ -162,7 +166,7 @@ try {
     const line = async (open) => {
       await page.goto(`${base}?${poor}&qc=1&qd=adv`);
       await page.waitForSelector('#answer-form');
-      if (open) await page.click('#toggle-details');
+      if (open) await openPage2(page);
       await page.click('#show-statement');
       await page.click('#check-answers');
       await page.waitForSelector('#reveal');

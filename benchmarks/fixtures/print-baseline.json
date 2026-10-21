@@ -1,0 +1,1441 @@
+{
+ "commit": "ec5f6cd",
+ "engine": "chromium",
+ "browserVersion": "141.0.7390.37",
+ "runs": {
+  "normal-load-1280": {
+   "geo": {
+    "hash": "dcc14d371dcd0412",
+    "boxes": 440,
+    "frame": {
+     "w": "816px",
+     "h": "1963.41px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "1ada6cba3cb5f240",
+     "dfa0f2d31f1a59a2",
+     "592557c93de66d07",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2e056432c6be05ae",
+     "334c48ce740e1707",
+     "f550dd975e035d71",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "normal-answered-1280": {
+   "geo": {
+    "hash": "dcc14d371dcd0412",
+    "boxes": 440,
+    "frame": {
+     "w": "816px",
+     "h": "1963.41px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "1ada6cba3cb5f240",
+     "dfa0f2d31f1a59a2",
+     "11644a49e99a23fd",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2e056432c6be05ae",
+     "6a7f57d389952771",
+     "7e75b71a7c526ebb",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "normal-details-1280": {
+   "geo": {
+    "hash": "78ff934d3c8d8066",
+    "boxes": 619,
+    "frame": {
+     "w": "816px",
+     "h": "1963.41px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 7,
+    "text": [
+     "1ada6cba3cb5f240",
+     "dfa0f2d31f1a59a2",
+     "11644a49e99a23fd",
+     "ebb275c155a6b8b2",
+     "8dbca30856df63a6",
+     "de4864da1d405155",
+     "fa6997b898c3c379"
+    ],
+    "raster": [
+     "2e056432c6be05ae",
+     "6a7f57d389952771",
+     "7e75b71a7c526ebb",
+     "5a3c0cf7f6f0e6a9",
+     "b681290785b68969",
+     "f810e5237eb81988",
+     "8e9c15a699019805"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Pre-bronchodilator: ATS/ERS repeatability criteria met for F"
+    ]
+   }
+  },
+  "normal-checked-1280": {
+   "geo": {
+    "hash": "c5d8871acfb2d034",
+    "boxes": 741,
+    "frame": {
+     "w": "816px",
+     "h": "2242.48px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 9,
+    "text": [
+     "35d4c70183ddaa73",
+     "efbd4a3faf549e97",
+     "41f8729c7dc20070",
+     "ebb275c155a6b8b2",
+     "8dbca30856df63a6",
+     "de4864da1d405155",
+     "723f9a24326a9b2a",
+     "56d8d2f90f3dd173",
+     "adb3d4e1c655879e"
+    ],
+    "raster": [
+     "e0b510bdec4f189c",
+     "c7eda5803fd42c59",
+     "21fbce37856c5b78",
+     "5a3c0cf7f6f0e6a9",
+     "b681290785b68969",
+     "f810e5237eb81988",
+     "7f11e9474162814f",
+     "6cdee0239fb20448",
+     "eabf6e047a82a32a"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Result LLN ULN z %Pred Shutter trace Slope\n\n\n\n\n Box pressure",
+     "Study-level review: one judgement about the whole study. Man",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Pre-bronchodilator: ATS/ERS repeatability criteria met for F",
+     "2017 (DLCO); neither statement sets\n a cut point for interpr",
+     "The pattern is the same under both equations (Normal). Volum"
+    ]
+   }
+  },
+  "obstruction-load-1280": {
+   "geo": {
+    "hash": "b946c94bedcaa5e1",
+    "boxes": 471,
+    "frame": {
+     "w": "816px",
+     "h": "1954.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "f87b2aa46304777d",
+     "fd2308e67f146dc1",
+     "da814850f83538f0",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "bc7e66c6e598523b",
+     "4625f0e4b02b115c",
+     "be737aab2a0fc41c",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "obstruction-answered-1280": {
+   "geo": {
+    "hash": "b946c94bedcaa5e1",
+    "boxes": 471,
+    "frame": {
+     "w": "816px",
+     "h": "1954.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "f87b2aa46304777d",
+     "fd2308e67f146dc1",
+     "6a141cce8e599a87",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "bc7e66c6e598523b",
+     "3df36e6f09aaadbc",
+     "642640b004d363d8",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "obstruction-details-1280": {
+   "geo": {
+    "hash": "24224899f37a3dc7",
+    "boxes": 789,
+    "frame": {
+     "w": "816px",
+     "h": "1954.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 8,
+    "text": [
+     "f87b2aa46304777d",
+     "fd2308e67f146dc1",
+     "6a141cce8e599a87",
+     "cca14ebae6b1535b",
+     "0028c641090030c1",
+     "c33eb68cc0fd9d37",
+     "b5e6eb7b5a254264",
+     "c5734194f459c7dd"
+    ],
+    "raster": [
+     "bc7e66c6e598523b",
+     "3df36e6f09aaadbc",
+     "642640b004d363d8",
+     "4b93e57ef6ce7a26",
+     "b58a6cce2b6ac8e8",
+     "f58096efdab08608",
+     "a251a48415e4c94c",
+     "4e15c71758fa9ac5"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Flow-volume Volume-time\n 10 7\n expiration predicted\n 3 5\n 8 ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Technical notes\n Pre-bronchodilator: early termination of ex"
+    ]
+   }
+  },
+  "obstruction-checked-1280": {
+   "geo": {
+    "hash": "9e49056eae06a65e",
+    "boxes": 928,
+    "frame": {
+     "w": "816px",
+     "h": "2290.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 11,
+    "text": [
+     "97e8263abe535fb4",
+     "7e81a8e3e6138cb4",
+     "3f9b5b4e4b78f468",
+     "cca14ebae6b1535b",
+     "0028c641090030c1",
+     "c33eb68cc0fd9d37",
+     "b5e6eb7b5a254264",
+     "2d3a748b8387b30e",
+     "b588496dbf49d21a",
+     "f23bfd470c0b418b",
+     "03b6418b32aee4b8"
+    ],
+    "raster": [
+     "f3fa1110313c06d8",
+     "238f6ed5418f29c3",
+     "1b17ad98e463c7ea",
+     "4b93e57ef6ce7a26",
+     "b58a6cce2b6ac8e8",
+     "f58096efdab08608",
+     "a251a48415e4c94c",
+     "bfd6bb8cca1aaade",
+     "8903901679037fbb",
+     "05082a3b2b2975f9",
+     "fa0aa0b79173268b"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Result LLN ULN z %Pred Shutter trace Slope\n 10\n\n\n\n\n Box pres",
+     "Study-level review: one judgement about the whole study. Man",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Flow-volume Volume-time\n 10 7\n expiration predicted\n 3 5\n 8 ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Technical notes\n Pre-bronchodilator: early termination of ex",
+     "without preventing it. Here every\n test that was performed m",
+     "Test quality\n Before bronchodilator: FEV₁ grade A, FVC grade",
+     "A value that is normal for those equations can fall just bel"
+    ]
+   }
+  },
+  "poorQc-load-1280": {
+   "geo": {
+    "hash": "37feb19c32d99170",
+    "boxes": 475,
+    "frame": {
+     "w": "816px",
+     "h": "2023.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "6e3f21d42d2379cd",
+     "798219396095fdbb",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "448486d07465a71c",
+     "666fa9e43c8f5038",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "The technologist’s statement and the grades are withheld. Pa",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-answered-1280": {
+   "geo": {
+    "hash": "37feb19c32d99170",
+    "boxes": 475,
+    "frame": {
+     "w": "816px",
+     "h": "2023.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "6e3f21d42d2379cd",
+     "602229e8271d37d1",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "5a3c7e922dcbadac",
+     "37ce048bcfd0d165",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "The technologist’s statement and the grades are withheld. Pa",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-details-1280": {
+   "geo": {
+    "hash": "42b94295cd77b181",
+    "boxes": 801,
+    "frame": {
+     "w": "816px",
+     "h": "2023.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 8,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "6e3f21d42d2379cd",
+     "602229e8271d37d1",
+     "5a773497a173ec58",
+     "b78c871d9c4faf6c",
+     "75a180b2b2b094c7",
+     "24d5d21760b12206",
+     "9fcbbddce996f08e"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "5a3c7e922dcbadac",
+     "37ce048bcfd0d165",
+     "da921694195a7a9c",
+     "4b0e38c35bbd3365",
+     "8ede5101aacf32a6",
+     "1aeff34bcd6140ec",
+     "2d4839101480b13e"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "The technologist’s statement and the grades are withheld. Pa",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Flow-volume Volume-time\n 4 3\n expiration\n\n\n 2\n PEF\n\n\n\n\n Exha",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  },
+  "poorQc-statement-1280": {
+   "geo": {
+    "hash": "07a7f55b66dd831b",
+    "boxes": 474,
+    "frame": {
+     "w": "816px",
+     "h": "1981.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "ce43439f1daba138",
+     "7eb2de4c093a67e6",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "f4440fe753458e50",
+     "0f508667ab9284e5",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-checked-1280": {
+   "geo": {
+    "hash": "1649bdf6b288f18f",
+    "boxes": 1016,
+    "frame": {
+     "w": "816px",
+     "h": "2317.08px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 13,
+    "text": [
+     "8a3f2605a2ab36ec",
+     "7f755415de5c43af",
+     "8825de7d2b1b1ad6",
+     "12d0b970eef1faee",
+     "87582cc127af769e",
+     "d1684752571c726b",
+     "75bc43f781cf0b14",
+     "742ab6ea2a9d42e2",
+     "e41a90dc44856d02",
+     "e758b061687e6fa2",
+     "eb07369032ed8796",
+     "34dbfd7b1f3b4fa7",
+     "82adefc6c9f30873"
+    ],
+    "raster": [
+     "229720d8587d417f",
+     "e38f8bb6b76ca80a",
+     "1d727dac452f08fc",
+     "46b188714e9eedad",
+     "45445980f94bddd5",
+     "2c4cadd506c9eb64",
+     "69702000d9aaf1eb",
+     "c33d4b07b324670c",
+     "f6279dfc3cda3636",
+     "0662469b2b4ea560",
+     "3cc1a9044c93cb36",
+     "6dacc3b8ce9c6afa",
+     "b6734a8da2dc2af4"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Result LLN ULN z %Pred Shutter trace Slope\n\n\n\n\n Box pressure",
+     "Study-level review: one judgement about the whole study. Man",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Forced maneuvers after bronchodilator\n\n FVC FEV1 PEF FEF25- ",
+     "Flow-volume Volume-time\n 4 3\n expiration\n\n\n 2\n PEF\n\n\n\n\n Exha",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Plethysmography: panting trials\n\n Pant\n FRCpleth Difference ",
+     "Z-scores\n\n LLN −1.645 Predicted ULN +1.645\n\n pre z −1.27 wit",
+     "Bronchodilator response (2022 You: Significant Key: Signific",
+     "smaller share of the vital capacity. A fixed ratio of 0.70 i",
+     "Before bronchodilator, maneuver 5, FVC: no end-of-forced-exp",
+     "The pattern is the same under both equations (Obstruction). "
+    ]
+   }
+  },
+  "spiroOnly-load-1280": {
+   "geo": {
+    "hash": "9f2b7c4ea4624da7",
+    "boxes": 426,
+    "frame": {
+     "w": "816px",
+     "h": "2343px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "89cfb13c4c312236",
+     "b21722c4fd5deed0",
+     "8895633505d62bdc",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "36374fda18809c4a",
+     "690e3ca4b668c3e0",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "FEV₁ quality grade before the FVC quality grade before the\n ",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-answered-1280": {
+   "geo": {
+    "hash": "9f2b7c4ea4624da7",
+    "boxes": 426,
+    "frame": {
+     "w": "816px",
+     "h": "2343px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "89cfb13c4c312236",
+     "b21722c4fd5deed0",
+     "237c6fcecc1470de",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "5367b4bdf05830bc",
+     "8956b6d4c813853e",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "FEV₁ quality grade before the FVC quality grade before the\n ",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-details-1280": {
+   "geo": {
+    "hash": "2a8c443f425677d3",
+    "boxes": 551,
+    "frame": {
+     "w": "816px",
+     "h": "2343px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 6,
+    "text": [
+     "89cfb13c4c312236",
+     "b21722c4fd5deed0",
+     "237c6fcecc1470de",
+     "143c2cbee56b1a46",
+     "022a9effe3aa9c2f",
+     "f53a55b1581c63b1"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "5367b4bdf05830bc",
+     "8956b6d4c813853e",
+     "771611e8a2d2f246",
+     "48fb7068ff3ce441",
+     "e79e553e8d11f451"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "FEV₁ quality grade before the FVC quality grade before the\n ",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Pre 1 Pre 2\n L/s L L/s L\n 6 4 6 4\n\n 4 4\n 3 3\n 2 2\n 2 2\n 0 0\n",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  },
+  "spiroOnly-statement-1280": {
+   "geo": {
+    "hash": "0d91e0260bc97faa",
+    "boxes": 436,
+    "frame": {
+     "w": "816px",
+     "h": "2479.61px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "89cfb13c4c312236",
+     "b18016f2a6d22d7b",
+     "a19a758d871d2bd4",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "61d4f6f60503c1c1",
+     "c1b781d2e9603e18",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "A A\n\n B B\n\n C C\n\n D D\n\n E E\n\n U U\n\n F F\n\n Flow-volume loop o",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-checked-1280": {
+   "geo": {
+    "hash": "350b553b7dbb9897",
+    "boxes": 707,
+    "frame": {
+     "w": "816px",
+     "h": "2642.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 8,
+    "text": [
+     "89cfb13c4c312236",
+     "62107bf549903817",
+     "7507e110bd08e591",
+     "60f95803b438e865",
+     "bac738f95c4d0e83",
+     "450f893bb723d938",
+     "b0a9c03e243f4de7",
+     "f58286a3e02f977b"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "9d11b02cdddab2d0",
+     "66028180de537a8a",
+     "c5d641301662566b",
+     "a188439e7a0b6f0e",
+     "9b6f95a7f5b76451",
+     "23c0d65090b6cba7",
+     "0461f1c67d926df4"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "A A\n\n B B\n\n C C\n\n D D\n\n E E\n\n U U\n\n F F\n\n Flow-volume loop o",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Pre 1 Pre 2\n L/s L L/s L\n 6 4 6 4\n\n 4 4\n 3 3\n 2 2\n 2 2\n 0 0\n",
+     "Z-scores\n\n LLN −1.645 Predicted\n\n FVC z −2.49 below LLN\n\n FE",
+     "FVC quality grade before the Key: A\nbronchodilator\n\nFlow-vol",
+     "The pattern is the same under both equations (Obstruction wi"
+    ]
+   }
+  },
+  "notes-load-1280": {
+   "geo": {
+    "hash": "ef8756387b1ad964",
+    "boxes": 435,
+    "frame": {
+     "w": "816px",
+     "h": "1898.58px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "fe57fa719573b551",
+     "003b85bc74d38ca2",
+     "b1469b1ec9a1642e",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "4f4330759af84e86",
+     "835e949bbacdb00b",
+     "8d95fd860976e246",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "interpret? A flawed maneuver limits the\n values that depend ",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "notes-answered-1280": {
+   "geo": {
+    "hash": "ef8756387b1ad964",
+    "boxes": 435,
+    "frame": {
+     "w": "816px",
+     "h": "1898.58px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "fe57fa719573b551",
+     "003b85bc74d38ca2",
+     "9f3c76724ea8da96",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "4f4330759af84e86",
+     "ea512a415ed63546",
+     "91cf57a1b4c6dadd",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "interpret? A flawed maneuver limits the\n values that depend ",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "notes-details-1280": {
+   "geo": {
+    "hash": "789d1ac1fa13bfc3",
+    "boxes": 697,
+    "frame": {
+     "w": "816px",
+     "h": "1898.58px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 9,
+    "text": [
+     "fe57fa719573b551",
+     "003b85bc74d38ca2",
+     "9f3c76724ea8da96",
+     "ce19f90388426f4e",
+     "e3b0c44298fc1c14",
+     "14c3977028fc17ad",
+     "d04789318fa1bf13",
+     "9f33c4a90c696c9c",
+     "3b1786c419b2b98e"
+    ],
+    "raster": [
+     "4f4330759af84e86",
+     "ea512a415ed63546",
+     "91cf57a1b4c6dadd",
+     "84005b8c2d08c77e",
+     "a46cb89280b93565",
+     "151ac7bbd584b2f4",
+     "b555e367ca148be3",
+     "819f5e08002e8898",
+     "7f937f84c30616c0"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "interpret? A flawed maneuver limits the\n values that depend ",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "",
+     "Pre 1 Pre 2\n L/s L L/s L\n 10 6 10 6\n 8 8\n 5 5\n 6 6\n 4 4\n 4 4",
+     "Predicted, constructed from FEV1 and FVC (GLI Global 2022)\n\n",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Patient started the blast late and gently on blows 1, 2, 3, "
+    ]
+   }
+  },
+  "notes-checked-1280": {
+   "geo": {
+    "hash": "2d887a4ee733f06a",
+    "boxes": 843,
+    "frame": {
+     "w": "816px",
+     "h": "2256.94px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 12,
+    "text": [
+     "0993a5e670881322",
+     "d66a9ea60a6b8470",
+     "78fdd478d9d59262",
+     "ce19f90388426f4e",
+     "e3b0c44298fc1c14",
+     "14c3977028fc17ad",
+     "d04789318fa1bf13",
+     "9f33c4a90c696c9c",
+     "5d4448c21de599ba",
+     "07ffbc468205a666",
+     "2cf6e3f7cebf0c2c",
+     "c5dc1e400979f173"
+    ],
+    "raster": [
+     "820bbd6e9f26e365",
+     "62826eb6426f00be",
+     "05750ebe37f0c280",
+     "84005b8c2d08c77e",
+     "a46cb89280b93565",
+     "151ac7bbd584b2f4",
+     "b555e367ca148be3",
+     "819f5e08002e8898",
+     "9867f327130d7dc9",
+     "dfbff2d26586d659",
+     "2a1e0f37fe427444",
+     "76548b79b59c2aec"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Result LLN ULN z %Pred Shutter trace Slope\n 4\n\n\n\n\n Box press",
+     "with limitations, or is it insufficient to\n interpret? A fla",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "",
+     "Pre 1 Pre 2\n L/s L L/s L\n 10 6 10 6\n 8 8\n 5 5\n 6 6\n 4 4\n 4 4",
+     "Predicted, constructed from FEV1 and FVC (GLI Global 2022)\n\n",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Patient started the blast late and gently on blows 1, 2, 3, ",
+     "criteria on which its values rest, so\n the study can be inte",
+     "Test quality\n Before bronchodilator: FEV₁ grade A, FVC grade",
+     "This case was generated around the GLI Global equations for "
+    ]
+   }
+  },
+  "normal-details-1440": {
+   "geo": {
+    "hash": "efbd2e67fccc2955",
+    "boxes": 619,
+    "frame": {
+     "w": "816px",
+     "h": "1963.41px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 7,
+    "text": [
+     "1ada6cba3cb5f240",
+     "dfa0f2d31f1a59a2",
+     "11644a49e99a23fd",
+     "ebb275c155a6b8b2",
+     "8dbca30856df63a6",
+     "de4864da1d405155",
+     "fa6997b898c3c379"
+    ],
+    "raster": [
+     "2e056432c6be05ae",
+     "6a7f57d389952771",
+     "7e75b71a7c526ebb",
+     "5a3c0cf7f6f0e6a9",
+     "b681290785b68969",
+     "f810e5237eb81988",
+     "8e9c15a699019805"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Pre-bronchodilator: ATS/ERS repeatability criteria met for F"
+    ]
+   }
+  },
+  "normal-answered-1024": {
+   "geo": {
+    "hash": "020a91e23e86f289",
+    "boxes": 440,
+    "frame": {
+     "w": "816px",
+     "h": "1963.41px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "1ada6cba3cb5f240",
+     "dfa0f2d31f1a59a2",
+     "11644a49e99a23fd",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2e056432c6be05ae",
+     "6a7f57d389952771",
+     "7e75b71a7c526ebb",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "Quality of the study\n Judge the study as a whole: can it be\n",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "normal-answered-820": {
+   "geo": {
+    "hash": "5ef05f52c0a2f3f5",
+    "boxes": 440,
+    "frame": {
+     "w": "815.997px",
+     "h": "1906.04px",
+     "zoom": "0.965"
+    },
+    "sheetS": "0.965"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "06c7e420c71f4fbc",
+     "4e8f9f32b5414a68",
+     "f8931127bae8a65e",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "07717dd5772a76b6",
+     "7cb04233b2b11252",
+     "1d6f5c95029e745c",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "secondary sources. Shutter trace Slope\n\n\n\n\n Box pressure (Pa",
+     "Interpretable\n\n Interpretable with limitations\n\n Insufficien",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "normal-answered-390": {
+   "geo": {
+    "hash": "26f004e66406287c",
+    "boxes": 440,
+    "frame": {
+     "w": "815.996px",
+     "h": "5282.03px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "3809a83f88c675a8",
+     "67ebaaf9f86dcece",
+     "bc86c825c6265abc",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "8469aa1e7464a292",
+     "a5dcba14e8e0544a",
+     "d32c66180d59ec83",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Pattern\n\n Normal\n\n Obstruction\n\n Obstruction with low FVC (v",
+     "Check answers Show the key without scoring\n\n\n\n Simulated int",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "normal-details-390": {
+   "geo": {
+    "hash": "77feeb4f8443a9da",
+    "boxes": 619,
+    "frame": {
+     "w": "815.996px",
+     "h": "5282.03px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 7,
+    "text": [
+     "3809a83f88c675a8",
+     "67ebaaf9f86dcece",
+     "bc86c825c6265abc",
+     "ebb275c155a6b8b2",
+     "8dbca30856df63a6",
+     "de4864da1d405155",
+     "fa6997b898c3c379"
+    ],
+    "raster": [
+     "8469aa1e7464a292",
+     "a5dcba14e8e0544a",
+     "d32c66180d59ec83",
+     "5a3c0cf7f6f0e6a9",
+     "b681290785b68969",
+     "f810e5237eb81988",
+     "8e9c15a699019805"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Pattern\n\n Normal\n\n Obstruction\n\n Obstruction with low FVC (v",
+     "Check answers Show the key without scoring\n\n\n\n Simulated int",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Pre-bronchodilator: ATS/ERS repeatability criteria met for F"
+    ]
+   }
+  },
+  "poorQc-details-1440": {
+   "geo": {
+    "hash": "cf96c87142d9742e",
+    "boxes": 801,
+    "frame": {
+     "w": "816px",
+     "h": "2023.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 8,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "6e3f21d42d2379cd",
+     "602229e8271d37d1",
+     "5a773497a173ec58",
+     "b78c871d9c4faf6c",
+     "75a180b2b2b094c7",
+     "24d5d21760b12206",
+     "9fcbbddce996f08e"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "5a3c7e922dcbadac",
+     "37ce048bcfd0d165",
+     "da921694195a7a9c",
+     "4b0e38c35bbd3365",
+     "8ede5101aacf32a6",
+     "1aeff34bcd6140ec",
+     "2d4839101480b13e"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "The technologist’s statement and the grades are withheld. Pa",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Flow-volume Volume-time\n 4 3\n expiration\n\n\n 2\n PEF\n\n\n\n\n Exha",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  },
+  "poorQc-answered-1024": {
+   "geo": {
+    "hash": "b054eb7757a91952",
+    "boxes": 475,
+    "frame": {
+     "w": "816px",
+     "h": "2023.89px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "e4c5f46c4b7fd632",
+     "6e3f21d42d2379cd",
+     "602229e8271d37d1",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "9a679524c4611b1b",
+     "5a3c7e922dcbadac",
+     "37ce048bcfd0d165",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Reference values: GLI-2021 volumes (reference population of ",
+     "The technologist’s statement and the grades are withheld. Pa",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-answered-820": {
+   "geo": {
+    "hash": "4e3a35f3838d8313",
+    "boxes": 475,
+    "frame": {
+     "w": "815.997px",
+     "h": "1983.23px",
+     "zoom": "0.965"
+    },
+    "sheetS": "0.965"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "9e424c1a2f2b7762",
+     "9a33fac80775fc9c",
+     "6394b450e040e6ec",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "84e9a096a242d5d8",
+     "bf793fa4ee328761",
+     "e5dbb90d28e96660",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "DIFFUSING CAPACITY Shutter trace Slope\n\n\n\n\n Box pressure (Pa",
+     "flawed maneuver limits the values that depend on it and leav",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-answered-390": {
+   "geo": {
+    "hash": "b8b152c47cfb3876",
+    "boxes": 475,
+    "frame": {
+     "w": "815.996px",
+     "h": "5472.32px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "b50bc1c2c22913bf",
+     "2e74076689d046b6",
+     "4f94f0b9f5a0bffa",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "77498ba39a869596",
+     "6781ec27dbd999ce",
+     "4a52d89b94fe13dc",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Pattern\n\n Normal\n\n Obstruction\n\n Obstruction with low FVC (v",
+     "Print parity impression: line one.\n\n\n\n\n Check answers Show t",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "poorQc-details-390": {
+   "geo": {
+    "hash": "ad6f49192ec60b37",
+    "boxes": 801,
+    "frame": {
+     "w": "815.996px",
+     "h": "5472.32px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 8,
+    "text": [
+     "b50bc1c2c22913bf",
+     "2e74076689d046b6",
+     "4f94f0b9f5a0bffa",
+     "5a773497a173ec58",
+     "b78c871d9c4faf6c",
+     "75a180b2b2b094c7",
+     "24d5d21760b12206",
+     "9fcbbddce996f08e"
+    ],
+    "raster": [
+     "77498ba39a869596",
+     "6781ec27dbd999ce",
+     "4a52d89b94fe13dc",
+     "da921694195a7a9c",
+     "4b0e38c35bbd3365",
+     "8ede5101aacf32a6",
+     "1aeff34bcd6140ec",
+     "2d4839101480b13e"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Pattern\n\n Normal\n\n Obstruction\n\n Obstruction with low FVC (v",
+     "Print parity impression: line one.\n\n\n\n\n Check answers Show t",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Flow-volume Volume-time\n 4 3\n expiration\n\n\n 2\n PEF\n\n\n\n\n Exha",
+     "Plethysmography\n A Volume-time record B Occlusion loops\n tri",
+     "Diffusing capacity\n\n Single-breath DLCO: gas fractions again",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  },
+  "spiroOnly-details-1440": {
+   "geo": {
+    "hash": "bba46dd04509749a",
+    "boxes": 551,
+    "frame": {
+     "w": "816px",
+     "h": "2343px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 6,
+    "text": [
+     "89cfb13c4c312236",
+     "b21722c4fd5deed0",
+     "237c6fcecc1470de",
+     "143c2cbee56b1a46",
+     "022a9effe3aa9c2f",
+     "f53a55b1581c63b1"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "5367b4bdf05830bc",
+     "8956b6d4c813853e",
+     "771611e8a2d2f246",
+     "48fb7068ff3ce441",
+     "e79e553e8d11f451"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "FEV₁ quality grade before the FVC quality grade before the\n ",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Pre 1 Pre 2\n L/s L L/s L\n 6 4 6 4\n\n 4 4\n 3 3\n 2 2\n 2 2\n 0 0\n",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  },
+  "spiroOnly-answered-1024": {
+   "geo": {
+    "hash": "9234d15c09f83308",
+    "boxes": 426,
+    "frame": {
+     "w": "816px",
+     "h": "2343px",
+     "zoom": "1"
+    },
+    "sheetS": "1"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "89cfb13c4c312236",
+     "b21722c4fd5deed0",
+     "237c6fcecc1470de",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "2a5905769ceb1624",
+     "5367b4bdf05830bc",
+     "8956b6d4c813853e",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "FEV₁ quality grade before the FVC quality grade before the\n ",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-answered-820": {
+   "geo": {
+    "hash": "e1eef16f4d25558b",
+    "boxes": 426,
+    "frame": {
+     "w": "815.997px",
+     "h": "2307.17px",
+     "zoom": "0.965"
+    },
+    "sheetS": "0.965"
+   },
+   "pdf": {
+    "pages": 4,
+    "text": [
+     "3d4b552261767d3e",
+     "77d03f1b3a56d158",
+     "a510d58b45123abd",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "f5a36620aae63348",
+     "31faccec81e103ea",
+     "c3a9f74946f23027",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Spirometry\n severe mild\n moderate not reduced\n\nFVC −2.49 bel",
+     "C C\n\n D D\n\n E E\n\n U U\n\n F F\n\n Flow-volume loop on the summar",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-answered-390": {
+   "geo": {
+    "hash": "8a98f7c6e0b81f7f",
+    "boxes": 426,
+    "frame": {
+     "w": "815.996px",
+     "h": "9815.03px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 5,
+    "text": [
+     "7e3ede7a03ec4ac3",
+     "f8c74520405b99ba",
+     "c162d9550df50878",
+     "eb68f73e5fdfced7",
+     "ab169dc67b21f01a"
+    ],
+    "raster": [
+     "d691501ea592847f",
+     "827a41895ac23d78",
+     "0ddebaa07819c23f",
+     "3b32433f209f42a3",
+     "7cab42fee95ce2a7"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Preserved ratio with low FVC or FEV₁, no volumes\n (PRISm)\n\n ",
+     "Maneuver 5, FEV₁\n Acceptable Not acceptable\n\n Maneuver 5, FV",
+     "Show the technologist’s statement and answer the last\n quest",
+     "Page 2: detailed report Every maneuver, trial and test with "
+    ]
+   }
+  },
+  "spiroOnly-details-390": {
+   "geo": {
+    "hash": "fed15190055f8dc8",
+    "boxes": 551,
+    "frame": {
+     "w": "815.996px",
+     "h": "9815.03px",
+     "zoom": "0.438"
+    },
+    "sheetS": "0.438"
+   },
+   "pdf": {
+    "pages": 7,
+    "text": [
+     "7e3ede7a03ec4ac3",
+     "f8c74520405b99ba",
+     "c162d9550df50878",
+     "eb68f73e5fdfced7",
+     "143c2cbee56b1a46",
+     "022a9effe3aa9c2f",
+     "f53a55b1581c63b1"
+    ],
+    "raster": [
+     "d691501ea592847f",
+     "827a41895ac23d78",
+     "0ddebaa07819c23f",
+     "3b32433f209f42a3",
+     "771611e8a2d2f246",
+     "48fb7068ff3ce441",
+     "e79e553e8d11f451"
+    ],
+    "head": [
+     "PFT Sim Quiz\n\n\n\nSimulated pulmonary function reports\nRead th",
+     "Preserved ratio with low FVC or FEV₁, no volumes\n (PRISm)\n\n ",
+     "Maneuver 5, FEV₁\n Acceptable Not acceptable\n\n Maneuver 5, FV",
+     "Show the technologist’s statement and answer the last\n quest",
+     "Page 2: detailed report Every maneuver, trial and test with ",
+     "Pre 1 Pre 2\n L/s L L/s L\n 6 4 6 4\n\n 4 4\n 3 3\n 2 2\n 2 2\n 0 0\n",
+     "Technical notes\n Pre-bronchodilator: hesitant start (maneuve"
+    ]
+   }
+  }
+ }
+}
