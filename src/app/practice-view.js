@@ -86,7 +86,7 @@ function comparisonHtml(ctx) {
   return `<div class="impression-compare" aria-labelledby="h-compare"><h3 id="h-compare">Compare the interpretation</h3>
     <p class="muted">Read the composed statement against your own wording: the pattern, its severity, the bronchodilator result, the diffusing capacity, and the limits that the quality of the tests places on them.</p>
     <div class="compare-grid"><div><h4>Your impression</h4>${mine ? paragraphs(mine) : '<p class="muted">No impression was written.</p>'}</div><div><h4>Composed summary</h4>${statementHtml(stmt.parts, stmt.text)}${support}${notes}</div></div>
-    <p class="signature"><span>Interpreting physician (simulation; unsigned)</span></p></div>`;
+    ${ctx.writtenHtml ?? ''}<p class="signature"><span>Interpreting physician (simulation; unsigned)</span></p></div>`;
 }
 
 /**
@@ -115,7 +115,7 @@ export function interpretationBoxHtml(ctx) {
   }
 
   if (locked) parts.push(comparisonHtml(ctx));
-  else parts.push(`<div class="impression"><label for="impression"><strong>Your impression</strong> <span class="muted">(optional; not scored)</span></label><textarea id="impression" name="impression" rows="4">${esc(responses.impression)}</textarea></div>`);
+  else parts.push(`<div class="impression"><label for="impression"><strong>Your impression</strong> <span class="muted">(optional; checked for the statements it makes when you check the answers; no score; stays in this page)</span></label><textarea id="impression" name="impression" rows="4">${esc(responses.impression)}</textarea></div>`);
 
   parts.push('</form>');
   const hint = !locked && !canCheck ? '<span class="muted" id="check-hint">Show the technologist’s statement and answer the last question before checking.</span>' : '';

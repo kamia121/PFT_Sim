@@ -1,0 +1,262 @@
+[
+ {
+  "id": "U017",
+  "scenario": "T1",
+  "case_facts": "obstruction, FEV1 MODERATE; TLC normal; BD done, SIGNIFICANT; DLCO REDUCED; quality OK",
+  "text": "Per the tech, bronchodilator response was significant. The report states DLCO is reduced. I think it is moderate obstruction.",
+  "domain": "bd",
+  "author_gold_all": {
+   "pattern": "correct",
+   "severity": "correct",
+   "bd": "uncertain",
+   "dlco": "uncertain",
+   "quality": "absent"
+  },
+  "first_run_raw_line": {
+   "id": "U017",
+   "scenario": "T1",
+   "domain": "bd",
+   "author": "uncertain",
+   "actual": "correct",
+   "text": "Per the tech, bronchodilator response was significant. The report states DLCO is reduced. I think it is moderate obstruction."
+  },
+  "current_extractor_claims": [
+   {
+    "domain": "bd",
+    "value": "significant",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "bronchodilator response was significant",
+    "start": 14,
+    "end": 53
+   },
+   {
+    "domain": "dlco",
+    "value": "reduced",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "DLCO is reduced",
+    "start": 73,
+    "end": 88
+   },
+   {
+    "domain": "pattern",
+    "value": "obstruction",
+    "certainty": "asserted",
+    "attribution": "self",
+    "quote": "obstruction",
+    "start": 113,
+    "end": 124
+   },
+   {
+    "domain": "severity",
+    "value": "moderate",
+    "certainty": "asserted",
+    "attribution": "self",
+    "quote": "moderate obstruction",
+    "start": 104,
+    "end": 124
+   }
+  ],
+  "current_verdict_domain": "review"
+ },
+ {
+  "id": "U089",
+  "scenario": "T4",
+  "case_facts": "mixed (ratio low + TLC low), severity ungraded; BD done, not significant; DLCO reduced; quality OK",
+  "text": "Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced.",
+  "domain": "pattern",
+  "author_gold_all": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "uncertain",
+   "dlco": "uncertain",
+   "quality": "absent"
+  },
+  "first_run_raw_line": {
+   "id": "U089",
+   "scenario": "T4",
+   "domain": "pattern",
+   "author": "uncertain",
+   "actual": "correct",
+   "text": "Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced."
+  },
+  "current_extractor_claims": [
+   {
+    "domain": "pattern",
+    "value": "mixed",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "mixed",
+    "start": 13,
+    "end": 18
+   },
+   {
+    "domain": "bd",
+    "value": "not-significant",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "BD nonsignificant",
+    "start": 46,
+    "end": 63
+   },
+   {
+    "domain": "dlco",
+    "value": "reduced",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "DLCO reported reduced",
+    "start": 65,
+    "end": 86
+   }
+  ],
+  "current_verdict_domain": "review"
+ },
+ {
+  "id": "U089",
+  "scenario": "T4",
+  "case_facts": "mixed (ratio low + TLC low), severity ungraded; BD done, not significant; DLCO reduced; quality OK",
+  "text": "Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced.",
+  "domain": "dlco",
+  "author_gold_all": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "uncertain",
+   "dlco": "uncertain",
+   "quality": "absent"
+  },
+  "first_run_raw_line": {
+   "id": "U089",
+   "scenario": "T4",
+   "domain": "dlco",
+   "author": "uncertain",
+   "actual": "correct",
+   "text": "Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced."
+  },
+  "current_extractor_claims": [
+   {
+    "domain": "pattern",
+    "value": "mixed",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "mixed",
+    "start": 13,
+    "end": 18
+   },
+   {
+    "domain": "bd",
+    "value": "not-significant",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "BD nonsignificant",
+    "start": 46,
+    "end": 63
+   },
+   {
+    "domain": "dlco",
+    "value": "reduced",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "DLCO reported reduced",
+    "start": 65,
+    "end": 86
+   }
+  ],
+  "current_verdict_domain": "review"
+ },
+ {
+  "id": "U113",
+  "scenario": "T5",
+  "case_facts": "all normal; no BD study; DLCO normal; quality OK",
+  "text": "The report says normal. Tech did not do a bronchodilator. DLCO reported normal.",
+  "domain": "dlco",
+  "author_gold_all": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "uncertain",
+   "dlco": "uncertain",
+   "quality": "absent"
+  },
+  "first_run_raw_line": {
+   "id": "U113",
+   "scenario": "T5",
+   "domain": "dlco",
+   "author": "uncertain",
+   "actual": "correct",
+   "text": "The report says normal. Tech did not do a bronchodilator. DLCO reported normal."
+  },
+  "current_extractor_claims": [
+   {
+    "domain": "bd",
+    "value": "ambiguous-none",
+    "certainty": "unresolved",
+    "attribution": "self",
+    "quote": "not do a bronchodilator",
+    "start": 33,
+    "end": 56
+   },
+   {
+    "domain": "dlco",
+    "value": "normal",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "DLCO reported normal",
+    "start": 58,
+    "end": 78
+   }
+  ],
+  "current_verdict_domain": "review"
+ },
+ {
+  "id": "U160",
+  "scenario": "T7",
+  "case_facts": "ratio normal, FVC low, TLC normal (nonspecific); no BD study; DLCO RAISED; quality OK",
+  "text": "Report says nonspecific pattern. Tech noted no BD. DLCO said to be raised.",
+  "domain": "dlco",
+  "author_gold_all": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "uncertain",
+   "dlco": "uncertain",
+   "quality": "absent"
+  },
+  "first_run_raw_line": {
+   "id": "U160",
+   "scenario": "T7",
+   "domain": "dlco",
+   "author": "uncertain",
+   "actual": "correct",
+   "text": "Report says nonspecific pattern. Tech noted no BD. DLCO said to be raised."
+  },
+  "current_extractor_claims": [
+   {
+    "domain": "pattern",
+    "value": "nonspecific",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "nonspecific",
+    "start": 12,
+    "end": 23
+   },
+   {
+    "domain": "bd",
+    "value": "ambiguous-none",
+    "certainty": "unresolved",
+    "attribution": "other",
+    "quote": "no BD",
+    "start": 44,
+    "end": 49
+   },
+   {
+    "domain": "dlco",
+    "value": "raised",
+    "certainty": "asserted",
+    "attribution": "other",
+    "quote": "DLCO said to be raised",
+    "start": 51,
+    "end": 73
+   }
+  ],
+  "current_verdict_domain": "review"
+ }
+]

@@ -1,0 +1,50 @@
+{
+ "items": 168,
+ "judgments": 840,
+ "falseCredit": 0,
+ "falseContradiction": 0,
+ "falseMissing": 1,
+ "creditRecall": "262/330",
+ "contradictionRecall": "33/42",
+ "abstainedOnClear": "58/372",
+ "reviewedOnUnclear": "116/123"
+}
+
+confusion (rows: author gold; columns: grader group; domains pattern, severity, bd, dlco, quality):
+{
+ "correct": {
+  "correct": 262,
+  "contradictory": 0,
+  "missing": 0,
+  "review": 53,
+  "none": 15
+ },
+ "wrong": {
+  "correct": 0,
+  "contradictory": 33,
+  "missing": 1,
+  "review": 5,
+  "none": 3
+ },
+ "absent": {
+  "correct": 0,
+  "contradictory": 0,
+  "missing": 46,
+  "review": 73,
+  "none": 226
+ },
+ "uncertain": {
+  "correct": 0,
+  "contradictory": 0,
+  "missing": 2,
+  "review": 116,
+  "none": 5
+ }
+}
+
+== FALSE CREDIT (graded correct, author did not): 0
+
+== FALSE CONTRADICTION (graded contradictory, author said correct/uncertain/absent): 0
+
+== FALSE MISSING (graded missing, author said correct/wrong): 1
+{"id":"U077","scenario":"T4","domain":"pattern","author":"wrong","actual":"missing","text":"Obstruction with hyperinflation and air trapping."}

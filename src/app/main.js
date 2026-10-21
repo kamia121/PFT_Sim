@@ -19,6 +19,8 @@ import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
 import { renderPractice, detailsBodyHtml } from './practice-view.js';
+import { takeSnapshot, visibleSnapshot } from '../written/session.js';
+import { writtenFeedbackHtml, writtenAnnouncement } from '../written/view.js';
 import { pageRulesCss } from '../report-page/pages.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -31,6 +33,7 @@ const state = {
   modelCache: null, itemsCache: null,
   reportModel: null, reportDark: false, reportInterp: false, printing: false,
   tally: { answered: 0, matched: 0, items: 0 }, fitContent: null,
+  written: null, // snapshot of the written-impression check: made only by an explicit scored check, retired by a new case (src/written/session.js)
 };
 
 /** Practice mix: weights are teaching choices, not prevalence. */
@@ -124,7 +127,9 @@ function practiceContext() {
 /** Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. */
 function render({ focus = null } = {}) {
   if (!$('#panel-report').hidden) { renderReportView(); return; }
-  $('#case').innerHTML = renderPractice(practiceContext());
+  const ctx = practiceContext();
+  ctx.writtenHtml = writtenFeedbackHtml(visibleSnapshot(state.written, { caseData: state.case, stage: state.stage }), { currentEquation: state.spirometryEquation });
+  $('#case').innerHTML = renderPractice(ctx);
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
   fitSheets();
@@ -242,11 +247,16 @@ function checkAnswers(scored) {
   const next = checkStage(state.stage, { scored });
   if (next === state.stage) return;
   state.stage = next;
+  if (scored) {
+    // The only place the written impression is graded: an explicit scored check, once, on the case and equation on the page.
+    const { a, b } = interpretations();
+    try { state.written = takeSnapshot({ scored, stage: next.stage, text: state.responses.impression, caseData: state.case, interp: a, interpOther: b, equation: state.spirometryEquation }); } catch { state.written = null; }
+  }
   render();
   if (scored) {
     state.tally = addToTally(state.tally, state.feedback);
     $('#tally').textContent = `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.`;
-    announce(`Answers checked: ${state.feedback.matched} of ${state.feedback.total} matched the key.`);
+    announce(`Answers checked: ${state.feedback.matched} of ${state.feedback.total} matched the key. ${writtenAnnouncement(visibleSnapshot(state.written, { caseData: state.case, stage: state.stage }))}`.trim());
   } else announce('The key is shown.');
   $('#reveal')?.scrollIntoView?.({ block: 'start' });
 }

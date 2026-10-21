@@ -1,0 +1,80 @@
+{
+ "items": 168,
+ "judgments": 840,
+ "falseCredit": 5,
+ "falseContradiction": 10,
+ "falseMissing": 16,
+ "creditRecall": "250/330",
+ "contradictionRecall": "34/42",
+ "abstainedOnClear": "49/372",
+ "reviewedOnUnclear": "105/123"
+}
+
+confusion (rows: author gold; columns: grader group; domains pattern, severity, bd, dlco, quality):
+{
+ "correct": {
+  "correct": 250,
+  "contradictory": 5,
+  "missing": 12,
+  "review": 48,
+  "none": 15
+ },
+ "wrong": {
+  "correct": 0,
+  "contradictory": 34,
+  "missing": 4,
+  "review": 1,
+  "none": 3
+ },
+ "absent": {
+  "correct": 0,
+  "contradictory": 0,
+  "missing": 46,
+  "review": 73,
+  "none": 226
+ },
+ "uncertain": {
+  "correct": 5,
+  "contradictory": 5,
+  "missing": 3,
+  "review": 105,
+  "none": 5
+ }
+}
+
+== FALSE CREDIT (graded correct, author did not): 5
+{"id":"U017","scenario":"T1","domain":"bd","author":"uncertain","actual":"correct","text":"Per the tech, bronchodilator response was significant. The report states DLCO is reduced. I think it is moderate obstruction."}
+{"id":"U089","scenario":"T4","domain":"pattern","author":"uncertain","actual":"correct","text":"Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced."}
+{"id":"U089","scenario":"T4","domain":"dlco","author":"uncertain","actual":"correct","text":"Per the lab, mixed pattern. Technologist says BD nonsignificant. DLCO reported reduced."}
+{"id":"U113","scenario":"T5","domain":"dlco","author":"uncertain","actual":"correct","text":"The report says normal. Tech did not do a bronchodilator. DLCO reported normal."}
+{"id":"U160","scenario":"T7","domain":"dlco","author":"uncertain","actual":"correct","text":"Report says nonspecific pattern. Tech noted no BD. DLCO said to be raised."}
+
+== FALSE CONTRADICTION (graded contradictory, author said correct/uncertain/absent): 10
+{"id":"U039","scenario":"T2","domain":"bd","author":"uncertain","actual":"contradictory","text":"Severe obstruction. BD response was significant and also not significant. DLCO normal."}
+{"id":"U057","scenario":"T3","domain":"pattern","author":"correct","actual":"contradictory","text":"No obstruction (ratio normal). Not able to call restriction without lung volumes. No bronchodilator given. DLCO not reduced."}
+{"id":"U063","scenario":"T3","domain":"pattern","author":"uncertain","actual":"contradictory","text":"Restrictive pattern confirmed; TLC not measured so cannot confirm. DLCO normal."}
+{"id":"U080","scenario":"T4","domain":"pattern","author":"correct","actual":"contradictory","text":"Not purely obstructive and not purely restrictive. Not responsive to bronchodilator. DLCO is not normal."}
+{"id":"U087","scenario":"T4","domain":"bd","author":"uncertain","actual":"contradictory","text":"Mixed defect. BD response significant and no response. DLCO reduced."}
+{"id":"U105","scenario":"T5","domain":"bd","author":"uncertain","actual":"contradictory","text":"Normal study; no bronchodilator response."}
+{"id":"U114","scenario":"T5","domain":"pattern","author":"uncertain","actual":"contradictory","text":"It is not the case that spirometry is not normal. DLCO not low. BD not done."}
+{"id":"U145","scenario":"T7","domain":"pattern","author":"correct","actual":"contradictory","text":"Nonspecific pattern: reduced FVC with normal ratio and normal TLC, so no restriction. No BD done. DLCO increased."}
+{"id":"U150","scenario":"T7","domain":"pattern","author":"correct","actual":"contradictory","text":"52 yo man, obese (BMI 41), OSA on CPAP, GERD, left shoulder surgery last year, never smoker, referred for dyspnea on stairs. Spirometry shows a low FVC with a normal FEV1/FVC ratio. TLC is normal, so there is no restriction, a nonspecific pattern. No bronchodilator was given. DLCO is increased."}
+{"id":"U152","scenario":"T7","domain":"pattern","author":"correct","actual":"contradictory","text":"No obstruction and no restriction (TLC normal) despite low FVC. DLCO is not reduced; it is raised. No BD."}
+
+== FALSE MISSING (graded missing, author said correct/wrong): 16
+{"id":"U002","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"Obstructive ventilatory defect, moderate. BD+. DLCO low."}
+{"id":"U003","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"mod obst, BDR+, DLCOc down, TLC nl"}
+{"id":"U003","scenario":"T1","domain":"dlco","author":"correct","actual":"missing","text":"mod obst, BDR+, DLCOc down, TLC nl"}
+{"id":"U007","scenario":"T1","domain":"severity","author":"wrong","actual":"missing","text":"Restrictive pattern, mild. No bronchodilator response. DLCO normal."}
+{"id":"U022","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"Moderately severe obstruction, GOLD 2, BD+, low TLCO."}
+{"id":"U026","scenario":"T2","domain":"bd","author":"correct","actual":"missing","text":"Severe obst, BD-, DLCO nl, efforts grade D so interpret w caution"}
+{"id":"U027","scenario":"T2","domain":"dlco","author":"correct","actual":"missing","text":"Severe airflow obstruction without significant BD response. Normal TLC and DLCO."}
+{"id":"U031","scenario":"T2","domain":"severity","author":"wrong","actual":"missing","text":"Severe restrictive defect. DLCO normal."}
+{"id":"U074","scenario":"T4","domain":"bd","author":"correct","actual":"missing","text":"mixed obst/restr, BD-, DLCOc low"}
+{"id":"U076","scenario":"T4","domain":"pattern","author":"wrong","actual":"missing","text":"Pure restriction, no BD response, DLCO normal. Poor quality test."}
+{"id":"U077","scenario":"T4","domain":"pattern","author":"wrong","actual":"missing","text":"Obstruction with hyperinflation and air trapping."}
+{"id":"U097","scenario":"T5","domain":"dlco","author":"correct","actual":"missing","text":"Normal spirometry, lung volumes and DLCO. No bronchodilator study."}
+{"id":"U103","scenario":"T5","domain":"pattern","author":"correct","actual":"missing","text":"Normall spirometry, TLC and DLCOc. No BD perfomed."}
+{"id":"U118","scenario":"T5","domain":"pattern","author":"correct","actual":"missing","text":"Normal, no severity to grade (GOLD 0)."}
+{"id":"U122","scenario":"T6","domain":"bd","author":"correct","actual":"missing","text":"Mild obstruction, BD+, DLCO nl."}
+{"id":"U133","scenario":"T6","domain":"dlco","author":"correct","actual":"missing","text":"Low ratio; need lung volumes to exclude restriction. FEV1 normal. BD response positive. DLCO ok."}
