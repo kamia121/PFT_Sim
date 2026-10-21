@@ -27,8 +27,10 @@
   sync();
   if (mq.addEventListener) mq.addEventListener('change', sync);
   window.addEventListener('storage', function (e) {
-    if (e.key !== KEY) return;
-    if (valid(e.newValue)) root.dataset.theme = e.newValue; else delete root.dataset.theme;
+    // A null key is localStorage.clear(): the saved choice is gone and the system preference applies again.
+    if (e.key !== null && e.key !== KEY) return;
+    var next = e.key === null ? null : valid(e.newValue);
+    if (next) root.dataset.theme = next; else delete root.dataset.theme;
     sync();
   });
 })();

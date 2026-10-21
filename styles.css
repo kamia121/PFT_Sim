@@ -120,3 +120,12 @@ fieldset.inline.eq-select legend{padding:0;margin-right:8px;float:left}
 .impression-compare .stmt-lines{margin:0 0 .5rem;padding-left:1.1rem}
 .impression-compare .stmt-lines li{margin:0 0 .25rem}
 .impression-compare details.supporting{margin:.4rem 0}
+
+/* Print never depends on background graphics: the navy masthead and the green buttons lose their fills when a browser drops backgrounds,
+   which left their white text near-invisible on paper. The chrome prints as dark ink on white; the toggle has no use on paper. */
+@media print {
+  .masthead{background:none;color:#000;border-bottom:1.5px solid #000}
+  .masthead a,.wordmark{color:#000}
+  .theme-button{display:none}
+  button.primary,button.secondary,.linkbutton{background:none;color:#000;border-color:#000}
+}

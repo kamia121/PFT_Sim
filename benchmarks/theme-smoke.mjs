@@ -153,6 +153,13 @@ try {
     await a.waitForFunction(() => document.querySelector('#theme-toggle').textContent === 'Light mode');
     check((await state(a)).bg === DARK_BG, 'a change of the system preference updates the page and the label while nothing is saved');
     await b.click('#theme-toggle');
+    await a.evaluate(() => localStorage.setItem('pft-theme', 'dark')); // a's own write does not fire in a; b hears it
+    await b.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+    await a.emulateMedia({ colorScheme: 'light' });
+    await b.evaluate(() => localStorage.clear());
+    await a.waitForFunction(() => !document.documentElement.dataset.theme, null, { timeout: 3000 }).catch(() => {});
+    check((await state(a)).bg === LIGHT_BG && (await state(a)).label === 'Dark mode', 'localStorage.clear() in another tab returns this tab to the system preference');
+    await b.click('#theme-toggle');
     const bTheme = (await state(b)).theme;
     await a.waitForFunction((t) => document.documentElement.dataset.theme === t, bTheme);
     const sa = await state(a);
@@ -213,6 +220,19 @@ try {
     await page.waitForSelector(ready, { timeout: 15000 });
     check(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${name}: no horizontal overflow at phone width in dark`);
     await page.emulateMedia({ media: 'print' });
+    // Backgrounds may be dropped on paper, so printed chrome is judged as its text color against white.
+    const chrome = await page.evaluate(() => {
+      const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+      const bad = [];
+      for (const el of document.querySelectorAll('.masthead, .masthead a, .wordmark, button.primary, button.secondary, .linkbutton, .tabs button')) {
+        const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+        if (!r.width || !r.height || cs.visibility === 'hidden') continue;
+        const cr = 1.05 / (lum(cs.color.match(/[\d.]+/g).map(Number)) + 0.05);
+        if (cr < 4.5) bad.push(`${el.tagName}.${el.className} ${cr.toFixed(2)}`);
+      }
+      return bad;
+    });
+    check(chrome.length === 0, `${name}: printed masthead and buttons are dark ink on white without background graphics${chrome.length ? ' ' + chrome.slice(0, 3).join('; ') : ''}`);
     const ink = await page.evaluate(() => [getComputedStyle(document.body).color, getComputedStyle(document.body).backgroundColor]);
     check(ink[0] === 'rgb(28, 35, 33)', `${name}: dark text for print while the screen theme is dark (${ink[0]})`);
     await ctx.close();

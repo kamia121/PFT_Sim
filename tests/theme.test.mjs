@@ -21,8 +21,9 @@ function boot({ saved = null, systemDark = false, storageBlocked = false } = {})
   const matchMedia = () => ({ matches: systemDark, addEventListener: () => {} });
   const window = { matchMedia, addEventListener: (t, f) => { listeners['w:' + t] = f; } };
   vm.runInNewContext(fs.readFileSync(new URL('../src/ui/theme-boot.js', import.meta.url), 'utf8'), { document, window, localStorage, matchMedia });
+  const storage = (key, newValue) => listeners['w:storage']({ key, newValue });
   const click = () => listeners.click({ target: { closest: (sel) => (sel === '#theme-toggle' ? button : null) } });
-  return { root, button, store, click, listeners };
+  return { root, button, store, click, storage, listeners };
 }
 
 test('the saved choice wins over the system preference; anything else is ignored', () => {
@@ -42,6 +43,25 @@ test('the toggle switches to the opposite of the theme in force, saves it and re
   a.click();
   assert.equal(a.root.dataset.theme, 'dark');
   assert.equal(a.button.textContent, 'Light mode');
+});
+
+test('a change in another tab is followed, and storage.clear() (null key) returns to the system preference', () => {
+  const a = boot({ saved: 'dark', systemDark: false });
+  a.storage('pft-theme', 'light');
+  assert.equal(a.root.dataset.theme, 'light');
+  assert.equal(a.button.textContent, 'Dark mode');
+  a.storage('unrelated', 'x');
+  assert.equal(a.root.dataset.theme, 'light');
+  a.storage('pft-theme', 'dark');
+  assert.equal(a.root.dataset.theme, 'dark');
+  a.storage(null, null);
+  assert.equal(a.root.dataset.theme, undefined);
+  assert.equal(a.button.textContent, 'Dark mode');
+  const b = boot({ saved: 'light', systemDark: true });
+  b.storage(null, null);
+  assert.equal(b.button.textContent, 'Light mode');
+  b.storage('pft-theme', null);
+  assert.equal(b.root.dataset.theme, undefined);
 });
 
 test('blocked storage does not stop the toggle', () => {
