@@ -1,6 +1,6 @@
 import { esc, num, signed, MEASURES, EQUATION_NAMES, hbKnown, hbLow, coHbMeasured, sexUndisclosed, showBirthSex } from './format.js';
 import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT, bdArtifactText, ARCHETYPE_NOTE_OVERRIDES } from './explain.js';
-import { QUESTIONS, hasData, questionLabel, label as answerLabel } from './answers.js';
+import { QUESTIONS, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
 import { FIGURES, PANEL_IDS } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
@@ -116,36 +116,37 @@ function equationCell(mr) {
   return mr.matched ? esc(name) : `${esc(name)} <span class="flag" title="This equation was derived in people of European ancestry, so its reference population may represent this patient less well; this limits the result, and no ancestry adjustment is applied.">European reference population</span>`;
 }
 
-export function renderReport(interp, names, title, id, { labels = {} } = {}) {
+export function renderReport(interp, names, title, id, { labels = {}, flags = 'lln' } = {}) {
+  const showFlags = flags !== 'none';
   const rows = names.map((n) => {
     const mr = interp.measures[n];
     if (!mr) return '';
     const meta = { ...MEASURES[n], ...(labels[n] ? { label: labels[n] } : {}) };
-    if (mr.available === false) return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td colspan="5" class="l muted">No reference value: ${esc(mr.reason ?? 'unavailable')}</td></tr>`;
-    return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td>${num(mr.predicted, meta.dp)}</td><td>${num(mr.lln, meta.dp)}</td><td>${num(mr.z, 2)}</td><td>${num(mr.percentPredicted, 0)}%</td><td class="l">${flagCell(mr)}</td><td class="l">${equationCell(mr)}</td></tr>`;
+    if (mr.available === false) return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td colspan="${showFlags ? 5 : 4}" class="l muted">No reference value: ${esc(mr.reason ?? 'unavailable')}</td></tr>`;
+    return `<tr><th scope="row" class="l">${meta.label}</th><td>${num(mr.value, meta.dp)}</td><td class="l">${meta.unit}</td><td>${num(mr.predicted, meta.dp)}</td><td>${num(mr.lln, meta.dp)}</td><td>${num(mr.z, 2)}</td><td>${num(mr.percentPredicted, 0)}%</td>${showFlags ? `<td class="l">${flagCell(mr)}</td>` : ''}<td class="l">${equationCell(mr)}</td></tr>`;
   }).join('');
-  return `<div class="scroll"><table class="data" id="${id}"><caption>${esc(title)}</caption><thead><tr><th class="l">Measure</th><th>Value</th><th class="l">Unit</th><th>Predicted</th><th>LLN</th><th>z-score</th><th>% pred.</th><th class="l">Flag</th><th class="l">Reference</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="scroll"><table class="data" id="${id}"><caption>${esc(title)}</caption><thead><tr><th class="l">Measure</th><th>Value</th><th class="l">Unit</th><th>Predicted</th><th>LLN</th><th>z-score</th><th>% pred.</th>${showFlags ? '<th class="l">Flag</th>' : ''}<th class="l">Reference</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-export function renderBronchodilator(c, interp) {
+export function renderBronchodilator(c, interp, { maneuvers = true } = {}) {
   const post = c.spirometry.post;
   if (!post) return '';
   const pre = c.report.spirometry, po = c.report.spirometry.post, bd = interp.bd;
   const rows = [['FEV₁', pre.fev1, po.fev1, bd.dFev1, bd.pctBase.fev1, bd.pctPred.fev1], ['FVC', pre.fvc, po.fvc, bd.dFvc, bd.pctBase.fvc, bd.pctPred.fvc]].map(([n, a, b, d, pb, pp]) =>
     `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pb, 1)}%</td><td>${signed(pp, 1)}%</td></tr>`).join('');
   return `<section class="card" aria-labelledby="h-bd"><h2 id="h-bd">After bronchodilator</h2>
-  ${renderManeuvers(post, 'Post-bronchodilator maneuvers', { revealed: false, id: 'post-maneuvers' })}
+  ${maneuvers ? renderManeuvers(post, 'Post-bronchodilator maneuvers', { revealed: false, id: 'post-maneuvers' }) : ''}
   <div class="scroll"><table class="data"><caption>Change from baseline</caption><thead><tr><th class="l">Measure</th><th>Before (L)</th><th>After (L)</th><th>Change (L)</th><th>Change, % of baseline</th><th>Change, % of predicted</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="muted">Post-bronchodilator FEV₁/FVC ${num(bd.postRatio, 3)}. Percent of predicted uses the reference equation selected for spirometry.</p></section>`;
 }
 
-export function renderVolumes(c, interp) {
+export function renderVolumes(c, interp, { flags = 'lln' } = {}) {
   if (!c.volumes) return '';
-  return `<section class="card" aria-labelledby="h-vol"><h2 id="h-vol">Lung volumes</h2>${renderReport(interp, ['tlc', 'rv', 'rv_tlc', 'vc', 'frc', 'erv', 'ic'], 'Plethysmographic lung volumes (single determination)', 'volumes-table')}
+  return `<section class="card" aria-labelledby="h-vol"><h2 id="h-vol">Lung volumes</h2>${renderReport(interp, ['tlc', 'rv', 'rv_tlc', 'vc', 'frc', 'erv', 'ic'], 'Plethysmographic lung volumes (single determination)', 'volumes-table', { flags })}
   <p class="muted">FRC, ERV and IC are the measured quantities; TLC, RV and VC follow from them. The reported FRC is the mean of the acceptable plethysmograph shutter closures shown in the figures.</p></section>`;
 }
 
-export function renderDlco(c, interp) {
+export function renderDlco(c, interp, { flags = 'lln' } = {}) {
   if (!c.dlco) return '';
   const d = c.dlco;
   const hbOk = hbKnown(d);
@@ -158,20 +159,8 @@ export function renderDlco(c, interp) {
     : `<div><dt>Measured DLCO</dt><dd>${num(d.raw, 1)} mL/min/mmHg</dd></div><div><dt>Hemoglobin</dt><dd>not available</dd></div><div><dt>Hemoglobin adjustment</dt><dd>not applied</dd></div>`;
   return `<section class="card" aria-labelledby="h-dlco"><h2 id="h-dlco">Diffusing capacity</h2>
   <dl class="demo">${head}${coHb}${vi}${bh}</dl>
-  ${renderReport(interp, ['dlco', 'va', 'kco'], hbOk ? 'Single-breath diffusing capacity, compared on the hemoglobin-adjusted value' : 'Single-breath diffusing capacity, compared without hemoglobin adjustment (hemoglobin not available)', 'dlco-table', { labels: hbOk ? {} : { dlco: 'DLCO, unadjusted' } })}
+  ${renderReport(interp, ['dlco', 'va', 'kco'], hbOk ? 'Single-breath diffusing capacity, compared on the hemoglobin-adjusted value' : 'Single-breath diffusing capacity, compared without hemoglobin adjustment (hemoglobin not available)', 'dlco-table', { flags, labels: hbOk ? {} : { dlco: 'DLCO, unadjusted' } })}
   <p class="muted">${hbOk ? 'The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard. ' : ''}The inspired volume and the breath-hold time are simulated in the single-breath tracing. One test is simulated, so no replicate-test rule applies.</p></section>`;
-}
-
-export function renderAnswerForm(c, answers, locked) {
-  const fields = QUESTIONS.map((q) => {
-    const na = !hasData(c, q.id);
-    const opts = q.options.map(([v, l]) => `<label><input type="radio" name="${q.id}" value="${esc(v)}" ${answers[q.id] === v ? 'checked' : ''} ${locked ? 'disabled' : ''}> ${esc(l)}</label>`).join('');
-    return `<fieldset><legend>${esc(questionLabel(c, q))}</legend>${na ? '<p class="muted">Not performed in this case.</p>' : ''}${opts}</fieldset>`;
-  }).join('');
-  return `<section class="card" aria-labelledby="h-answers"><h2 id="h-answers">Your interpretation</h2>
-  <p class="muted">Answer from the report above, then check. Results are scored against the stored key for the displayed reference equation, and an answer that matches the other equation is accepted for borderline values. Answers stay in this page and are not saved or sent anywhere.</p>
-  <form id="answer-form" class="answers">${fields}</form>
-  <div class="toolbar"><button type="button" class="primary" id="check-answers" ${locked ? 'disabled' : ''}>Check answers</button><button type="button" class="secondary" id="show-key" ${locked ? 'disabled' : ''}>Show the key without scoring</button></div></section>`;
 }
 
 const STATUS_TEXT = { correct: ['ok', 'Correct'], 'other-equation': ['ok', 'Accepted: matches the other reference equation'], incorrect: ['miss', 'Differs from the key'], unanswered: ['miss', 'Not answered'] };
@@ -182,15 +171,27 @@ function groundTruthNote(c, truth) {
   return ARCHETYPE_NOTE_OVERRIDES[truth.archetype] ?? archetypeNote(truth.archetype);
 }
 
-export function renderReveal(c, interp, cmp, scores, scored) {
+/** One row of the feedback list: the item, the learner's answer, the key and the status. */
+function resultRow(r, scored) {
+  const [cls, base] = STATUS_TEXT[r.status];
+  const text = r.status === 'other-equation' ? r.note : base;
+  const note = r.kind === 'challenge' && r.note && r.status !== 'other-equation' ? ` <span class="muted">${esc(r.note)}</span>` : '';
+  const why = r.why ? `<div class="muted why">${esc(r.why)}</div>` : '';
+  return `<div class="result-row"><div class="head">${esc(r.label)}</div><div>${scored ? `You: ${esc(r.answer ?? 'no answer')}` : ''}</div><div>Key: <strong>${esc(r.expected)}</strong>${r.other ? ` <span class="muted">(other equation: ${esc(r.other)})</span>` : ''}${scored ? ` <span class="${cls}">${esc(text)}</span>${note}` : ''}${scored ? why : ''}</div></div>`;
+}
+
+/**
+ * The reveal. `scores` are the structured answers scored by scoreAnswers; `feedback` (src/app/feedback.js) replaces them with every
+ * item of the page (structured questions and challenge items), adds the test-quality section and the line about the detailed report.
+ */
+export function renderReveal(c, interp, cmp, scores, scored, feedback = null) {
   const k = interp.key;
-  const tally = scored ? scores.filter((s) => s.status === 'correct' || s.status === 'other-equation').length : null;
-  const rows = scores.map((s) => {
-    const [cls, base] = STATUS_TEXT[s.status];
-    s = { ...s, label: questionLabel(c, QUESTIONS.find((q) => q.id === s.id)) };
-    const text = s.status === 'other-equation' ? s.otherLabel : base;
-    return `<div class="result-row"><div class="head">${esc(s.label)}</div><div>${scored ? `You: ${esc(answerLabel(s.id, s.answer))}` : ''}</div><div>Key: <strong>${esc(answerLabel(s.id, s.expected))}</strong>${s.other !== s.expected ? ` <span class="muted">(other equation: ${esc(answerLabel(s.id, s.other))})</span>` : ''}${scored ? ` <span class="${cls}">${text}</span>` : ''}</div></div>`;
-  }).join('');
+  const rowsData = feedback ? feedback.rows : scores.map((s) => ({
+    kind: 'structured', id: s.id, label: questionLabel(c, QUESTIONS.find((q) => q.id === s.id)), answer: s.status === 'unanswered' ? null : answerLabel(s.id, s.answer),
+    expected: answerLabel(s.id, s.expected), other: s.other !== s.expected ? answerLabel(s.id, s.other) : null, status: s.status, note: s.otherLabel, why: '',
+  }));
+  const tally = scored ? rowsData.filter((s) => s.status === 'correct' || s.status === 'other-equation').length : null;
+  const rows = rowsData.map((r) => resultRow(r, scored)).join('');
   const paras = (arr) => arr.map((t) => `<p>${esc(t)}</p>`).join('');
   const parts = [];
   parts.push(`<h3>${esc(PATTERNS[interp.pattern])}</h3>${paras(PATTERN_TEXT[interp.pattern] ?? [])}`);
@@ -213,8 +214,13 @@ export function renderReveal(c, interp, cmp, scores, scored) {
   } else if ((sc.statements ?? []).length) {
     parts.push('<h3>Limits on this interpretation</h3><p>None of the notes changes the interpretation.</p>');
   }
-  const gr = c.spirometry.pre.summary.grades;
-  parts.push(`<h3>Session quality</h3><p>FEV₁ grade <strong>${gr.fev1}</strong>: ${esc(GRADE_TEXT[gr.fev1])} FVC grade <strong>${gr.fvc}</strong>: ${esc(GRADE_TEXT[gr.fvc])} FEV₁ and FVC are graded separately because a cough in the first second spoils FEV₁ but not FVC, and an early end of expiration spoils FVC but not FEV₁.${interp.qualityLimited ? ' With these grades the interpretation is qualified: the values may understate the patient’s best effort.' : ''}</p>`);
+  if (feedback?.quality) {
+    parts.push(`<h3 id="h-quality">Test quality</h3><ul class="notes">${feedback.quality.lines.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>${interp.qualityLimited ? '<p>With these grades the interpretation is qualified: the values may understate the patient’s best effort.</p>' : ''}`);
+  } else {
+    const gr = c.spirometry.pre.summary.grades;
+    parts.push(`<h3>Session quality</h3><p>FEV₁ grade <strong>${gr.fev1}</strong>: ${esc(GRADE_TEXT[gr.fev1])} FVC grade <strong>${gr.fvc}</strong>: ${esc(GRADE_TEXT[gr.fvc])} FEV₁ and FVC are graded separately because a cough in the first second spoils FEV₁ but not FVC, and an early end of expiration spoils FVC but not FEV₁.${interp.qualityLimited ? ' With these grades the interpretation is qualified: the values may understate the patient’s best effort.' : ''}</p>`);
+  }
+  if (feedback?.detailsLine) parts.push(`<p class="details-line">${esc(feedback.detailsLine)}</p>`);
 
   const cmpRows = ['fev1', 'fvc', 'fev1_fvc'].map((n) => {
     const a = cmp.a.measures[n], b = cmp.b.measures[n];
@@ -223,7 +229,7 @@ export function renderReveal(c, interp, cmp, scores, scored) {
     return `<tr><th scope="row" class="l">${MEASURES[n].label}</th><td>${num(a.value, MEASURES[n].dp)}</td><td>${num(a.z, 2)}</td><td class="l">${a.label}${a.borderline ? ' (borderline)' : ''}</td><td>${num(b.z, 2)}</td><td class="l">${b.label}${b.borderline ? ' (borderline)' : ''}</td><td class="l">${changed ? `<span class="flag">${a.label} → ${b.label}</span>` : 'no change'}</td></tr>`;
   }).join('');
   const truth = c.groundTruth;
-  return `<section class="card explain" id="reveal" aria-labelledby="h-key"><h2 id="h-key">${scored ? `Result: ${tally} of ${scores.length} matched the key` : 'The key'}</h2>
+  return `<section class="card explain" id="reveal" aria-labelledby="h-key"><h2 id="h-key">${scored ? `Result: ${tally} of ${rowsData.length} matched the key` : 'The key'}</h2>
   ${rows}
   ${parts.join('')}
   <h3>Same values under the other reference equations</h3>
