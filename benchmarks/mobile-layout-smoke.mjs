@@ -109,22 +109,33 @@ try {
     check(doc[0] <= doc[1] + 1, `${tag}: no document-level horizontal scroll (${doc[0]} of ${doc[1]})`);
     check(!(await page.evaluate(clipReport)).length, `${tag}: practice page has no content clipped inside overflow hidden or clip boxes${(await page.evaluate(clipReport)).join('; ')}`);
 
-    // Bullets stay inside the comment box: the list indent is wider than a marker even when a browser inflates the list text to 150%.
+    // Bullets stay inside the comment box. The list text is inflated to 150% (what iOS text autosizing does to a wide text block) and
+    // the measurements are taken while it is inflated; the style is removed afterwards.
     const bullet = await page.evaluate(() => {
       const ul = document.querySelector('#summary-slot .sheet-box ul');
       if (!ul) return null;
-      const li = ul.querySelector('li');
-      const box = ul.closest('.sheet-box').getBoundingClientRect();
-      const cs = getComputedStyle(ul);
       const style = document.createElement('style');
-      style.textContent = '#summary-slot .sheet-box li { font-size: 150% !important; }';
+      style.textContent = '#summary-slot .sheet-box ul { font-size: 150% !important; }';
       document.head.append(style);
-      const inflated = parseFloat(getComputedStyle(li).fontSize);
-      style.remove();
-      return { pad: parseFloat(cs.paddingLeft), fs: parseFloat(getComputedStyle(li).fontSize), inflated, indent: li.getBoundingClientRect().left - box.left };
+      try {
+        const box = ul.closest('.sheet-box').getBoundingClientRect();
+        const fs = parseFloat(getComputedStyle(ul.querySelector('li')).fontSize);
+        const pad = parseFloat(getComputedStyle(ul).paddingLeft);
+        const outside = [];
+        for (const li of ul.querySelectorAll('li')) {
+          const r = li.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(li);
+          const t = range.getBoundingClientRect();
+          if (r.left - pad < box.left || t.right > box.right + 1 || r.right > box.right + 1) outside.push(`${li.textContent.slice(0, 20)} ${Math.round(r.left - pad)}..${Math.round(t.right)} in ${Math.round(box.left)}..${Math.round(box.right)}`);
+        }
+        return { pad, fs, inflated: true, outside, indent: ul.querySelector('li').getBoundingClientRect().left - box.left };
+      } finally { style.remove(); }
     });
-    if (bullet) check(bullet.pad >= 1.2 * bullet.fs, `${tag}: list indent ${bullet.pad.toFixed(1)} px is at least 1.2 em of the list text (${bullet.fs} px), so the marker clears the border; text starts ${bullet.indent.toFixed(1)} px inside the box`);
-    else console.log(`skip ${tag}: this case has no technologist comment list`);
+    if (bullet) {
+      check(bullet.pad >= 1.2 * bullet.fs, `${tag}: with the list text inflated to 150% (${bullet.fs.toFixed(1)} px) the indent is ${bullet.pad.toFixed(1)} px, at least 1.2 em, so the marker clears the border; text starts ${bullet.indent.toFixed(1)} px inside the box`);
+      check(!bullet.outside.length, `${tag}: with the list text inflated to 150% every comment and its marker stay inside the comment box${bullet.outside.slice(0, 2).join('; ')}`);
+    } else console.log(`skip ${tag}: this case has no technologist comment list`);
 
     const adjust = await page.evaluate(() => { if (!CSS.supports('text-size-adjust', '100%') && !CSS.supports('-webkit-text-size-adjust', '100%')) return ''; const cs = getComputedStyle(document.documentElement); return cs.textSizeAdjust || cs.webkitTextSizeAdjust || ''; });
     if (adjust) check(adjust === '100%', `${tag}: text-size-adjust is 100% (${adjust})`); else console.log(`skip ${tag}: text-size-adjust is not exposed by this engine`);

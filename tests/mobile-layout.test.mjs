@@ -32,3 +32,10 @@ test('phone reflow is screen-only and the list indent scales with the text', () 
   assert.match(css, /\.sheet-box ul \{[^}]*padding-left: 1\.4em/);
   assert.match(fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8'), /text-size-adjust:100%/);
 });
+
+test('the phone table-scroll cue uses the sheet paper token, not a literal white', () => {
+  const css = fs.readFileSync(new URL('../src/sheets/sheets.css', import.meta.url), 'utf8');
+  const block = css.slice(css.indexOf('@media screen and (max-width: 700px)'));
+  assert.doesNotMatch(block.match(/\.sheet-block \{[^}]*\}/)[0], /[ (]#fff\b(?!\))/);
+  assert.match(block, /\.sheet-block \{[^}]*var\(--sheet-paper, #fff\)/);
+});
