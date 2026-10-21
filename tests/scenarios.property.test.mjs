@@ -90,7 +90,7 @@ for (const level of ['none', 'light', 'moderate', 'heavy']) {
       if (c.dlco?.hbGdl === null) assert.equal(c.dlco.hbFactor, 1);
 
       // The key is a deterministic function of what the lab entered.
-      const again = interpret(c.report, resolveReference, 'GLIglobal');
+      const again = interpret(c.report, resolveReference, 'GLIglobal', { generatorKey: true });
       assert.equal(JSON.stringify(again.key), JSON.stringify(c.anchorKey.key), tag);
       if (level === 'none') assert.equal('caveatIds' in c.anchorKey.key, false);
       else if (sc.caveats.length) assert.deepEqual(c.anchorKey.key.caveatIds, sc.caveats.map((x) => x.id).sort());

@@ -51,7 +51,7 @@ test('CSV units come from the column or the row', () => {
   assert.equal(find('spirometry', 'FEV1/FVC', 'Pre-bronchodilator: Best')[5], 'ratio');
   assert.equal(find('spirometry', 'FEV1', 'Post-bronchodilator: Change')[5], 'L');
   assert.equal(find('volumes', 'RV/TLC', 'Result')[5], '%');
-  assert.equal(find('dlco', 'KCO', 'Result')[5], 'mL/min/mmHg/L');
+  assert.equal(find('dlco', 'KCO, measured', 'Result')[5], 'mL/min/mmHg/L');
 });
 
 test('TSV, wide CSV, clipboard HTML and the page HTML carry the same numbers as the model', () => {

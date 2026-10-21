@@ -17,7 +17,8 @@ export const QUESTIONS = [
     ['prism', 'Preserved ratio with low FVC or FEV₁, no volumes (PRISm)'],
   ] },
   { id: 'severity', label: 'Severity of obstruction (FEV₁ z-score)', options: [
-    ['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe'], ['na', 'Not applicable (no obstruction)'],
+    ['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe'],
+    ['fev1-normal', 'Not graded: FEV₁ within normal limits'], ['not-graded', 'Not graded for this pattern'], ['na', 'Not applicable (no obstruction)'],
   ] },
   { id: 'gradeFev1', label: 'FEV₁ quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },
   { id: 'gradeFvc', label: 'FVC quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },
@@ -29,9 +30,18 @@ export const QUESTIONS = [
   ] },
 ];
 
+/**
+ * Questions of the practice page. The two grade questions are not among them: grading belongs to the challenge list
+ * (src/challenges), which asks about the maneuvers and the technologist's statement. The quiz still draws on QUESTIONS
+ * (src/quiz/items.js) and keeps its own grade items.
+ */
+export const PRACTICE_QUESTIONS = QUESTIONS.filter((q) => q.id !== 'gradeFev1' && q.id !== 'gradeFvc');
+
 /** Question label for a case: the diffusing capacity question drops "hemoglobin-adjusted" when no hemoglobin was available. */
 export function questionLabel(caseData, q) {
   if (q.id === 'dlco' && caseData?.dlco && !hbKnown(caseData.dlco)) return 'Diffusing capacity (no hemoglobin adjustment: hemoglobin not available)';
+  // A COHb-adjusted line printed beside the report is supplementary: the question is scored on the hemoglobin-adjusted reference alone.
+  if (q.id === 'dlco' && caseData?.scenario?.coHbMeasured === true && caseData.scenario.coHbPercent > 2) return 'Diffusing capacity (scored on the hemoglobin-adjusted reference; the COHb-adjusted line is supplementary)';
   return q.label;
 }
 
@@ -43,7 +53,7 @@ export function hasData(caseData, questionId) {
 }
 
 const norm = (k, id) => {
-  if (id === 'severity') return k.severity ?? 'na';
+  if (id === 'severity') return k.severity ?? (k.pattern === 'mixed' ? 'not-graded' : 'na');
   if (id === 'bronchodilator') return k.bronchodilator ?? 'not-done';
   if (id === 'dlco') return k.dlco ?? 'not-done';
   return k[id] ?? null;
@@ -60,20 +70,22 @@ export const OTHER_EQUATION_LABEL = {
  * @param {object} keyA key under the displayed equation
  * @param {object} keyB key under the other equation, for borderline tolerance
  * @param {'GLIglobal'|'GLI2012'} [equationA] the equation of keyA; the default key is GLI Global
+ * @param {{ id: string, label: string, options: string[][] }[]} [questions] the questions to score; the default is all of QUESTIONS
  * @returns {{ id: string, label: string, answer: string|null, expected: string, status: 'correct'|'other-equation'|'incorrect'|'unanswered', other: string, otherLabel: string }[]}
  */
-export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal') {
+export function scoreAnswers(answers, keyA, keyB, equationA = 'GLIglobal', questions = QUESTIONS) {
   const otherLabel = OTHER_EQUATION_LABEL[equationA === 'GLI2012' ? 'GLIglobal' : 'GLI2012'];
-  return QUESTIONS.map((q) => {
+  return questions.map((q) => {
     const expected = norm(keyA, q.id);
     const other = norm(keyB, q.id);
     const answer = answers[q.id] ?? null;
     let status;
     if (!answer) status = 'unanswered';
     else if (answer === expected) status = 'correct';
+    else if (q.id === 'severity' && (keyA.severityAlso ?? []).includes(answer)) status = 'correct'; // at a cut point of the 2022 scale, to the precision of its rounding: checked before the other equation's key
     else if (answer === other) status = 'other-equation';
     else status = 'incorrect';
-    return { id: q.id, label: q.label, answer, expected, status, other, otherLabel };
+    return { id: q.id, label: q.label, answer, expected, status, other, otherLabel, ...(status === 'correct' && answer !== expected ? { note: 'The z-score is at a cut point of the 2022 scale, so the adjacent band is accepted.' } : {}) };
   });
 }
 

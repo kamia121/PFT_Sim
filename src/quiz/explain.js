@@ -46,8 +46,11 @@ function explainPattern(item, prep) {
 
 function explainSeverity(item, prep) {
   const s = prep.a.severity;
+  if (s?.notGraded) {
+    return `<p>The FEV₁/FVC ratio shows that obstruction exists, but the FEV₁ z-score of ${num(s.z, 2)} is within the normal range of the 2022 scale (z above −1.645), and the statement defines severity bands only below the lower limit of normal. The obstruction is therefore not graded by FEV₁. The statement lists a low ratio with a normal FEV₁ and FVC as a possible dysanaptic pattern that may be a normal variant, and notes that severity of impairment is not disease severity.</p>`;
+  }
   if (s?.scored) {
-    return `<p>The FEV₁/FVC ratio shows that obstruction exists; the FEV₁ z-score shows how far expiratory flow is reduced, and the 2022 strategy grades severity from it. ${s.fev1WithinLimits ? 'Here the FEV₁ itself is within its reference range, so the band reflects obstruction by the ratio alone. ' : ''}The band edges (z of −2.5 and −4.0) are taken from secondary summaries of the 2022 statement and have not been checked against it.</p><p>The key band is <strong>${esc(s.id)}</strong> at an FEV₁ z-score of ${num(s.z, 2)}.</p>`;
+    return `<p>The FEV₁/FVC ratio shows that obstruction exists; the FEV₁ z-score shows how far expiratory flow is reduced, and the 2022 statement grades severity from it: mild to a z-score of −2.5, moderate to −4.0, severe below (Table 1 and the Figure 7 caption; its text prints the edges as −2.51 and −4.1, read here as reporting precision).</p><p>The key band is <strong>${esc(s.id)}</strong> at an FEV₁ z-score of ${num(s.z, 2)}.</p>`;
   }
   return '<p>Severity of obstruction is graded only when the FEV₁/FVC ratio is below its lower limit of normal. With a ratio at or above the limit there is no airflow obstruction to grade, and a low FVC or TLC defines a different pattern. Severity grading of other patterns has not been checked against the statement and is not scored.</p>';
 }
@@ -68,7 +71,7 @@ function explainBd(item, prep) {
   const rows = `<tr><th scope="row" class="l">2022 rule: change above 10% of predicted</th><td class="l">${b.rule2022.significant ? 'significant' : 'not significant'}</td></tr><tr><th scope="row" class="l">Earlier rule: at least 12% of baseline and 200 mL</th><td class="l">${b.rule2005.significant ? 'significant' : 'not significant'}</td></tr>`;
   const extra = c.groundTruth.bdVariant === 'volume' ? paras([BD_TEXT.volume]) : c.groundTruth.bdVariant === 'artifact' ? paras([bdArtifactText(b)]) : '';
   return `<p>${esc(BD_TEXT.rules)}</p><div class="scroll"><table class="data"><caption>Bronchodilator response under both rules</caption><tbody>${rows}</tbody></table></div>${extra}
-    <p>The 10%-of-predicted threshold comes from secondary summaries of the 2022 statement, and whether the boundary is inclusive has not been checked against it.${prep.cmp.bronchodilatorChanged ? ' Because the 2022 rule uses the predicted value, the result also changes with the spirometry equation.' : ''}</p>`;
+    <p>The 2022 statement calls a change above 10% of the predicted value significant, a strict comparison as printed.${prep.cmp.bronchodilatorChanged ? ' Because the 2022 rule uses the predicted value, the result also changes with the spirometry equation.' : ''}</p>`;
 }
 
 function explainDlco(item, prep) {
@@ -135,7 +138,8 @@ export function feedbackHtml(item, prep, result, opts = {}) {
   const detail = result.detail
     ? `<p class="muted">You selected ${num(result.detail.recall * 100, 0)}% of the applicable statements (weighted) and ${num(result.detail.falseRate * 100, 0)}% of the statements that do not apply. The score is the first share minus the second, and not below 0, so selecting every statement scores 0.</p>` : '';
   const key = item.key.correct;
-  const alt = item.key.alt ? `<span class="muted"> (other equation: ${esc(optLabel(item, item.key.alt))})</span>` : '';
+  const alt = (item.key.alt ? `<span class="muted"> (other equation: ${esc(optLabel(item, item.key.alt))})</span>` : '')
+    + (item.key.also?.length ? `<span class="muted"> (also accepted, the z-score being at a cut point: ${item.key.also.map((a) => esc(optLabel(item, a))).join(', ')})</span>` : '');
   const body = EXPLAINERS[item.id]?.(item, prep, result, o) ?? '';
   const lines = item.id === 'limitations' || item.id === 'final' ? '' : `<p>Your answer: ${show(item, result.response ?? '')}</p><p>Key: <strong>${show(item, key)}</strong>${alt}</p>`;
   return `<div class="feedback"><p><span class="${cls}">${text}${pts}</span></p>${lines}${detail}${body}</div>`;

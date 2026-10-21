@@ -32,14 +32,16 @@ export function learnerCsv(cases, responses) {
 
 /** Answer key CSV for the instructor, with the letters of the printed sheet. */
 export function keyCsv(def, cases) {
-  const rows = [['case', 'archetype', 'technique', 'panel', 'item', 'skill', 'key letters', 'key', 'also accepted (other equation)']];
+  const rows = [['case', 'archetype', 'technique', 'panel', 'item', 'skill', 'key letters', 'key', 'also accepted (other equation)', 'also accepted (at a cut point)']];
   cases.forEach((c, i) => {
     for (const it of c.items) {
       const opts = lettered(it, def, i);
       const keys = [].concat(it.key.correct);
       const letters = keys.map((k) => opts.find((o) => o.id === k)?.letter).filter(Boolean).sort().join('');
       const alt = it.key.alt ? `${opts.find((o) => o.id === it.key.alt)?.letter ?? ''} ${labelOf(it, it.key.alt)}` : '';
-      rows.push([i + 1, c.descriptor.archetype, c.descriptor.technique, c.descriptor.panel, ITEM_NAMES[it.id], SKILL_LABELS[it.skill], letters, labels(it, it.key.correct), alt]);
+      // A band accepted because the z-score is at a cut point of the 2022 scale: a separate column from the other equation's key, since the two are different reasons.
+      const cut = (it.key.also ?? []).map((a) => `${opts.find((o) => o.id === a)?.letter ?? ''} ${labelOf(it, a)}`).join('; ');
+      rows.push([i + 1, c.descriptor.archetype, c.descriptor.technique, c.descriptor.panel, ITEM_NAMES[it.id], SKILL_LABELS[it.skill], letters, labels(it, it.key.correct), alt, cut]);
     }
   });
   return toCsv(rows);
@@ -68,6 +70,7 @@ export function classSummary(cases, results) {
         const picks = Array.isArray(res.response) ? res.response : res.response ? [res.response] : [];
         const keySet = new Set([].concat(it.key.correct));
         if (it.key.alt) keySet.add(it.key.alt);
+        for (const a of it.key.also ?? []) keySet.add(a);
         for (const p of picks) if (!keySet.has(p)) dist.set(p, (dist.get(p) ?? 0) + 1);
       }
       const wrong = [...dist.entries()].sort((x, y) => y[1] - x[1]).map(([id, count]) => ({ id, label: labelOf(it, id), count }));

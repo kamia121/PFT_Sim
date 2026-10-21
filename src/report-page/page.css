@@ -1,0 +1,128 @@
+/*
+ * Report page (report.html): the screen frame around the printed pages and the page layout itself.
+ * A page is 816 by 1056 CSS px (8.5 by 11 in). On screen each page sits in a box that is scaled to the width of the window
+ * (--rp-s, set by fit.js); in print the scale is 1 and the page size is 8.5 in by 11 in with no margin (the footer and the
+ * margins belong to the page). The paper is white in both screen themes, as a document preview is. Table, header and box rules
+ * come from src/report/report.css (scoped to .pft-report); this file overrides their sizes for the page layout.
+ */
+
+/* ---------- screen frame ---------- */
+.rp-main { max-width: none; padding: 12px 16px 28px; }
+.rp-main h1 { margin: .1em 0 .2em; }
+.rp-toolbar { align-items: flex-end; }
+.rp-toolbar label.field.check { flex-direction: row; align-items: center; gap: 6px; padding-bottom: 6px; }
+.rp-toolbar .linkbutton { display: inline-block; text-decoration: none; background: var(--surface); color: var(--text); }
+.rp-hint { color: var(--text-muted); margin: 0 0 12px; max-width: 60rem; }
+.rp-stage { --rp-s: 1; padding: 4px 0 8px; min-height: 12rem; }
+.rp-gate { max-width: 40rem; }
+.rp-gate label { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; }
+.rp-error { max-width: 40rem; }
+
+.rp-box { position: relative; width: calc(816px * var(--rp-s)); height: calc(1056px * var(--rp-s)); margin: 0 auto 14px; background: #fff; box-shadow: 0 1px 8px rgba(0, 0, 0, .28); }
+.rp-box.flow { height: calc(var(--rp-h, 1056) * 1px * var(--rp-s)); }
+.pft-report.rp-page {
+  position: absolute; left: 0; top: 0; width: 816px; height: 1056px; max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none;
+  transform: scale(var(--rp-s)); transform-origin: 0 0; overflow: visible;
+  font-size: calc(9pt * var(--rp-ts, 1)); line-height: 1.28; background: #fff; color: #000;
+}
+.pft-report.rp-page.rp-flow { height: auto; min-height: 1056px; }
+.rp-content { position: absolute; left: 48px; right: 48px; top: 40px; bottom: 53px; display: flex; flex-direction: column; gap: 5px; z-index: 1; }
+.rp-flow .rp-content { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin: 40px 48px 53px; gap: 8px; }
+.rp-markwrap { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.rp-mark { position: absolute; left: 50%; top: 50%; width: 1000px; transform: translate(-50%, -50%) rotate(-32deg); text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(0, 0, 0, .06); white-space: nowrap; pointer-events: none; user-select: none; z-index: 0; }
+.rp-foot { position: absolute; left: 48px; right: 48px; bottom: 20px; display: flex; justify-content: space-between; gap: 12px; font-size: 7pt; color: #3d3d3d; border-top: .5pt solid #9a9a9a; padding-top: 2px; z-index: 1; }
+.rp-flow .rp-foot { position: static; margin: 0 48px 20px; }
+
+/* ---------- page content ---------- */
+.rp-page .rpt-head { margin-bottom: 3px; }
+.rp-page .rpt-lab strong { font-size: 11pt; }
+.rp-page .rpt-lab span { font-size: 7.5pt; }
+.rp-page .rpt-ttl { font-size: 13pt; padding: 3px 10px; }
+.rp-page .rpt-ttl .rpt-code { font-size: 8pt; }
+.rp-page .rpt-fields > div { padding: 1px 7px 2px; }
+.rp-page .rpt-fields dt { font-size: 7pt; }
+.rp-page .rpt-fields dd { font-size: calc(8.5pt * var(--rp-ts, 1)); line-height: 1.2; }
+.rp-page h2 { font-size: calc(10pt * var(--rp-ts, 1)); }
+.rp-page .rpt-sec, .rp-page .rpt-col { margin: 0 0 4px; }
+.rp-page .rpt-block { margin-bottom: 4px; }
+.rp-page .rpt-cap h3 { font-size: 9pt; }
+/* maneuver tables: the same column widths in both so that the comment column lines up */
+.rp-page #rpt-maneuvers-pre, .rp-page #rpt-maneuvers-post { table-layout: fixed; }
+.rp-page #rpt-maneuvers-pre thead th:first-child, .rp-page #rpt-maneuvers-post thead th:first-child { width: .45in; }
+.rp-page #rpt-maneuvers-pre thead th:last-child, .rp-page #rpt-maneuvers-post thead th:last-child { width: 3.1in; }
+.rp-page .rpt-table { font-size: calc(8.5pt * var(--rp-ts, 1)); }
+.rp-page .rpt-table th, .rp-page .rpt-table td { padding: 1px 5px; }
+.rp-page .rpt-fn { font-size: calc(7.5pt * var(--rp-ts, 1)); line-height: 1.25; margin-top: 2px; }
+.rp-page .rpt-note { font-size: calc(8pt * var(--rp-ts, 1)); padding: 2px 8px; margin-bottom: 4px; }
+.rp-page .rpt-note h2 { font-size: calc(9pt * var(--rp-ts, 1)); }
+.rp-page .rpt-boxes { margin-bottom: 4px; flex: 1 1 auto; align-items: stretch; max-height: 3.6in; }
+.rp-page .rpt-box { font-size: calc(8.5pt * var(--rp-ts, 1)); min-height: calc(1.9in * var(--rp-fs, 1)); }
+.rp-page .rpt-box h2 { font-size: calc(9pt * var(--rp-ts, 1)); margin-bottom: 2px; }
+.rp-page .rpt-end { margin-top: 2px; }
+.rp-page .rpt-sign { margin: 6px 0 2px; }
+.rp-page .rpt-disc { font-size: calc(8pt * var(--rp-ts, 1)); }
+
+.rp-page .rpt-boxes.rp-one { grid-template-columns: 1fr; }
+.rp-page .rp-closing { margin: 4px 0 0; font-weight: 600; }
+
+/* inline z-score graphic */
+.rp-page .rpt-table th.zi, .rp-page .rpt-table td.zi { width: 1.25in; padding: 0 4px; text-align: center; white-space: nowrap; }
+.rp-page .rpt-table thead th.nw { white-space: nowrap; }
+.rp-page .rpt-table tbody th.l { white-space: nowrap; }
+.rp-page .rpt-table td.zi svg { display: block; width: 100%; height: auto; max-height: 17px; }
+
+/* figure slots: drawn 7 in wide (a full panel) or 3.6 in (a half); --rp-fs shrinks them when a page would overflow */
+.rp-slot { margin: 3px auto 4px; width: calc(100% * var(--rp-fs, 1)); }
+.rp-slot.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.rp-slot.half { width: calc(50% * var(--rp-fs, 1)); }
+.rp-fig { margin: 0; border: .5pt solid #9a9a9a; break-inside: avoid; }
+.rp-fig svg { display: block; width: 100%; height: auto; text-rendering: geometricPrecision; }
+
+.rp-vols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 0 10px; align-items: start; }
+.rp-vols.solo { grid-template-columns: minmax(0, 1fr); }
+.rp-dlco.side { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0 10px; align-items: start; }
+.rp-dlco.side .rp-slot { width: 100%; margin: 0; }
+.rp-dlco.side .rpt-table td.zi, .rp-dlco.side .rpt-table th.zi { width: .9in; }
+
+/* instructor appendix */
+.rp-apx-head h1 { font-size: 15pt; margin: 0 0 2px; font-family: inherit; }
+.rp-apx-head p { margin: 0 0 2px; }
+.rp-gen { font-size: 8pt; color: #3d3d3d; }
+.rp-qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(2.3in, 1fr)); gap: 6px 14px; }
+.rp-q h3 { font-size: 9pt; margin: 0 0 1px; }
+.rp-q ul { margin: 0; padding-left: 14px; font-size: 8.5pt; }
+.rp-apx .rpt-box { min-height: 0; }
+.rp-stmt p { margin: 0 0 4px; }
+.rp-stmt ul { margin: 0; padding-left: 16px; }
+.rp-apx { break-inside: auto; }
+.rp-apx .rpt-block { break-inside: avoid; }
+
+/* ---------- print: pages are exactly Letter, white, no chrome ---------- */
+@media print {
+  .no-print, .masthead, .footer, .rp-toolbar, .rp-hint, .rp-gate, .rp-main > h1, .rp-main > .warn { display: none !important; }
+  html, body { background: #fff !important; }
+  .rp-main { padding: 0; max-width: none; }
+  .rp-stage { --rp-s: 1 !important; padding: 0; min-height: 0; }
+  .rp-box { width: 8.5in; height: 11in; margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .rp-box:last-child { break-after: auto; page-break-after: auto; }
+  .pft-report.rp-page { transform: none; box-shadow: none; }
+  .rp-box.flow { height: auto; page: apx; break-before: page; }
+  .rp-box.flow.cont { page: cont; }
+  .rp-flow .rpt-sec, .rp-flow .rpt-boxes, .rp-flow .rp-slot, .rp-flow .rpt-end, .rp-flow .rpt-note { break-inside: avoid; }
+  .pft-report.rp-page.rp-flow { position: static; width: auto; min-height: 0; }
+  .rp-flow .rp-content { margin: 0; }
+  .rp-flow .rp-foot { display: none; }
+  .rp-mark { color: rgba(0, 0, 0, .07); }
+}
+
+/* narrow windows: the pages scale down to fit; the toolbar wraps */
+@media (max-width: 640px) {
+  .rp-main { padding: 8px 12px 20px; }
+  .rp-toolbar > * { flex: 1 1 100%; }
+  .rp-toolbar label.field select { width: 100%; }
+}
+
+/* The summary sheet fills its Letter box; it takes the page scale of the report page instead of its own. */
+.rp-box.sheet-box { overflow: hidden; }
+.rp-box.sheet-box .sheet-frame { --sheet-s: var(--rp-s); margin: 0; box-shadow: none; }
+@media print { .rp-box.sheet-box .sheet-frame { --sheet-s: 1; } }

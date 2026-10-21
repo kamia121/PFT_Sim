@@ -53,7 +53,7 @@ try {
   console.log('standalone PDF pages:', pagesOf(path.join(out, 'standalone-print.pdf')));
 
   const app = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
-  await app.goto(`http://127.0.0.1:${port}/?s=${seed}&a=${archetype}&v=1&t=fair`);
+  await app.goto(`http://127.0.0.1:${port}/?s=${seed}&a=${archetype}&v=2&t=fair`);
   await app.waitForSelector('#pre-maneuvers');
   await app.click('[data-tab=report]');
   await app.waitForSelector('.pft-report');

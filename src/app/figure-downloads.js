@@ -85,7 +85,7 @@ export function bindFigureDownloads(root, getCaseData) {
     if (!btn) return;
     const caseData = getCaseData();
     const id = btn.dataset.figDl, pal = btn.dataset.pal;
-    const svg = svgVariants(id, caseData)[pal];
+    const svg = svgVariants(id, caseData, caseData.figView?.[id] ?? {})[pal];
     const status = btn.closest('.fig-dl')?.querySelector('.fig-dl-status');
     if (!svg) { if (status) status.textContent = 'This figure is not available for the case.'; return; }
     if (btn.dataset.act === 'copy') {

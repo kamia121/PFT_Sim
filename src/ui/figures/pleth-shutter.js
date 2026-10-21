@@ -51,9 +51,8 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
     const lo = Math.min(...t.pm) * 1.12, hi = Math.max(...t.pm) * 1.12;
     const pts = [lo, hi].map((px) => [xs(px), ys(my + t.slope * (px - mx))]);
     out.push(polyline(pts, { stroke: palette.mark, width: 1, dash: '4 3', opacity: 0.95 }));
-    const k = t.pm.indexOf(Math.max(...t.pm));
-    out.push(text(xs(t.pm[k]) + 5, ys(t.pbox[k]) - 4, String(t.index), { size: 10, weight: 700, fill: colorOf(t) }));
   }
+  // No trial numbers are written on the plot (they collide where the traces overlap); the table lists each trial.
 
   // Legend under the heading.
   let lx = x0;

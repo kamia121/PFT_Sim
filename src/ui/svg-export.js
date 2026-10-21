@@ -37,7 +37,7 @@ export function svgVariants(figureId, caseData, opts = {}) {
   const data = fig.dataFor(caseData);
   if (data === null || data === undefined) return {};
   const out = {};
-  for (const id of PALETTE_IDS) out[id] = standaloneSvg(fig.render(data, { ...opts, palette: PALETTES[id] }));
+  for (const id of PALETTE_IDS) out[id] = standaloneSvg(fig.render(data, { showQuality: Boolean(caseData?.revealed), ...opts, palette: PALETTES[id] }));
   return out;
 }
 

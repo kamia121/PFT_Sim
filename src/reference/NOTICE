@@ -21,5 +21,11 @@ Required attribution:
 Citations are from memory of the publications and should be checked before release.
 
 The regression coefficients for the GLI-2021 volume and GLI-2017 TLCO equations are not in the
-supplied workbooks. They were taken from the pft_interpreter project and have not yet been checked
-against the publications.
+lookup workbooks. They were first taken from the pft_interpreter project. On 2026-10-20 they were
+compared with the printed Hall 2021 Table 3 (PDF page 5) and the 2020-corrected Stanojevic 2017
+Table 2 (PDF page 2), inspected visually in the publisher PDFs and transcribed by the project, and
+the spline tables with the ERS lookup workbooks (tools/verify-gli-primary.py; hashes and result in
+src/reference/sources.json and docs/verification/). The coefficients and spline tables are equal to
+those sources. This is a comparison of numbers, not a validation of units, interpolation, age
+boundaries or the LMS calculation against an official calculator, which has not been run. A separate audit (Codex) matched all 120 coefficient values and
+100 recomputations from the stored splines; it could not rerun the workbook comparison.

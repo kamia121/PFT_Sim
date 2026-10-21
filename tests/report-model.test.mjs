@@ -35,7 +35,7 @@ test('the case code and test date are deterministic functions of the seed', () =
 test('spirometry rows have the specified units, and the ratio has no percent predicted', () => {
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   const t = table(model, 'spirometry');
-  assert.deepEqual(t.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'fet', 'pef']);
+  assert.deepEqual(t.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'fet', 'pef', 'fef2575']);
   assert.equal(row(t, 'fvc').unit, 'L');
   assert.equal(row(t, 'fev1_fvc').unit, 'ratio');
   assert.equal(row(t, 'fet').unit, 's');
@@ -155,10 +155,10 @@ test('equation names appear per index, and fallbacks are stated', () => {
 
 test('lung volume and DLCO tables carry the specified rows and respect the panel', () => {
   const { model } = makeModel(SAMPLE_INPUTS[0]);
-  assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc']);
+  assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc', 'sraw', 'sgaw', 'raw']);
   assert.equal(row(table(model, 'volumes'), 'rv_tlc').unit, '%');
-  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['dlco-raw', 'hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
-  assert.match(table(model, 'dlco').footnote, /Cotes formula, not yet checked/);
+  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
+  assert.match(table(model, 'dlco').footnote, /ATS\/ERS 2017, eqs 31 and 32/);
   const s = makeModel({ seed: 44, archetype: 'mixed', panel: 'spirometry' }).model;
   assert.equal(table(s, 'volumes'), undefined);
   assert.equal(table(s, 'dlco'), undefined);
@@ -208,26 +208,26 @@ test('the interpretation text is null unless supplied', () => {
 
 test('figures come from the registry, skipping null and empty results, with the requested palette', () => {
   const { c, interp } = makeModel(SAMPLE_INPUTS[0]);
-  const saved = { fv: { ...FIGURES['flow-volume'] }, vt: { ...FIGURES['volume-time'] }, dl: { ...FIGURES['dlco-trace'] } };
+  const saved = { fv: { ...FIGURES['panel-spirometry'] }, vt: { ...FIGURES['panel-pleth'] }, dl: { ...FIGURES['panel-dlco'] } };
   const seen = [];
   try {
-    FIGURES['flow-volume'].dataFor = () => ({ ok: 1 });
-    FIGURES['flow-volume'].render = (data, opts) => { seen.push(opts.palette.id); return '<svg xmlns="http://www.w3.org/2000/svg"><title>fv</title></svg>'; };
-    FIGURES['volume-time'].dataFor = () => ({ ok: 1 });
-    FIGURES['volume-time'].render = () => '';
-    FIGURES['dlco-trace'].dataFor = () => { throw new Error('boom'); };
+    FIGURES['panel-spirometry'].dataFor = () => ({ ok: 1 });
+    FIGURES['panel-spirometry'].render = (data, opts) => { seen.push(opts.palette.id); return '<svg xmlns="http://www.w3.org/2000/svg"><title>fv</title></svg>'; };
+    FIGURES['panel-pleth'].dataFor = () => ({ ok: 1 });
+    FIGURES['panel-pleth'].render = () => '';
+    FIGURES['panel-dlco'].dataFor = () => { throw new Error('boom'); };
     const model = buildReportModel(c, interp, { resolve: resolveReference, palette: 'dark' });
-    assert.deepEqual(model.sections[0].figureIds, ['flow-volume']);
+    assert.deepEqual(model.sections[0].figureIds, ['panel-spirometry', 'z-strip']);
     assert.deepEqual(seen, ['dark']);
     assert.equal(model.meta.figureErrors.length, 1);
-    assert.equal(model.meta.figureErrors[0].id, 'dlco-trace');
+    assert.equal(model.meta.figureErrors[0].id, 'panel-dlco');
     assert.equal(buildReportModel(c, interp, { figures: false }).sections[0].figures.length, 0);
-    assert.deepEqual(buildReportModel(c, interp, { resolve: resolveReference }).meta.figureErrors.map((e) => e.id), ['dlco-trace']);
+    assert.deepEqual(buildReportModel(c, interp, { resolve: resolveReference }).meta.figureErrors.map((e) => e.id), ['panel-dlco']);
     assert.deepEqual(seen.slice(1), ['white']);
   } finally {
-    Object.assign(FIGURES['flow-volume'], saved.fv);
-    Object.assign(FIGURES['volume-time'], saved.vt);
-    Object.assign(FIGURES['dlco-trace'], saved.dl);
+    Object.assign(FIGURES['panel-spirometry'], saved.fv);
+    Object.assign(FIGURES['panel-pleth'], saved.vt);
+    Object.assign(FIGURES['panel-dlco'], saved.dl);
   }
 });
 

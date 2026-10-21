@@ -59,6 +59,7 @@ export function caseFacts(prep) {
     lowErv: a.flags.some((x) => x.id === 'low-erv'),
     europeanApplied: measures.some((m) => m.available !== false && m.matched === false),
     unavailable: measures.some((m) => m.available === false),
+    ageClamped: measures.some((m) => m.ageClamped),
     equationFlip: cmp.labelChanges.length > 0 || cmp.patternChanged,
     borderline: ['fev1', 'fvc', 'fev1_fvc', 'tlc', 'dlco'].some((k) => a.measures[k]?.borderline),
     bdVariant: c.groundTruth.bdVariant ?? null,
@@ -110,9 +111,11 @@ const RULES = [
     applies: (f) => Boolean(f.post) && f.bdVariant === 'volume', decoy: (f) => f.bdVariant !== 'volume', why: 'The bronchodilator response was not a volume response, or no bronchodilator study was done.' },
   { id: 'fb-bd-rules', topic: 'bd', weight: 'minor', text: 'When the 2022 rule (percent of predicted) and the earlier rule (percent of baseline) disagree, the bronchodilator conclusion depends on the criterion.',
     applies: (f, a) => Boolean(a.bd) && !a.bd.rulesAgree && f.bdVariant === null, decoy: (f, a) => !a.bd || a.bd.rulesAgree, why: 'The two bronchodilator criteria agree, or no bronchodilator study was done.' },
+  { id: 'fb-age-cap', topic: 'age', weight: 'minor', text: 'A patient older than the upper age limit of a reference equation is referenced at the last age the equation covers, so the z-scores at this age are an approximation and carry added uncertainty.',
+    applies: (f) => f.ageClamped, decoy: (f) => !f.ageClamped, why: 'The age lies inside the range of every equation used.' },
   // Statements that never become a caveat in the built-in set; they are irrelevant whenever the stated fact is absent.
   { id: 'fb-d-age', topic: 'age', text: 'An age outside the range of a reference equation means that predicted values cannot be computed or must be extrapolated.',
-    decoy: (f) => !f.unavailable, why: 'The age lies inside the range of every equation used.' },
+    decoy: (f) => !f.unavailable && !f.ageClamped, why: 'The age lies inside the range of every equation used.' },
   { id: 'fb-d-saba', topic: 'medication', text: 'A short-acting bronchodilator taken inside its withholding window can raise the baseline FEV₁ and FVC and narrow the bronchodilator increment.',
     decoy: (f) => !f.medicationNote, why: 'No bronchodilator or other inhaled medication is recorded before the test.' },
   { id: 'fb-d-smoke', topic: 'smoke', text: 'Smoke or vapor inhaled within the hour before testing can cause bronchoconstriction and cough, lowering the FEV₁ and FVC.',
@@ -148,6 +151,7 @@ export function fallbackCaveats(prep) {
 // Final interpretation statements
 
 const SEVERITIES = ['mild', 'moderate', 'severe'];
+const SEVERITY_KEYS_ALL = ['fev1-normal', ...SEVERITIES];
 const SUBTYPE_TEXT = {
   'low-kco-preserved-va': ' with a low KCO and a preserved alveolar volume, which points to a defect intrinsic to the lung',
   'low-va-high-kco': ' with a small alveolar volume and a raised KCO, as when expansion is incomplete and the gas-exchanging tissue is intact',
@@ -235,6 +239,7 @@ export function fallbackDistractors(prep, variant = 0) {
     const other = SEVERITIES.filter((x) => x !== k.severity);
     push('fb-n-severity', { ...k, severity: other[(variant + (k.severity === 'mild' ? 1 : 0)) % other.length] }, 'States the wrong severity band: severity of obstruction follows the FEV₁ z-score.');
   }
+  if (!k.severity && prep.a.severity?.notGraded && k.pattern === 'obstruction') push('fb-n-severity-normal-fev1', { ...k, severity: 'mild' }, 'Grades an obstruction as mild although the FEV₁ z-score is within the normal range of the 2022 scale, which defines no grade there.');
   for (const [i, [pattern, flaw]] of (WRONG_PATTERN[k.pattern] ?? []).entries()) {
     const sev = ['obstruction', 'obstruction-low-fvc'].includes(pattern) ? 'moderate' : null;
     const noTlc = !k.hasVolumes && ['mixed', 'restriction'].includes(pattern);

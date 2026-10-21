@@ -20,6 +20,9 @@ Browser check (Chromium; set `PFT_CHROMIUM` to an executable if Playwright's own
 ```sh
 npm install
 node benchmarks/ui-smoke.mjs
+node benchmarks/report-smoke.mjs
+node benchmarks/quiz-smoke.mjs
+node benchmarks/interaction-smoke.mjs   # real pointer and keyboard input, phone width, printed PDFs (pdftotext is used when installed)
 ```
 
 Other tools: `tools/constraint-sweep.mjs` checks the exact constraints over many seeds, `tools/extract-gli.py` rebuilds the reference JSON from the GLI workbooks, `tools/crosscheck-interpreter.mjs` compares it with another implementation, and `scripts/make-vectors.R` regenerates the rspiro test vectors.

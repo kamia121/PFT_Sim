@@ -67,11 +67,31 @@ test('GLI Global ignores group; GLI-2012 uses it; both are matched for spirometr
   assert.ok(a.matched && d.matched);
 });
 
-test('ages outside the published range are reported, not extrapolated', () => {
+test('ages below the published range are reported, not extrapolated', () => {
   assert.equal(resolveReference('fvc', { age: 2.5, sex: 'M', heightCm: 90, group: 'White' }).available, false);
-  assert.equal(resolveReference('tlc', { age: 85, sex: 'M', heightCm: 175, group: 'White' }).fallbackReason, 'age-outside-range');
-  assert.equal(resolveReference('dlco', { age: 90, sex: 'M', heightCm: 175, group: 'White' }).available, true);
-  assert.equal(resolveReference('dlco', { age: 90.5, sex: 'M', heightCm: 175, group: 'White' }).available, false);
+  assert.equal(resolveReference('tlc', { age: 4.5, sex: 'M', heightCm: 110, group: 'White' }).fallbackReason, 'age-outside-range');
+});
+
+test('above the upper age limit the values for the last available age are used and flagged', () => {
+  const p = { sex: 'M', heightCm: 175, group: 'White', measured: 6 };
+  // Volumes end at 80 years, TLCO at 85 (the workbook runs to 90), so older patients take the values at those ages.
+  const tlc80 = resolveReference('tlc', { ...p, age: 80 });
+  const tlc88 = resolveReference('tlc', { ...p, age: 88 });
+  assert.equal(tlc88.available, true);
+  assert.equal(tlc88.ageClamped, true);
+  assert.equal(tlc88.ageUsed, 80);
+  assert.equal(tlc88.ageRequested, 88);
+  assert.equal(tlc88.predicted, tlc80.predicted);
+  assert.equal(tlc88.z, tlc80.z);
+  assert.equal(tlc80.ageClamped, undefined);
+  const d85 = resolveReference('dlco', { ...p, age: 85, measured: 25 });
+  for (const age of [86, 90, 95]) {
+    const d = resolveReference('dlco', { ...p, age, measured: 25 });
+    assert.equal(d.ageUsed, 85);
+    assert.equal(d.predicted, d85.predicted);
+    assert.equal(d.z, d85.z);
+  }
+  assert.equal(resolveReference('fvc', { ...p, age: 94, measured: 3 }).ageClamped, undefined);
 });
 
 test('spline interpolation is linear between the workbook rows', () => {

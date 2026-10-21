@@ -1,0 +1,171 @@
+/*
+ * Report sheets (src/sheets/): page 1, the summary sheet, at Letter size (816 by 1056 CSS px, 8.5 by 11 in).
+ *
+ * The sheet is a paper document and stays black on white in both screen themes, as src/report/report.css does; the colors that
+ * carry meaning come from the shared tokens: --mcw-navy for the rules and titles, and --z-severe, --z-moderate, --z-mild and
+ * --z-ok for the flag color and the z-score graphic (the integrator adds the four --z-* tokens to src/styles/tokens.css; the
+ * fallbacks below are the light values, so the sheet works before they exist). Flag color is text only, in bold, never a fill; the
+ * one fill that carries a flag is the z-score graphic, drawn inside its SVG from the palette (src/ui/palettes.js).
+ *
+ * Screen: the fixed-size sheet scales to its container. fitSheetScale() in summary.js sets --sheet-s on the container; without
+ * it the scale is 1. Print: scale 1, exact Letter size, no chrome.
+ */
+.sheet-frame {
+  --sheet-ink: #000;
+  --sheet-muted: #3d3d3d;
+  --sheet-hair: #9a9a9a;
+  --sheet-paper: #fff;
+  --sheet-shade: #efefef;
+  --sheet-rule: var(--mcw-navy, #0E2B73);
+  --sheet-flag: #A8321E;
+  position: relative;
+  width: calc(816px * var(--sheet-s, 1));
+  height: calc(1056px * var(--sheet-s, 1));
+  margin: 0 auto 14px;
+  background: var(--sheet-paper);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .28);
+}
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+  .sheet-frame { --sheet-flag: color-mix(in srgb, var(--z-severe, #c8553d) 76%, #000); }
+}
+.sheet-frame * { box-sizing: border-box; }
+
+.sheet {
+  position: absolute; left: 0; top: 0; width: 816px; height: 1056px; overflow: hidden;
+  transform: scale(var(--sheet-s, 1)); transform-origin: 0 0;
+  font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif;
+  font-size: 8pt; line-height: 1.25; color: var(--sheet-ink); background: var(--sheet-paper);
+}
+.sheet h2 { font-size: 8.5pt; margin: 0 0 2px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--sheet-ink); }
+.sheet p { margin: 0; }
+.sheet sub { font-size: .75em; line-height: 0; }
+.sheet-content { position: absolute; left: 36px; right: 36px; top: 24px; bottom: 36px; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
+.sheet-mark { position: absolute; left: 50%; top: 50%; width: 1000px; transform: translate(-50%, -50%) rotate(-32deg); text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(0, 0, 0, .05); white-space: nowrap; pointer-events: none; user-select: none; z-index: 0; }
+.sheet-foot { position: absolute; left: 36px; right: 36px; bottom: 14px; display: flex; justify-content: space-between; gap: 12px; font-size: 6.5pt; color: var(--sheet-muted); border-top: .5pt solid var(--sheet-hair); padding-top: 2px; z-index: 1; }
+
+/* identity block */
+.sheet-head { border: 1.4px solid var(--sheet-rule); flex: 0 0 auto; }
+.sheet-lab { display: flex; align-items: stretch; justify-content: space-between; border-bottom: 1.4px solid var(--sheet-rule); }
+.sheet-lab > div:first-child { padding: 3px 8px; display: flex; flex-direction: column; }
+.sheet-lab strong { font-size: 10.5pt; color: var(--sheet-rule); }
+.sheet-lab span { color: var(--sheet-muted); font-size: 7pt; }
+.sheet-ttl { padding: 3px 10px; font-size: 12pt; font-weight: 700; background: var(--sheet-shade); border-left: 1.4px solid var(--sheet-rule); display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1.1; }
+.sheet-ttl span { font-size: 7.5pt; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sheet-fields { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row dense; margin: 0; }
+.sheet-fields > div { padding: 1px 6px 2px; border-right: 1px solid var(--sheet-hair); border-bottom: 1px solid var(--sheet-hair); min-width: 0; }
+.sheet-fields > div:nth-child(6n) { border-right: 0; }
+.sheet-fields > .s2 { grid-column: span 2; }
+.sheet-fields > .s3 { grid-column: span 3; }
+.sheet-fields > .s5 { grid-column: span 5; }
+.sheet-fields > .s6 { grid-column: span 6; border-right: 0; }
+.sheet-fields dt { font-size: 6pt; text-transform: uppercase; letter-spacing: .05em; color: var(--sheet-muted); }
+.sheet-fields dd { margin: 0; font-weight: 600; font-size: 7.5pt; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* tables left, curves right */
+.sheet-main { display: flex; gap: 10px; align-items: stretch; flex: 0 0 auto; }
+.sheet-tables { flex: 0 0 398px; width: 398px; display: flex; flex-direction: column; gap: 5px; }
+.sheet-curves { flex: 0 0 336px; width: 336px; display: flex; flex-direction: column; gap: 4px; }
+.sheet-block h2 { border-bottom: 1.5px solid var(--sheet-rule); padding-bottom: 0; }
+.sheet-table { width: 100%; border-collapse: collapse; table-layout: auto; font-variant-numeric: tabular-nums; font-size: 7.5pt; }
+.sheet-table th, .sheet-table td { padding: 0 3px; border-bottom: .5pt solid var(--sheet-hair); white-space: nowrap; line-height: 1.3; }
+.sheet-table th.l { text-align: left; font-weight: 600; }
+.sheet-table th.r, .sheet-table td.r { text-align: right; }
+.sheet-table thead th { font-weight: 700; border-bottom: 1px solid var(--sheet-ink); vertical-align: bottom; }
+.sheet-table thead tr.grp th { text-align: center; background: var(--sheet-shade); border-bottom: .5pt solid var(--sheet-ink); border-top: 1px solid var(--sheet-ink); }
+.sheet-table thead tr.grp th.empty { background: none; border: 0; }
+.sheet-table td.best { font-weight: 700; }
+.sheet-table tbody tr:last-child th, .sheet-table tbody tr:last-child td { border-bottom: 1px solid var(--sheet-ink); }
+.sheet-table td.flag { color: var(--sheet-flag); font-weight: 800; }
+.sheet-fn { font-size: 6.5pt; line-height: 1.25; color: var(--sheet-muted); margin-top: 1px; }
+.sheet-fig { margin: 0; border: .5pt solid var(--sheet-hair); }
+.sheet-fig svg { display: block; width: 100%; height: auto; text-rendering: geometricPrecision; }
+
+/* z-score graphic */
+.sheet-z { margin: 0; flex: 0 0 auto; }
+.sheet-z svg { display: block; width: 744px; max-width: 100%; height: auto; text-rendering: geometricPrecision; }
+
+/* comments and interpretation */
+.sheet-boxes { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; flex: 1 0 auto; min-height: 104px; align-items: stretch; }
+.sheet-boxes.solo { grid-template-columns: minmax(0, 1fr); }
+.sheet-tables > .sheet-comments { flex: 1 1 auto; margin-top: 3px; }
+/* A box takes the height of its text (the comment list varies from case to case); the fit of the whole sheet (summary.js, fitSheetContent) then makes room for it, so that no comment is clipped. */
+.sheet-box { border: 1.4px solid var(--sheet-rule); padding: 3px 7px 4px; font-size: 7.5pt; line-height: 1.25; display: flex; flex-direction: column; }
+.sheet-box ul { margin: 0; padding-left: 14px; }
+.sheet-box li { margin-bottom: 1px; }
+.sheet-none { color: var(--sheet-muted); font-style: italic; }
+.sheet-interp-body { flex: 1 1 auto; min-height: 20px; font-size: 8pt; white-space: pre-wrap; }
+.sheet-interp-ref { font-style: italic; color: var(--sheet-muted); }
+
+/* The interpretation statement, once released: a flowing section after the summary sheet (src/sheets/summary.js, interpretationSectionHtml). */
+.sheet-interp-full { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--sheet-ink, #000); background: var(--sheet-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 6px 10px 8px; margin: 0 auto 14px; max-width: 816px; }
+.sheet-interp-full .sheet-statement p { margin: 0 0 6px; font-size: 10pt; line-height: 1.35; }
+.sheet-interp-full .sheet-simnotes h3 { font-size: 8.5pt; margin: 6px 0 2px; }
+.sheet-interp-full .sheet-simnotes ul { margin: 0; padding-left: 16px; font-size: 8.5pt; color: var(--sheet-muted, #3d3d3d); }
+.sheet-interp-full .sheet-sign { margin-top: 10px; }
+.sheet-sign { display: flex; gap: 18px; font-size: 6.5pt; color: var(--sheet-muted); }
+.sheet-sign > div { flex: 1 1 auto; }
+.sheet-sign > div.short { flex: 0 0 1.1in; }
+.sheet-line { display: block; border-bottom: 1px solid var(--sheet-ink); height: 14px; margin-bottom: 1px; }
+
+/* print: exact Letter, no chrome */
+@media print {
+  .sheet-frame { width: 8.5in; height: 11in; margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .sheet { transform: none; }
+  .sheet-mark { color: rgba(0, 0, 0, .06); }
+  /* Lab report view of the practice page: the summary sheet is one edge-to-edge Letter page (the unnamed @page, margin 0, from
+     src/report-page/pages.js pageRulesCss), and what follows flows on the named page `cont`, which carries real margins and the page number. */
+  body.report-active .report-flow { page: cont; break-before: page; margin: 0; padding: 0; border: 0; box-shadow: none; max-width: none; }
+  body.report-active .sheet-wrap { overflow: visible; }
+  .sheet-table td.flag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Notes on the reference values (fallbacks, height and sex used, age limits): small print under the z-score graphic. */
+.sheet-refnote { margin: 2px 0 0; font-size: 7pt; line-height: 1.25; color: var(--sheet-muted, #444); flex: 0 0 auto; }
+
+/* Live mode (the practice page): the learner works inside the interpretation box, so the sheet grows with its content instead of
+   clipping at Letter height, and scales to the width of the page with zoom. The printed and report-page sheets stay fixed. */
+.sheet-live { overflow-x: hidden; }
+.sheet-live .sheet-frame { height: auto; width: 816px; zoom: var(--sheet-s, 1); margin: 0 auto 14px; }
+.sheet-live .sheet { position: relative; height: auto; min-height: 1056px; overflow: visible; transform: none; display: flex; flex-direction: column; }
+.sheet-live .sheet-content { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin: 24px 36px 12px; flex: 1 1 auto; }
+.sheet-live .sheet-foot { position: relative; left: auto; right: auto; bottom: auto; margin: 0 36px 14px; }
+.sheet-live .sheet-boxes { flex: 0 0 auto; }
+/* In live mode the comment box and the interpretation box stack, and the questions run in columns across the full sheet width. */
+.sheet-live .sheet-boxes { grid-template-columns: minmax(0, 1fr); }
+.sheet-live .sheet-interp-body { white-space: normal; font-size: 8.5pt; }
+/* The form is not paper: the frame is scaled to the width of a phone, so the form inside it is scaled back to its natural size and
+   the text and controls take sizes that can be read and operated. Its width follows the scaled frame. */
+.sheet-live .sheet-interp-body { zoom: calc(1 / var(--sheet-s, 1)); }
+.sheet-live .sheet-interp .answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 14px; align-items: start; }
+.sheet-live .sheet-interp .answers fieldset { margin: 0; min-width: 0; }
+.sheet-live .sheet-interp h2 + .muted, .sheet-live .sheet-interp-body > .interp-box > h2 { display: none; }
+.sheet-live .sheet-interp { font-size: 8.5pt; }
+.sheet-live .sheet-interp fieldset { font-size: 8.5pt; padding: 4px 8px; }
+.sheet-live .sheet-interp legend, .sheet-live .sheet-interp h3 { font-size: 9pt; }
+.sheet-live .sheet-interp .answers p { font-size: 8pt; margin: 2px 0; }
+
+@media (max-width: 700px) {
+  .sheet-live .sheet-interp-body, .sheet-live .sheet-interp fieldset { font-size: 15px; }
+  .sheet-live .sheet-interp legend, .sheet-live .sheet-interp h3 { font-size: 16px; }
+  .sheet-live .sheet-interp .answers p, .sheet-live .sheet-interp .prompt { font-size: 14px; }
+  .sheet-live .sheet-interp .answers { grid-template-columns: minmax(0, 1fr); }
+  .sheet-live .sheet-interp label { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 2px 0; }
+  .sheet-live .sheet-interp input[type=radio], .sheet-live .sheet-interp input[type=checkbox] { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
+  .sheet-live .sheet-interp .rows { grid-template-columns: minmax(0, 1fr); }
+  .sheet-live .sheet-interp textarea { width: 100%; font-size: 16px; }
+  .sheet-live .sheet-interp button { min-height: 44px; font-size: 15px; }
+}
+
+/* Comments or the reference note that did not fit the fixed summary sheet at the smallest legible size (summary.js, fitSheetContent). */
+.sheet-cont-ref { list-style: none; margin-left: -14px; font-style: italic; color: var(--sheet-muted, #3d3d3d); }
+.sheet-continuation { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--rpt-ink, #000); background: var(--rpt-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 8px 12px; margin: 0 auto 14px; max-width: 816px; font-size: 9pt; }
+.sheet-continuation h2 { font-size: 9pt; margin: 6px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
+.sheet-continuation ul { margin: 0; padding-left: 16px; }
+@media print {
+  .sheet-continuation { page: cont; break-before: page; break-after: page; border: 0; margin: 0; padding: 0; max-width: none; }
+}
+
+/* Concise interpretation summary (src/report/concise.js, statementHtml): the impression, then labelled lines. */
+.sheet-interp-full .stmt-impression { margin: 0 0 6px; font-size: 10.5pt; line-height: 1.3; }
+.sheet-interp-full .stmt-lines { margin: 0; padding-left: 16px; font-size: 9.5pt; line-height: 1.3; }
+.sheet-interp-full .stmt-lines li { margin: 0 0 3px; }

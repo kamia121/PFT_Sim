@@ -52,7 +52,7 @@ const LABELS = {
 };
 
 const GRADE_ORDER = ['A', 'B', 'C', 'D', 'E'];
-const SEVERITY_ORDER = ['mild', 'moderate', 'severe'];
+const SEVERITY_ORDER = ['fev1-normal', 'mild', 'moderate', 'severe'];
 export const NONE_ID = 'none';
 export const NONE_LABEL = 'None of these statements applies.';
 
@@ -70,7 +70,7 @@ function categorical(prep, qid, seed) {
   return {
     id: qid, skill: SKILL_OF[qid], type: 'single', ordered: qid === 'severity' || qid === 'gradeFev1' || qid === 'gradeFvc',
     stem: pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,
-    key: { correct: scored.expected, alt: scored.other !== scored.expected ? scored.other : null, altEquation: otherEquation(prep.equation) },
+    key: { correct: scored.expected, alt: scored.other !== scored.expected ? scored.other : null, altEquation: otherEquation(prep.equation), ...(qid === 'severity' && prep.a.key.severityAlso?.length ? { also: [...prep.a.key.severityAlso] } : {}) },
     explain: { kind: qid },
   };
 }

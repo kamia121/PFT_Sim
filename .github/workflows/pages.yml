@@ -11,7 +11,10 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  browsers:
+    uses: ./.github/workflows/browser-checks.yml
   deploy:
+    needs: browsers
     # One allocation for verification, artifact upload and deployment.
     # Pin the image instead of relying on the moving ubuntu-latest alias.
     runs-on: ubuntu-22.04

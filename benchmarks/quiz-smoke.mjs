@@ -9,8 +9,7 @@
  * Usage: node benchmarks/quiz-smoke.mjs [screenshotDir]
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
-import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
 import fs from 'node:fs';
 import { encodeExam, decodeExam } from '../src/quiz/codes.js';
 import { ARCHETYPES } from '../src/core/descriptor.js';
@@ -19,10 +18,8 @@ const port = 5201;
 const base = `http://127.0.0.1:${port}`;
 const shotDir = process.argv[2];
 if (shotDir) fs.mkdirSync(shotDir, { recursive: true });
-const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
-await new Promise((r) => setTimeout(r, 800));
-const executablePath = process.env.PFT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
-const browser = await chromium.launch({ executablePath });
+const server = await startServer(port);
+const browser = await launchBrowser();
 let failures = 0;
 const check = (ok, msg) => { if (!ok) { failures++; console.error('FAIL', msg); } else console.log('ok  ', msg); };
 
@@ -163,7 +160,8 @@ try {
   check(built === code, 'instructor builds the same code the test computed');
   check(decodeExam(built).n === 3 && (await page.inputValue('#i-link')).includes(`?x=${built}`), 'exam link carries the code');
   await page.click('#i-show-student');
-  await page.waitForSelector('#sheet-body[data-kind=student]');
+  // The sheet is built in a timer; an exception there leaves no sheet, so a timeout reports the page errors collected, not just the timeout.
+  await page.waitForSelector('#sheet-body[data-kind=student]').catch((e) => { throw new Error(`${e.message}\npage errors: ${problems.join(' | ') || 'none'}`); });
   const student = await page.locator('#sheet-body').innerText();
   check(/Case 3 of 3/.test(student) && /Questions/.test(student) && /Name:/.test(student), 'student question sheet lists the cases and questions');
   check(!/answer key|Key:/i.test(student), 'student sheet carries no answer key');
@@ -231,7 +229,8 @@ try {
   await page.click('[data-tab=instructor]');
   await page.click('#i-build');
   await page.click('#i-show-student');
-  await page.waitForSelector('#sheet-body[data-kind=student]');
+  // The sheet is built in a timer; an exception there leaves no sheet, so a timeout reports the page errors collected, not just the timeout.
+  await page.waitForSelector('#sheet-body[data-kind=student]').catch((e) => { throw new Error(`${e.message}\npage errors: ${problems.join(' | ') || 'none'}`); });
   check((await overflow(page)) <= 1, `no horizontal overflow at 390 px, instructor sheet (${await overflow(page)})`);
   await shot(page, 'instructor-phone');
 

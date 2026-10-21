@@ -155,11 +155,11 @@ def workbook_measures(path, sheet_map, measure_names):
 
 vol_names = ['tlc', 'rv', 'vc', 'ic', 'erv', 'frc', 'rvtlc']
 vsheets = {(('rv_tlc' if v == 'rvtlc' else v), sx): f"{v}_{sx[0]}_lookuptable" for v in vol_names for sx in ('male', 'female')}
-data['gli_volumes.json'] = {'id': 'GLI2021vol', 'sourceFile': 'GLI-2021-volumes.xlsx', 'coefficientSource': 'pft_interpreter (unverified against the publication)',
+data['gli_volumes.json'] = {'id': 'GLI2021vol', 'sourceFile': 'GLI-2021-volumes.xlsx', 'coefficientSource': 'pft_interpreter; equal to the printed Hall 2021 Table 3 and the 2020-corrected Stanojevic 2017 Table 2 (tools/verify-gli-primary.py, 2026-10-20)',
                             'measures': workbook_measures(src_dir / 'GLI-2021-volumes.xlsx', vsheets, {k: k for k in ['tlc', 'rv', 'vc', 'ic', 'erv', 'frc', 'rv_tlc']})}
 tsheets = {('dlco', 'male'): 'DLCO_m', ('dlco', 'female'): 'DLCO_f', ('kco', 'male'): 'KCO_m', ('kco', 'female'): 'KCO_f', ('va', 'male'): 'VA_m', ('va', 'female'): 'VA_f'}
 data['gli_tlco.json'] = {'id': 'GLI2017tlco', 'units': 'traditional (DLCO mL/min/mmHg, KCO mL/min/mmHg/L, VA L)', 'sourceFile': 'GLI-2017-TLCO-traditional-corrected2020.xlsx',
-                         'coefficientSource': 'pft_interpreter (unverified against the publication)',
+                         'coefficientSource': 'pft_interpreter; equal to the printed Hall 2021 Table 3 and the 2020-corrected Stanojevic 2017 Table 2 (tools/verify-gli-primary.py, 2026-10-20)',
                          'measures': workbook_measures(src_dir / 'GLI-2017-TLCO-traditional-corrected2020.xlsx', tsheets, {k: k for k in ['dlco', 'kco', 'va']})}
 
 for name, payload in data.items():

@@ -32,8 +32,8 @@ test('standaloneSvg adds the XML declaration, xmlns, width and height, and is id
 
 test('svgVariants returns four standalone, different SVG strings for each available figure', () => {
   const figs = availableFigures(caseData);
-  // The first three are always there; the plethysmography and DLCO figures follow for full-panel cases.
-  assert.deepEqual(figs.map((f) => f.id).slice(0, 3), ['flow-volume', 'volume-time', 'z-strip']);
+  // The spirometry panel and the z-score strip are always there; the plethysmography and DLCO panels follow for full-panel cases.
+  assert.deepEqual(figs.map((f) => f.id).slice(0, 4), ['panel-spirometry', 'panel-pleth', 'panel-dlco', 'z-strip']);
   for (const { id } of figs) {
     const v = svgVariants(id, caseData);
     assert.deepEqual(Object.keys(v).sort(), [...PALETTE_IDS].sort());

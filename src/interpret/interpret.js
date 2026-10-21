@@ -12,6 +12,13 @@ import { INTERPRETATION_2022 as S22 } from '../core/standards.js';
 export const LLN_Z = S22.llnZ.value; // -1.645
 export const BORDERLINE_BAND = 0.25; // z units either side of a limit (SPEC default, confirmed by the project physician)
 
+/**
+ * Indices whose high side the engine acts on: TLC above the ULN (hyperinflation), RV or RV/TLC above the ULN (air trapping), a raised
+ * DLCO and a high KCO in the VA-KCO subtype. The graphics draw an upper limit for these and no others; FVC, FEV1, FEV1/FVC and VA
+ * are read on the lower side only (labelOf can return 'high' for them, and nothing is made of it). The one definition, imported by every graphic and flag.
+ */
+export const TWO_SIDED = new Set(['tlc', 'rv', 'rv_tlc', 'dlco', 'kco']);
+
 export const labelOf = (z) => (z < LLN_Z ? 'low' : z > -LLN_Z ? 'high' : 'normal');
 export const borderlineOf = (z) => Math.abs(z - LLN_Z) <= BORDERLINE_BAND || Math.abs(z + LLN_Z) <= BORDERLINE_BAND;
 
@@ -21,6 +28,25 @@ export function severityOf(z) {
   if (z >= -4.0) return 'moderate';
   return 'severe';
 }
+
+const SEVERITY_BANDS = ['fev1-normal', 'mild', 'moderate', 'severe'];
+/**
+ * Bands accepted besides the key when the z-score, as printed to two decimals, is at a cut point: the 2022 text gives the cut points to
+ * the precision of its rounding (-1.65, -2.5 and -2.51, -4 and -4.1), so a printed -2.50 or -2.51 does not decide between mild and moderate.
+ * The key is unchanged.
+ */
+export function severityAlso(severity) {
+  if (!severity || !Number.isFinite(severity.z) || !(severity.scored || severity.notGraded)) return [];
+  const z2 = Number(severity.z.toFixed(2));
+  const near = (lo, hi) => z2 >= lo - 1e-9 && z2 <= hi + 1e-9;
+  const pairs = [[near(-1.65, -1.64), 0], [near(-2.51, -2.5), 1], [near(-4.1, -4.0), 2]];
+  const out = [];
+  for (const [hit, i] of pairs) if (hit && (SEVERITY_BANDS[i] === severity.id || SEVERITY_BANDS[i + 1] === severity.id)) out.push(SEVERITY_BANDS[i] === severity.id ? SEVERITY_BANDS[i + 1] : SEVERITY_BANDS[i]);
+  return out;
+}
+
+/** Key value of the severity question for an obstruction whose FEV1 is within normal limits: not graded. */
+export const FEV1_NORMAL = 'fev1-normal';
 
 export const PATTERNS = {
   normal: 'Normal',
@@ -50,8 +76,9 @@ const VOLS = ['tlc', 'rv', 'rv_tlc', 'vc', 'frc', 'erv', 'ic'];
  * @param {Report} report
  * @param {(measure: string, patient: object, family?: string) => object} resolve resolveReference from gli.js
  * @param {'GLI2012'|'GLIglobal'} spirometryEquation
+ * @param {{ generatorKey?: boolean }} [opts] generatorKey: the generator's self-check form (case.anchorKey), whose severity is always the FEV1 band
  */
-export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
+export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opts = {}) {
   const { patient } = report;
   const measures = {};
   const add = (name, measure, measured, extra = {}) => {
@@ -60,7 +87,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
     if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }
     measures[name] = {
       measure, value: measured, predicted: r.predicted, lln: r.lln, uln: r.uln, z: r.z, percentPredicted: r.percentPredicted,
-      label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...extra,
+      label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...(r.ageClamped ? { ageClamped: true, ageUsed: r.ageUsed } : {}), ...extra,
     };
   };
   const sp = report.spirometry;
@@ -101,7 +128,17 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
   // ------------- severity -------------
   let severity = null;
   if (['obstruction', 'obstruction-low-fvc'].includes(pattern) && have('fev1')) {
-    severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits: m.fev1.label !== 'low', verification: 'bands per secondary sources; boundary rule unresolved' };
+    const fev1WithinLimits = m.fev1.label !== 'low';
+    if (opts.generatorKey) {
+      // The generator's own check of its archetype targets (case.anchorKey) keeps the severity band of FEV1 whatever the label of the learner's key, so that the case and its hashes do not depend on the key's wording.
+      severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };
+    } else if (fev1WithinLimits) {
+      // The 2022 statement (Table 1 and its text) grades every measure by z-score and calls z above -1.645 normal; it defines no grade for an obstruction
+      // whose FEV1 is within limits (Table 5 lists the pattern, FEV1 normal with a low ratio, as possibly a normal variant). The key does not call it mild.
+      severity = { id: FEV1_NORMAL, basis: 'FEV1 z-score', z: m.fev1.z, scored: false, notGraded: FEV1_NORMAL, fev1WithinLimits, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])), verification: 'ERS/ATS 2022 Table 1 and p.12 (primary text); no grade is defined for a normal FEV1' };
+    } else {
+      severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'cut points -2.5 and -4.0 from the 2022 statement (Table 1, p.12, Figure 7 caption); the -2.51 and -4.1 of its text are read as reporting precision' };
+    }
   } else if (pattern !== 'normal' && pattern !== 'indeterminate') {
     severity = { id: null, basis: 'Not scored: the 2022 rule for this pattern has not been checked', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };
   }
@@ -116,7 +153,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
     const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);
     bd = {
       dFev1, dFvc, pctPred, pctBase,
-      rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: 'threshold from secondary sources; inclusive or exclusive boundary unresolved' },
+      rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },
       rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },
       rulesAgree: rule2022 === rule2005,
       postRatio: sp.post.fev1 / sp.post.fvc,
@@ -141,13 +178,15 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal') {
   const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));
   const key = {
     pattern,
-    severity: severity?.scored ? severity.id : null,
+    severity: severity?.scored ? severity.id : severity?.notGraded ?? null,
     gradeFev1: quality.fev1 ?? null,
     gradeFvc: quality.fvc ?? null,
     bronchodilator: bd ? (bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     dlco: dlco ? dlco.category : null,
   };
   // Scenario caveats the laboratory record supports (src/scenarios); absent for a plain case.
+  const also = opts.generatorKey ? [] : severityAlso(severity);
+  if (also.length) key.severityAlso = also;
   if (report.caveatIds?.length) key.caveatIds = [...new Set(report.caveatIds)].sort();
   return { spirometryEquation, measures, pattern, patternLabel: PATTERNS[pattern], flags, severity, bd, dlco, qualityLimited: limited, key };
 }

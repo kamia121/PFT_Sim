@@ -18,7 +18,7 @@
 <header class="masthead"><a href="./" class="wordmark">PFT Sim</a><a href="./quiz.html" class="wordmark" style="font-size:1rem;margin-left:auto;margin-right:12px;text-decoration:underline">Quiz</a><button id="theme-toggle" type="button" class="theme-button" aria-label="Toggle light or dark theme">Dark mode</button></header>
 <main>
   <h1>Simulated pulmonary function reports</h1>
-  <p class="lede">Read the report, write an interpretation, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.</p>
+  <p class="lede">Read the report, write an interpretation on it, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.</p>
   <p class="warn"><strong>Educational use only.</strong> Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.</p>
   <nav class="tabs" role="tablist" aria-label="Sections"><button type="button" role="tab" data-tab="practice" aria-selected="true">Practice</button><button type="button" role="tab" data-tab="report" aria-selected="false">Lab report</button><button type="button" role="tab" data-tab="method" aria-selected="false">Method and limits</button></nav>
   <div id="panel-practice" class="panel" role="tabpanel">
@@ -27,11 +27,14 @@
       <label class="field">Test quality<select id="technique"><option value="varies">Varies</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select></label>
       <label class="field">Technologist notes<select id="scenario"><option value="varies">Varies</option><option value="none">None</option><option value="light">One</option><option value="moderate">Several</option><option value="heavy">Many</option></select></label>
       <label class="field">Tests<select id="panel"><option value="varies">Varies</option><option value="full">Spirometry, volumes, DLCO</option><option value="spirometry">Spirometry only</option></select></label>
+      <label class="field">Quality challenge<select id="qc"><option value="off">Off</option><option value="on">On</option><option value="varies">Varies</option></select></label>
+      <label class="field">Flags<select id="flags"><option value="lln">Below the LLN</option><option value="none">None</option></select></label>
       <button type="button" class="secondary" id="copy-link">Copy case link</button>
       <label class="field">Case link<input type="text" id="caseCode" readonly size="30" aria-label="Case link"></label>
     </div>
     <p id="tally" class="muted" aria-live="polite"></p>
-    <div id="case" aria-live="polite"><p class="muted">Loading reference tables…</p></div>
+    <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
+    <div id="case"><p class="muted">Loading reference tables…</p></div>
   </div>
   <div id="panel-report" class="panel" role="tabpanel" hidden>
     <div class="toolbar rpt-toolbar">
@@ -43,7 +46,7 @@
       <label><input type="checkbox" id="report-interp" disabled> Add the interpretation statement</label>
       <label><input type="checkbox" id="report-dark"> Dark figure panels (screen only)</label>
     </div>
-    <p class="muted" id="report-hint">Quality grades, per-maneuver acceptability and the interpretation statement appear after you check your answers on the Practice tab.</p>
+    <p class="muted" id="report-hint">Quality grades, per-maneuver acceptability and the interpretation statement appear when the Practice tab releases them: the technologist’s statement when it is shown, the rest after you check your answers.</p>
     <div id="report-root" aria-live="polite"></div>
   </div>
   <div id="panel-method" class="panel" role="tabpanel" hidden><div id="method"></div></div>
