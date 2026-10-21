@@ -195,7 +195,7 @@ export function detailsAreaHtml(ctx) {
 export function renderPractice(ctx) {
   const box = interpretationBoxHtml(ctx);
   const summary = ctx.sheets.summarySheetHtml && ctx.model
-    ? ctx.sheets.summarySheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, flags: ctx.flags, showQualityLines: ctx.vis.showQualityLines })
+    ? ctx.sheets.summarySheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, flags: ctx.flags, showQualityLines: ctx.vis.showQualityLines, narrowZ: true })
     : summaryFallbackHtml(ctx);
   const reveal = ctx.stage === 3 ? R.renderReveal(ctx.caseData, ctx.interp, ctx.cmp, [], ctx.scored, ctx.feedback) : '';
   return `${equationSelectorHtml(ctx.equation)}<div id="summary-slot" class="sheet-wrap sheet-live">${injectInterpretation(summary, box)}</div>${detailsAreaHtml(ctx)}${reveal}`;

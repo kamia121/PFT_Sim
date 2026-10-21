@@ -18,6 +18,8 @@ import { renderChart } from './chart.js';
 import { orderSeedFor } from './exam.js';
 import { learnerCsv, keyCsv, classSummary, classCsv } from './export.js';
 import { studentSheetHtml, keySheetHtml, resultSheetHtml, rubricTable } from './print.js';
+import { watchScrollRegions } from '../ui/scroll-regions.js';
+watchScrollRegions();
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = { datasets: null, adapters: null };

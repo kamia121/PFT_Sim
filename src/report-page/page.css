@@ -123,6 +123,6 @@
 }
 
 /* The summary sheet fills its Letter box; it takes the page scale of the report page instead of its own. */
-.rp-box.sheet-box { overflow: hidden; }
-.rp-box.sheet-box .sheet-frame { --sheet-s: var(--rp-s); margin: 0; box-shadow: none; }
-@media print { .rp-box.sheet-box .sheet-frame { --sheet-s: 1; } }
+.rp-box.rp-sheet-box { overflow: hidden; }
+.rp-box.rp-sheet-box .sheet-frame { --sheet-s: var(--rp-s); margin: 0; box-shadow: none; }
+@media print { .rp-box.rp-sheet-box .sheet-frame { --sheet-s: 1; } }

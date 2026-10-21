@@ -20,6 +20,8 @@ import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
 import { renderPractice, detailsBodyHtml } from './practice-view.js';
 import { pageRulesCss } from '../report-page/pages.js';
+import { watchScrollRegions } from '../ui/scroll-regions.js';
+watchScrollRegions();
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
