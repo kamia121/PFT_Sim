@@ -553,7 +553,7 @@ function orthogonalize(y, x, inWindow) {
 function buildRawLoop({ seed, box, tgvTrue, frcReported, u, z, phenotype, tech, morphology, restricted }) {
   const r0 = createStream(seed, 'pleth-raw');
   const sizeFactor = (3.0 / clamp(tgvTrue, 1.2, 9)) ** 0.35; // Raw falls with lung size (exponent unverified)
-  const phenotypeFactor = phenotype === 'airway' ? 1.15 : phenotype === 'emphysema' ? 0.85 : 1;
+  const phenotypeFactor = phenotype === 'airway-predominant' ? 1.15 : phenotype === 'emphysema' ? 0.85 : 1;
   const m = obstructionMeasure(z);
   const rawModel = PLETH_MODEL.rawMedianKpaSL.value * sizeFactor * phenotypeFactor * Math.exp(0.36 * m) * Math.exp(0.08 * r0.normal());
 

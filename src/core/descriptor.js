@@ -24,6 +24,7 @@ export const GROUP_LABELS = ['White', 'Black or African American', 'Asian: North
 
 // Random draws stay at 18 to 80. An explicit age may go to 95, the upper limit of the GLI spirometry tables; above 80 (volumes) and
 // 85 (TLCO) the reference values for the last available age are used and the report says so.
+const OBESITY_BMI = { 1: [35, 40], 2: [40, 46], 3: [46, 55] };
 const OVERRIDABLE = {
   age: [18, 95],
   heightCm: [140, 205],
@@ -45,7 +46,7 @@ const OVERRIDABLE = {
  * Demographics from the "demographics" stream. The draws are fixed in number and order, so the
  * archetype changes only how BMI and hemoglobin are used, never the other fields.
  */
-export function deriveDemographics(seed, archetype = 'normal') {
+export function deriveDemographics(seed, archetype = 'normal', severity = 2) {
   const rng = createStream(seed, 'demographics');
   const sex = rng.chance(0.5) ? 'M' : 'F';
   const age = Math.round(rng.range(18, 80));
@@ -54,7 +55,9 @@ export function deriveDemographics(seed, archetype = 'normal') {
   const hbDraw = Math.round((sex === 'M' ? 14.8 + 1.1 * rng.normal() : 13.3 + 1.0 * rng.normal()) * 10) / 10;
   const group = GROUP_LABELS[rng.int(0, GROUP_LABELS.length - 1)];
   const u1 = rng.uniform(), u2 = rng.uniform();
-  const bmi = archetype === 'obesity-low-erv' ? 35 + 15 * u1 : bmiDraw;
+  // The obesity archetype takes its BMI from the severity: 35 to 40, 40 to 46 and 46 to 55 kg/m2 (a teaching choice; expiratory reserve volume falls with BMI).
+  const [bmiLo, bmiHi] = OBESITY_BMI[Math.min(Math.max(Math.round(severity), 1), 3)];
+  const bmi = archetype === 'obesity-low-erv' ? bmiLo + (bmiHi - bmiLo) * u1 : bmiDraw;
   const hb = archetype === 'anemia' ? Math.round((7 + 2 * u2) * 10) / 10 : hbDraw;
   const weight = Math.round(bmi * (height / 100) ** 2);
   return {
@@ -73,7 +76,7 @@ export function resolveDescriptor(input) {
   if (!ARCHETYPES.includes(input.archetype)) throw new RangeError(`unknown archetype: ${input.archetype}`);
   const technique = input.technique ?? 'good';
   if (!TECHNIQUE_LEVELS.includes(technique)) throw new RangeError(`unknown technique: ${technique}`);
-  const base = deriveDemographics(input.seed, input.archetype);
+  const base = deriveDemographics(input.seed, input.archetype, input.severity ?? 2);
   const merged = { ...base, ...Object.fromEntries(Object.entries(input).filter(([k, v]) => k in base && v !== undefined)) };
   if (merged.sex !== 'M' && merged.sex !== 'F') throw new RangeError('sex must be M or F');
   if (!GROUP_LABELS.includes(merged.group)) throw new RangeError(`unknown group: ${merged.group}`);
@@ -98,7 +101,7 @@ const SHORT = { panel: 'p', age: 'ag', sex: 'x', heightCm: 'h', weightKg: 'w', h
 
 /** Query string holding the version, seed, archetype and only the fields that differ from the derived defaults. */
 export function serializeDescriptor(d) {
-  const base = deriveDemographics(d.seed, d.archetype);
+  const base = deriveDemographics(d.seed, d.archetype, d.severity);
   const p = new URLSearchParams({ v: String(d.v), s: String(d.seed), a: d.archetype });
   if (d.severity !== 2) p.set(SHORT.severity, String(d.severity));
   if (d.technique !== 'good') p.set(SHORT.technique, d.technique);

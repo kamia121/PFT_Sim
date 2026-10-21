@@ -1,5 +1,5 @@
 /**
- * Address of the report page. The case is the same descriptor query as the practice page (`?c=<code>` or `?v=1&s=..&a=..`),
+ * Address of the report page. The case is the same descriptor query as the practice page (`?c=<code>` or `?v=2&s=..&a=..`),
  * with two more parameters: `eq` (the spirometry equation, as on the practice page) and `copy` (student or instructor).
  * A link that cannot be read produces an error whose message is written for the person who opened it.
  */

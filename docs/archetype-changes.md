@@ -1,4 +1,6 @@
-# Archetype parameters: decisions after the literature review (draft for consultation)
+# Archetype parameters: decisions after the literature review
+
+Status: implemented as generator version 2 on 2026-10-21 after a critical Opus 5.5 review of the draft below. The review's verdicts and the final parameters are in the section "Review and final decisions" at the end; the table in the middle is the draft, kept for the audit trail.
 
 Evidence: `docs/research/archetype-literature.md`. Current-generator profile: `tools/archetype-profile.mjs` (percent of the GLI anchor prediction, 300 seeds per cell, White patients, true physiology before measurement variability). This document decides, for each finding, whether the generator should change, and by how much. Teaching simulator only; archetype parameters are proposals for physician review whatever the outcome here.
 
@@ -35,3 +37,30 @@ Practice mix weights stay labelled teaching choices. Nonspecific cases could dra
 ## Numerical checks to record
 
 `tools/archetype-profile.mjs` before and after: the means by cell against the cohort values above converted to the GLI scale (Global spirometry about 0.94 of Caucasian-based percent predicted); the proportion with BD response above 10% of predicted; the constraint sweep (`tools/constraint-sweep.mjs`) with zero violations; the property test that each archetype yields its expected anchor pattern; the 29 interpretation fixtures; regenerated baseline hashes with the reason; and a statement in `SPEC.md` that all existing case links change meaning.
+
+## Review and final decisions (Opus 5.5, high reasoning; implemented 2026-10-21)
+
+Reasoning accepted: cohort percent predicted must be converted before comparison with GLI Global percent predicted; the factor 0.94 holds for GLI-2012 and NHANES-based cohorts but is close to 1.0 for ECCS, so it is per cohort; the uncertainty is about 0.5 z for spirometry and 0.7 to 1.0 z for DLCO and RV. Reasoning corrected: the draft's rule "change only the gap beyond 0.5 z" is only a rule for whether to change; if a parameter changes it moves to the best converted estimate, because shrinking toward the current numbers pulls toward values with no source. The post-bronchodilator cohorts differ from the pre-bronchodilator generator values by about -0.3 z, which should be applied explicitly. The volume-anchor decomposition was understated (VC is 1.059 to 1.096 times the GLI-2012 FVC). Declining the full "draw FVC first" restructure stands, but a directly drawn FVC on the Global scale would push the 12% to 17% scale mismatch into RV (simulated RV 167 / 203 / 257 %p, RV/TLC above 0.70 in 17% of severity 3), so the draft's row 2 was rejected.
+
+Verdicts and what was implemented:
+
+| Row | Verdict | Implemented |
+|---|---|---|
+| 2 | REJECT as written | TLC and RV/TLC construction kept; severity 3 RV/TLC z raised; FEV1 floor 18% of predicted; a directly drawn FVC was not used. |
+| 4 | MODIFY | Three phenotypes with an age-dependent mix: airway-predominant DLCO z tn(0, 0.8, -1.3, 2.0); nonemphysematous COPD -1.8 / -2.8 / -3.3, SD 1.0; emphysema -3.6 / -4.4 / -5.0, SD 0.9. Reason: the draft left airway-predominant disease with a normal DLCO in only 52 / 14 / 4% of cases and a KCO that `explain.js` would call an emphysema-type defect. |
+| 6 | MODIFY | Gap 0.04 / 0.06 / 0.08 (+0.02 emphysema), SD 0.04, offset by RV/TLC z +0.1 / +0.25 / +0.4 (the +0.6 severity-3 air trapping is added on top). |
+| 7 | MODIFY | FEV1 5.0 ± 4.5 / 3.5 ± 3.5 / 2.0 ± 2.5 and FVC 4.5 ± 5.5 %p at every severity (the FVC response is not damped, as in NOVELTY), correlation 0.5; mixed disease uses the same model; asthma-like cases 8.0 ± 5.5 (teaching choice). |
+| 8 | ACCEPT with FEV1 SD 3.3 | FEV1 3.2 ± 3.3, FVC -0.5 ± 3.1 %p. |
+| 9 | MODIFY | KCO-anchored: KCO z tn(-2.2, 0.8, -4.5, -1), DLCO = KCO × VA. (The draft's DLCO z = TLC z - 1.0 left KCO low in only 44 / 52 / 32%.) |
+| 10 | MODIFY | Johnson's relation, soft cap near 1.40, lognormal noise SD 0.12, a quarter of cases pulled toward normal. |
+| 11 | MODIFY | KCO-anchored: KCO z tn(-1.8, 0.8, -4, -0.5), DLCO = KCO × VA. |
+| 12 | ACCEPT as harmless; claim dropped | Not changed (the TLC shift moved RV only from 172 to 163 %p). |
+| 15 | REJECT the ERV bands | The draft's z-to-percent conversion was wrong (z -3.9 is on the 0.12 L floor). ERV follows BMI by a two-point formula; severity chooses the BMI band; ERV uses the actual descriptor BMI. |
+
+Missed by the draft and fixed: the severity-3 FEV1 band ran past the LMS support (FEV1 below 15 %p in 30% of cases, down to 8 %p; now floored at 18% of predicted for every archetype); RV/TLC reached 0.94 (now capped at 0.74 where it is drawn; the nonspecific archetype's derived RV/TLC, up to 0.77, is left and labelled); VA fell too little in non-emphysematous obstruction (shift 0.03 + 0.02 × severity). Noted and not changed: the factor-model loadings affect only the FVC/VC gap of the normal-range archetypes and the VA noise (every archetype overwrites the z-scores), so labelling them is of limited consequence; normal cases never sit near the lower limit for FVC or FEV1 (see SPEC.md), so equation-flip teaching relies on the borderline ratio, TLC and DLCO draws and on mildly abnormal archetypes.
+
+Versioning: the reviewer asked to bump the generator version; it is now 2, and version-1 links and exam codes are refused with a readable message. Freezing the version-1 generator for reproduction was not done: the plethysmography change and the DLCO changes to come already changed version-1 values, so a frozen copy would not reproduce distributed version-1 cases either.
+
+Numerical checks (all recorded in the profile files and SPEC.md): before and after profiles by archetype and severity; a constraint sweep of 20,000 cases with zero violations; tails over ages 18, 45, 80 and 95 for 1,500 draws per cell (FEV1 at least 18 %p, RV/TLC at most 0.74 where capped, identities exact, post-bronchodilator FEV1 not above FVC); bronchodilator positivity 25% to 30% (obstruction), 15% to 19% (mixed) and 1% to 4% (normal); equation sensitivity 12% to 27% of cases changing a label, 0% to 4% the pattern.
+
+Not done: physician sign-off, a quiz answer-distribution review for the bronchodilator and DLCO questions, and a re-run of the 29 interpretation fixtures against a physician's reading (they pass as tests).

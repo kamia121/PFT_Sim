@@ -205,7 +205,7 @@ test('short-acting bronchodilator before the test: higher baseline, smaller resp
     const archetype = ['obstruction', 'mixed', 'normal'][seed % 3];
     const p = plain(seed, archetype), c = build(seed, archetype, ['med-saba-recent']);
     assert.ok(c.spirometry.post, 'a bronchodilator study is performed');
-    assert.ok(c.report.spirometry.fev1 >= p.report.spirometry.fev1 - 0.1, 'a bronchodilator study that falls slightly can only lower the baseline a little');
+    assert.ok(c.report.spirometry.fev1 >= p.report.spirometry.fev1 - 0.3, 'a bronchodilator study that falls (responses are continuous and can be negative) can only lower the baseline a little');
     dBase.push(c.report.spirometry.fev1 - p.report.spirometry.fev1);
     if (p.spirometry.post) dResp.push((c.report.spirometry.post.fev1 - c.report.spirometry.fev1) - (p.report.spirometry.post.fev1 - p.report.spirometry.fev1));
     const h = c.scenario.preTest.lastSabaHours;

@@ -11,8 +11,9 @@
  * are scored on is computed later from the values actually reported, after maneuver variability
  * and technique faults; agreement between archetype and key is a property test, not a filter.
  *
- * Every correlation loading, archetype mean and band here is a proposal for physician review.
- * None is source-backed. See SPEC.md.
+ * Archetype means and bands were compared with published cohorts (docs/research/archetype-literature.md; the decisions
+ * and their sources are in docs/archetype-changes.md and SPEC.md). Each parameter is either anchored to a source or labelled
+ * a teaching choice in those documents; all remain proposals for physician review. Generator version 2.
  */
 import { createStream } from './prng.js';
 import { truncatedNormal } from './stats.js';
@@ -26,7 +27,7 @@ const RATIO_Z = { 1: [-2.6, -1.8], 2: [-3.4, -2.6], 3: [-4.2, -3.4] };
 
 const ARCHETYPE_NOTES = {
   normal: 'Normal for the anchor equations.',
-  obstruction: 'Airflow obstruction. The phenotype (airway-predominant or emphysema-like) is drawn from the seed.',
+  obstruction: 'Airflow obstruction. The phenotype (asthma-like or chronic bronchitis with a preserved DLCO, COPD without emphysema with a reduced DLCO, or emphysema with a low DLCO) is drawn from the seed, with more asthma-like cases below 40 years.',
   'restriction-parenchymal': 'Restriction with low diffusing capacity and a preserved or raised FEV1/FVC.',
   'restriction-extraparenchymal': 'Restriction from the chest wall or respiratory muscles: raised RV/TLC, low ERV, mildly low DLCO, raised KCO.',
   mixed: 'Obstruction and restriction together.',
@@ -43,6 +44,18 @@ export function hbFactor(hb, sex, age) {
   const c = sex === 'M' && age >= 15 ? 10.22 : 9.38;
   return (c + hb) / (1.7 * hb);
 }
+
+/**
+ * Bronchodilator response of the true values, as percent of the predicted FEV1 and FVC (mean, SD), correlation 0.5.
+ * Obstruction and mixed disease: continuous and damped with severity, as in COPD cohorts (SCAPIS COPD: FEV1 5.2 +- 5.4 %p,
+ * FVC 4.8 +- 6.1 %p; ECLIPSE: the response falls with GOLD stage; NOVELTY: a response in FVC is at least as common as in FEV1,
+ * so the FVC response is not damped). About 15 to 25% of obstructive cases exceed 10% of predicted.
+ * Normal and nonspecific: SCAPIS never-smokers (FEV1 3.2 +- 4.2 %p, FVC -0.5 +- 3.1 %p; the FEV1 SD is set to 3.3 so that the 95th percentile matches their 8.7).
+ * Asthma-like obstruction has a larger response: a TEACHING CHOICE with no cohort anchor, so that a classic concordant response is seen.
+ */
+const bdObstructive = (sev) => ({ fev1: [[5.0, 4.5], [3.5, 3.5], [2.0, 2.5]][sev - 1], fvc: [4.5, 5.5], limits: [-6, 25] });
+const BD_ASTHMA_LIKE = { fev1: [8.0, 5.5], fvc: [6.0, 6.0], limits: [-6, 30] };
+const BD_NORMAL = { fev1: [3.2, 3.3], fvc: [-0.5, 3.1], limits: [-8, 12] };
 
 /** Value at z that stays defined when 1 + L S z approaches zero (extreme negative z in skewed distributions). */
 function valueAt({ L, M, S }, z) {
@@ -66,11 +79,12 @@ export function generatePhysiology(seed, d, datasets) {
   const uni = (lo, hi) => rng.range(lo, hi);
   const sev = d.severity;
 
-  // Factor model for variables an archetype does not define. Loadings are proposals.
+  // Latent defaults for a healthy lung. Every archetype below overwrites the z-scores, so these loadings affect only the
+  // FVC/VC gap of the normal-range archetypes and the VA noise; the draws are kept so that the random stream is stable.
   const S = rng.normal(), G = rng.normal(), T = rng.normal();
   const e = Array.from({ length: 6 }, () => rng.normal());
   const phenotypeDraw = rng.uniform(), variantDraw = rng.uniform(), bdDraw = rng.uniform(), borderDraw = rng.uniform(), borderPick = rng.uniform();
-  const bd = { responder: false, deltaFev1Pred: 0, deltaFvcFraction: 0, variant: null };
+  const bd = { responder: false, deltaFev1Pred: 0, deltaFvcFraction: 0, variant: null, model: BD_NORMAL };
 
   // Defaults: a healthy lung before the archetype is applied.
   const lat = {
@@ -83,7 +97,18 @@ export function generatePhysiology(seed, d, datasets) {
     vaShift: 0,
     zFvcTarget: null,
     zFev1Target: null,
+    zKco: null, // when set, KCO is drawn and DLCO = KCO x VA (restriction, mixed)
+    kcoJohnson: false, // extraparenchymal restriction: DLCO and KCO follow VA by Johnson's relation
+    ervFromBmi: false, // obesity: ERV follows BMI
   };
+  // Floor for the obstructive FEV1: the severity band's lower edge runs past the support of the LMS curve in older women
+  // (FEV1 below 10% of predicted), so FEV1 is kept at 18% of the predicted value or above. Where that floor lies above the band the
+  // target takes the floor, and the key then grades such a case by its z-score.
+  const FEV1_FLOOR = 0.18;
+  const fev1FloorZ = () => resolveReference('fev1', { ...pat, measured: FEV1_FLOOR * anchor('fev1').M }, ANCHOR.spirometry).z;
+  const fev1TargetZ = (s) => { const [lo, hi] = SEVERITY_Z[s]; const f = fev1FloorZ(); return uni(Math.max(lo, f), Math.max(hi, f)); };
+  // RV/TLC above about 0.74 is not seen even in severe obstruction; it is the cap on the drawn RV/TLC.
+  const RVT_MAX = 0.74;
   const clipNormal = () => {
     lat.zRatio = tn(0.1, 0.9, -1.2);
     lat.zTLC = tn(0, 0.9, -1.3, 1.6);
@@ -104,15 +129,23 @@ export function generatePhysiology(seed, d, datasets) {
       break;
     }
     case 'obstruction': {
-      phenotype = phenotypeDraw < 0.6 ? 'airway' : 'emphysema';
-      lat.zFev1Target = uni(...SEVERITY_Z[sev]);
-      lat.zTLC = tn(phenotype === 'airway' ? 0.3 + 0.3 * (sev - 1) : 0.9 + 0.5 * (sev - 1), 0.7, -1.2, 3.2);
-      lat.zRVT = tn(phenotype === 'airway' ? 1.2 + 0.6 * (sev - 1) : 2.0 + 0.6 * (sev - 1), 0.7, 0.3, 5);
-      lat.delta = uni(0.03, 0.07) + 0.04 * (sev - 1) + (phenotype === 'emphysema' ? 0.03 : 0);
+      // Phenotype: asthma-like or chronic bronchitis ('airway-predominant', DLCO preserved), COPD without emphysema ('nonemphysematous', DLCO reduced),
+      // and emphysema. The mix depends on age (a teaching choice): younger patients are mostly asthma-like.
+      const older = d.age >= 40;
+      const pAirway = older ? 0.2 : 0.8, pCopd = older ? 0.45 : 0.2;
+      phenotype = phenotypeDraw < pAirway ? 'airway-predominant' : phenotypeDraw < pAirway + pCopd ? 'nonemphysematous' : 'emphysema';
+      const k = sev - 1;
+      lat.zFev1Target = fev1TargetZ(sev);
+      lat.zTLC = tn(phenotype === 'airway-predominant' ? 0.3 + 0.3 * k : phenotype === 'nonemphysematous' ? 0.6 + 0.4 * k : 0.9 + 0.5 * k, 0.7, -1.2, 3.2);
+      // RV/TLC rises with the FVC/VC gap (+0.1, +0.25, +0.4) and, in severe disease, with air trapping (+0.6).
+      const rvtAdd = [0.1, 0.25, 1.0][k];
+      lat.zRVT = tn((phenotype === 'airway-predominant' ? 1.2 : phenotype === 'nonemphysematous' ? 1.6 : 2.0) + 0.6 * k + rvtAdd, 0.7, 0.3, 5);
+      lat.delta = tn(0.04 + 0.02 * k + (phenotype === 'emphysema' ? 0.02 : 0), 0.04, -0.02, 0.2);
       lat.zERV = tn(-0.3, 0.9, -2, 1.5);
-      lat.zDLCO = phenotype === 'airway' ? tn(0.2, 0.8, -1.3, 2) : tn(-1.8 - 0.6 * (sev - 1), 0.6, -5, -1.7);
-      lat.vaShift = phenotype === 'emphysema' ? 0.05 + 0.04 * sev : 0.01 * sev;
-      bd.responder = bdDraw < 0.45;
+      lat.zDLCO = phenotype === 'airway-predominant' ? tn(0, 0.8, -1.3, 2) : phenotype === 'nonemphysematous' ? tn([-1.8, -2.8, -3.3][k], 1.0, -5.5, -0.5) : tn([-3.6, -4.4, -5.0][k], 0.9, -6.5, -1.7);
+      lat.vaShift = phenotype === 'airway-predominant' ? 0.01 * sev : phenotype === 'nonemphysematous' ? 0.03 + 0.02 * sev : 0.05 + 0.04 * sev;
+      bd.responder = bdDraw < 0.45; // drawn to keep the stream; the response is continuous (see the bronchodilator block)
+      bd.model = phenotype === 'airway-predominant' ? BD_ASTHMA_LIKE : bdObstructive(sev);
       break;
     }
     case 'restriction-parenchymal': {
@@ -121,7 +154,7 @@ export function generatePhysiology(seed, d, datasets) {
       lat.delta = uni(0.01, 0.04);
       lat.zRatio = tn(0.5, 0.7, -0.8, 2.3);
       lat.zERV = tn(-0.5, 0.8, -2, 1);
-      lat.zDLCO = tn(-1.2 - 0.8 * sev, 0.7, -6, -1.75);
+      lat.zKco = tn(-2.2, 0.8, -4.5, -1);
       break;
     }
     case 'restriction-extraparenchymal': {
@@ -130,7 +163,7 @@ export function generatePhysiology(seed, d, datasets) {
       lat.delta = uni(0.01, 0.05);
       lat.zRatio = tn(0.2, 0.7, -0.8, 2);
       lat.zERV = tn(-1.8, 0.8, -4, -0.5);
-      lat.zDLCO = tn(-0.6, 0.6, -1.5, 0.8);
+      lat.kcoJohnson = true;
       break;
     }
     case 'mixed': {
@@ -139,8 +172,9 @@ export function generatePhysiology(seed, d, datasets) {
       lat.zRVT = tn(0.6, 0.8, -0.8, 3);
       lat.delta = uni(0.04, 0.09);
       lat.zERV = tn(-0.8, 0.9, -3, 1);
-      lat.zDLCO = tn(-1.2 - 0.4 * sev, 0.8, -5, 0.3);
-      bd.responder = bdDraw < 0.3;
+      lat.zKco = tn(-1.8, 0.8, -4, -0.5);
+      bd.responder = bdDraw < 0.3; // drawn to keep the stream
+      bd.model = bdObstructive(sev);
       break;
     }
     case 'nonspecific': {
@@ -166,15 +200,15 @@ export function generatePhysiology(seed, d, datasets) {
       clipNormal();
       lat.zTLC = tn(-0.6, 0.6, -1.4, 0.5);
       lat.zRVT = tn(-0.2, 0.7, -1.4, 1);
-      lat.zERV = uni(...SEVERITY_Z[sev]);
+      lat.ervFromBmi = true;
       lat.zDLCO = tn(0.2, 0.7, -0.8, 1.6);
       lat.zRatio = tn(0.3, 0.8, -1, 2);
       break;
     }
     case 'bd-discordant': {
-      phenotype = 'airway';
+      phenotype = 'airway-predominant';
       bd.variant = variantDraw < 0.6 ? 'volume' : 'artifact';
-      lat.zFev1Target = uni(...SEVERITY_Z[Math.min(sev, 2)]);
+      lat.zFev1Target = fev1TargetZ(Math.min(sev, 2));
       lat.zTLC = tn(0.6, 0.6, -0.4, 2.6);
       lat.zRVT = tn(2.2, 0.6, 1.2, 4.2);
       lat.delta = uni(0.10, 0.18);
@@ -198,6 +232,7 @@ export function generatePhysiology(seed, d, datasets) {
     rv = tlc - vc;
     rvt = rv / tlc;
   } else {
+    rvt = Math.min(rvt, RVT_MAX);
     rv = tlc * rvt;
     vc = tlc - rv;
     fvc = vc * (1 - lat.delta);
@@ -209,17 +244,41 @@ export function generatePhysiology(seed, d, datasets) {
     ratio = Math.min(fev1Target / fvc, valueAt(anchor('fev1_fvc'), -1.8));
   }
   ratio = Math.min(ratio, 0.98);
+  // FEV1 floor for every archetype (mixed disease and extraparenchymal restriction can reach it in older women).
+  const fev1Pred0 = anchor('fev1').M;
+  if (fvc * ratio < FEV1_FLOOR * fev1Pred0) ratio = Math.min(FEV1_FLOOR * fev1Pred0 / fvc, 0.97);
   const fev1 = fvc * ratio;
-  const erv = Math.max(Math.min(at('erv', lat.zERV), 0.85 * vc), 0.12);
+  // Obesity: ERV falls with BMI, ERV = predicted x (0.2 + 0.8 exp(-0.12 (BMI - 20))). A two-point fit through Jones and Nzekwu
+  // (about 0.44 of the BMI-20 value at BMI 30) and Steier (0.4 L against 1.7 L, about 0.23, at BMI 47); abstracts only.
+  const bmi = d.weightKg / (d.heightCm / 100) ** 2;
+  const ervTarget = lat.ervFromBmi ? anchor('erv').M * (0.2 + 0.8 * Math.exp(-0.12 * (bmi - 20))) * Math.exp(0.25 * e[2]) : at('erv', lat.zERV);
+  const erv = Math.max(Math.min(ervTarget, 0.85 * vc), 0.12);
   const frc = rv + erv;
   const ic = vc - erv;
-  const dlcoCorrected = at('dlco', lat.zDLCO);
   const vaPred = anchor('va').M, tlcPred = anchor('tlc').M;
   // VA is a fraction of TLC: the ratio of the anchor predicted values, kept in a physical range because
   // the two anchor families were derived separately and their predicted VA/TLC is not always below one.
   const vaFraction = Math.min(Math.max(vaPred / tlcPred, 0.8), 0.96);
   const va = Math.min(tlc * vaFraction * Math.exp(0.03 * e[5]) * (1 - lat.vaShift), 0.98 * tlc);
-  const kco = dlcoCorrected / va;
+  // Diffusing capacity. Restriction and mixed disease are anchored on KCO and DLCO = KCO x VA, so that KCO is low as in the registries;
+  // extraparenchymal restriction follows Johnson's relation (KCO/KCOpred = 0.42 + 0.58 / (VA/VApred), abstract only) with a soft cap near
+  // 1.40 (KCO in neuromuscular weakness reaches 114 to 130 %p), lognormal noise (SD 0.12), and a quarter of cases pulled toward
+  // normal (combined weakness, scoliosis); the other archetypes draw DLCO directly and KCO = DLCO/VA.
+  let kco, dlcoCorrected;
+  if (lat.zKco !== null) {
+    kco = at('kco', lat.zKco);
+    dlcoCorrected = kco * va;
+  } else if (lat.kcoJohnson) {
+    const r = va / vaPred;
+    let ratio = 0.42 + 0.58 / r;
+    ratio = 1 + 0.4 * Math.tanh((ratio - 1) / 0.4);
+    if (rng.uniform() < 0.25) ratio = 1 + 0.4 * (ratio - 1);
+    kco = anchor('kco').M * ratio * Math.exp(0.12 * rng.normal());
+    dlcoCorrected = kco * va;
+  } else {
+    dlcoCorrected = at('dlco', lat.zDLCO);
+    kco = dlcoCorrected / va;
+  }
 
   // Bronchodilator effect on the true values.
   const fev1Pred = anchor('fev1').M;
@@ -233,12 +292,12 @@ export function generatePhysiology(seed, d, datasets) {
       dFev1 = uni(0.12, 0.2) * fev1Pred;
       dFvc = 0;
       earlyStop = [2.6, 4.2];
-    } else if (bd.responder) {
-      dFev1 = uni(0.11, 0.2) * fev1Pred;
-      dFvc = dFev1 * uni(0.2, 0.9);
     } else {
-      dFev1 = uni(-0.01, 0.06) * fev1Pred;
-      dFvc = dFev1 * uni(0.0, 0.8);
+      const n1 = rng.normal(), n2 = rng.normal();
+      const [lo, hi] = bd.model.limits;
+      const clampPct = (x) => Math.min(Math.max(x, lo), hi) / 100;
+      dFev1 = clampPct(bd.model.fev1[0] + bd.model.fev1[1] * n1) * fev1Pred;
+      dFvc = clampPct(bd.model.fvc[0] + bd.model.fvc[1] * (0.5 * n1 + Math.sqrt(0.75) * n2)) * anchor('fvc').M;
     }
     const pf = fvc + dFvc;
     post = { fvc: pf, fev1: Math.min(fev1 + dFev1, 0.985 * pf), earlyStop };

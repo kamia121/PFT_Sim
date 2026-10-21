@@ -37,11 +37,11 @@ test('archetype changes BMI and hemoglobin only, never the other demographic fie
 });
 
 test('bad links fail loudly', () => {
-  assert.throws(() => parseDescriptor('v=1&a=normal'), /seed/);
+  assert.throws(() => parseDescriptor('v=2&a=normal'), /seed/);
   assert.throws(() => parseDescriptor('v=99&s=1&a=normal'), /generator version/);
-  assert.throws(() => parseDescriptor('v=1&s=1&a=bogus'), /archetype/);
-  assert.throws(() => parseDescriptor('v=1&s=-3&a=normal'), /seed/);
-  assert.throws(() => parseDescriptor('v=1&s=1&a=normal&h=3000'), /heightCm/);
+  assert.throws(() => parseDescriptor('v=2&s=1&a=bogus'), /archetype/);
+  assert.throws(() => parseDescriptor('v=2&s=-3&a=normal'), /seed/);
+  assert.throws(() => parseDescriptor('v=2&s=1&a=normal&h=3000'), /heightCm/);
 });
 
 test('scenario level and ids are optional link keys (sc, si) that round-trip; a plain link is unchanged', () => {
@@ -66,13 +66,13 @@ test('scenario level and ids are optional link keys (sc, si) that round-trip; a 
   // Explicit ids without a level imply the lightest level.
   assert.equal(resolveDescriptor({ seed: 5, archetype: 'mixed', scenarioIds: ['qs-leak'] }).scenarioLevel, 'light');
   // Links made before the scenario keys existed still parse to the same descriptor.
-  assert.deepEqual(parseDescriptor('v=1&s=2024&a=obstruction'), resolveDescriptor({ seed: 2024, archetype: 'obstruction' }));
+  assert.deepEqual(parseDescriptor('v=2&s=2024&a=obstruction'), resolveDescriptor({ seed: 2024, archetype: 'obstruction' }));
 });
 
 test('scenario keys are validated', () => {
   assert.throws(() => resolveDescriptor({ seed: 1, archetype: 'normal', scenarioLevel: 'extreme' }), /scenario level/);
   assert.throws(() => resolveDescriptor({ seed: 1, archetype: 'normal', scenarioIds: ['no-such-scenario'] }), /unknown scenario/);
   assert.throws(() => resolveDescriptor({ seed: 1, archetype: 'normal', scenarioLevel: 'none', scenarioIds: ['qs-leak'] }), /need a scenario level/);
-  assert.throws(() => parseDescriptor('v=1&s=1&a=normal&sc=bogus'), /scenario level/);
-  assert.throws(() => parseDescriptor('v=1&s=1&a=normal&sc=light&si=nope'), /unknown scenario/);
+  assert.throws(() => parseDescriptor('v=2&s=1&a=normal&sc=bogus'), /scenario level/);
+  assert.throws(() => parseDescriptor('v=2&s=1&a=normal&sc=light&si=nope'), /unknown scenario/);
 });

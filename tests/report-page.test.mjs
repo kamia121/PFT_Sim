@@ -39,20 +39,20 @@ function assertBalanced(html) {
 }
 
 test('the report address: code, plain descriptor, equation and copy', () => {
-  const d = parseDescriptor(serializeDescriptor(parseDescriptor('v=1&s=12&a=obstruction&t=fair')));
+  const d = parseDescriptor(serializeDescriptor(parseDescriptor('v=2&s=12&a=obstruction&t=fair')));
   const token = encodeCase(serializeDescriptor(d));
   const a = parseReportQuery(`?c=${token}`);
   assert.equal(a.equation, 'GLIglobal');
   assert.equal(a.copy, 'student');
   assert.equal(a.descriptor.seed, 12);
-  const b = parseReportQuery('v=1&s=12&a=obstruction&t=fair&eq=GLI2012&copy=instructor');
+  const b = parseReportQuery('v=2&s=12&a=obstruction&t=fair&eq=GLI2012&copy=instructor');
   assert.deepEqual([b.equation, b.copy, b.descriptor.archetype], ['GLI2012', 'instructor', 'obstruction']);
   assert.equal(parseReportQuery(reportQuery({ token, equation: 'GLI2012', copy: 'instructor' })).copy, 'instructor');
   assert.equal(parseReportQuery(reportQuery({ token })).copy, 'student');
 });
 
 test('a link that cannot be read gives a readable message, never a stack or a bare error', () => {
-  const bad = ['', '?s=12', '?c=!!!!', '?c=bm90IGEgZGVzY3JpcHRvcg', '?v=2&s=12&a=obstruction', '?v=1&s=12&a=nonsense', '?v=1&s=12&a=normal&eq=XYZ', '?v=1&s=12&a=normal&copy=teacher', '?v=1&s=-4&a=normal', '?c=%E0%A4%A'];
+  const bad = ['', '?s=12', '?c=!!!!', '?c=bm90IGEgZGVzY3JpcHRvcg', '?v=1&s=12&a=obstruction', '?v=2&s=12&a=nonsense', '?v=2&s=12&a=normal&eq=XYZ', '?v=2&s=12&a=normal&copy=teacher', '?v=2&s=-4&a=normal', '?c=%E0%A4%A'];
   for (const q of bad) {
     assert.throws(() => parseReportQuery(q), (e) => {
       assert.ok(e instanceof ReportLinkError, `${q}: ${e}`);

@@ -28,12 +28,12 @@ const port = 5198;
 const shotDir = process.argv[2];
 if (shotDir) fs.mkdirSync(shotDir, { recursive: true });
 const CASES = [
-  ['normal', 'v=1&s=5&a=normal'],
-  ['obstruction-post-bd', 'v=1&s=12&a=obstruction&t=fair'],
-  ['restriction', 'v=1&s=31&a=restriction-parenchymal'],
-  ['mixed', 'v=1&s=44&a=mixed'],
-  ['spirometry-only', 'v=1&s=44&a=mixed&p=spirometry'],
-  ['full-heavy', 'v=1&s=90&a=bd-discordant&t=poor&sc=heavy'],
+  ['normal', 'v=2&s=5&a=normal'],
+  ['obstruction-post-bd', 'v=2&s=12&a=obstruction&t=fair'],
+  ['restriction', 'v=2&s=31&a=restriction-parenchymal'],
+  ['mixed', 'v=2&s=44&a=mixed'],
+  ['spirometry-only', 'v=2&s=44&a=mixed&p=spirometry'],
+  ['full-heavy', 'v=2&s=90&a=bd-discordant&t=poor&sc=heavy'],
 ];
 
 const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
@@ -154,7 +154,7 @@ try {
     check(!(await page.locator('.rp-toolbar').isVisible()) && !(await page.locator('.masthead').isVisible()), 'print view hides the toolbar and page chrome');
     await page.emulateMedia({ media: 'screen' });
     // Damaged and incomplete links.
-    for (const bad of ['', '?c=!!!', '?v=1&s=12&a=nonsense', '?v=1&s=12&a=normal&eq=XYZ']) {
+    for (const bad of ['', '?c=!!!', '?v=2&s=12&a=nonsense', '?v=2&s=12&a=normal&eq=XYZ']) {
       await page.goto(`${base}/report.html${bad}`);
       await ready(page, 'error');
       const msg = await page.locator('#rp-stage').innerText();
