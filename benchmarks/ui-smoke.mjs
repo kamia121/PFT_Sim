@@ -142,10 +142,10 @@ try {
   const poor = 'v=2&s=8&a=bd-discordant&t=poor';
   if (haveRt) {
     await page.selectOption('#qc', 'on');
-    await page.goto(`${base}?${poor}&qc=1`);
+    await page.goto(`${base}?${poor}&qc=1&qd=adv`);
     await page.waitForSelector('#answer-form');
     check((await page.locator('#qc').inputValue()) === 'on', 'a link with qc=1 opens with the challenge on');
-    check((await page.locator('#show-statement').count()) === 1 && (await page.locator('#check-answers').isDisabled()), 'stage 1: the statement is requested by a button, and a scored check waits');
+    check((await page.locator('#show-statement').count()) === 1 && (await page.locator('#check-answers').isDisabled()), 'stage 1 (advanced review): the statement is requested by a button, and a scored check waits');
     const stage1 = await page.content();
     check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1), 'stage 1: no grade statement in the page source');
     await page.click('#toggle-details');
@@ -160,7 +160,7 @@ try {
     check((await page.locator('#h-quality').count()) === 1, 'stage 3: the quality section appears');
     // The same link, page 2 opened or not: the line about the details differs and no status does.
     const line = async (open) => {
-      await page.goto(`${base}?${poor}&qc=1`);
+      await page.goto(`${base}?${poor}&qc=1&qd=adv`);
       await page.waitForSelector('#answer-form');
       if (open) await page.click('#toggle-details');
       await page.click('#show-statement');

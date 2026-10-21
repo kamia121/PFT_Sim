@@ -274,6 +274,11 @@ function checkAnswers(scored) {
 }
 
 function releaseStatement() {
+  // In the basic review the release locks the one study-level answer, so it is refused while that answer is empty.
+  if (state.stage.review === 'basic' && state.stage.qualityChallenge && !state.responses.challenge.studyInterpretable) {
+    announce('Answer the study-level question first; showing the statement locks it.');
+    return;
+  }
   const next = showStatement(state.stage);
   if (next === state.stage) return;
   state.stage = next;

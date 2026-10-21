@@ -8,7 +8,7 @@ import { PALETTES } from '../src/ui/palettes.js';
 import { renderPractice, injectInterpretation, interpretationBoxHtml, SUMMARY_MISSING, DETAILS_MISSING } from '../src/app/practice-view.js';
 import { buildFeedback, scoreAll, qualityFeedback, detailsLine, addToTally } from '../src/app/feedback.js';
 import { emptyResponses, applyChange, challengeField } from '../src/app/collect.js';
-import { createStage, showStatement, check, fallbackVisibility } from '../src/app/stage.js';
+import { createStage, showStatement, check, canCheck, fallbackVisibility } from '../src/app/stage.js';
 import * as stub from './helpers/practice-stub.mjs';
 
 const CASES = {
@@ -28,14 +28,14 @@ function makeCtx(input, { qualityChallenge = false, stage = 1, detailsOpen = fal
   const cmp = compareEquations(caseData.report, resolveReference, 'GLI2012', 'GLIglobal');
   const rt = stub.buildRtReport(caseData);
   const items = stub.buildChallenges(caseData, { rt, interp, qualityChallenge });
-  let st = createStage({ qualityChallenge });
+  let st = createStage({ qualityChallenge, review: 'advanced' });
   if (stage >= 2) st = showStatement(st);
   if (detailsOpened) st = { ...st, detailsOpened: true };
   if (stage === 3) st = check(st, { scored: true });
   const vis = stub.visibility({ qualityChallenge, stage: st.stage });
   const model = buildReportModel(caseData, interp, { equation, includeGrades: vis.showGradeColumns, resolve: resolveReference, palette: PALETTES.white });
   const feedback = st.stage === 3 ? buildFeedback({ caseData, interp, interpOther, equation, responses, items, scoreChallenge: stub.scoreChallenge, rt, detailsOpened: st.detailsOpened }) : null;
-  return { caseData, interp, interpOther, cmp, equation, flags: 'lln', qualityChallenge, stage: st.stage, scored: st.scored, detailsOpen, vis, canCheck: st.stage !== 3 && (!qualityChallenge || st.stage === 2), rt, items, responses, model, sheets, palette: PALETTES.white, figView: {}, showSchematic: false, resolve: resolveReference, feedback, rtReport: rt };
+  return { caseData, interp, interpOther, cmp, equation, flags: 'lln', qualityChallenge, review: 'advanced', stage: st.stage, scored: st.scored, detailsOpen, vis, canCheck: canCheck(st), rt, items, responses, model, sheets, palette: PALETTES.white, figView: {}, showSchematic: false, resolve: resolveReference, feedback, rtReport: rt };
 }
 
 const textOf = (html) => html.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ');

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { forEachCase, resolveReference, interpret, buildCase, ds } from './helpers/rt-cases.mjs';
 import { buildRtReport } from '../src/core/rt-report.js';
 import { buildChallenges, scoreChallenge, studyJudgement } from '../src/challenges/index.js';
-import { createStage, setReview, canSetReview, showStatement, check, setQualityChallenge, canEnableQualityChallenge, normalizeReview, qualityAnswersLocked } from '../src/app/stage.js';
+import { createStage, setReview, canSetReview, showStatement, check, setQualityChallenge, canEnableQualityChallenge, normalizeReview, qualityAnswersLocked, canCheck } from '../src/app/stage.js';
 import { parseAddress, buildSearch } from '../src/app/address.js';
 import { parseReportQuery, reportQuery, practiceHref } from '../src/report-page/query.js';
 import { emptyResponses, applyChange, answerFor } from '../src/app/collect.js';
@@ -178,7 +178,7 @@ function pageFor(input, { qualityChallenge, stage, review }) {
   let st = createStage({ qualityChallenge, review });
   if (stage >= 2) st = showStatement(st);
   const vis = visibility({ qualityChallenge, stage: st.stage });
-  const ctx = { caseData: c, interp, equation: 'GLIglobal', flags: 'lln', qualityChallenge, review, stage: st.stage, scored: false, detailsOpen: false, vis, canCheck: st.stage === 2, rt, items, responses: emptyResponses(), model: null, sheets: {}, figView: {}, resolve: resolveReference };
+  const ctx = { caseData: c, interp, equation: 'GLIglobal', flags: 'lln', qualityChallenge, review, stage: st.stage, scored: false, detailsOpen: false, vis, canCheck: canCheck(st), rt, items, responses: emptyResponses(), model: null, sheets: {}, figView: {}, resolve: resolveReference };
   return { html: renderPractice(ctx), items, rt };
 }
 
@@ -327,6 +327,9 @@ test('every action sequence of length up to 6 from both starting states keeps th
     visited++;
     if (s.qualityChallenge && s.stage === 1) assert.equal(s.disclosed, false, `disclosed while the challenge is on and nothing was released: ${trail.join(' > ')}`);
     if (s.qualityChallenge && s.stage === 1) assert.equal(qualityAnswersLocked(s), false);
+    // The gate: with the challenge on at stage 1 a scored check is available exactly in the basic review.
+    if (s.qualityChallenge && s.stage === 1) assert.equal(canCheck(s), s.review === 'basic', `gate: ${trail.join(' > ')}`);
+    if (s.qualityChallenge && s.stage === 1) assert.equal(check(s, { scored: true }) !== s, s.review === 'basic');
     if (depth === 0) return;
     for (const n of names) {
       const next = actions[n](s);
@@ -369,4 +372,84 @@ test('over the sample: whenever a post-bronchodilator set exists and a supported
     }
   });
   assert.ok(n > 0, 'the sample holds a case with a supported bronchodilator caveat');
+});
+
+// ---- the basic flow: no forced technologist-statement step, direct check, optional release ----
+
+test('basic review, challenge on: a scored check is available from stage 1 with no statement release; the advanced review is still gated', () => {
+  const basic = createStage({ qualityChallenge: true, review: 'basic' });
+  assert.equal(canCheck(basic), true);
+  const done = check(basic, { scored: true });
+  assert.deepEqual([done.stage, done.scored, done.disclosed], [3, true, true]);
+  const adv = createStage({ qualityChallenge: true, review: 'advanced' });
+  assert.equal(canCheck(adv), false);
+  assert.equal(check(adv, { scored: true }), adv);
+  // Old links (qc=1 without qd) open as basic and therefore ungated.
+  assert.equal(canCheck(createStage({ qualityChallenge: true, review: parseAddress('?c=x&qc=1').review })), true);
+});
+
+test('basic review: the release of the statement is optional, locks the study answer, and does not change what a later check needs', () => {
+  let s = createStage({ qualityChallenge: true, review: 'basic' });
+  const released = showStatement(s);
+  assert.equal(released.stage, 2);
+  assert.equal(qualityAnswersLocked(released), true);
+  assert.equal(canCheck(released), true);
+  assert.equal(check(released, { scored: true }).stage, 3);
+  // Without the release the answer is simply scored at the check; nothing was disclosed before it.
+  assert.equal(s.disclosed, false);
+  assert.equal(qualityAnswersLocked(s), false);
+});
+
+test('switching the level at stage 1 re-gates or ungates the check; after the release the level is fixed, and the button follows the case’s level', () => {
+  let s = createStage({ qualityChallenge: true, review: 'basic' });
+  s = setReview(s, 'advanced');
+  assert.equal(canCheck(s), false);
+  s = setReview(s, 'basic');
+  assert.equal(canCheck(s), true);
+  const released = showStatement(s);
+  assert.equal(setReview(released, 'advanced'), released);
+  assert.equal(canCheck(setReview(released, 'advanced')), true, 'the case keeps its level, so the gate follows the case');
+  // The sticky disclosure and the lock chain still hold on the basic flow.
+  let t = showStatement(createStage({ qualityChallenge: true, review: 'basic' }));
+  t = setQualityChallenge(t, false);
+  t = setReview(t, 'advanced');
+  t = setQualityChallenge(t, true);
+  assert.equal(t.qualityChallenge, false);
+  assert.equal(t.disclosed, true);
+});
+
+test('basic page, challenge on, stage 1: the check is enabled with no hint, the copy does not send the learner to the maneuvers, and the source holds no grade or statement text', () => {
+  const { html, rt } = pageFor(seen.limited[0], { qualityChallenge: true, stage: 1, review: 'basic' });
+  assert.doesNotMatch(html, /id="check-hint"/);
+  assert.doesNotMatch(html, /id="check-answers"[^>]*disabled/);
+  assert.doesNotMatch(html, /Judge the tests from the maneuvers/);
+  assert.match(html, /Page 2 lists the maneuvers and tests behind the study\. Showing the statement before the check locks the study-level answer\./);
+  assert.match(html, /Show the technologist’s statement and lock the study answer/);
+  assert.doesNotMatch(html, /\bfixes\b/);
+  for (const line of rt.qualityLines) assert.ok(!html.includes(line));
+  assert.doesNotMatch(html, /FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/);
+});
+
+test('advanced page, challenge on, stage 1: the maneuver instruction and the gate are unchanged', () => {
+  const { html } = pageFor(seen.limited[0], { qualityChallenge: true, stage: 1, review: 'advanced' });
+  assert.match(html, /Judge the tests from the maneuvers on page 2/);
+  assert.match(html, /id="check-answers"[^>]*disabled/);
+  assert.match(html, /id="check-hint"/);
+  assert.match(html, />Show the technologist’s statement<\/button>/);
+});
+
+test('basic stage 2 note locks only the study answer; an unanswered study item scores as unanswered at a direct check', () => {
+  const { html } = pageFor(seen.limited[0], { qualityChallenge: true, stage: 2, review: 'basic' });
+  assert.match(html, /The study-level answer is locked; the other answers remain open\./);
+  const c = buildCase(seen.limited[0], ds);
+  const rt = buildRtReport(c);
+  const interp = interpret(c.report, resolveReference, 'GLIglobal');
+  const items = buildChallenges(c, { rt, interp, review: 'basic' });
+  assert.equal(scoreChallenge(items[0], answerFor(items[0], emptyResponses())).status, 'unanswered');
+});
+
+test('the quiz states its scope', async () => {
+  const fs = await import('node:fs');
+  const html = fs.readFileSync(new URL('../quiz.html', import.meta.url), 'utf8');
+  assert.match(html, /id="quiz-scope"[^>]*>Scope: the quiz asks the FEV₁ and FVC quality grades as items of their own\./);
 });

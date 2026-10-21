@@ -74,7 +74,7 @@ function studyItem(c, rt) {
     id: 'studyInterpretable',
     stage: 1,
     title: 'Quality of the study',
-    prompt: 'Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with stated limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable.',
+    prompt: 'Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable.',
     options: [['interpretable', 'Interpretable'], ['limited', 'Interpretable with limitations'], ['insufficient', 'Insufficient to interpret']],
     key,
     why: `Each reported FEV₁ and FVC is the largest value of its own variable among the acceptable maneuvers or, when none is acceptable (grade U), among the usable ones, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The grouping is the simulator's, built on the grades and acceptability of ATS/ERS 2019 (grades A to F and U) and ATS/ERS 2017 (DLCO); neither statement sets a cut point for interpretability.`,

@@ -47,9 +47,13 @@ export function showStatement(s) {
   return s.qualityChallenge && s.stage === 1 ? { ...s, stage: 2, disclosed: true } : s;
 }
 
-/** Whether the answers may be checked with scoring now: with the quality challenge on, only after the statement was released. */
+/**
+ * Whether the answers may be checked with scoring now. With the quality challenge on, the advanced review waits for the technologist's
+ * statement, because its last item compares the statement with the maneuvers; the basic review has one study-level question and no item
+ * about the statement, so it may be checked from stage 1 and the release of the statement stays optional (it locks the study answer).
+ */
 export function canCheck(s) {
-  return s.stage !== 3 && (!s.qualityChallenge || s.stage === 2);
+  return s.stage !== 3 && (!s.qualityChallenge || s.stage === 2 || s.review === 'basic');
 }
 
 /** Check the answers (scored) or show the key without scoring. A refused scored check leaves the state unchanged. */

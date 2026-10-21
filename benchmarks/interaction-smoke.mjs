@@ -162,7 +162,7 @@ try {
     const { items } = keyFor(POOR);
     void items;
     const lines = buildRtReport(buildCase(parseDescriptor(POOR), ds)).qualityLines;
-    for (const [stage, act] of [[1, async () => {}], [2, async () => { await page.click('#show-statement'); }], [3, async () => { await page.click('#show-key'); }]]) {
+    for (const [stage, act] of [[1, async () => {}], [2, async () => { await page.locator('input[name="ch:studyInterpretable"]').first().check(); await page.click('#show-statement'); }], [3, async () => { await page.click('#show-key'); }]]) {
       await page.goto(`${base}?${POOR}&qc=1`);
       await page.waitForSelector('#answer-form');
       await act();
@@ -571,6 +571,54 @@ try {
     await page.waitForSelector('#answer-form');
     await page.selectOption('#qc', 'on');
     check(await page.locator('#show-statement').count() === 0 && !page.url().includes('qc=1'), 'Q2: a case that began with the challenge off stays without it');
+  }
+
+  // ---- Q3: the basic flow has no forced technologist-statement step ----
+  {
+    const radio = (v) => page.locator(`input[name="ch:studyInterpretable"][value="${v}"]`);
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    const note = await page.locator('#h-quality-items ~ p.muted').allInnerTexts();
+    check(!(await page.locator('#case').innerText()).includes('Judge the tests from the maneuvers'), 'Q3: the basic page does not send the learner to the maneuvers');
+    check(note.some((t) => /Page 2 lists the maneuvers and tests behind the study\. Showing the statement before the check locks the study-level answer\./.test(t)), 'Q3: the basic stage-1 note is the study-level wording');
+    check(!(await page.locator('#check-answers').isDisabled()) && await page.locator('#check-hint').count() === 0, 'Q3: the check is available at stage 1 with no hint');
+    check(await page.locator('#show-statement').innerText() === 'Show the technologist’s statement and lock the study answer', 'Q3: the optional release says that it locks the study answer');
+    // The release is refused while the study answer is empty.
+    await page.click('#show-statement');
+    check(await page.locator('#show-statement').count() === 1 && /Answer the study-level question first/.test(await page.locator('#status').innerText()), 'Q3: the release is refused, and says why, while the study answer is empty');
+    // Direct check, never releasing the statement.
+    await radio('limited').check();
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(await page.locator('#h-quality').count() === 1 && /Quality of the study/.test(await page.locator('#reveal').innerText()), 'Q3: a direct check scores the study item and shows the quality feedback');
+    // Optional release, then check.
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await radio('interpretable').check();
+    await page.click('#show-statement');
+    check(await radio('interpretable').isDisabled() && !(await page.locator('input[name=pattern]').first().isDisabled()), 'Q3: the release locks the study answer and leaves the interpretation answers open');
+    check(/The study-level answer is locked; the other answers remain open\./.test(await page.locator('#statement-note').innerText()), 'Q3: the stage-2 note says what is locked');
+    await page.locator('input[name=pattern]').first().check();
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(await page.locator('#reveal').count() === 1, 'Q3: a check after the release works');
+    // Switching the level re-gates the check; switching back ungates it.
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await page.selectOption('#qd', 'advanced');
+    check(await page.locator('#check-answers').isDisabled() && /Judge the tests from the maneuvers on page 2/.test(await page.locator('#case').innerText()), 'Q3: the advanced review keeps its maneuver instruction and its gate');
+    await page.selectOption('#qd', 'basic');
+    check(!(await page.locator('#check-answers').isDisabled()), 'Q3: switching back to basic ungates the check');
+    // Disclosure lock on the basic flow: release, challenge off, advanced, challenge on is refused.
+    await radio('limited').check();
+    await page.click('#show-statement');
+    await page.selectOption('#qc', 'off');
+    await page.selectOption('#qd', 'advanced');
+    await page.selectOption('#qc', 'on');
+    check(!page.url().includes('qc=1') && /already shown the grades and the statement/.test(await page.locator('#status').innerText()), 'Q3: the disclosure lock holds after a basic release');
+    // The quiz states its scope.
+    await page.goto(`${base}quiz.html`);
+    check(/Scope: the quiz asks the FEV₁ and FVC quality grades as items of their own/.test(await page.locator('#quiz-scope').innerText()), 'Q3: the quiz states its scope');
   }
 
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);

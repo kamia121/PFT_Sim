@@ -119,12 +119,20 @@ export function interpretationBoxHtml(ctx) {
   if (items.length) {
     parts.push(`<h3 id="h-quality-items">Test quality${statementItems.length ? ' and the technologist’s statement' : ''}</h3>`);
     parts.push(reviewNoteHtml(review, qualityChallenge));
-    if (qualityChallenge && stage === 1) parts.push('<p class="muted">The technologist’s statement is withheld. Judge the tests from the maneuvers on page 2, then ask for the statement; the answers in this section are then fixed.</p>');
+    if (qualityChallenge && stage === 1) {
+      parts.push(review === 'basic'
+        ? '<p class="muted">The technologist’s statement and the grades are withheld. Page 2 lists the maneuvers and tests behind the study. Showing the statement before the check locks the study-level answer.</p>'
+        : '<p class="muted">The technologist’s statement is withheld. Judge the tests from the maneuvers on page 2, then ask for the statement; the answers in this section are then fixed.</p>');
+    }
     if (first.length) parts.push(`<div class="answers">${first.map((i) => itemFieldsetHtml(i, responses, locked || qualityLocked)).join('')}</div>`);
     if (qualityChallenge && stage === 1) {
-      parts.push(`<div class="stage-block"><button type="button" class="secondary" id="show-statement">Show the technologist’s statement</button></div>`);
+      parts.push(`<div class="stage-block"><button type="button" class="secondary" id="show-statement">${review === 'basic' ? 'Show the technologist’s statement and lock the study answer' : 'Show the technologist’s statement'}</button></div>`);
     }
-    if (qualityChallenge && stage === 2) parts.push('<p class="note" id="statement-note" role="status" tabindex="-1">The technologist’s statement now appears in the comment box on page 1. The test quality answers above are fixed.</p>');
+    if (qualityChallenge && stage === 2) {
+      parts.push(`<p class="note" id="statement-note" role="status" tabindex="-1">${review === 'basic'
+        ? 'The technologist’s statement is in the comment box on page 1. The study-level answer is locked; the other answers remain open.'
+        : 'The technologist’s statement now appears in the comment box on page 1. The test quality answers above are fixed.'}</p>`);
+    }
     if (statementItems.length) parts.push(`<div class="answers">${statementItems.map((i) => itemFieldsetHtml(i, responses, locked)).join('')}</div>`);
   }
 
