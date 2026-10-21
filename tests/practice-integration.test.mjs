@@ -11,7 +11,7 @@ import { buildReportModel } from '../src/report/model.js';
 import { PALETTES } from '../src/ui/palettes.js';
 import { loadOptionalModules } from '../src/app/modules.js';
 import { renderPractice } from '../src/app/practice-view.js';
-import { createStage, showStatement, check } from '../src/app/stage.js';
+import { createStage, showStatement, check, canCheck } from '../src/app/stage.js';
 import { emptyResponses } from '../src/app/collect.js';
 import { buildFeedback } from '../src/app/feedback.js';
 
@@ -38,14 +38,14 @@ function ctxFor(input, qualityChallenge, stage) {
   const cmp = compareEquations(caseData.report, resolveReference, 'GLI2012', 'GLIglobal');
   const rt = mods.buildRtReport(caseData);
   const items = mods.buildChallenges(caseData, { rt, interp, qualityChallenge });
-  let st = createStage({ qualityChallenge });
+  let st = createStage({ qualityChallenge, review: 'advanced' });
   if (stage >= 2) st = showStatement(st);
   if (stage === 3) st = check(st, { scored: true });
   const vis = mods.visibility({ qualityChallenge, stage: st.stage });
   const model = buildReportModel(caseData, interp, { equation: 'GLIglobal', includeGrades: vis.showGradeColumns, resolve: resolveReference, palette: PALETTES.white });
   const responses = emptyResponses();
   const feedback = st.stage === 3 ? buildFeedback({ caseData, interp, interpOther, equation: 'GLIglobal', responses, items, scoreChallenge: mods.scoreChallenge, rt, detailsOpened: false }) : null;
-  return { rt, items, ctx: { caseData, interp, cmp, equation: 'GLIglobal', flags: 'lln', qualityChallenge, stage: st.stage, scored: st.scored, detailsOpen: true, vis, canCheck: st.stage !== 3 && (!qualityChallenge || st.stage === 2), rt, items, responses, model, sheets: { summarySheetHtml: mods.summarySheetHtml, detailsSheetHtml: mods.detailsSheetHtml }, palette: PALETTES.white, figView: {}, showSchematic: false, resolve: resolveReference, feedback } };
+  return { rt, items, ctx: { caseData, interp, cmp, equation: 'GLIglobal', flags: 'lln', qualityChallenge, review: 'advanced', stage: st.stage, scored: st.scored, detailsOpen: true, vis, canCheck: canCheck(st), rt, items, responses, model, sheets: { summarySheetHtml: mods.summarySheetHtml, detailsSheetHtml: mods.detailsSheetHtml }, palette: PALETTES.white, figView: {}, showSchematic: false, resolve: resolveReference, feedback } };
 }
 
 for (const input of CASES) {

@@ -52,5 +52,18 @@ export const PALETTES = {
     zStar: { fill: '#E4E9E7', halo: '#0A1311' },
   },
 };
+/**
+ * The palette the pages draw with: every color is a CSS variable (--fig-* in src/styles/tokens.css), so a figure on screen follows the
+ * light or dark theme without being redrawn, and prints light. Presentation attributes accept var(). Exports never use it; they name
+ * one of the palettes above.
+ */
+export const PAGE_PALETTE = {
+  id: 'page', label: 'Page theme',
+  background: 'var(--fig-bg)', grid: 'var(--fig-grid)', axis: 'var(--fig-axis)', text: 'var(--fig-text)',
+  measured: 'var(--fig-measured)', predicted: 'var(--fig-predicted)', lln: 'var(--fig-lln)', rejected: 'var(--fig-rejected)',
+  second: 'var(--fig-second)', third: 'var(--fig-third)', mark: 'var(--fig-mark)',
+  zBand: { severe: 'var(--fig-z-severe)', moderate: 'var(--fig-z-moderate)', mild: 'var(--fig-z-mild)', ok: 'var(--fig-z-ok)' }, zBandAlpha: 1,
+  zStar: { fill: 'var(--fig-star)', halo: 'var(--fig-halo)' },
+};
 export const PALETTE_IDS = Object.keys(PALETTES);
 export const FONT_STACK = "'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif";

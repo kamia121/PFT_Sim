@@ -12,14 +12,16 @@ import { buildReportModel, allTables } from '../report/model.js';
 import { renderReportHtml, reportPageHref } from '../report/html.js';
 import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadReportHtml } from '../report/export.js';
 import { interpretationFor } from '../report/statement.js';
-import { PALETTES } from '../ui/palettes.js';
+import { PALETTES, PAGE_PALETTE } from '../ui/palettes.js';
 import { loadOptionalModules } from './modules.js';
-import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, fallbackVisibility } from './stage.js';
+import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, canEnableQualityChallenge, setReview, canSetReview, fallbackVisibility } from './stage.js';
 import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
 import { renderPractice, detailsBodyHtml } from './practice-view.js';
 import { pageRulesCss } from '../report-page/pages.js';
+import { watchScrollRegions } from '../ui/scroll-regions.js';
+watchScrollRegions();
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
@@ -29,7 +31,7 @@ const state = {
   stage: createStage(), responses: emptyResponses(), detailsOpen: false, feedback: null,
   showSchematic: false, figView: {},
   modelCache: null, itemsCache: null,
-  reportModel: null, reportDark: false, reportInterp: false, printing: false,
+  reportModel: null, reportInterp: false,
   tally: { answered: 0, matched: 0, items: 0 }, fitContent: null,
 };
 
@@ -57,7 +59,7 @@ function randomCase(options) {
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = buildSearch({ query: serializeDescriptor(state.case.descriptor), mode: state.mode, equation: state.spirometryEquation, qualityChallenge: state.stage.qualityChallenge, flags: state.flags });
+    url.search = buildSearch({ query: serializeDescriptor(state.case.descriptor), mode: state.mode, equation: state.spirometryEquation, qualityChallenge: state.stage.qualityChallenge, flags: state.flags, review: state.stage.review });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -75,10 +77,10 @@ const visibilityNow = () => (state.mods.visibility ?? fallbackVisibility)({ qual
 /** Challenge items for the case under the displayed equation; recomputed only when the case, equation or challenge setting changes. */
 function itemsNow(a) {
   if (!state.mods.buildChallenges || !state.rt) return [];
-  const key = `${state.spirometryEquation}|${state.stage.qualityChallenge}`;
+  const key = `${state.spirometryEquation}|${state.stage.qualityChallenge}|${state.stage.review}`;
   if (state.itemsCache?.case === state.case && state.itemsCache.key === key) return state.itemsCache.items;
   let items = [];
-  try { items = state.mods.buildChallenges(state.case, { rt: state.rt, interp: a, qualityChallenge: state.stage.qualityChallenge }) ?? []; } catch { items = []; }
+  try { items = state.mods.buildChallenges(state.case, { rt: state.rt, interp: a, qualityChallenge: state.stage.qualityChallenge, review: state.stage.review }) ?? []; } catch { items = []; }
   state.itemsCache = { case: state.case, key, items };
   return items;
 }
@@ -114,10 +116,10 @@ function practiceContext() {
     : null;
   return {
     caseData: c, interp: a, cmp, equation: state.spirometryEquation, flags: state.flags,
-    qualityChallenge: state.stage.qualityChallenge, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
+    qualityChallenge: state.stage.qualityChallenge, review: state.stage.review, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
     vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
     model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
-    palette: PALETTES.white, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
+    palette: PAGE_PALETTE, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
   };
 }
 
@@ -154,7 +156,7 @@ function currentDetailsHtml() {
   if (!$('#panel-report').hidden) {
     const { a } = interpretations();
     const vis = visibilityNow();
-    return state.mods.detailsSheetHtml?.(state.reportModel, { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette: state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) ?? '';
+    return state.mods.detailsSheetHtml?.(state.reportModel, { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette: PAGE_PALETTE, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) ?? '';
   }
   return state.mods.detailsSheetHtml ? detailsBodyHtml(practiceContext()) : '';
 }
@@ -210,7 +212,7 @@ function renderDetailsOnly() {
   if (focus) $(focus)?.focus?.({ preventScroll: true });
 }
 
-function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = {}) {
+function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false, review = 'basic' } = {}) {
   state.case = buildCase(descriptorLike, state.datasets);
   state.mode = mode;
   state.rt = null;
@@ -218,7 +220,7 @@ function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = 
   state.figView = {};
   state.responses = emptyResponses();
   // The quality challenge needs the technologist's report; without it the page runs as with the challenge off.
-  state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt) });
+  state.stage = createStage({ qualityChallenge: qualityChallenge && Boolean(state.rt), review });
   state.detailsOpen = false;
   state.feedback = null;
   state.itemsCache = null;
@@ -234,8 +236,30 @@ function chosenQualityChallenge() {
   return v === 'on' || (v === 'varies' && randomUint32() / 4294967296 < 0.5);
 }
 
+/** The review level chosen in the toolbar; anything but advanced is basic. It carries from case to case. */
+const chosenReview = () => ($('#qd').value === 'advanced' ? 'advanced' : 'basic');
+
 function newCase() {
-  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }), { qualityChallenge: chosenQualityChallenge() });
+  loadCase(randomCase({ technique: $('#technique').value, panel: $('#panel').value, scenario: $('#scenario').value }), { qualityChallenge: chosenQualityChallenge(), review: chosenReview() });
+}
+
+/**
+ * A change of the review level. While the answers are open and nothing has been released (stage 1) it applies to the case on the page and
+ * starts a fresh attempt at the quality items: their answers are cleared, the structured answers and the impression are kept. Once the
+ * technologist's statement has been shown or the answers checked, the case keeps its level (disclosure has already happened) and the
+ * toolbar setting applies to the next case.
+ */
+function changeReview(value) {
+  if (!state.case) return;
+  const next = setReview(state.stage, value);
+  if (!canSetReview(state.stage)) { announce('The review level of this case is fixed once the statement is shown. The setting applies to the next case.'); return; }
+  if (next === state.stage) return;
+  state.stage = next;
+  state.responses = { ...state.responses, challenge: {} };
+  state.itemsCache = null;
+  setUrl();
+  render({ focus: '#qd' });
+  announce(`${next.review === 'advanced' ? 'Maneuver-level' : 'Study-level'} quality review. The quality answers were cleared.`);
 }
 
 function checkAnswers(scored) {
@@ -252,6 +276,11 @@ function checkAnswers(scored) {
 }
 
 function releaseStatement() {
+  // In the basic review the release locks the one study-level answer, so it is refused while that answer is empty.
+  if (state.stage.review === 'basic' && state.stage.qualityChallenge && !state.responses.challenge.studyInterpretable) {
+    announce('Answer the study-level question first; showing the statement locks it.');
+    return;
+  }
   const next = showStatement(state.stage);
   if (next === state.stage) return;
   state.stage = next;
@@ -266,7 +295,7 @@ function toggleDetails() {
 }
 
 /** The page settings that ride in the address of the printable report page: the quality challenge as set for the case, and the flags. */
-const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, flags: state.flags, stage: state.stage.qualityChallenge ? state.stage.stage : 1 });
+const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, review: state.stage.review, flags: state.flags, stage: state.stage.qualityChallenge ? state.stage.stage : 1 });
 
 /** Lab report view: the same case and spirometry equation as the summary and details sheets, for printing and download. Nothing from the key appears before the visibility rule releases it. */
 function renderReportView() {
@@ -276,10 +305,11 @@ function renderReportView() {
   const revealed = state.stage.stage === 3;
   const interpretation = revealed && state.reportInterp ? interpretationFor(state.case, a, cmp) : null;
   const sheets = state.mods.summarySheetHtml || state.mods.detailsSheetHtml;
-  const palette = state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white;
+  // The sheets draw with the page palette, whose colors are theme variables; the model keeps the white palette, which the downloads use.
+  const palette = PAGE_PALETTE;
   const model = buildReportModel(state.case, a, {
     equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve,
-    palette: sheets ? palette : (state.reportDark && !state.printing ? 'dark' : 'white'),
+    palette: 'white',
     interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [], interpretationParts: interpretation?.parts ?? null, interpretationSupporting: interpretation?.supporting ?? '',
   });
   state.reportModel = model;
@@ -314,12 +344,6 @@ function showTab(name) {
   else { $('#report-root').innerHTML = ''; if (state.case) render(); }
 }
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
-  $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
-}
-
 function addSheetStyles() {
   if (document.querySelector('link[data-sheets-css]')) return Promise.resolve();
   // The details sheet's own rules (running header, figure frames, pagination) are the ones the report page loads. The fit of the fixed
@@ -335,12 +359,6 @@ function addSheetStyles() {
 }
 
 async function boot() {
-  try {
-    const saved = localStorage.getItem('pft-theme');
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-  } catch { /* ignore */ }
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  $('#theme-toggle').textContent = dark ? 'Light mode' : 'Dark mode';
   $('#version').textContent = String(GENERATOR_VERSION);
   $('#method').innerHTML = R.renderMethod(GENERATOR_VERSION);
   state.datasets = await loadDatasets();
@@ -364,9 +382,10 @@ async function boot() {
   state.flags = addr.flags;
   $('#flags').value = state.flags;
   if (addr.kind) $('#qc').value = addr.qualityChallenge ? 'on' : 'off';
+  $('#qd').value = addr.review;
   try {
-    if (addr.kind === 'code') loadCase(parseDescriptor(decodeCase(addr.code)), { mode: 'code', qualityChallenge: addr.qualityChallenge });
-    else if (addr.kind === 'plain') loadCase(parseDescriptor(addr.plainQuery), { mode: 'plain', qualityChallenge: addr.qualityChallenge });
+    if (addr.kind === 'code') loadCase(parseDescriptor(decodeCase(addr.code)), { mode: 'code', qualityChallenge: addr.qualityChallenge, review: addr.review });
+    else if (addr.kind === 'plain') loadCase(parseDescriptor(addr.plainQuery), { mode: 'plain', qualityChallenge: addr.qualityChallenge, review: addr.review });
     else newCase();
   } catch (e) {
     const msg = String(e.message).replace(/[<>&"']/g, '');
@@ -381,7 +400,6 @@ async function boot() {
     else if (t.id === 'show-key') checkAnswers(false);
     else if (t.id === 'show-statement') releaseStatement();
     else if (t.id === 'toggle-details') toggleDetails();
-    else if (t.id === 'theme-toggle') setTheme(document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches) ? 'light' : 'dark');
     else if (t.id === 'copy-link') navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy case link'), 1500); }).catch(() => $('#caseCode').select());
     else if (t.dataset.tab) showTab(t.dataset.tab);
     else if (t.id === 'report-print') printReport();
@@ -401,13 +419,20 @@ async function boot() {
     const t = e.target;
     if (t.id === 'report-eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: '#report-eq' }); }
     else if (t.id === 'report-interp') { state.reportInterp = t.checked; renderReportView(); }
-    else if (t.id === 'report-dark') { state.reportDark = t.checked; renderReportView(); }
     else if (t.name === 'eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: `input[name=eq][value=${t.value}]` }); }
     else if (t.id === 'flags') { state.flags = t.value === 'none' ? 'none' : 'lln'; setUrl(); render(); }
     else if (t.id === 'qc') {
       // On and Off apply to the case on the page until its answers are checked; Varies is drawn at the next new case.
-      if (t.value !== 'varies' && state.case) { state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render(); }
+      if (t.value !== 'varies' && state.case) {
+        if (t.value === 'on' && !state.stage.qualityChallenge && !canEnableQualityChallenge(state.stage)) {
+          // The grades or the statement were already shown for this case: it continues without the challenge, and the setting applies to the next case.
+          announce('This case has already shown the grades and the statement, so it continues without the quality challenge. The setting applies to the next case.');
+          return;
+        }
+        state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render();
+      }
     }
+    else if (t.id === 'qd') changeReview(t.value);
     else if (t.id === 'schematic') { state.showSchematic = t.checked; render(); }
     else if (t.dataset?.figView) {
       const id = t.dataset.figView;
@@ -428,7 +453,5 @@ async function boot() {
 }
 
 // Figures print on white whatever the on-screen panel choice.
-window.addEventListener('beforeprint', () => { if (state.reportModel && !$('#panel-report').hidden && state.reportDark) { state.printing = true; renderReportView(); } });
-window.addEventListener('afterprint', () => { if (state.printing) { state.printing = false; renderReportView(); } });
 
 boot();

@@ -10,6 +10,7 @@ import { buildChallengeList } from './items.js';
 
 export { visibility } from './visibility.js';
 export { scoreChallenge } from './score.js';
+export { studyJudgement } from './items.js';
 
 /**
  * @typedef {object} ChallengeRow one answer row of a per-maneuver item
@@ -20,7 +21,7 @@ export { scoreChallenge } from './score.js';
 
 /**
  * @typedef {object} Challenge
- * @property {string} id one of acceptableManeuversPre, acceptableManeuversPost, gradePreFev1, gradePreFvc, gradePostFev1,
+ * @property {string} id one of studyInterpretable (basic review), acceptableManeuversPre, acceptableManeuversPost, gradePreFev1, gradePreFvc, gradePostFev1,
  *   gradePostFvc, representativeLoopOk, bdInterpretable, rtConsistent, dlcoAcceptable, plethAcceptable
  * @property {string} title
  * @property {string} prompt
@@ -46,7 +47,8 @@ export { scoreChallenge } from './score.js';
 
 /**
  * @param {object} caseData a case from buildCase
- * @param {{ rt: import('../core/rt-report.js').RtReport, interp?: object, qualityChallenge?: boolean, interpOther?: object }} context
+ * @param {{ rt: import('../core/rt-report.js').RtReport, interp?: object, qualityChallenge?: boolean, interpOther?: object, review?: 'basic'|'advanced' }} context
+ *   `review` 'basic' returns the single study-level item `studyInterpretable`; 'advanced' (the default of this function, so the earlier callers are unchanged) the per-maneuver list
  *   `interp` is the interpretation under the displayed equation (without it the bronchodilator item is omitted); `interpOther`
  *   (optional) the one under the other equation, which lets the bronchodilator item return 'other-equation'
  * @returns {Challenge[]} items for which the case holds data, in presentation order

@@ -14,22 +14,17 @@ import { loadZInline } from './panels.js';
 import { loadSheetModules } from './modules.js';
 import { fitPages, scalePages } from './fit.js';
 import { fitSheetContent } from '../sheets/summary.js';
+import { PAGE_PALETTE } from '../ui/palettes.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, stage: 1, confirmed: false };
+const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, stage: 1, review: 'basic', confirmed: false };
 
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags, stage: state.stage });
+    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags, stage: state.stage, review: state.review });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
-}
-
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
-  $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
 }
 
 /** The summary sheet brings its own stylesheet; it is linked only when that module exists. */
@@ -68,12 +63,12 @@ async function render() {
   $('#rp-qc').checked = state.qualityChallenge;
   $('#rp-stagesel').value = String(state.stage);
   $('#rp-stagesel').disabled = !state.qualityChallenge;
-  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags });
+  $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags, review: state.review });
   setUrl();
   if (state.copy === 'instructor' && !state.confirmed) { gate(); return; }
   $('#rp-print').disabled = false;
   const stage = $('#rp-stage');
-  const out = assembleReport({ caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline, flags: state.flags, qualityChallenge: state.qualityChallenge, stage: state.stage, sheets: state.sheets });
+  const out = assembleReport({ palette: PAGE_PALETTE, caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline, flags: state.flags, qualityChallenge: state.qualityChallenge, stage: state.stage, sheets: state.sheets });
   stage.innerHTML = out.html;
   document.title = out.title;
   try { await document.fonts?.ready; } catch { /* fonts are a refinement */ }
@@ -85,12 +80,6 @@ async function render() {
 }
 
 async function boot() {
-  try {
-    const saved = localStorage.getItem('pft-theme');
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-  } catch { /* ignore */ }
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  $('#theme-toggle').textContent = dark ? 'Light mode' : 'Dark mode';
   $('#version').textContent = String(GENERATOR_VERSION);
 
   try {
@@ -103,6 +92,7 @@ async function boot() {
   state.copy = state.link.copy;
   state.flags = state.link.flags;
   state.qualityChallenge = state.link.qualityChallenge;
+  state.review = state.link.review;
   state.stage = state.link.stage;
   try {
     const datasets = await loadDatasets();
@@ -122,8 +112,7 @@ async function boot() {
   document.addEventListener('click', (e) => {
     const t = e.target.closest('button');
     if (!t) return;
-    if (t.id === 'theme-toggle') setTheme(document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches) ? 'light' : 'dark');
-    else if (t.id === 'rp-print') window.print();
+    if (t.id === 'rp-print') window.print();
     else if (t.id === 'rp-show-instructor') { state.confirmed = true; render(); }
     else if (t.id === 'rp-show-student') { state.copy = 'student'; render(); }
   });

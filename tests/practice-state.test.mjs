@@ -19,8 +19,8 @@ test('stage machine, challenge off: answers can be checked at once, and checking
   assert.equal(setQualityChallenge(s, true), s, 'the setting waits for the next case once checked');
 });
 
-test('stage machine, challenge on: the statement comes before a scored check', () => {
-  let s = createStage({ qualityChallenge: true });
+test('stage machine, challenge on, advanced review: the statement comes before a scored check', () => {
+  let s = createStage({ qualityChallenge: true, review: 'advanced' });
   assert.equal(canCheck(s), false);
   assert.equal(check(s, { scored: true }), s, 'a scored check is refused at stage 1');
   assert.equal(qualityAnswersLocked(s), false);

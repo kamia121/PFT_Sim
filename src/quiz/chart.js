@@ -110,9 +110,9 @@ export function scopeIds(html, prefix) {
 
 /**
  * @param {ReturnType<import('./prepare.js').prepareCase>} prep
- * @param {{ adapters: object, index?: number, palette?: 'dark'|'white', idPrefix?: string }} opts
+ * @param {{ adapters: object, index?: number, palette?: 'page'|'dark'|'white', idPrefix?: string }} opts
  */
-export function renderChart(prep, { adapters, index = 0, palette = 'dark', idPrefix = `c${index}-` }) {
+export function renderChart(prep, { adapters, index = 0, palette = 'page', idPrefix = `c${index}-` }) {
   const c = prep.caseData, a = prep.a;
   const figs = figuresFor(adapters, c, palette);
   let spiroFigs = figureGrid(figs, SPIRO_FIGS);
