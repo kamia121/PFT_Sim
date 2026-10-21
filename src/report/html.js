@@ -72,10 +72,20 @@ export function headerHtml(model) {
 /** The reference equation note, which sits with the numbers it explains. */
 export const refNoteHtml = (model) => `<section class="rpt-note"><h2>Reference equation note</h2>${model.referenceNote.map((l) => `<p>${esc(l)}</p>`).join('')}</section>`;
 
+/**
+ * The interpretation as markup: the impression first, then one labelled line per item (src/report/concise.js); the plain text, as paragraphs, when the
+ * model carries no parts. `text` is the model's plain statement.
+ * @param {{ impression: string, lines: { label: string, text: string }[] }|null|undefined} parts @param {string} text
+ */
+export function statementHtml(parts, text) {
+  if (!parts) return paragraphs(text);
+  return `<p class="stmt-impression"><strong>Impression.</strong> ${esc(parts.impression)}</p><ul class="stmt-lines">${parts.lines.map((l) => `<li><strong>${esc(l.label)}.</strong> ${esc(l.text)}</li>`).join('')}</ul>`;
+}
+
 /** Technologist comments beside the interpretation box (blank for the reader unless the model carries a statement). */
 export function boxesHtml(model) {
   const comments = model.technologistComments.length ? `<ul>${model.technologistComments.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="rpt-none">No comments recorded.</p>';
-  const interp = model.interpretation ? paragraphs(model.interpretation) : '<p class="rpt-none">Interpretation to be entered by the reader.</p>';
+  const interp = model.interpretation ? statementHtml(model.interpretationParts, model.interpretation) : '<p class="rpt-none">Interpretation to be entered by the reader.</p>';
   // Verification notes sit apart from the interpretation, so that the statement a physician would write stays free of remarks about the simulation.
   const simNotes = model.interpretation && model.interpretationNotes?.length
     ? `<div class="rpt-simnotes"><h3>Notes on this simulation</h3><ul>${model.interpretationNotes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
@@ -94,10 +104,10 @@ export function endHtml(model) {
  * report page's own query writer. The quality challenge and the flag setting ride beside the case, so that the page opens in the
  * state in which the link was followed: with the challenge on, the grades and the acceptability that are still withheld stay withheld.
  * The link is always the student copy.
- * @param {object} model @param {{ qualityChallenge?: boolean, flags?: 'lln'|'none' }} [settings]
+ * @param {object} model @param {{ qualityChallenge?: boolean, flags?: 'lln'|'none', stage?: 1|2|3 }} [settings]
  */
-export const reportPageHref = (model, { qualityChallenge = false, flags = 'lln' } = {}) =>
-  `report.html${reportQuery({ token: model.meta.caseToken, equation: model.meta.equation, qualityChallenge, flags })}`;
+export const reportPageHref = (model, { qualityChallenge = false, flags = 'lln', stage = 1 } = {}) =>
+  `report.html${reportQuery({ token: model.meta.caseToken, equation: model.meta.equation, qualityChallenge, flags, stage })}`;
 
 /**
  * @param {object} model from buildReportModel

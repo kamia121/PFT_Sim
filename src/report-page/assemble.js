@@ -34,7 +34,7 @@ export const COPY_LABEL = { student: 'Student copy', instructor: 'Instructor cop
  * @returns {{ html: string, model: object, fullModel: object|null, title: string, pageCount: number, errors: object[], slots: object,
  *   rt: object, visibility: object, summaryFrom: 'summary'|'fallback' }}
  */
-export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy = 'student', zInline = null, palette = PALETTES.white, flags = 'lln', qualityChallenge = false, view = 'auto', sheets = {} }) {
+export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy = 'student', zInline = null, palette = PALETTES.white, flags = 'lln', qualityChallenge = false, stage = 1, view = 'auto', sheets = {} }) {
   const interp = interpret(caseData.report, resolve, equation);
   const errors = [];
   // gradesWithheld null: the model says nothing about quality, not even that it is withheld.
@@ -45,7 +45,7 @@ export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy
     try { rt = sheets.buildRtReport(caseData); } catch (e) { errors.push({ id: 'rt-report', message: String(e?.message ?? e) }); }
   }
   rt ??= fallbackRtReport(caseData, model);
-  const vis = (typeof sheets.visibility === 'function' ? sheets.visibility : localVisibility)({ qualityChallenge, stage: 1 });
+  const vis = (typeof sheets.visibility === 'function' ? sheets.visibility : localVisibility)({ qualityChallenge, stage });
 
   const cd = slotCaseData(caseData, interp, equation, resolve);
   const hasInline = typeof zInline === 'function';
@@ -67,7 +67,7 @@ export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy
   if (copy === 'instructor') {
     const cmp = compareEquations(caseData.report, resolve, 'GLI2012', 'GLIglobal');
     const statement = interpretationFor(caseData, interp, cmp);
-    fullModel = buildReportModel(caseData, interp, { equation, resolve, palette, figures: false, includeGrades: true, includeKey: true, interpretationText: statement.text, interpretationNotes: statement.notes });
+    fullModel = buildReportModel(caseData, interp, { equation, resolve, palette, figures: false, includeGrades: true, includeKey: true, interpretationText: statement.text, interpretationNotes: statement.notes, interpretationParts: statement.parts, interpretationSupporting: statement.supporting });
     const d = caseData.descriptor;
     appendix = buildAppendix(fullModel, { generatedAs: `Generated as archetype ${d.archetype}, severity ${d.severity}, technique ${d.technique}, panel ${d.panel}, seed ${d.seed}; spirometry equation ${equation}.` });
   }

@@ -145,3 +145,6 @@ body.rpt-standalone .pft-report { margin: 12px auto; }
 /* Combined panels are drawn for the full 7 in page width. */
 .pft-report .rpt-figs:has(> .rpt-fig[class*="rpt-fig-panel-"]) { grid-template-columns: 1fr; }
 .pft-report .rpt-secpair .rpt-fig[class*="rpt-fig-panel-"] svg { max-height: none; }
+.pft-report .stmt-impression { margin: 0 0 4px; font-size: 1.02em; }
+.pft-report .stmt-lines { margin: 0; padding-left: 14px; }
+.pft-report .stmt-lines li { margin: 0 0 2px; }

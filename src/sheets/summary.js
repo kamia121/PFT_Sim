@@ -26,6 +26,7 @@
  * independently of the physiology and are plausible and non-informative; recent smoking from the scenario overrides the draw.
  */
 import { tableMatrix, esc, labelHtml, round } from '../report/table.js';
+import { statementHtml } from '../report/html.js';
 import { LLN_Z, borderlineOf } from '../interpret/interpret.js';
 import { createStream } from '../core/prng.js';
 import zStrip, { TWO_SIDED } from '../ui/figures/z-strip.js';
@@ -271,7 +272,7 @@ export function interpretationSectionHtml(model) {
   if (!model?.interpretation) return '';
   const notes = model.interpretationNotes?.length ? `<div class="sheet-simnotes"><h3>Notes on this simulation</h3><ul>${model.interpretationNotes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
   const foot = model.footer;
-  return `<section class="rpt-sec dt-sec sheet-interp-full" data-section="interpretation-statement"><h2>Interpretation</h2><div class="sheet-statement">${interpParagraphs(model.interpretation)}</div>${notes}`
+  return `<section class="rpt-sec dt-sec sheet-interp-full" data-section="interpretation-statement"><h2>Interpretation</h2><div class="sheet-statement">${statementHtml(model.interpretationParts, model.interpretation)}</div>${notes}`
     + `<div class="sheet-sign"><div><span class="sheet-line"></span>${esc(foot.signatureLabel)}</div><div class="short"><span class="sheet-line"></span>${esc(foot.dateLabel)}</div></div></section>`;
 }
 

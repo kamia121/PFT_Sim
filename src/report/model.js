@@ -626,6 +626,8 @@ export function buildReportModel(caseData, interp, options = {}) {
     identity: buildIdentity(caseData),
     referenceNote: note,
     interpretation: options.interpretationText ?? null,
+    interpretationParts: options.interpretationText ? (options.interpretationParts ?? null) : null,
+    interpretationSupporting: options.interpretationText ? (options.interpretationSupporting ?? '') : '',
     interpretationNotes: options.interpretationText ? (options.interpretationNotes ?? []) : [],
     footer: {
       signatureLabel: 'Simulated interpreting physician (not signed)',

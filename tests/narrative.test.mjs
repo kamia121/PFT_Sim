@@ -158,7 +158,7 @@ test('every sentence type has at least three phrasing variants', () => {
 test('output has the contracted shape, ordered sections and a bounded final statement', () => {
   const x = makeCase(5);
   const n = composeNarrative({ caseData: x.c, interp: x.interp, cmp: x.cmp, seed: 3 });
-  assert.deepEqual(Object.keys(n).sort(), ['distractors', 'finalStatement', 'findings', 'notes', 'sections']);
+  assert.deepEqual(Object.keys(n).sort(), ['caveats', 'distractors', 'finalStatement', 'findings', 'notes', 'sections']);
   const ids = n.sections.map((s) => s.id);
   assert.deepEqual(ids, SECTION_ORDER.filter((id) => ids.includes(id)));
   assert.equal(ids[0], 'quality');

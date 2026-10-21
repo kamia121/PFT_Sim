@@ -1285,7 +1285,7 @@ export function composeNarrative({ caseData, interp, cmp = null, seed = 0, force
   const finalStatement = buildFinal(ctx, correctClaims(ctx), P);
   const findings = buildFindings(ctx);
   const distractors = buildDistractors(ctx, P).filter((d) => d.text !== finalStatement);
-  return { sections, finalStatement, findings, distractors, notes: notesFor(ctx) };
+  return { sections, finalStatement, findings, distractors, notes: notesFor(ctx), caveats: { major: ctx.caveats.major, minor: ctx.caveats.minor } };
 }
 
 // ---------------------------------------------------------------------------------------------

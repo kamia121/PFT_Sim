@@ -10,7 +10,7 @@
  * is 9 pt, tables 8.5 pt, footnotes 7.5 pt and the smallest label 7 pt (page.css).
  */
 import { esc } from '../report/table.js';
-import { headerHtml, tableHtml, refNoteHtml, endHtml, paragraphs } from '../report/html.js';
+import { headerHtml, tableHtml, refNoteHtml, endHtml, paragraphs, statementHtml } from '../report/html.js';
 import { inlineCell } from './panels.js';
 
 const byId = (model, id) => model.sections.flatMap((s) => s.tables).find((t) => t.id === id) ?? null;
@@ -101,12 +101,13 @@ export function buildAppendix(full, { generatedAs }) {
   // The student pages carry tables with the same ids, so the appendix copies take their own.
   const tables = ['maneuvers-pre', 'maneuvers-post', 'pleth'].map((id) => { const t = byId(full, id); return t ? tableHtml({ ...t, id: `apx-${t.id}` }, {}) : ''; }).join('');
   const key = byId(full, 'key');
-  const statement = full.interpretation ? paragraphs(full.interpretation) : '<p class="rpt-none">No statement was composed for this case.</p>';
+  const statement = full.interpretation ? statementHtml(full.interpretationParts, full.interpretation) : '<p class="rpt-none">No statement was composed for this case.</p>';
   const notes = full.interpretationNotes?.length ? `<ul>${full.interpretationNotes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '<p class="rpt-none">No verification notes.</p>';
   return `<header class="rp-apx-head"><h1>Instructor appendix</h1><p>Case ${esc(full.meta.caseCode)}. Grades, the interpretation statement, verification notes and the answer key. This appendix is not part of the student copy.</p><p class="rp-gen">${esc(generatedAs)}</p></header>`
     + `<section class="rpt-sec rp-apx" data-section="quality"><h2>Test quality grades</h2><div class="rp-qgrid">${quality}</div></section>`
     + `<section class="rpt-sec rp-apx" data-section="acceptability"><h2>Acceptability by maneuver and trial</h2>${tables}</section>`
-    + `<section class="rpt-sec rp-apx" data-section="statement"><h2>Interpretation statement</h2><div class="rpt-box rp-stmt">${statement}</div></section>`
+    + `<section class="rpt-sec rp-apx" data-section="statement"><h2>Interpretation summary</h2><div class="rpt-box rp-stmt">${statement}</div></section>`
+    + (full.interpretationSupporting ? `<section class="rpt-sec rp-apx" data-section="supporting"><h2>Supporting explanation</h2><div class="rpt-box rp-stmt">${paragraphs(full.interpretationSupporting)}</div></section>` : '')
     + `<section class="rpt-sec rp-apx" data-section="notes"><h2>Notes on this simulation</h2><div class="rpt-box rp-stmt">${notes}</div></section>`
     + (key ? `<section class="rpt-sec rp-apx" data-section="key"><h2>Answer key</h2>${tableHtml({ ...key, id: 'apx-key', footnote: 'Computed from the reported values under the spirometry equation named in the report.' }, {})}</section>` : '');
 }

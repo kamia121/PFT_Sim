@@ -443,7 +443,7 @@ function renderAbout() {
     <h3>Optional modules in this build</h3>
     <p>Scenarios: ${st.scenarios ? 'installed' : 'not installed; built-in intake notes and caveats are used'}. Narrative: ${st.narrative ? 'installed' : 'not installed; a rule-based final-statement generator is used'}. Figures: ${st.figures} of 6 registered${st.figures ? '; figures that return no data are skipped' : ''}.</p>
     <h3>Rules that have not been checked against their primary source</h3>
-    <p>The severity band edges (z of −2.5 and −4.0) and the 10%-of-predicted bronchodilator threshold are taken from secondary summaries of the 2022 ERS/ATS statement. The definitions of air trapping and hyperinflation, and the Cotes hemoglobin correction for DLCO, have not been compared with the statements. Feedback text states this wherever a rule is used. No validation claim is made that has not been run and recorded.</p>
+    <p>The severity band edges (z of −2.5 and −4.0), the 10%-of-predicted bronchodilator threshold and the hemoglobin and carboxyhemoglobin adjustments of the DLCO reference were compared with the 2022 ERS/ATS statement and the 2017 ERS/ATS DLCO standard. The definitions of air trapping and hyperinflation, and severity grading of a reduced DLCO and of the other patterns, have not been compared with the statements. Feedback text states this wherever a rule is used. No validation claim is made that has not been run and recorded.</p>
     </section>`;
 }
 

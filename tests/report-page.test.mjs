@@ -111,7 +111,7 @@ test('the student copy is well formed (page 1, then the flowing details), and ca
     const text = textOf(out.html);
     const interp = interpret(c.report, resolveReference, 'GLIglobal');
     const stmt = interpretationFor(c, interp, null);
-    for (const phrase of [PATTERNS[c.anchorKey.pattern], stmt.text.slice(0, 50), ...stmt.notes.map((n) => n.slice(0, 40)), 'Answer key', 'Instructor appendix', 'Interpretation statement', 'Notes on this simulation', 'Computed from the reported values']) {
+    for (const phrase of [PATTERNS[c.anchorKey.pattern], stmt.parts.impression.slice(0, 40), stmt.supporting.slice(0, 50), ...stmt.notes.map((n) => n.slice(0, 40)), 'Answer key', 'Instructor appendix', 'Interpretation summary', 'Supporting explanation', 'Notes on this simulation', 'Computed from the reported values']) {
       assert.ok(!text.includes(phrase), `student copy contains "${phrase}"`);
     }
     // Grades are the technologist's report and print with the challenge off; with it on, no grade or acceptability text is in the markup.
@@ -131,7 +131,7 @@ test('the instructor copy adds an appendix with grades, the statement, the notes
   assertBalanced(out.html);
   const text = textOf(out.html);
   const stmt = interpretationFor(c, interpret(c.report, resolveReference, 'GLIglobal'), compareEquations(c.report, resolveReference, 'GLI2012', 'GLIglobal'));
-  for (const phrase of ['Instructor appendix', 'Test quality grades', 'Interpretation statement', 'Notes on this simulation', 'Answer key', stmt.text.slice(0, 50), 'Instructor copy', PATTERNS[c.anchorKey.pattern].toLowerCase()]) assert.ok(text.includes(phrase), `instructor copy lacks "${phrase}"`);
+  for (const phrase of ['Instructor appendix', 'Test quality grades', 'Interpretation summary', 'Supporting explanation', 'Notes on this simulation', 'Answer key', stmt.parts.impression.slice(0, 40), stmt.supporting.slice(0, 50), 'Instructor copy', PATTERNS[c.anchorKey.pattern].toLowerCase()]) assert.ok(text.includes(phrase), `instructor copy lacks "${phrase}"`);
   assert.match(text, /FEV1 - [A-F]/);
   assert.match(out.html, /data-page="appendix"/);
   // The student pages are the same in both copies, apart from the label in the footer.

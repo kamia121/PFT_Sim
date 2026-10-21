@@ -89,7 +89,7 @@ function modelNow(a, vis, { palette = PALETTES.white, interpretation = null } = 
   if (state.modelCache?.case === state.case && state.modelCache.key === key) return state.modelCache.model;
   const model = buildReportModel(state.case, a, {
     equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve, palette,
-    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [],
+    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [], interpretationParts: interpretation?.parts ?? null, interpretationSupporting: interpretation?.supporting ?? '',
   });
   state.modelCache = { case: state.case, key, model };
   return model;
@@ -147,6 +147,51 @@ function focusSelector(el) {
   if (el.dataset?.figView) return `input[data-fig-view="${CSS.escape(el.dataset.figView)}"][value="${CSS.escape(el.value)}"]`;
   if (el.dataset?.figChip) return `input[data-fig-chip="${CSS.escape(el.dataset.figChip)}"][value="${CSS.escape(el.value)}"]`;
   return null;
+}
+
+/** The details sheet markup for the page now showing it (the Lab report view or page 2 of the practice page), with the current figure state. */
+function currentDetailsHtml() {
+  if (!$('#panel-report').hidden) {
+    const { a } = interpretations();
+    const vis = visibilityNow();
+    return state.mods.detailsSheetHtml?.(state.reportModel, { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette: state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) ?? '';
+  }
+  return state.mods.detailsSheetHtml ? detailsBodyHtml(practiceContext()) : '';
+}
+
+let announceTimer = 0;
+/** One short, polite announcement after a run of changes (arrowing through the radios gives one message, not three). */
+function announceLater(text) {
+  clearTimeout(announceTimer);
+  announceTimer = setTimeout(() => announce(text), 350);
+}
+
+/**
+ * Redraw one panel of the details sheet in place after a view or chip change: the figure, and the chips when the view changed. The radio or the
+ * checkbox the learner used is not replaced, so it keeps focus, its checked state and its place in the reading order of a screen reader; the answers, the scroll
+ * position and (in the Lab report) the fit of the summary sheet are not touched. Returns false when the page holds no such parts (the card view), and the caller redraws.
+ * @param {string} id panel id @param {{ chips: boolean }} o chips: the view changed, so the chip group appears, disappears or is redrawn
+ */
+function updatePanelInPlace(id, { chips }) {
+  const root = !$('#panel-report').hidden ? $('#report-root') : $('#details-slot');
+  const html = currentDetailsHtml();
+  if (!root || !html) return false;
+  const next = document.createElement('template');
+  next.innerHTML = html;
+  const oldFig = root.querySelector(`figure[data-figure-id="${CSS.escape(id)}"]`), newFig = next.content.querySelector(`figure[data-figure-id="${CSS.escape(id)}"]`);
+  const oldBox = root.querySelector(`[data-fig-controls="${CSS.escape(id)}"]`), newBox = next.content.querySelector(`[data-fig-controls="${CSS.escape(id)}"]`);
+  if (!oldFig || !newFig || !oldBox || !newBox) return false;
+  oldFig.replaceWith(newFig);
+  if (chips) {
+    oldBox.querySelector('[data-fig-chips]')?.remove();
+    const fresh = newBox.querySelector('[data-fig-chips]');
+    if (fresh) oldBox.append(fresh);
+  }
+  const shown = oldBox.querySelectorAll('input[data-fig-chip]:checked').length;
+  const view = oldBox.querySelector('input[data-fig-view]:checked')?.value;
+  const noun = id === 'panel-pleth' ? 'trial' : 'maneuver';
+  announceLater(`${id === 'panel-pleth' ? 'Plethysmography' : 'Spirometry'} panel: ${view === 'best' ? `best ${noun}` : `${shown} ${noun}${shown === 1 ? '' : 's'}, ${view === 'all' ? 'overlaid' : 'separate'}`}.`);
+  return true;
 }
 
 /**
@@ -221,7 +266,7 @@ function toggleDetails() {
 }
 
 /** The page settings that ride in the address of the printable report page: the quality challenge as set for the case, and the flags. */
-const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, flags: state.flags });
+const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, flags: state.flags, stage: state.stage.qualityChallenge ? state.stage.stage : 1 });
 
 /** Lab report view: the same case and spirometry equation as the summary and details sheets, for printing and download. Nothing from the key appears before the visibility rule releases it. */
 function renderReportView() {
@@ -235,7 +280,7 @@ function renderReportView() {
   const model = buildReportModel(state.case, a, {
     equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve,
     palette: sheets ? palette : (state.reportDark && !state.printing ? 'dark' : 'white'),
-    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [],
+    interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [], interpretationParts: interpretation?.parts ?? null, interpretationSupporting: interpretation?.supporting ?? '',
   });
   state.reportModel = model;
   if (sheets) {
@@ -367,13 +412,14 @@ async function boot() {
     else if (t.dataset?.figView) {
       const id = t.dataset.figView;
       state.figView[id] = { ...state.figView[id], view: t.value };
-      renderDetailsOnly();
+      if (!updatePanelInPlace(id, { chips: true })) renderDetailsOnly();
     } else if (t.dataset?.figChip) {
       const id = t.dataset.figChip;
       const boxes = [...document.querySelectorAll(`input[data-fig-chip="${id}"]`)];
       const selected = boxes.filter((b) => b.checked).map((b) => Number(b.value));
       state.figView[id] = { ...state.figView[id], selected: selected.length ? selected : [Number(t.value)] };
-      renderDetailsOnly();
+      if (selected.length === 0) t.checked = true; // the last chip cannot be switched off: a panel always draws something
+      if (!updatePanelInPlace(id, { chips: false })) renderDetailsOnly();
     } else if (t.closest?.('#answer-form') && t.name) {
       const checkedValues = t.type === 'checkbox' ? [...document.querySelectorAll(`#answer-form input[name="${CSS.escape(t.name)}"]:checked`)].map((x) => x.value) : [];
       state.responses = applyChange(state.responses, { name: t.name, type: t.type, value: t.value, checkedValues });

@@ -94,7 +94,9 @@ for (const [name, input] of Object.entries(CASES)) {
     assert.match(html, /Grade [A-FU] requires/);
     assert.match(html, /WHY:|Key:/);
     assert.match(html, /Compare the interpretation/);
-    assert.match(html, /Composed statement/);
+    assert.match(html, /Composed summary/);
+    assert.match(html, /class="stmt-impression"/);
+    assert.match(html, /Supporting explanation/);
   });
 }
 

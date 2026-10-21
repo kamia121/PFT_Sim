@@ -14,6 +14,7 @@ import { PRACTICE_QUESTIONS, hasData, questionLabel } from './answers.js';
 import * as R from './render.js';
 import { challengeField, challengeRowField, isMultiItem, isStatementItem } from './collect.js';
 import { interpretationFor } from '../report/statement.js';
+import { statementHtml } from '../report/html.js';
 
 export const SUMMARY_MISSING = 'Summary sheet not available in this build.';
 export const DETAILS_MISSING = 'Details sheet not available in this build.';
@@ -80,10 +81,11 @@ function comparisonHtml(ctx) {
   const { caseData, interp, cmp, responses } = ctx;
   const stmt = interpretationFor(caseData, interp, cmp);
   const mine = responses.impression.trim();
+  const support = stmt.supporting ? `<details class="supporting"><summary>Supporting explanation</summary>${paragraphs(stmt.supporting)}</details>` : '';
   const notes = stmt.notes?.length ? `<details><summary>Notes on this simulation</summary><ul class="notes">${stmt.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></details>` : '';
   return `<div class="impression-compare" aria-labelledby="h-compare"><h3 id="h-compare">Compare the interpretation</h3>
     <p class="muted">Read the composed statement against your own wording: the pattern, its severity, the bronchodilator result, the diffusing capacity, and the limits that the quality of the tests places on them.</p>
-    <div class="compare-grid"><div><h4>Your impression</h4>${mine ? paragraphs(mine) : '<p class="muted">No impression was written.</p>'}</div><div><h4>Composed statement</h4>${paragraphs(stmt.text)}${notes}</div></div>
+    <div class="compare-grid"><div><h4>Your impression</h4>${mine ? paragraphs(mine) : '<p class="muted">No impression was written.</p>'}</div><div><h4>Composed summary</h4>${statementHtml(stmt.parts, stmt.text)}${support}${notes}</div></div>
     <p class="signature"><span>Interpreting physician (simulation; unsigned)</span></p></div>`;
 }
 

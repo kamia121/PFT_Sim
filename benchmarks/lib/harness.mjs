@@ -1,7 +1,7 @@
 /**
  * Shared startup and teardown of the browser harnesses: the static server (polled until it answers, bounded, killed on every
  * exit path) and the browser (Playwright's own, or an executable named by PFT_CHROMIUM; PFT_BROWSER selects chromium, firefox or
- * webkit). PFT_ARTIFACT_DIR names a directory that keeps PDFs, screenshots and logs for a CI upload.
+ * webkit). PFT_SERVE_DIR names the directory to serve (default the working directory). PFT_ARTIFACT_DIR names a directory that keeps PDFs, screenshots and logs for a CI upload.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -13,7 +13,8 @@ export const ENGINE = process.env.PFT_BROWSER || 'chromium';
 
 /** @returns {Promise<import('node:child_process').ChildProcess>} the server, once it answers on `port` (rejects after `timeoutMs`) */
 export async function startServer(port, { timeoutMs = 10000 } = {}) {
-  const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
+  // PFT_SERVE_DIR serves a built copy (dist/) instead of the source tree, which is what CI tests and what is deployed.
+  const server = spawn(process.execPath, [path.resolve('scripts/serve.mjs')], { cwd: process.env.PFT_SERVE_DIR ? path.resolve(process.env.PFT_SERVE_DIR) : process.cwd(), env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
   const stop = () => { try { server.kill(); } catch { /* already gone */ } };
   process.once('exit', stop);
   for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => { stop(); process.exit(130); });

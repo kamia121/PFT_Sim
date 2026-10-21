@@ -24,10 +24,20 @@ export function figureView(id, n, figView = {}, fallback = 'best') {
   return { view: VIEW_LABELS.some(([k]) => k === v.view) ? v.view : fallback, selected: (v.selected ?? Array.from({ length: n }, (_, i) => i + 1)).filter((k) => k >= 1 && k <= n) };
 }
 
-/** View switch and numbered chips for a panel with several maneuvers or trials. */
-export function viewControls(id, n, view) {
-  const radios = VIEW_LABELS.map(([v, l]) => `<label><input type="radio" name="fv-${id}" data-fig-view="${id}" value="${v}" ${view.view === v ? 'checked' : ''}> ${l}</label>`).join(' ');
+/** The numbered chips of a panel: real checkboxes in a labelled group of their own, absent in the best view. Redrawn on their own when the view changes. */
+export function chipsHtml(id, n, view) {
+  if (view.view === 'best') return '';
   const noun = id === 'panel-pleth' ? 'trial' : 'maneuver';
-  const chips = view.view === 'best' ? '' : Array.from({ length: n }, (_, i) => `<label class="chip"><input type="checkbox" data-fig-chip="${id}" value="${i + 1}" ${view.selected.includes(i + 1) ? 'checked' : ''}><span class="visually-hidden">${noun} </span>${i + 1}</label>`).join('');
-  return `<div class="fig-view no-print" role="group" aria-label="Show ${noun}s as"><span class="muted">${noun === 'trial' ? 'Panting trials' : 'Maneuvers'}:</span> ${radios}${chips ? `<span class="chips">${chips}</span>` : ''}</div>`;
+  const chips = Array.from({ length: n }, (_, i) => `<label class="chip"><input type="checkbox" data-fig-chip="${id}" value="${i + 1}" ${view.selected.includes(i + 1) ? 'checked' : ''}><span class="visually-hidden">${noun} </span>${i + 1}</label>`).join('');
+  return `<fieldset class="chips" data-fig-chips="${id}"><legend class="muted">${noun === 'trial' ? 'Trials' : 'Maneuvers'} drawn</legend>${chips}</fieldset>`;
+}
+
+/**
+ * View switch and numbered chips for a panel with several maneuvers or trials. The radios and the chips are separate labelled groups, so that
+ * the page can redraw the figure (and the chips) in place and leave the radio the learner is using untouched.
+ */
+export function viewControls(id, n, view) {
+  const noun = id === 'panel-pleth' ? 'trial' : 'maneuver';
+  const radios = VIEW_LABELS.map(([v, l]) => `<label><input type="radio" name="fv-${id}" data-fig-view="${id}" value="${v}" ${view.view === v ? 'checked' : ''}> ${l}</label>`).join(' ');
+  return `<div class="fig-view no-print" data-fig-controls="${id}"><fieldset class="fv-radios"><legend class="muted">${noun === 'trial' ? 'Panting trials' : 'Maneuvers'} shown as</legend>${radios}</fieldset>${chipsHtml(id, n, view)}</div>`;
 }

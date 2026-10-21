@@ -73,6 +73,8 @@ figure svg{max-width:100%;height:auto;display:block}
 
 /* Figure view controls: best, overlay or separate maneuvers, with numbered chips. */
 .fig-view{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:4px 0 8px;font-size:.92rem}
+.fig-view fieldset{border:0;margin:0;padding:0;min-width:0;display:inline-flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.fig-view legend{float:left;padding:0;margin-right:8px}
 .fig-view .chips{display:inline-flex;gap:6px;flex-wrap:wrap}
 .fig-view .chip{display:inline-flex;align-items:center;gap:4px;padding:1px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);cursor:pointer}
 .fig-view .chip:has(input:checked){border-color:var(--link);color:var(--link)}
@@ -114,3 +116,7 @@ fieldset.inline.eq-select legend{padding:0;margin-right:8px;float:left}
 .result-row .why{margin-top:2px;font-size:.93rem}
 .details-line{border-left:3px solid var(--accent-bar);padding-left:12px}
 @media (max-width:640px){.interp-box{padding:10px 12px}.signature span{min-width:0;display:block}}
+.impression-compare .stmt-impression{margin:.2rem 0 .5rem;font-size:1.02em}
+.impression-compare .stmt-lines{margin:0 0 .5rem;padding-left:1.1rem}
+.impression-compare .stmt-lines li{margin:0 0 .25rem}
+.impression-compare details.supporting{margin:.4rem 0}

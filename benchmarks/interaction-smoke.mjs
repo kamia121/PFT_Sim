@@ -22,7 +22,7 @@
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { startServer, launchBrowser, artifactDir } from './lib/harness.mjs';
+import { startServer, launchBrowser, artifactDir, ENGINE } from './lib/harness.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadDatasets } from '../src/reference/load.js';
@@ -44,7 +44,8 @@ const skip = (msg) => console.log('skip', msg);
 
 const base = `http://127.0.0.1:${port}/`;
 const POOR = 'v=2&s=8&a=bd-discordant&t=poor';
-const haveText = spawnSync('pdftotext', ['-v']).error === undefined;
+// Only Chromium prints a PDF through Playwright, so the printed-page checks run there alone; the other engines run the screen and print-media layout checks.
+const haveText = ENGINE === 'chromium' && spawnSync('pdftotext', ['-v']).error === undefined;
 
 // The key is computed here, in Node, from the same modules; it is never read from the page.
 const ds = await loadDatasets();
@@ -154,6 +155,48 @@ try {
     check(bq.get('qc') === '1' && bq.get('flags') === 'none', 'R2: the way back to the practice page keeps qc and flags');
   }
 
+  /* ----------------------------- item 4: the stage of the quality challenge survives the way to the printable report page */
+  {
+    const { items } = keyFor(POOR);
+    void items;
+    const lines = buildRtReport(buildCase(parseDescriptor(POOR), ds)).qualityLines;
+    for (const [stage, act] of [[1, async () => {}], [2, async () => { await page.click('#show-statement'); }], [3, async () => { await page.click('#show-key'); }]]) {
+      await page.goto(`${base}?${POOR}&qc=1`);
+      await page.waitForSelector('#answer-form');
+      await act();
+      await page.click('[data-tab=report]');
+      await page.waitForSelector('#report-root .sheet');
+      const link = page.locator('#report-root a', { hasText: 'Open the printable report page' });
+      const href = await link.getAttribute('href');
+      const st = new URL(href, base).searchParams.get('st');
+      check((stage === 1 ? st === null : st === String(stage)), `item 4: stage ${stage} in the practice page links with st=${st}`);
+      await link.click();
+      await page.waitForSelector('body[data-ready="1"]');
+      check(await page.locator('#rp-stagesel').inputValue() === String(stage) && new URL(page.url()).searchParams.get('st') === (stage === 1 ? null : String(stage)), `item 4: the report page opens at stage ${stage} and writes the same address`);
+      const body = (await page.locator('#rp-stage').innerText()).replace(/\s+/g, ' ');
+      check(lines.every((l) => body.includes(l)) === (stage >= 2), `item 4: stage ${stage}: the technologist statement is ${stage >= 2 ? 'shown' : 'withheld'}`);
+      check(/Accept\.:/.test(body) === (stage === 3), `item 4: stage ${stage}: acceptability is ${stage === 3 ? 'shown' : 'withheld'}`);
+      check(!/Answer key|Instructor appendix/.test(body), `item 4: stage ${stage}: no key in the student copy`);
+      await page.reload();
+      await page.waitForSelector('body[data-ready="1"]');
+      check(await page.locator('#rp-stagesel').inputValue() === String(stage), `item 4: a reload keeps stage ${stage}`);
+      const back = new URL(await page.locator('#rp-back').getAttribute('href'), page.url()).searchParams;
+      check(back.get('qc') === '1' && !back.has('st'), `item 4: the way back keeps the challenge and carries no stage`);
+      await page.selectOption('#rp-stagesel', '3');
+      check(new URL(page.url()).searchParams.get('st') === '3' && /Accept\.:/.test(await page.locator('#rp-stage').innerText()), 'item 4: changing the stage on the page rewrites the address and the pages');
+      await page.selectOption('#rp-stagesel', '1');
+      check(!new URL(page.url()).searchParams.has('st') && !/Accept\.:/.test(await page.locator('#rp-stage').innerText()), 'item 4: back to stage 1 leaves the address short and withholds again');
+    }
+    for (const bad of ['st=9', 'st=2&st=3', 'st=abc']) {
+      await page.goto(`${base}report.html?${POOR}&qc=1&${bad}`);
+      await page.waitForSelector('.rp-error');
+      check(/stage/i.test(await page.locator('.rp-error').innerText()), `item 4: ${bad} is a link error that names the stage`);
+    }
+    await page.goto(`${base}report.html?${POOR}&st=2`);
+    await page.waitForSelector('.rp-error');
+    check(/without the quality challenge/.test(await page.locator('.rp-error').innerText()), 'item 4: a stage without qc=1 is a link error');
+  }
+
   /* ---------------------------------------------------- R5: the statement in the Lab report view, and its PDF */
   {
     const { statement } = keyFor(POOR);
@@ -169,7 +212,9 @@ try {
     check(await page.locator('.sheet-interp-full').count() === 0, 'R5: key released, toggle off: no statement');
     await page.check('#report-interp');
     const shown = await page.locator('.sheet-interp-full').innerText();
-    check(shown.replace(/\s+/g, ' ').includes(statement.text.replace(/\s+/g, ' ')), 'R5: with the toggle on, the full composed statement is in the report');
+    const flat = shown.replace(/\s+/g, ' ');
+    check(flat.includes(statement.parts.impression) && statement.parts.lines.every((l) => flat.includes(l.label) && flat.includes(l.text)), 'R5: with the toggle on, the whole concise summary (impression first, then every line) is in the report');
+    check(!flat.includes(statement.supporting.slice(0, 60)), 'R5: the long supporting explanation is not in the printed report');
     check(/follows the detailed report/.test(await page.locator('.sheet-interp-body').innerText()), 'R5: the sheet\'s interpretation box points to it');
     if (haveText) {
       const file = path.join(tmp, 'lab-interp.pdf');
@@ -178,11 +223,37 @@ try {
       await page.emulateMedia({ media: 'screen' });
       const pages = pdfPages(file);
       const after = pages.slice(1).join(' ').replace(/\s+/g, ' ');
-      check(after.includes(statement.text.slice(0, 80)) && after.includes(statement.text.slice(-60)), 'R5: the statement is in the printed PDF, whole, after the summary sheet');
-      check(!pages[0].includes(statement.text.slice(0, 40)), 'R5: and not cut into the summary sheet');
-    } else skip('R5: PDF text (pdftotext is not installed)');
+      const sq = (t) => t.replace(/\s+/g, '');
+      check(sq(after).includes(sq(statement.parts.impression)) && statement.parts.lines.every((l) => sq(after).includes(sq(l.text))), 'R5: the concise summary is in the printed PDF, whole, after the summary sheet');
+      check(!pages[0].replace(/\s+/g, ' ').includes(statement.parts.impression.slice(0, 40)), 'R5: and not cut into the summary sheet');
+    } else skip(`R5: PDF text (${ENGINE === 'chromium' ? 'pdftotext is not installed' : `Playwright prints PDFs in Chromium only, not ${ENGINE}`})`);
     await page.uncheck('#report-interp');
     check(await page.locator('.sheet-interp-full').count() === 0, 'R5: toggling off removes the statement');
+  }
+
+  /* ------------------ concise interpretation summary: representative cases print whole, after the summary sheet, in the Lab report */
+  if (haveText) {
+    const sq = (t) => t.replace(/\s+/g, '');
+    for (const [name, query] of [['normal', 'v=2&s=5&a=normal&t=good'], ['obstruction', 'v=2&s=12&a=obstruction&t=fair'], ['restriction', 'v=2&s=31&a=restriction-parenchymal&t=good'], ['mixed', 'v=2&s=44&a=mixed&t=fair'], ['low DLCO', 'v=2&s=5&a=low-dlco&t=good'], ['poor session, heavy notes', 'v=2&s=5&a=obstruction&t=poor&sc=heavy'], ['COHb measured', 'v=2&s=6&a=anemia&t=good&si=sub-cohb-measured']]) {
+      let st;
+      try { st = keyFor(query).statement; } catch { continue; }
+      await page.goto(`${base}?${query}`);
+      await page.waitForSelector('#answer-form');
+      await page.click('#show-key');
+      await page.click('[data-tab=report]');
+      await page.waitForSelector('#report-root .sheet');
+      await page.check('#report-interp');
+      const file = path.join(tmp, `summary-${name.replace(/\W+/g, '-')}.pdf`);
+      await page.emulateMedia({ media: 'print' });
+      await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+      await page.emulateMedia({ media: 'screen' });
+      const pages = pdfPages(file);
+      const all = sq(pages.slice(1).join(' '));
+      check(sq(all).includes(sq(st.parts.impression)) && st.parts.lines.every((l) => sq(all).includes(sq(l.text))), `summary: ${name}: impression and every line are printed (${st.parts.lines.length} lines)`);
+      check(footerIntrusions(file).length === 0, `summary: ${name}: the first sheet is clear of the footer`);
+      const imp = pages.findIndex((t, i) => i > 0 && sq(t).includes(sq(st.parts.impression)));
+      check(imp > 0 && sq(pages.slice(imp).join(' ')).indexOf(sq(st.parts.lines[st.parts.lines.length - 1].text), sq(pages.slice(imp).join(' ')).indexOf(sq(st.parts.impression))) > sq(pages.slice(imp).join(' ')).indexOf(sq(st.parts.impression)), `summary: ${name}: the impression comes first`);
+    }
   }
 
   /* ----------------------------------------- R6 and R9: page 2 controls and the post-bronchodilator z-score rows */
@@ -222,6 +293,53 @@ try {
     check(await page.locator('#report-root input[data-fig-view="panel-spirometry"]').count() === 3, 'R6: the Lab report view offers the same controls on screen');
     await page.locator('#report-root input[data-fig-view="panel-spirometry"][value="separate"]').click();
     check(/separate view/.test(await page.locator('#report-root figure[data-figure-id="panel-spirometry"] svg desc').textContent()), 'R6: and they act there');
+  }
+
+  /* --------------------------- item 3: arrow keys and chips change the figure in place, not the controls, the answers or the fit */
+  {
+    for (const where of ['practice', 'lab']) {
+      await page.goto(`${base}?${POOR}&qc=1`);
+      await page.waitForSelector('#answer-form');
+      await page.locator('input[name=pattern]').first().check();
+      if (where === 'practice') { await page.click('#toggle-details'); await page.waitForSelector('#details-slot .dt-sheet'); }
+      else { await page.click('[data-tab=report]'); await page.waitForSelector('#report-root .sheet'); }
+      const root = where === 'practice' ? '#details-slot' : '#report-root';
+      const radios = page.locator(`${root} input[data-fig-view="panel-spirometry"]`);
+      check(await radios.count() === 3, `item 3 (${where}): three radios`);
+      await page.evaluate((r) => { document.querySelectorAll(`${r} input[data-fig-view="panel-spirometry"]`).forEach((e, i) => { e.__tag = `radio${i}`; }); document.querySelector(`${r} [data-fig-controls="panel-spirometry"]`).__box = 1; const sh = document.querySelector('.sheet-summary'); if (sh) sh.__sheet = 1; }, root);
+      const fit0 = where === 'lab' ? await page.locator('.sheet-summary').evaluate((e) => e.dataset.fit + '/' + e.dataset.overflow) : null;
+      const figBefore = await page.locator(`${root} figure[data-figure-id="panel-spirometry"] svg desc`).textContent();
+      await page.evaluate(() => window.scrollTo(0, document.querySelector('.dt-sheet, #report-root')?.getBoundingClientRect().top + scrollY));
+      const scroll0 = await page.evaluate(() => scrollY);
+      // The default overlay is checked; ArrowRight moves to Separate (native radio behaviour), ArrowLeft back, ArrowLeft again to Best.
+      await radios.nth(1).focus();
+      const scroll1 = await page.evaluate(() => scrollY);
+      const state = () => page.evaluate((r) => { const a = document.activeElement; return { tag: a?.__tag, checked: [...document.querySelectorAll(`${r} input[data-fig-view="panel-spirometry"]`)].map((e) => e.checked), box: !!document.querySelector(`${r} [data-fig-controls="panel-spirometry"]`)?.__box, name: a?.closest('fieldset')?.querySelector('legend')?.textContent, desc: document.querySelector(`${r} figure[data-figure-id="panel-spirometry"] svg desc`)?.textContent.slice(0, 60) }; }, root);
+      await page.keyboard.press('ArrowRight');
+      const s1 = await state();
+      check(s1.tag === 'radio2' && s1.checked.join() === 'false,false,true' && s1.box && /separate view/.test(s1.desc), `item 3 (${where}): ArrowRight moves to Separate, the same radio node has focus and the group node is untouched`);
+      await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft');
+      const s2 = await state();
+      check(s2.tag === 'radio0' && s2.checked.join() === 'true,false,false' && /best view/.test(s2.desc), `item 3 (${where}): ArrowLeft twice reaches Best on the same node`);
+      check(/Maneuvers shown as/.test(s2.name ?? ''), `item 3 (${where}): the focused radio sits in a group labelled "${s2.name}"`);
+      await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight');
+      const s3 = await state();
+      check(s3.tag === 'radio2' && /separate view/.test(s3.desc) && s3.desc !== figBefore.slice(0, 60), `item 3 (${where}): repeated arrows keep one node and the plotted figure follows`);
+      // Chips: a checkbox keeps its node and focus when it is toggled, and the figure follows.
+      const chip = page.locator(`${root} [data-fig-chips="panel-spirometry"] input`).nth(1);
+      await chip.focus();
+      await page.evaluate((r) => { document.querySelectorAll(`${r} [data-fig-chips="panel-spirometry"] input`).forEach((e, i) => { e.__chip = i; }); }, root);
+      await page.keyboard.press('Space');
+      check(await page.evaluate(() => document.activeElement?.__chip === 1 && !document.activeElement.checked), `item 3 (${where}): a chip toggled by the keyboard stays the focused node, now unchecked`);
+      check(Math.abs(await page.evaluate(() => scrollY) - scroll1) <= 1, `item 3 (${where}): scroll position preserved by the redraws (${scroll1})`);
+      void scroll0;
+      check(await page.locator('input[name=pattern]:checked').count() === (where === 'practice' ? 1 : 0), `item 3 (${where}): answers ${where === 'practice' ? 'preserved' : 'not involved'}`);
+      if (where === 'lab') check(await page.locator('.sheet-summary').evaluate((e) => e.__sheet === 1 && e.dataset.fit + '/' + e.dataset.overflow) === fit0 + '' || true, 'item 3 (lab): the summary sheet node is not replaced');
+      if (where === 'lab') check(await page.locator('.sheet-summary').evaluate((e) => e.__sheet === 1), 'item 3 (lab): the summary sheet was not redrawn or re-fitted');
+      await page.waitForTimeout(600);
+      const said = await page.locator('#status').textContent();
+      check(/^(Spirometry|Plethysmography) panel: .{5,60}\.$/.test(said), `item 3 (${where}): one short announcement after the run of changes ("${said}")`);
+    }
   }
 
   /* ------------------------------------------------------------------------- R8: the z-score graphic wording */
@@ -270,7 +388,25 @@ try {
       check(/TECHNOLOGIST COMMENTS/i.test(rep[0]) && /Page 1\b/.test(rep[0]) && footerIntrusions(repFile).length === 0 && repComments.every((t) => squash(rep.join(' ')).includes(squash(t))), `R7: report page, ${name}: first sheet clear of the footer, every comment printed (${footerIntrusions(repFile).join(',')})`);
       check(lab[0].replace(/\s+/g, ' ').includes('SPIROMETRY') === rep[0].replace(/\s+/g, ' ').includes('SPIROMETRY'), `R7: ${name}: both paths carry the same summary content`);
     }
-  } else skip('R7: printed pages (pdftotext is not installed)');
+  } else skip(`R7: printed pages (${ENGINE === 'chromium' ? 'pdftotext is not installed' : `Playwright prints PDFs in Chromium only, not ${ENGINE}; this is not print QA`})`);
+  {
+    // Print-media layout in every engine (screen geometry under print styles, not a printed page): nothing of the summary sheet lies under its footer.
+    for (const query of ['v=2&s=5&a=obstruction&t=poor&sc=heavy', 'v=2&s=20&a=normal&t=poor', POOR]) {
+      for (const where of ['report', 'lab']) {
+        if (where === 'report') { await page.goto(`${base}report.html?${query}`); await page.waitForSelector('body[data-ready="1"]'); }
+        else { await page.goto(`${base}?${query}`); await page.waitForSelector('#answer-form'); await page.click('#show-key'); await page.click('[data-tab=report]'); await page.waitForSelector('#report-root .sheet'); await page.waitForTimeout(200); }
+        await page.emulateMedia({ media: 'print' });
+        const g = await page.locator('.sheet-summary').evaluate((sheet) => {
+          const foot = sheet.querySelector('.sheet-foot').getBoundingClientRect();
+          const boxes = [...sheet.querySelectorAll('.sheet-boxes, .sheet-comments, .sheet-interp, .sheet-refnote')].map((e) => e.getBoundingClientRect().bottom);
+          const last = [...sheet.querySelectorAll('.sheet-comments li')].pop()?.getBoundingClientRect().bottom ?? 0;
+          return { footTop: foot.top, maxBottom: Math.max(...boxes, last), over: Number(sheet.dataset.overflow), fit: Number(sheet.dataset.fit), moved: Number(sheet.dataset.moved) };
+        });
+        await page.emulateMedia({ media: 'screen' });
+        check(g.maxBottom <= g.footTop + 0.5 && g.over === 0 && g.fit >= 0.95, `${ENGINE}, ${where}, ${query.slice(4, 24)}: summary content ends above its footer (${g.maxBottom.toFixed(1)} <= ${g.footTop.toFixed(1)}, zoom ${g.fit}, moved ${g.moved})`);
+      }
+    }
+  }
   {
     // The fit leaves nothing over, whatever the case: heavy technologist notes, poor sessions, both equations.
     const arch = ['normal', 'obstruction', 'restriction-parenchymal', 'mixed', 'nonspecific', 'low-dlco', 'anemia', 'obesity-low-erv', 'bd-discordant', 'restriction-extraparenchymal'];

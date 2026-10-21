@@ -164,3 +164,8 @@
 @media print {
   .sheet-continuation { page: cont; break-before: page; break-after: page; border: 0; margin: 0; padding: 0; max-width: none; }
 }
+
+/* Concise interpretation summary (src/report/concise.js, statementHtml): the impression, then labelled lines. */
+.sheet-interp-full .stmt-impression { margin: 0 0 6px; font-size: 10.5pt; line-height: 1.3; }
+.sheet-interp-full .stmt-lines { margin: 0; padding-left: 16px; font-size: 9.5pt; line-height: 1.3; }
+.sheet-interp-full .stmt-lines li { margin: 0 0 3px; }

@@ -7,6 +7,7 @@
 import { PATTERNS } from '../interpret/interpret.js';
 import { composeNarrative } from '../interpret/narrative.js';
 import { MEASURES, hbKnown } from '../app/format.js';
+import { conciseSummary, conciseText } from './concise.js';
 
 /**
  * @param {object} caseData result of buildCase
@@ -19,15 +20,20 @@ export function statementFor(caseData, interp, cmp = null) {
 }
 
 /**
- * The interpretation text and the notes on the simulation that belong under it.
- * @returns {{ text: string, notes: string[] }}
+ * The interpretation for the report: a concise summary (impression first, then labelled lines), the notes on the simulation that belong under it,
+ * and the longer supporting explanation of the teaching narrative, kept apart.
+ * @returns {{ text: string, notes: string[], parts: { impression: string, lines: { label: string, text: string }[] }|null, supporting: string }}
+ *   `text` is the concise summary as plain text (the impression, then one line per item); `supporting` the narrative statement ('' when there is none).
  */
 export function interpretationFor(caseData, interp, cmp = null) {
   try {
     const narrative = composeNarrative({ caseData, interp, cmp, seed: caseData.descriptor?.seed ?? 0 });
-    if (narrative?.finalStatement) return { text: narrative.finalStatement, notes: narrative.notes ?? [] };
+    if (narrative?.finalStatement) {
+      const parts = conciseSummary({ caseData, interp, cmp, caveats: narrative.caveats });
+      return { text: conciseText(parts), notes: narrative.notes ?? [], parts, supporting: narrative.finalStatement };
+    }
   } catch { /* fall through to the key-based statement */ }
-  return { text: keyStatement(caseData, interp, cmp), notes: [] };
+  return { text: keyStatement(caseData, interp, cmp), notes: [], parts: null, supporting: '' };
 }
 
 function keyStatement(caseData, interp, cmp) {

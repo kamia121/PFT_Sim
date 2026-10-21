@@ -71,7 +71,7 @@ function explainBd(item, prep) {
   const rows = `<tr><th scope="row" class="l">2022 rule: change above 10% of predicted</th><td class="l">${b.rule2022.significant ? 'significant' : 'not significant'}</td></tr><tr><th scope="row" class="l">Earlier rule: at least 12% of baseline and 200 mL</th><td class="l">${b.rule2005.significant ? 'significant' : 'not significant'}</td></tr>`;
   const extra = c.groundTruth.bdVariant === 'volume' ? paras([BD_TEXT.volume]) : c.groundTruth.bdVariant === 'artifact' ? paras([bdArtifactText(b)]) : '';
   return `<p>${esc(BD_TEXT.rules)}</p><div class="scroll"><table class="data"><caption>Bronchodilator response under both rules</caption><tbody>${rows}</tbody></table></div>${extra}
-    <p>The 10%-of-predicted threshold comes from secondary summaries of the 2022 statement, and whether the boundary is inclusive has not been checked against it.${prep.cmp.bronchodilatorChanged ? ' Because the 2022 rule uses the predicted value, the result also changes with the spirometry equation.' : ''}</p>`;
+    <p>The 2022 statement calls a change above 10% of the predicted value significant, a strict comparison as printed.${prep.cmp.bronchodilatorChanged ? ' Because the 2022 rule uses the predicted value, the result also changes with the spirometry equation.' : ''}</p>`;
 }
 
 function explainDlco(item, prep) {

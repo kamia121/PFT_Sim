@@ -16,12 +16,12 @@ import { fitPages, scalePages } from './fit.js';
 import { fitSheetContent } from '../sheets/summary.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, confirmed: false };
+const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, stage: 1, confirmed: false };
 
 function setUrl() {
   try {
     const url = new URL(location.href);
-    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags });
+    url.search = reportQuery({ token: state.link.token, equation: state.equation, copy: state.copy, qualityChallenge: state.qualityChallenge, flags: state.flags, stage: state.stage });
     history.replaceState(null, '', url);
   } catch { /* the address bar is a convenience */ }
 }
@@ -66,12 +66,14 @@ async function render() {
   $('#rp-copy').value = state.copy;
   $('#rp-flags').value = state.flags;
   $('#rp-qc').checked = state.qualityChallenge;
+  $('#rp-stagesel').value = String(state.stage);
+  $('#rp-stagesel').disabled = !state.qualityChallenge;
   $('#rp-back').href = practiceHref({ token: state.link.token, equation: state.equation, qualityChallenge: state.qualityChallenge, flags: state.flags });
   setUrl();
   if (state.copy === 'instructor' && !state.confirmed) { gate(); return; }
   $('#rp-print').disabled = false;
   const stage = $('#rp-stage');
-  const out = assembleReport({ caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline, flags: state.flags, qualityChallenge: state.qualityChallenge, sheets: state.sheets });
+  const out = assembleReport({ caseData: state.caseData, resolve: state.resolve, equation: state.equation, copy: state.copy, zInline: state.zInline, flags: state.flags, qualityChallenge: state.qualityChallenge, stage: state.stage, sheets: state.sheets });
   stage.innerHTML = out.html;
   document.title = out.title;
   try { await document.fonts?.ready; } catch { /* fonts are a refinement */ }
@@ -101,6 +103,7 @@ async function boot() {
   state.copy = state.link.copy;
   state.flags = state.link.flags;
   state.qualityChallenge = state.link.qualityChallenge;
+  state.stage = state.link.stage;
   try {
     const datasets = await loadDatasets();
     state.resolve = createReference(datasets).resolveReference;
@@ -128,7 +131,8 @@ async function boot() {
     if (e.target.id === 'rp-eq') { state.equation = e.target.value; render(); }
     else if (e.target.id === 'rp-copy') { state.copy = e.target.value; render(); }
     else if (e.target.id === 'rp-flags') { state.flags = e.target.value; render(); }
-    else if (e.target.id === 'rp-qc') { state.qualityChallenge = e.target.checked; render(); }
+    else if (e.target.id === 'rp-qc') { state.qualityChallenge = e.target.checked; if (!state.qualityChallenge) state.stage = 1; render(); }
+    else if (e.target.id === 'rp-stagesel') { state.stage = Number(e.target.value); render(); }
     else if (e.target.id === 'rp-confirm') $('#rp-show-instructor').disabled = !e.target.checked;
   });
   let pending = 0;

@@ -1,0 +1,59 @@
+name: Browser checks
+# Reusable: called by check.yml (every push and pull request) and by pages.yml (before a deployment). The built site (dist/) is served and driven
+# by the harnesses in benchmarks/ in Playwright's Chromium, Firefox and WebKit, at the version pinned in package-lock.json.
+# Playwright prints PDFs in Chromium only, so the printed-page checks run in the Chromium job alone; the Firefox and WebKit jobs run the screen and
+# print-media layout checks, which is not print QA and says nothing about Safari on macOS.
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    env:
+      PFT_BROWSER: ${{ matrix.engine }}
+      PFT_SERVE_DIR: dist
+      PFT_ARTIFACT_DIR: ${{ github.workspace }}/browser-artifacts/${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ steps.pw.outputs.version }}-${{ matrix.engine }}-ubuntu-24.04
+      - name: Install the browser and its system libraries
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Install poppler (printed-page text, Chromium job)
+        if: matrix.engine == 'chromium'
+        run: sudo apt-get install -y --no-install-recommends poppler-utils
+      - run: npm run build
+      - name: Interaction harness
+        run: timeout 600 node benchmarks/interaction-smoke.mjs
+      - name: Practice page harness
+        run: timeout 300 node benchmarks/ui-smoke.mjs
+      - name: Report page harness
+        run: timeout 300 node benchmarks/report-smoke.mjs
+      - name: Quiz harness
+        run: timeout 300 node benchmarks/quiz-smoke.mjs
+      - name: Keep what the run produced when it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-artifacts-${{ matrix.engine }}
+          path: browser-artifacts/${{ matrix.engine }}
+          retention-days: 7
+          if-no-files-found: ignore

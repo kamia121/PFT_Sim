@@ -66,7 +66,7 @@ try {
   check((await page.locator('#toggle-details').getAttribute('aria-expanded')) === 'true' && (await page.locator('#details-slot').isVisible()), 'page 2 opens from the keyboard');
   check(await page.evaluate(() => document.activeElement?.id === 'toggle-details'), 'focus stays on the page 2 control after it opens');
   const nSvg = await page.locator('#details-slot svg').count();
-  check(nSvg >= 3, `page 2 holds the figures (${nSvg} drawings)`);
+  check(nSvg >= 2, `page 2 holds the figures (${nSvg} drawings; a spirometry-only case has the panel and the z-score graphic)`);
   const fallbackFigs = (await page.locator('figure[data-figure]').count()) > 0;
   if (fallbackFigs) {
     const nFig = await page.locator('figure[data-figure]').count();
@@ -98,7 +98,7 @@ try {
   await page.waitForSelector('#reveal');
   check(/matched the key/.test(await page.locator('#reveal h2').innerText()), 'checking answers shows a score');
   check((await page.locator('#reveal .result-row').count()) >= 4, 'feedback lists every item');
-  check(/Interpretation written by the learner/.test(await page.locator('.impression-compare').innerText()) && /Composed statement/.test(await page.locator('.impression-compare').innerText()), 'the impression is shown beside the composed statement');
+  check(/Interpretation written by the learner/.test(await page.locator('.impression-compare').innerText()) && /Composed summary/.test(await page.locator('.impression-compare').innerText()), 'the impression is shown beside the composed statement');
   check(/Cases checked: 1/.test(await page.locator('#tally').innerText()), 'the tally counts the checked case');
   check((await page.locator('#reveal').innerText()).includes('GLI-2012') && /Same values under the other reference equations/.test(await page.locator('#reveal').innerText()), 'the reveal compares GLI-2012 with GLI Global');
 

@@ -51,7 +51,7 @@ function keyPhrases(query) {
   const c = buildCase(parseDescriptor(query), datasets);
   const interp = interpret(c.report, resolveReference, 'GLIglobal');
   const stmt = interpretationFor(c, interp, compareEquations(c.report, resolveReference, 'GLI2012', 'GLIglobal'));
-  return { statement: stmt.text.slice(0, 60), pattern: PATTERNS[c.anchorKey.pattern], hasPost: Boolean(c.spirometry.post), hasVolumes: Boolean(c.volumes) };
+  return { statement: (stmt.parts?.impression ?? stmt.text).slice(0, 50), pattern: PATTERNS[c.anchorKey.pattern], hasPost: Boolean(c.spirometry.post), hasVolumes: Boolean(c.volumes) };
 }
 
 /** Errors that are expected while optional modules (z-inline.js, panels) are not in the build. */
@@ -88,7 +88,7 @@ try {
       check(box.width <= viewport.width - 8 && box.width >= 0.4 * Math.min(viewport.width, 816), `${name} ${label}: page scaled to the window (${Math.round(box.width)} px)`);
       const text = await page.locator('#rp-stage').innerText();
       check(!text.includes(info.pattern) || info.pattern === 'Normal', `${name} ${label}: student copy has no pattern wording`);
-      check(!text.includes(info.statement) && !/Answer key|Instructor appendix|Interpretation statement/i.test(text), `${name} ${label}: student copy has no statement or key section`);
+      check(!text.includes(info.statement) && !/Answer key|Instructor appendix|Interpretation summary|Supporting explanation/i.test(text), `${name} ${label}: student copy has no statement or key section`);
       check(/\b(FEV1|FVC) - [A-FU]\b/.test(text) && /accept\./i.test(text), `${name} ${label}: grades and acceptability show with the quality challenge off`);
       check((await page.locator('[data-sheet=details]').count()) === 1 && (await page.locator('.rp-box').last().locator('[data-sheet=details]').count()) === 1, `${name} ${label}: the details sheet is in the flowing page`);
       check((await page.locator('.rp-box').last().locator('[data-section=interpretation] .rp-blank').count()) === 1 && /Date/.test(text), `${name} ${label}: blank interpretation block with signature and date lines`);
@@ -96,12 +96,14 @@ try {
       if (shotDir) await page.screenshot({ path: `${shotDir}/${name}-${label}.png`, fullPage: true });
       if (label === 'desktop') {
         if (shotDir) for (let i = 0; i < boxes; i++) await page.locator('.rp-box').nth(i).screenshot({ path: `${shotDir}/${name}-page${i + 1}.png` });
-        const file = `${shotDir ?? '/tmp'}/${name}-student.pdf`;
-        await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
-        const { pages, letter } = pdfPages(file);
-        check(pages >= expected && pages <= expected + 6, `${name}: student PDF has ${expected} boxes and prints to ${expected} to ${expected + 6} sheets (${pages})`);
-        check(letter, `${name}: PDF page size is Letter`);
-        if (!shotDir) fs.unlinkSync(file);
+        if (ENGINE === 'chromium') {
+          const file = `${shotDir ?? '/tmp'}/${name}-student.pdf`;
+          await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+          const { pages, letter } = pdfPages(file);
+          check(pages >= expected && pages <= expected + 6, `${name}: student PDF has ${expected} boxes and prints to ${expected} to ${expected + 6} sheets (${pages})`);
+          check(letter, `${name}: PDF page size is Letter`);
+          if (!shotDir) fs.unlinkSync(file);
+        }
       }
       await page.close();
     }
@@ -158,11 +160,13 @@ try {
     const text = await page.locator('#rp-stage').innerText();
     check(text.includes(info.statement) && /Instructor appendix/i.test(text) && /Answer key/i.test(text) && /Test quality grades/i.test(text) && /Notes on this simulation/i.test(text), 'instructor copy shows the statement, key, grades and notes');
     check((await page.locator('.rp-box').count()) === (SUMMARY ? 3 : 4), 'instructor copy has the pages and the appendix');
-    const file = `${shotDir ?? '/tmp'}/obstruction-instructor.pdf`;
-    await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
-    const { pages } = pdfPages(file);
-    check(pages >= 4 && pages <= 12, `instructor PDF is the student pages plus a short appendix (${pages})`);
-    if (shotDir) { await page.locator('.rp-box').last().screenshot({ path: `${shotDir}/obstruction-instructor-appendix.png` }); } else fs.unlinkSync(file);
+    if (ENGINE === 'chromium') {
+      const file = `${shotDir ?? '/tmp'}/obstruction-instructor.pdf`;
+      await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+      const { pages } = pdfPages(file);
+      check(pages >= 4 && pages <= 12, `instructor PDF is the student pages plus a short appendix (${pages})`);
+      if (shotDir) { await page.locator('.rp-box').last().screenshot({ path: `${shotDir}/obstruction-instructor-appendix.png` }); } else fs.unlinkSync(file);
+    }
     await page.selectOption('#rp-copy', 'student');
     await ready(page);
     check(!/Instructor appendix/i.test(await page.locator('#rp-stage').innerText()), 'switching back to the student copy removes the appendix');
