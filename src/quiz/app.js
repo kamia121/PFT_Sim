@@ -455,19 +455,12 @@ function showTab(name) {
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== `panel-${name}`;
 }
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
-  $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
-}
-const isDark = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
 
 function onClick(e) {
   const t = e.target.closest('button');
   if (!t) return;
   const id = t.id;
   if (t.dataset.tab) return showTab(t.dataset.tab);
-  if (id === 'theme-toggle') return setTheme(isDark() ? 'light' : 'dark');
   // practice
   if (id === 'p-new') return newPracticeCase();
   if (id === 'p-copy') return copyText(location.href, t);
@@ -511,11 +504,6 @@ function onChange(e) {
 }
 
 async function boot() {
-  try {
-    const saved = localStorage.getItem('pft-theme');
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-  } catch { /* ignore */ }
-  $('#theme-toggle').textContent = isDark() ? 'Light mode' : 'Dark mode';
   $('#version').textContent = String(GENERATOR_VERSION);
   $('#p-topic').innerHTML = `<option value="all">All topics</option>${Object.entries(TOPICS).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join('')}`;
   renderInstructor();

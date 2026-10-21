@@ -19,7 +19,7 @@ h3{font-size:1.02rem;margin:1.1em 0 .4em;font-weight:600}
 .card>h2:first-child,.card>h3:first-child{margin-top:.2em}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
 button.primary,button.secondary,.linkbutton{font:inherit;border-radius:4px;padding:7px 14px;cursor:pointer;border:1px solid var(--accent-bar)}
-button.primary{background:var(--accent-bar);color:#fff}
+button.primary{background:var(--mcw-green);color:#fff}
 button.secondary{background:var(--surface);color:var(--text)}
 button:disabled{opacity:.5;cursor:not-allowed}
 label.field{display:flex;flex-direction:column;font-size:.85rem;color:var(--text-muted);gap:2px}

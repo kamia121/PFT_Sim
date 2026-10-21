@@ -1,16 +1,19 @@
 /*
  * Laboratory-report styling for the simulated PFT report (src/report/html.js).
- * The report is a paper document, so it uses its own black-on-white palette on screen and in print
- * instead of the learner page tokens. Everything is scoped to .pft-report. The page margin and the
+ * The report is a paper document: black on white in print, in the downloaded HTML and wherever the page tokens are absent. On the
+ * learner pages on screen it takes the --paper-* tokens of src/styles/tokens.css, which follow the light or dark theme; the fallbacks
+ * below are the printed values, so this file works alone. Everything is scoped to .pft-report. The page margin and the
  * margin-box footer (case code, page n of m) are emitted by html.js as an inline @page rule.
  */
+:root, .pft-report {
+  --rpt-ink: var(--paper-ink, #000);
+  --rpt-muted: var(--paper-muted, #3d3d3d);
+  --rpt-rule: var(--paper-rule, #000);
+  --rpt-hair: var(--paper-hair, #9a9a9a);
+  --rpt-paper: var(--paper-bg, #fff);
+  --rpt-shade: var(--paper-shade, #efefef);
+}
 .pft-report {
-  --rpt-ink: #000;
-  --rpt-muted: #3d3d3d;
-  --rpt-rule: #000;
-  --rpt-hair: #9a9a9a;
-  --rpt-paper: #fff;
-  --rpt-shade: #efefef;
   font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif;
   font-size: 10pt;
   line-height: 1.3;
@@ -106,10 +109,10 @@
 
 /* Screen-only controls */
 .pft-report .rpt-open { margin: 0 0 8px; font-size: 9.5pt; }
-.pft-report .rpt-open a { color: #0e2b73; font-weight: 600; }
-.pft-report .rpt-copy { font: inherit; font-size: 8.5pt; padding: 1px 8px; border: 1px solid var(--rpt-rule); background: #fff; color: #000; border-radius: 3px; cursor: pointer; }
+.pft-report .rpt-open a { color: var(--paper-accent, #0e2b73); font-weight: 600; }
+.pft-report .rpt-copy { font: inherit; font-size: 8.5pt; padding: 1px 8px; border: 1px solid var(--rpt-rule); background: var(--rpt-paper); color: var(--rpt-ink); border-radius: 3px; cursor: pointer; }
 .pft-report .rpt-copy:hover { background: var(--rpt-shade); }
-.pft-report .rpt-copy:focus-visible { outline: 2px solid #0e2b73; outline-offset: 1px; }
+.pft-report .rpt-copy:focus-visible { outline: 2px solid var(--paper-accent, #0e2b73); outline-offset: 1px; }
 
 /* Narrow-window rules below apply to the practice-page preview and the saved file; the report page (.rp-page) scales its fixed pages instead. */
 /* A standalone saved file sits on a plain page */

@@ -4,7 +4,7 @@ import { QUESTIONS, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
 import { bdPctPredDp, bdPctPredQualifier } from '../interpret/precision.js';
 import { FIGURES, PANEL_IDS } from '../ui/figures/index.js';
-import { PALETTES } from '../ui/palettes.js';
+import { PAGE_PALETTE } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
 import { separableCount, figureView, viewControls } from '../ui/fig-view.js';
 import { archetypeNote } from '../core/physiology.js';
@@ -73,7 +73,7 @@ export function renderFigures(c, interp, { revealed, showSchematic, figView, res
   const card = ({ id, title, data }) => {
     const n = separableCount(id, c);
     const view = n ? figureView(id, n, figView) : null;
-    const opts = { palette: PALETTES.dark, showQuality: !!revealed, ...(view ? { view: view.view, selected: view.selected } : {}) };
+    const opts = { palette: PAGE_PALETTE, showQuality: !!revealed, ...(view ? { view: view.view, selected: view.selected } : {}) };
     const note = FIGURE_NOTES[id]?.(cd);
     return `<figure class="card" data-figure="${id}"${id === 'z-strip' || PANEL_IDS.includes(id) ? ' style="max-width:48rem"' : ''}><figcaption><strong>${title}</strong></figcaption>${n > 1 ? viewControls(id, n, view) : ''}${FIGURES[id].render(data, opts)}${note ? `<p class="muted">${note}</p>` : ''}${downloadControlsHtml(id)}</figure>`;
   };

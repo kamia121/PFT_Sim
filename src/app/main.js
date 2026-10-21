@@ -12,7 +12,7 @@ import { buildReportModel, allTables } from '../report/model.js';
 import { renderReportHtml, reportPageHref } from '../report/html.js';
 import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadReportHtml } from '../report/export.js';
 import { interpretationFor } from '../report/statement.js';
-import { PALETTES } from '../ui/palettes.js';
+import { PALETTES, PAGE_PALETTE } from '../ui/palettes.js';
 import { loadOptionalModules } from './modules.js';
 import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, fallbackVisibility } from './stage.js';
 import { parseAddress, buildSearch } from './address.js';
@@ -29,7 +29,7 @@ const state = {
   stage: createStage(), responses: emptyResponses(), detailsOpen: false, feedback: null,
   showSchematic: false, figView: {},
   modelCache: null, itemsCache: null,
-  reportModel: null, reportDark: false, reportInterp: false, printing: false,
+  reportModel: null, reportInterp: false,
   tally: { answered: 0, matched: 0, items: 0 }, fitContent: null,
 };
 
@@ -117,7 +117,7 @@ function practiceContext() {
     qualityChallenge: state.stage.qualityChallenge, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
     vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
     model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
-    palette: PALETTES.white, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
+    palette: PAGE_PALETTE, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
   };
 }
 
@@ -154,7 +154,7 @@ function currentDetailsHtml() {
   if (!$('#panel-report').hidden) {
     const { a } = interpretations();
     const vis = visibilityNow();
-    return state.mods.detailsSheetHtml?.(state.reportModel, { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette: state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) ?? '';
+    return state.mods.detailsSheetHtml?.(state.reportModel, { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette: PAGE_PALETTE, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) ?? '';
   }
   return state.mods.detailsSheetHtml ? detailsBodyHtml(practiceContext()) : '';
 }
@@ -276,10 +276,11 @@ function renderReportView() {
   const revealed = state.stage.stage === 3;
   const interpretation = revealed && state.reportInterp ? interpretationFor(state.case, a, cmp) : null;
   const sheets = state.mods.summarySheetHtml || state.mods.detailsSheetHtml;
-  const palette = state.reportDark && !state.printing ? PALETTES.dark : PALETTES.white;
+  // The sheets draw with the page palette, whose colors are theme variables; the model keeps the white palette, which the downloads use.
+  const palette = PAGE_PALETTE;
   const model = buildReportModel(state.case, a, {
     equation: state.spirometryEquation, includeGrades: vis.showGradeColumns, resolve: state.resolve,
-    palette: sheets ? palette : (state.reportDark && !state.printing ? 'dark' : 'white'),
+    palette: 'white',
     interpretationText: interpretation?.text ?? null, interpretationNotes: interpretation?.notes ?? [], interpretationParts: interpretation?.parts ?? null, interpretationSupporting: interpretation?.supporting ?? '',
   });
   state.reportModel = model;
@@ -314,12 +315,6 @@ function showTab(name) {
   else { $('#report-root').innerHTML = ''; if (state.case) render(); }
 }
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('pft-theme', theme); } catch { /* storage may be unavailable */ }
-  $('#theme-toggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
-}
-
 function addSheetStyles() {
   if (document.querySelector('link[data-sheets-css]')) return Promise.resolve();
   // The details sheet's own rules (running header, figure frames, pagination) are the ones the report page loads. The fit of the fixed
@@ -335,12 +330,6 @@ function addSheetStyles() {
 }
 
 async function boot() {
-  try {
-    const saved = localStorage.getItem('pft-theme');
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-  } catch { /* ignore */ }
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  $('#theme-toggle').textContent = dark ? 'Light mode' : 'Dark mode';
   $('#version').textContent = String(GENERATOR_VERSION);
   $('#method').innerHTML = R.renderMethod(GENERATOR_VERSION);
   state.datasets = await loadDatasets();
@@ -381,7 +370,6 @@ async function boot() {
     else if (t.id === 'show-key') checkAnswers(false);
     else if (t.id === 'show-statement') releaseStatement();
     else if (t.id === 'toggle-details') toggleDetails();
-    else if (t.id === 'theme-toggle') setTheme(document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches) ? 'light' : 'dark');
     else if (t.id === 'copy-link') navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy case link'), 1500); }).catch(() => $('#caseCode').select());
     else if (t.dataset.tab) showTab(t.dataset.tab);
     else if (t.id === 'report-print') printReport();
@@ -401,7 +389,6 @@ async function boot() {
     const t = e.target;
     if (t.id === 'report-eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: '#report-eq' }); }
     else if (t.id === 'report-interp') { state.reportInterp = t.checked; renderReportView(); }
-    else if (t.id === 'report-dark') { state.reportDark = t.checked; renderReportView(); }
     else if (t.name === 'eq') { state.spirometryEquation = t.value; setUrl(); render({ focus: `input[name=eq][value=${t.value}]` }); }
     else if (t.id === 'flags') { state.flags = t.value === 'none' ? 'none' : 'lln'; setUrl(); render(); }
     else if (t.id === 'qc') {
@@ -428,7 +415,5 @@ async function boot() {
 }
 
 // Figures print on white whatever the on-screen panel choice.
-window.addEventListener('beforeprint', () => { if (state.reportModel && !$('#panel-report').hidden && state.reportDark) { state.printing = true; renderReportView(); } });
-window.addEventListener('afterprint', () => { if (state.printing) { state.printing = false; renderReportView(); } });
 
 boot();

@@ -38,7 +38,7 @@ export async function loadAdapters(importer = defaultImporter) {
     scenarios: scenarios ?? null,
     composeNarrative: compose,
     figures: registry,
-    palettes: palettes?.PALETTES ?? null,
+    palettes: palettes?.PALETTES ? { ...palettes.PALETTES, page: palettes.PAGE_PALETTE } : null,
     status: { scenarios: Boolean(scenarios), narrative: Boolean(compose), figures: registry ? registry.FIGURE_ORDER.length : 0 },
   };
 }
@@ -71,7 +71,7 @@ export function narrativeFor(adapters, args) {
  * Figures that exist for this case: [{ id, title, svg }] in registry order. Placeholders that return
  * null data or an empty string are skipped.
  */
-export function figuresFor(adapters, caseData, paletteId = 'dark') {
+export function figuresFor(adapters, caseData, paletteId = 'page') {
   const out = [];
   const reg = adapters?.figures;
   const palette = adapters?.palettes?.[paletteId];
