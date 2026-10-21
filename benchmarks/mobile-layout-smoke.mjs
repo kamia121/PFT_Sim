@@ -10,6 +10,13 @@
  */
 import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
 import { svgInkCollisions } from './lib/svg-ink.mjs';
+import { loadDatasets } from '../src/reference/load.js';
+import { createReference } from '../src/reference/gli.js';
+import { buildCase } from '../src/core/case.js';
+import { interpret } from '../src/interpret/interpret.js';
+import { parseDescriptor } from '../src/core/descriptor.js';
+import { decodeCase } from '../src/core/code.js';
+import { parseAddress } from '../src/app/address.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -26,6 +33,23 @@ const FLOOR_PX = 11; // effective size of report text on a phone
 // Layout assertions run on a fixed case with usable values (spirometry, volumes, DLCO, post-bronchodilator, quality notes). A random case can have none: for instance
 // ?v=2&s=1774&a=mixed&t=poor&p=spirometry&sc=moderate has null FEV1 and FEV1/FVC, grades F/F and no interpretation measures, and the sheet then correctly has no z-score
 // graphic (55 text labels at 390 px). Random cases are still loaded, with their URL and DOM state logged, and that case is checked on its own as an expected absence.
+const Z_MEASURES = ['fvc', 'fev1', 'fev1_fvc', 'tlc', 'rv', 'rv_tlc', 'dlco', 'va', 'kco'];
+let oracleRef = null;
+/**
+ * Whether the case at this address has any measure with a z-score, computed from the case data and the interpretation (the descriptor is decoded from the address,
+ * the case is built and interpreted here), never from the page. The z-score graphic is expected exactly when this is true. It uses the interpretation of the
+ * case, not the figure code, so a figure that fails to draw for a usable case is a mismatch.
+ */
+async function expectUsableZ(search) {
+  oracleRef ??= createReference(await loadDatasets());
+  const a = parseAddress(search);
+  const query = a.kind === 'code' ? decodeCase(a.code) : a.plainQuery;
+  const c = buildCase(parseDescriptor(query), await loadDatasets());
+  const interp = interpret(c.report, oracleRef.resolveReference, a.equation ?? 'GLIglobal');
+  return Z_MEASURES.some((id) => { const m = interp.measures[id]; return m && m.available !== false && Number.isFinite(m.z); });
+}
+const zJudge = (st, expected) => st.wide === (expected ? 1 : 0) && st.narrow === (expected ? 1 : 0);
+const zState = (page) => page.evaluate(() => ({ url: location.search, wide: document.querySelectorAll('[data-figure-id="z-strip-ats"]').length, narrow: document.querySelectorAll('[data-figure-id="z-strip-ats-narrow"]').length, svgTexts: document.querySelectorAll('#summary-slot .sheet svg text').length, doc: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1 }));
 const FIXTURE = '?v=2&s=485924449&a=obstruction&t=poor&sc=heavy';
 const NO_USABLE_VALUES = '?v=2&s=1774&a=mixed&t=poor&p=spirometry&sc=moderate';
 
@@ -234,15 +258,27 @@ try {
     await ctx.close();
   }
 
-  // Random cases, as the page loads them: the case URL and the state of the DOM are logged before anything waits, and the two z-score figures must agree with each other.
-  // A case without usable values has neither, and is reported as such; it is not a failure of the layout.
+  // Random cases, as the page loads them: the case URL and the state of the DOM are logged right after the page's own 500 ms settle (openPractice), before any further wait.
+  // The z-score figures are expected exactly when the case has a measure with a z-score, derived from the case data (expectUsableZ), not from the DOM. A deletion control
+  // follows: with both figures removed from a case that has usable values, the same judgement must fail.
+  console.log(`fixture data: usable ${await expectUsableZ(FIXTURE)}; no-usable-values case usable ${await expectUsableZ(NO_USABLE_VALUES)}`);
+  check((await expectUsableZ(FIXTURE)) === true && (await expectUsableZ(NO_USABLE_VALUES)) === false, 'the fixed case has usable z-scores and the no-usable-values case has none, from the case data');
   for (const w of PHONES) {
+    let controlDone = false;
     for (let i = 0; i < 4; i++) {
       const { ctx, page, problems } = await openPractice(w, 844, '');
-      const st = await page.evaluate(() => ({ url: location.search, wide: document.querySelectorAll('[data-figure-id="z-strip-ats"]').length, narrow: document.querySelectorAll('[data-figure-id="z-strip-ats-narrow"]').length, svgTexts: document.querySelectorAll('#summary-slot .sheet svg text').length, doc: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1 }));
-      check(st.wide === st.narrow && st.wide <= 1 && st.doc && !problems.length, `${w} px: random case ${st.url}: z-score figures wide ${st.wide}, narrow ${st.narrow} (${st.wide ? 'usable values' : 'no usable values: none expected'}), ${st.svgTexts} chart labels, no document scroll, no page errors`);
+      const st = await zState(page);
+      const expected = await expectUsableZ(st.url);
+      check(zJudge(st, expected) && st.doc && !problems.length, `${w} px: random case ${st.url}: case data says ${expected ? 'usable' : 'no usable'} z-scores; z-score figures wide ${st.wide}, narrow ${st.narrow}, ${st.svgTexts} chart labels, no document scroll, no page errors`);
+      if (expected && !controlDone) {
+        await page.evaluate(() => document.querySelectorAll('[data-figure-id^="z-strip-ats"]').forEach((f) => f.remove()));
+        const after = await zState(page);
+        check(!zJudge(after, expected), `${w} px: deletion control: with both z-score figures removed from a case with usable values the judgement fails (wide ${after.wide}, narrow ${after.narrow})`);
+        controlDone = true;
+      }
       await ctx.close();
     }
+    check(controlDone, `${w} px: the deletion control ran on a random case with usable values`);
   }
 
   // A case with no usable values: its sheet has no z-score graphic, wide or stacked, and still lays out inside the screen.
