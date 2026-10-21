@@ -160,7 +160,8 @@ try {
   check(built === code, 'instructor builds the same code the test computed');
   check(decodeExam(built).n === 3 && (await page.inputValue('#i-link')).includes(`?x=${built}`), 'exam link carries the code');
   await page.click('#i-show-student');
-  await page.waitForSelector('#sheet-body[data-kind=student]');
+  // The sheet is built in a timer; an exception there leaves no sheet, so a timeout reports the page errors collected, not just the timeout.
+  await page.waitForSelector('#sheet-body[data-kind=student]').catch((e) => { throw new Error(`${e.message}\npage errors: ${problems.join(' | ') || 'none'}`); });
   const student = await page.locator('#sheet-body').innerText();
   check(/Case 3 of 3/.test(student) && /Questions/.test(student) && /Name:/.test(student), 'student question sheet lists the cases and questions');
   check(!/answer key|Key:/i.test(student), 'student sheet carries no answer key');
@@ -228,7 +229,8 @@ try {
   await page.click('[data-tab=instructor]');
   await page.click('#i-build');
   await page.click('#i-show-student');
-  await page.waitForSelector('#sheet-body[data-kind=student]');
+  // The sheet is built in a timer; an exception there leaves no sheet, so a timeout reports the page errors collected, not just the timeout.
+  await page.waitForSelector('#sheet-body[data-kind=student]').catch((e) => { throw new Error(`${e.message}\npage errors: ${problems.join(' | ') || 'none'}`); });
   check((await overflow(page)) <= 1, `no horizontal overflow at 390 px, instructor sheet (${await overflow(page)})`);
   await shot(page, 'instructor-phone');
 

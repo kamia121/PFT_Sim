@@ -111,6 +111,12 @@ export function renderBronchodilator(c, interp, { maneuvers = true } = {}) {
   const post = c.spirometry.post;
   if (!post) return '';
   const pre = c.report.spirometry, po = c.report.spirometry.post, bd = interp.bd;
+  // A post-bronchodilator FEV₁ or FVC can be missing (no usable maneuver, a scenario such as a slow start or a small set), and then no change is computed.
+  if (!bd) {
+    return `<section class="card" aria-labelledby="h-bd"><h2 id="h-bd">After bronchodilator</h2>
+  ${maneuvers ? renderManeuvers(post, 'Post-bronchodilator maneuvers', { revealed: false, id: 'post-maneuvers' }) : ''}
+  <p class="muted">No change from baseline is calculated: a pre- or post-bronchodilator FEV₁ or FVC is not available.</p></section>`;
+  }
   const rows = [['FEV₁', pre.fev1, po.fev1, bd.dFev1, bd.pctBase.fev1, bd.pctPred.fev1], ['FVC', pre.fvc, po.fvc, bd.dFvc, bd.pctBase.fvc, bd.pctPred.fvc]].map(([n, a, b, d, pb, pp]) =>
     `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pb, 1)}%</td><td>${signed(pp, bdPctPredDp(pp))}%${bdPctPredQualifier(pp) ? ` (${bdPctPredQualifier(pp)} 10)` : ''}</td></tr>`).join('');
   return `<section class="card" aria-labelledby="h-bd"><h2 id="h-bd">After bronchodilator</h2>
