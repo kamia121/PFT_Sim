@@ -1,0 +1,152 @@
+[
+ {
+  "kind": "false-credit",
+  "id": "H005",
+  "scenario": "S1",
+  "case_facts": "obstruction (mild by FEV1); TLC normal; BD done, not significant; DLCO normal; quality OK",
+  "domain": "pattern",
+  "text": "Mild obstruction; cannot exclude a coexisting restrictive process.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "correct",
+   "severity": "correct",
+   "bd": "missing",
+   "dlco": "missing",
+   "quality": "none",
+   "volumes": "none"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "correct",
+   "bd": "absent",
+   "dlco": "absent",
+   "quality": "absent"
+  }
+ },
+ {
+  "kind": "false-credit",
+  "id": "H017",
+  "scenario": "S1",
+  "case_facts": "obstruction (mild by FEV1); TLC normal; BD done, not significant; DLCO normal; quality OK",
+  "domain": "pattern",
+  "text": "Obstruction on spirometry; lung volumes are needed to exclude a restrictive component.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "correct",
+   "severity": "missing",
+   "bd": "missing",
+   "dlco": "missing",
+   "quality": "none",
+   "volumes": "contradictory"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "absent",
+   "dlco": "absent",
+   "quality": "absent"
+  }
+ },
+ {
+  "kind": "false-credit",
+  "id": "H027",
+  "scenario": "S2",
+  "case_facts": "obstruction, FVC low, moderate by FEV1; TLC NOT measured; BD done, significant; DLCO not done; quality OK",
+  "domain": "pattern",
+  "text": "Moderate obstruction. The reduced FVC likely reflects restriction.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "correct",
+   "severity": "correct",
+   "bd": "missing",
+   "dlco": "none",
+   "quality": "none",
+   "volumes": "review"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "correct",
+   "bd": "absent",
+   "dlco": "absent",
+   "quality": "absent"
+  }
+ },
+ {
+  "kind": "false-credit",
+  "id": "H034",
+  "scenario": "S2",
+  "case_facts": "obstruction, FVC low, moderate by FEV1; TLC NOT measured; BD done, significant; DLCO not done; quality OK",
+  "domain": "pattern",
+  "text": "If TLC shows hyperinflation then this is obstruction with air trapping. Obstruction is moderate. BD positive.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "correct",
+   "severity": "correct",
+   "bd": "correct",
+   "dlco": "none",
+   "quality": "none",
+   "volumes": "correct"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "correct",
+   "bd": "correct",
+   "dlco": "absent",
+   "quality": "absent"
+  }
+ },
+ {
+  "kind": "false-credit",
+  "id": "H068",
+  "scenario": "S3",
+  "case_facts": "ratio normal, FVC low, TLC low = restriction (ungraded); no BD study; DLCO reduced; quality OK",
+  "domain": "pattern",
+  "text": "Restriction on spirometry (normal ratio, low FVC); lung volumes needed to confirm.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "correct",
+   "severity": "none",
+   "bd": "none",
+   "dlco": "missing",
+   "quality": "none",
+   "volumes": "contradictory"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "absent",
+   "dlco": "absent",
+   "quality": "absent"
+  }
+ },
+ {
+  "kind": "false-credit",
+  "id": "H094",
+  "scenario": "S4",
+  "case_facts": "all normal; no BD study; quality LIMITED",
+  "domain": "quality",
+  "text": "Not an abnormal study; not a good quality study, grade limited.",
+  "expected_author_label": "uncertain",
+  "actual_label": "correct",
+  "actual_all_domains": {
+   "pattern": "review",
+   "severity": "none",
+   "bd": "none",
+   "dlco": "missing",
+   "quality": "correct",
+   "volumes": "none"
+  },
+  "author_gold_all_domains": {
+   "pattern": "uncertain",
+   "severity": "absent",
+   "bd": "absent",
+   "dlco": "absent",
+   "quality": "uncertain"
+  }
+ }
+]

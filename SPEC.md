@@ -6,7 +6,7 @@ Revision 2. This revision replaces the scope memo with an implementable specific
 
 Implemented and tested: scaffold; seeded PRNG with named streams; descriptor and URL codec; volume-time curve family; maneuver-set generator with the 2019 acceptability and grading rules; GLI-2012 and GLI Global spirometry reference outputs checked against rspiro; constructive physiology for ten archetypes; encounter scenarios (technologist and intake notes, height estimation, reference sex, smoking, recent medication, quality faults); case assembly; plethysmography and single-breath DLCO tracings; the interpretation engine with 29 fixture cases and a rule-based narrative composer; SVG figures with four-palette export; a lab-style printable report with CSV, TSV and clipboard export; the learner site and a separate quiz and assessment tool (`quiz.html`). `npm test` runs the node tests; the browser harnesses (`benchmarks/ui-smoke.mjs`, `benchmarks/quiz-smoke.mjs`) are run by hand.
 
-Not implemented: NHANES III, FEF25-75 references, TLCO in SI units, replicate DLCO tests, criteria for children, a server, and a language model for free-text feedback.
+Not implemented: NHANES III, FEF25-75 references, TLCO in SI units, replicate DLCO tests, criteria for children, a server, and a language model for free-text feedback. An experimental, local, rule-based reader of the written impression exists but is disabled by default and has failed independent evaluation; it grades nothing in the practice tally or the quiz (`docs/written-grader/`).
 
 ## Purpose
 

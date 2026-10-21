@@ -1,0 +1,425 @@
+[
+ {
+  "id": "B01",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B02",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "Obstruction and its grade are conditional on the ratio; BD response hedged pending repeat."
+ },
+ {
+  "id": "B03",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Only KCO is reported, which does not count as a DLCO statement."
+ },
+ {
+  "id": "B04",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "KCO and VA statements do not count as a DLCO statement."
+ },
+ {
+  "id": "B05",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B06",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "Global 'normal study' implies but does not name DLCO."
+ },
+ {
+  "id": "B07",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B08",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "wrong",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B09",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "Pattern ends as a question and DLCO only 'seems high'."
+ },
+ {
+  "id": "B10",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "KCO and VA statements do not count as a DLCO statement."
+ },
+ {
+  "id": "B11",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "uncertain",
+  "quality": "uncertain",
+  "overall_note": "Values and grade are listed without any interpretive commitment."
+ },
+ {
+  "id": "B12",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B13",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B14",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "wrong",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B15",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B16",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "wrong",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B17",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B18",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B19",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "'COPD pattern' is a disease label that implies but does not name obstruction."
+ },
+ {
+  "id": "B20",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Spirometry described accurately but no pattern named and no need for lung volumes stated."
+ },
+ {
+  "id": "B21",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "uncertain",
+  "quality": "uncertain",
+  "overall_note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+ },
+ {
+  "id": "B22",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B23",
+  "pattern": "wrong",
+  "severity": "wrong",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B24",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B25",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B26",
+  "pattern": "correct",
+  "severity": "uncertain",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "correct",
+  "overall_note": "'Very severe' is not an ATS/ERS 2022 grade; overgrades versus the severe key under older schemes."
+ },
+ {
+  "id": "B27",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "uncertain",
+  "overall_note": "Claims poor effort although test quality was acceptable."
+ },
+ {
+  "id": "B28",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B29",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Double negatives prevent a clear commitment on obstruction, grade or BD response."
+ },
+ {
+  "id": "B30",
+  "pattern": "wrong",
+  "severity": "correct",
+  "bd": "wrong",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B31",
+  "pattern": "correct",
+  "severity": "uncertain",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "Key does not grade severity in this mixed defect, so the severe grade cannot be confirmed or refuted."
+ },
+ {
+  "id": "B32",
+  "pattern": "wrong",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B33",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "uncertain",
+  "quality": "absent",
+  "overall_note": "Values are listed without any interpretive commitment."
+ },
+ {
+  "id": "B34",
+  "pattern": "absent",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B35",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": "'COPD' is a disease label that implies but does not name obstruction."
+ },
+ {
+  "id": "B36",
+  "pattern": "correct",
+  "severity": "wrong",
+  "bd": "correct",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B37",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B38",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "uncertain",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Double negatives on ratio and BD response; FEV1 statement is clear."
+ },
+ {
+  "id": "B39",
+  "pattern": "uncertain",
+  "severity": "correct",
+  "bd": "uncertain",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Obstruction and BD significance are hedged."
+ },
+ {
+  "id": "B40",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "correct",
+  "overall_note": ""
+ },
+ {
+  "id": "B41",
+  "pattern": "uncertain",
+  "severity": "wrong",
+  "bd": "uncertain",
+  "dlco": "absent",
+  "quality": "absent",
+  "overall_note": "Pattern and BD attributed to software or report; own conclusion assigns mild grade."
+ },
+ {
+  "id": "B42",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B43",
+  "pattern": "correct",
+  "severity": "correct",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B44",
+  "pattern": "uncertain",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "uncertain",
+  "quality": "uncertain",
+  "overall_note": "All statements attributed to technologist or report; effort concern is not the trainee's claim."
+ },
+ {
+  "id": "B45",
+  "pattern": "correct",
+  "severity": "absent",
+  "bd": "absent",
+  "dlco": "correct",
+  "quality": "absent",
+  "overall_note": ""
+ },
+ {
+  "id": "B46",
+  "pattern": "uncertain",
+  "severity": "uncertain",
+  "bd": "uncertain",
+  "dlco": "uncertain",
+  "quality": "correct",
+  "overall_note": "Obstruction never named and grade, BD and DLCO are all hedged."
+ },
+ {
+  "id": "B47",
+  "pattern": "correct",
+  "severity": "wrong",
+  "bd": "correct",
+  "dlco": "correct",
+  "quality": "correct",
+  "overall_note": "Trainee revises to moderate as the final grade, adjusting for effort rather than grading measured FEV1."
+ }
+]

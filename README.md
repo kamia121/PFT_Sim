@@ -27,6 +27,10 @@ node benchmarks/interaction-smoke.mjs   # real pointer and keyboard input, phone
 
 Other tools: `tools/constraint-sweep.mjs` checks the exact constraints over many seeds, `tools/extract-gli.py` rebuilds the reference JSON from the GLI workbooks, `tools/crosscheck-interpreter.mjs` compares it with another implementation, and `scripts/make-vectors.R` regenerates the rspiro test vectors.
 
+## Experimental written-impression check (off by default)
+
+An opt-in prototype reads the optional written impression locally and lists, after a scored check, which short standard statements match the key, which are contradicted or not mentioned, and which need review. It is **experimental, unreliable and not for trainee assessment**: it failed a fresh independent phrasing set (see `docs/written-grader/EVALUATION.md`), it abstains often, it gives no score, and nothing leaves the page. It is off unless the address carries `written=1`; with the switch off the page, its label and its network requests are unchanged. `docs/written-grader/SUPPORTED.md` lists the bounded grammar; `node tools/eval-written.mjs <set.json>` evaluates a labelled phrasing set; `PFT_SERVE_DIR=dist node benchmarks/written-smoke.mjs` is the browser privacy and event check.
+
 ## Licensing
 
 The code is MIT licensed. The reference data in `src/reference/data/` derive from the Global Lung Function Initiative lookup tables and are covered by the notice in `src/reference/NOTICE`, not by the MIT license. Commercial use of the GLI data requires permission from the European Respiratory Society.

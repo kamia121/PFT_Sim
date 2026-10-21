@@ -1,0 +1,10 @@
+/* Written-impression feedback. Colors come from src/styles/tokens.css only; status is carried by words, not color. */
+.written-feedback{margin:14px 0 4px;padding-top:6px;border-top:1px solid var(--border);overflow-wrap:anywhere}
+.written-feedback h4{margin:.2em 0 .3em;font-size:1rem}
+.written-feedback h5{margin:.7em 0 .15em;font-size:.95rem}
+.written-feedback ul{margin:0;padding-left:1.1rem}
+.written-feedback li{margin:0 0 .3rem}
+.written-feedback q{font-style:italic;color:var(--text)}
+.written-feedback .written-focus{margin:.5em 0;padding:6px 10px;background:var(--surface-2);border-left:3px solid var(--accent-bar)}
+.written-feedback .written-contradictory h5{color:var(--flag)}
+@media (max-width:640px){.written-feedback ul{padding-left:.9rem}}

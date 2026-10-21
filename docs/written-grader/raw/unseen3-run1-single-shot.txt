@@ -1,0 +1,89 @@
+{
+ "items": 175,
+ "judgments": 875,
+ "falseCredit": 15,
+ "falseContradiction": 3,
+ "falseMissing": 21,
+ "creditRecall": "235/306",
+ "contradictionRecall": "37/54",
+ "abstainedOnClear": "51/360",
+ "reviewedOnUnclear": "93/130"
+}
+
+confusion (rows: author gold; columns: grader group; domains pattern, severity, bd, dlco, quality):
+{
+ "correct": {
+  "correct": 235,
+  "contradictory": 1,
+  "missing": 20,
+  "review": 44,
+  "none": 6
+ },
+ "wrong": {
+  "correct": 1,
+  "contradictory": 37,
+  "missing": 1,
+  "review": 7,
+  "none": 8
+ },
+ "absent": {
+  "correct": 0,
+  "contradictory": 0,
+  "missing": 54,
+  "review": 77,
+  "none": 254
+ },
+ "uncertain": {
+  "correct": 14,
+  "contradictory": 2,
+  "missing": 15,
+  "review": 93,
+  "none": 6
+ }
+}
+
+== FALSE CREDIT (graded correct, author did not): 15
+{"id":"V024","scenario":"T1","domain":"bd","author":"uncertain","actual":"correct","text":"Could be consistent with moderate obstruction if the ratio is truly below the LLN; BD response appears significant though I would confirm with a repeat; DLCO reduced."}
+{"id":"V031","scenario":"T2","domain":"bd","author":"uncertain","actual":"correct","text":"Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think."}
+{"id":"V031","scenario":"T2","domain":"dlco","author":"uncertain","actual":"correct","text":"Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think."}
+{"id":"V042","scenario":"T2","domain":"quality","author":"uncertain","actual":"correct","text":"FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D"}
+{"id":"V048","scenario":"T2","domain":"pattern","author":"uncertain","actual":"correct","text":"Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO."}
+{"id":"V048","scenario":"T2","domain":"severity","author":"uncertain","actual":"correct","text":"Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO."}
+{"id":"V048","scenario":"T2","domain":"bd","author":"uncertain","actual":"correct","text":"Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO."}
+{"id":"V048","scenario":"T2","domain":"dlco","author":"uncertain","actual":"correct","text":"Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO."}
+{"id":"V050","scenario":"T2","domain":"severity","author":"wrong","actual":"correct","text":"Severe obstruction... on reflection I'd call it moderate, since effort was poor and FEV1 is likely underestimated. No BD response. DLCO nl."}
+{"id":"V071","scenario":"T3","domain":"pattern","author":"uncertain","actual":"correct","text":"Spirometry shows a reduced FVC and FEV1 with a normal ratio."}
+{"id":"V092","scenario":"T4","domain":"bd","author":"uncertain","actual":"correct","text":"Reported as mixed defect; agree, both obstruction and restriction are present. BD response not significant as flagged. DLCO reduced."}
+{"id":"V131","scenario":"T6","domain":"bd","author":"uncertain","actual":"correct","text":"Software flagged ratio < LLN; reported as obstruction with significant BD response. I'd call it mild."}
+{"id":"V132","scenario":"T6","domain":"bd","author":"uncertain","actual":"correct","text":"Ratio is a bit low, maybe obstruction? FEV1 is fine. Some BD response, possibly significant."}
+{"id":"V157","scenario":"T7","domain":"dlco","author":"uncertain","actual":"correct","text":"Maybe restriction, maybe nonspecific - TLC is normal, so probably nonspecific? DLCO seems high, could be obesity or polycythemia."}
+{"id":"V173","scenario":"T7","domain":"dlco","author":"uncertain","actual":"correct","text":"Tech says FVC submaximal effort possible. Reported as nonspecific pattern with high DLCO."}
+
+== FALSE CONTRADICTION (graded contradictory, author said correct/uncertain/absent): 3
+{"id":"V044","scenario":"T2","domain":"pattern","author":"uncertain","actual":"contradictory","text":"No evidence against severe obstruction. BD response is not absent."}
+{"id":"V051","scenario":"T3","domain":"pattern","author":"correct","actual":"contradictory","text":"nl ratio, ↓FVC → ?restriction, need lung vols. no BD. DLCO nl."}
+{"id":"V144","scenario":"T6","domain":"pattern","author":"uncertain","actual":"contradictory","text":"Ratio not not low. FEV1 not reduced. BD response isn't insignificant."}
+
+== FALSE MISSING (graded missing, author said correct/wrong): 21
+{"id":"V001","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"FEV1/FVC ↓, FEV1 62% (mod), FVC nl. TLC nl. +BD resp. DLCOc ↓."}
+{"id":"V002","scenario":"T1","domain":"dlco","author":"correct","actual":"missing","text":"Moderate airflow obstruction with a significant bronchodilator response. Lung volumes are normal. Diffusing capacity, corrected for hemoglobin, is reduced."}
+{"id":"V018","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"Efforts poor, interpret with caution. Moderate obstruction, +BD, low DLCO."}
+{"id":"V020","scenario":"T1","domain":"bd","author":"correct","actual":"missing","text":"Moderate obstruction, the bronchodilator test is positive, the DLCO is in normal."}
+{"id":"V023","scenario":"T1","domain":"severity","author":"correct","actual":"missing","text":"Mixed obstr/restr, mod, BD neg, DLCO ↓"}
+{"id":"V032","scenario":"T2","domain":"pattern","author":"correct","actual":"missing","text":"v severe OVD. BD (-). DLCO WNL. quality D."}
+{"id":"V032","scenario":"T2","domain":"severity","author":"correct","actual":"missing","text":"v severe OVD. BD (-). DLCO WNL. quality D."}
+{"id":"V032","scenario":"T2","domain":"quality","author":"correct","actual":"missing","text":"v severe OVD. BD (-). DLCO WNL. quality D."}
+{"id":"V049","scenario":"T2","domain":"pattern","author":"correct","actual":"missing","text":"OVD sev, BD neg, DLCO nl"}
+{"id":"V049","scenario":"T2","domain":"severity","author":"correct","actual":"missing","text":"OVD sev, BD neg, DLCO nl"}
+{"id":"V080","scenario":"T4","domain":"pattern","author":"wrong","actual":"missing","text":"Restriction with reduced DLCO; no BD response."}
+{"id":"V083","scenario":"T4","domain":"bd","author":"correct","actual":"missing","text":"mixed defect, severe obstr component. BD -, DLCO ↓"}
+{"id":"V090","scenario":"T4","domain":"bd","author":"correct","actual":"missing","text":"Mixed pattern. Diffusion capacity normal. No reversible."}
+{"id":"V094","scenario":"T4","domain":"pattern","author":"correct","actual":"missing","text":"OVD + RVD. DLCO ↓. BD (-)"}
+{"id":"V101","scenario":"T5","domain":"dlco","author":"correct","actual":"missing","text":"WNL spiro, TLC, DLCO. no BD done."}
+{"id":"V102","scenario":"T5","domain":"pattern","author":"correct","actual":"missing","text":"Spirometry, lung volumes and diffusing capacity are within normal limits. A bronchodilator study was not performed."}
+{"id":"V126","scenario":"T6","domain":"bd","author":"correct","actual":"missing","text":"↓ratio w/ nl FEV1 → obstr, FEV1 preserved. +BD. DLCO nl."}
+{"id":"V133","scenario":"T6","domain":"bd","author":"correct","actual":"missing","text":"obstr (FEV1 nl), BD +, DLCO WNL"}
+{"id":"V142","scenario":"T6","domain":"bd","author":"correct","actual":"missing","text":"Patient is a 34 yo teacher with episodic wheeze since childhood, worse in spring and with cold air, and she notes that symptoms flare when the classroom is cleaned with a particular spray. She had two courses of oral steroids last year, uses her rescue inhaler about three times a week, and wakes at night roughly once a week. Her mother and brother have hay fever, she has a cat at home, and she is planning to move to a new apartment in the fall that she hopes will have fewer carpets. She jogs on weekends but stops at about two miles because of chest tightness. PFT: obstruction, reversible."}
+{"id":"V143","scenario":"T6","domain":"bd","author":"correct","actual":"missing","text":"mod obstr, +BD"}
+{"id":"V174","scenario":"T7","domain":"pattern","author":"correct","actual":"missing","text":"Pattern no specific, lung volume normal. Diffusion is increase. Not done the bronchodilatator."}
+code SHA 157bab46220ccb9627e1e92454cd2865b92295f9; set sha256 86a8e5e0af3cecb74e0f003cf2cef651f85a3c2779ba8443030eac4a62c7e174

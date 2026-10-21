@@ -1,0 +1,485 @@
+{
+ "note": "Raw first-run grader output is in unseen3-run1.txt. Columns: author = the set author (a language model); adjudicator = blind second model (Opus); grader = this code at 157bab4.",
+ "rows": [
+  {
+   "id": "V094",
+   "sc": "T4",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "OVD + RVD. DLCO ↓. BD (-)",
+   "note": ""
+  },
+  {
+   "id": "V024",
+   "sc": "T1",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Could be consistent with moderate obstruction if the ratio is truly below the LLN; BD response appears significant though I would confirm with a repeat; DLCO reduced.",
+   "note": "Obstruction and its grade are conditional on the ratio; BD response hedged pending repeat."
+  },
+  {
+   "id": "V142",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Patient is a 34 yo teacher with episodic wheeze since childhood, worse in spring and with cold air, and she notes that symptoms flare when the classroom is cleaned with a particular spray. She had two courses of oral steroids last year, uses her rescue inhaler about three times a week, and wakes at night roughly once a week. Her mother and brother have hay fever, she has a cat at home, and she is planning to move to a new apartment in the fall that she hopes will have fewer carpets. She jogs on weekends but stops at about two miles because of chest tightness. PFT: obstruction, reversible.",
+   "note": ""
+  },
+  {
+   "id": "V113",
+   "sc": "T5",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "Normal pulmonary function study.",
+   "note": "Global 'normal study' implies but does not name DLCO."
+  },
+  {
+   "id": "V174",
+   "sc": "T7",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Pattern no specific, lung volume normal. Diffusion is increase. Not done the bronchodilatator.",
+   "note": ""
+  },
+  {
+   "id": "V090",
+   "sc": "T4",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Mixed pattern. Diffusion capacity normal. No reversible.",
+   "note": ""
+  },
+  {
+   "id": "V157",
+   "sc": "T7",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Maybe restriction, maybe nonspecific - TLC is normal, so probably nonspecific? DLCO seems high, could be obesity or polycythemia.",
+   "note": "Pattern ends as a question and DLCO only 'seems high'."
+  },
+  {
+   "id": "V042",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D",
+   "note": "Values and grade are listed without any interpretive commitment."
+  },
+  {
+   "id": "V042",
+   "sc": "T2",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D",
+   "note": "Values and grade are listed without any interpretive commitment."
+  },
+  {
+   "id": "V042",
+   "sc": "T2",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D",
+   "note": "Values and grade are listed without any interpretive commitment."
+  },
+  {
+   "id": "V042",
+   "sc": "T2",
+   "domain": "quality",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "FEV1 28%, ratio 0.41, post BD +4%, DLCO 92%, grade D",
+   "note": "Values and grade are listed without any interpretive commitment."
+  },
+  {
+   "id": "V101",
+   "sc": "T5",
+   "domain": "dlco",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "WNL spiro, TLC, DLCO. no BD done.",
+   "note": ""
+  },
+  {
+   "id": "V002",
+   "sc": "T1",
+   "domain": "dlco",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Moderate airflow obstruction with a significant bronchodilator response. Lung volumes are normal. Diffusing capacity, corrected for hemoglobin, is reduced.",
+   "note": ""
+  },
+  {
+   "id": "V020",
+   "sc": "T1",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Moderate obstruction, the bronchodilator test is positive, the DLCO is in normal.",
+   "note": ""
+  },
+  {
+   "id": "V051",
+   "sc": "T3",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "contradictory",
+   "text": "nl ratio, ↓FVC → ?restriction, need lung vols. no BD. DLCO nl.",
+   "note": ""
+  },
+  {
+   "id": "V071",
+   "sc": "T3",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Spirometry shows a reduced FVC and FEV1 with a normal ratio.",
+   "note": "Spirometry described accurately but no pattern named and no need for lung volumes stated."
+  },
+  {
+   "id": "V048",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO.",
+   "note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+  },
+  {
+   "id": "V048",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO.",
+   "note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+  },
+  {
+   "id": "V048",
+   "sc": "T2",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO.",
+   "note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+  },
+  {
+   "id": "V048",
+   "sc": "T2",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO.",
+   "note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+  },
+  {
+   "id": "V048",
+   "sc": "T2",
+   "domain": "quality",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "Tech comment: efforts graded D, results should be interpreted with caution. Lab interpretation: severe obstruction, no significant BD response, normal DLCO.",
+   "note": "Every statement is attributed to the technologist or lab interpretation, not the trainee."
+  },
+  {
+   "id": "V001",
+   "sc": "T1",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "FEV1/FVC ↓, FEV1 62% (mod), FVC nl. TLC nl. +BD resp. DLCOc ↓.",
+   "note": ""
+  },
+  {
+   "id": "V102",
+   "sc": "T5",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Spirometry, lung volumes and diffusing capacity are within normal limits. A bronchodilator study was not performed.",
+   "note": ""
+  },
+  {
+   "id": "V133",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "obstr (FEV1 nl), BD +, DLCO WNL",
+   "note": ""
+  },
+  {
+   "id": "V032",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "v severe OVD. BD (-). DLCO WNL. quality D.",
+   "note": "'Very severe' is not an ATS/ERS 2022 grade; overgrades versus the severe key under older schemes."
+  },
+  {
+   "id": "V032",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "correct",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "v severe OVD. BD (-). DLCO WNL. quality D.",
+   "note": "'Very severe' is not an ATS/ERS 2022 grade; overgrades versus the severe key under older schemes."
+  },
+  {
+   "id": "V032",
+   "sc": "T2",
+   "domain": "quality",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "v severe OVD. BD (-). DLCO WNL. quality D.",
+   "note": "'Very severe' is not an ATS/ERS 2022 grade; overgrades versus the severe key under older schemes."
+  },
+  {
+   "id": "V018",
+   "sc": "T1",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Efforts poor, interpret with caution. Moderate obstruction, +BD, low DLCO.",
+   "note": "Claims poor effort although test quality was acceptable."
+  },
+  {
+   "id": "V049",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "OVD sev, BD neg, DLCO nl",
+   "note": ""
+  },
+  {
+   "id": "V049",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "OVD sev, BD neg, DLCO nl",
+   "note": ""
+  },
+  {
+   "id": "V044",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "contradictory",
+   "text": "No evidence against severe obstruction. BD response is not absent.",
+   "note": "Double negatives prevent a clear commitment on obstruction, grade or BD response."
+  },
+  {
+   "id": "V044",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "No evidence against severe obstruction. BD response is not absent.",
+   "note": "Double negatives prevent a clear commitment on obstruction, grade or BD response."
+  },
+  {
+   "id": "V023",
+   "sc": "T1",
+   "domain": "severity",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "Mixed obstr/restr, mod, BD neg, DLCO ↓",
+   "note": ""
+  },
+  {
+   "id": "V083",
+   "sc": "T4",
+   "domain": "severity",
+   "author": "wrong",
+   "adjudicator": "uncertain",
+   "grader": "none",
+   "text": "mixed defect, severe obstr component. BD -, DLCO ↓",
+   "note": "Key does not grade severity in this mixed defect, so the severe grade cannot be confirmed or refuted."
+  },
+  {
+   "id": "V083",
+   "sc": "T4",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "mixed defect, severe obstr component. BD -, DLCO ↓",
+   "note": "Key does not grade severity in this mixed defect, so the severe grade cannot be confirmed or refuted."
+  },
+  {
+   "id": "V080",
+   "sc": "T4",
+   "domain": "pattern",
+   "author": "wrong",
+   "adjudicator": "wrong",
+   "grader": "missing",
+   "text": "Restriction with reduced DLCO; no BD response.",
+   "note": ""
+  },
+  {
+   "id": "V143",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "mod obstr, +BD",
+   "note": ""
+  },
+  {
+   "id": "V092",
+   "sc": "T4",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "correct",
+   "grader": "correct",
+   "text": "Reported as mixed defect; agree, both obstruction and restriction are present. BD response not significant as flagged. DLCO reduced.",
+   "note": ""
+  },
+  {
+   "id": "V144",
+   "sc": "T6",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "contradictory",
+   "text": "Ratio not not low. FEV1 not reduced. BD response isn't insignificant.",
+   "note": "Double negatives on ratio and BD response; FEV1 statement is clear."
+  },
+  {
+   "id": "V132",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Ratio is a bit low, maybe obstruction? FEV1 is fine. Some BD response, possibly significant.",
+   "note": "Obstruction and BD significance are hedged."
+  },
+  {
+   "id": "V131",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Software flagged ratio < LLN; reported as obstruction with significant BD response. I'd call it mild.",
+   "note": "Pattern and BD attributed to software or report; own conclusion assigns mild grade."
+  },
+  {
+   "id": "V126",
+   "sc": "T6",
+   "domain": "bd",
+   "author": "correct",
+   "adjudicator": "correct",
+   "grader": "missing",
+   "text": "↓ratio w/ nl FEV1 → obstr, FEV1 preserved. +BD. DLCO nl.",
+   "note": ""
+  },
+  {
+   "id": "V173",
+   "sc": "T7",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Tech says FVC submaximal effort possible. Reported as nonspecific pattern with high DLCO.",
+   "note": "All statements attributed to technologist or report; effort concern is not the trainee's claim."
+  },
+  {
+   "id": "V031",
+   "sc": "T2",
+   "domain": "pattern",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think.",
+   "note": "Obstruction never named and grade, BD and DLCO are all hedged."
+  },
+  {
+   "id": "V031",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "missing",
+   "text": "Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think.",
+   "note": "Obstruction never named and grade, BD and DLCO are all hedged."
+  },
+  {
+   "id": "V031",
+   "sc": "T2",
+   "domain": "bd",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think.",
+   "note": "Obstruction never named and grade, BD and DLCO are all hedged."
+  },
+  {
+   "id": "V031",
+   "sc": "T2",
+   "domain": "dlco",
+   "author": "uncertain",
+   "adjudicator": "uncertain",
+   "grader": "correct",
+   "text": "Severe? Could be moderate given the poor efforts - hard to say. Not obviously BD responsive. DLCO okay I think.",
+   "note": "Obstruction never named and grade, BD and DLCO are all hedged."
+  },
+  {
+   "id": "V050",
+   "sc": "T2",
+   "domain": "severity",
+   "author": "wrong",
+   "adjudicator": "wrong",
+   "grader": "correct",
+   "text": "Severe obstruction... on reflection I'd call it moderate, since effort was poor and FEV1 is likely underestimated. No BD response. DLCO nl.",
+   "note": "Trainee revises to moderate as the final grade, adjusting for effort rather than grading measured FEV1."
+  }
+ ]
+}
