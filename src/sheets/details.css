@@ -1,0 +1,37 @@
+/*
+ * Details sheet (src/sheets/details.js): the flowing second page of the report. Laboratory paper is black on white in both screen
+ * themes and in print, so the sheet takes its inks from the report variables (--rpt-*, src/report/report.css) with the same values
+ * as fallbacks. Tables, headings and notes inherit the rules of .pft-report; this file adds the running header, the figure frames
+ * and the pagination rules. Panels are drawn 7 in wide.
+ */
+.dt-sheet { color: var(--rpt-ink, #000); }
+.dt-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: stretch; border: 1.5px solid var(--rpt-rule, #000); margin: 0 0 8px; break-after: avoid; }
+.dt-lab { display: flex; flex-direction: column; justify-content: center; padding: 4px 8px; }
+.dt-lab strong { font-size: 10.5pt; }
+.dt-lab span { font-size: 8.5pt; color: var(--rpt-muted, #3d3d3d); }
+.dt-id { display: flex; margin: 0; border-left: 1.5px solid var(--rpt-rule, #000); }
+.dt-id > div { padding: 3px 9px; border-right: 1px solid var(--rpt-hair, #9a9a9a); min-width: 0; }
+.dt-id > div:last-child { border-right: 0; }
+.dt-id dt { font-size: 7pt; text-transform: uppercase; letter-spacing: .05em; color: var(--rpt-muted, #3d3d3d); }
+.dt-id dd { margin: 0; font-weight: 600; font-size: 8.5pt; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.dt-sec { margin: 0 0 8px; }
+.dt-fig { margin: 4px 0 6px; border: .5pt solid var(--rpt-hair, #9a9a9a); break-inside: avoid; }
+.dt-fig svg { display: block; width: 100%; height: auto; text-rendering: geometricPrecision; }
+.dt-dlco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.dt-dlco .rpt-block { max-width: 3.6in; }
+.dt-notes ul { margin: 0; padding-left: 16px; }
+.dt-notes li { margin-bottom: 2px; }
+.dt-sheet .rpt-table td.l, .dt-sheet .rpt-table th.l { white-space: normal; }
+.dt-sheet .rpt-table td.r { text-align: right; }
+
+/* Interpretation block: blank box, then the signature and date lines. */
+.rp-interp { margin-top: 6px; break-inside: avoid; }
+.rp-blank { min-height: 1.7in; }
+
+@media print {
+  /* A section of the details can be longer than a sheet, so only its parts are kept whole. */
+  .rp-flow .rpt-sec.dt-sec { break-inside: auto; }
+  .dt-fig, .dt-sheet .rpt-block, .dt-notes li { break-inside: avoid; }
+  .dt-sheet h2 { break-after: avoid; }
+}

@@ -99,7 +99,7 @@ export const reportPageHref = (model) => `report.html?c=${encodeURIComponent(mod
 export function renderReportHtml(model, { interactive = false } = {}) {
   const head = headerHtml(model);
   // The preview is a summary; the full printable report is its own page. The link is a screen control and is not part of a saved file.
-  const open = interactive && model.meta.caseToken ? `<p class="rpt-open no-print"><a href="${esc(reportPageHref(model))}">Open full report</a> (three printable Letter pages, with the figure panels)</p>` : '';
+  const open = interactive && model.meta.caseToken ? `<p class="rpt-open no-print"><a href="${esc(reportPageHref(model))}">Open full report</a> (summary page and detailed report, printable on Letter paper)</p>` : '';
   // Lung volumes and DLCO sit side by side, as on a one-page laboratory printout.
   // The reference equation note follows the spirometry table and figures, so equation statements sit with the numbers.
   const refNote = refNoteHtml(model);

@@ -1,16 +1,16 @@
 /**
- * Page layout of the printed report: Letter pages of 8.5 in by 11 in, assembled from the report model (src/report/model.js)
- * and the figure slots (panels.js). Page 1 holds the identification grid, the spirometry table and its figure slot; page 2
- * the lung volumes (with the airway-resistance rows) and the plethysmography slot; page 3 the diffusing capacity with its slot, the
- * technologist comments, the reference equation note, the interpretation box, signature lines and the disclaimer; page 4 the
- * per-maneuver tables. A case without volumes and DLCO has three pages. The maneuver page also draws every maneuver on its own (the separate view of the spirometry panel). The instructor copy appends a flowing appendix.
+ * Page layout of the printed report: Letter pages of 8.5 in by 11 in, assembled from the report model (src/report/model.js).
+ * Page 1 is the summary sheet (src/sheets/summary.js), one fixed sheet. When that module is not available the earlier page 1 is
+ * used in its place (identification grid, spirometry table and panel, then a sheet of the volume and DLCO tables). Page 2 is the
+ * details sheet (src/sheets/details.js), which flows, followed by the blank interpretation block with the signature and date
+ * lines. The instructor copy appends a flowing appendix.
  *
- * Sizes: a page is 816 by 1056 CSS px (8.5 by 11 in). Content sits inside margins of 0.42 in (top), 0.5 in (sides) and
+ * Sizes: a fixed page is 816 by 1056 CSS px (8.5 by 11 in). Content sits inside margins of 0.42 in (top), 0.5 in (sides) and
  * 0.55 in (bottom, which also holds the footer line), leaving 7.5 in by 10.03 in. Panels are drawn 7 in wide; running text
  * is 9 pt, tables 8.5 pt, footnotes 7.5 pt and the smallest label 7 pt (page.css).
  */
 import { esc } from '../report/table.js';
-import { headerHtml, tableHtml, refNoteHtml, boxesHtml, endHtml, paragraphs } from '../report/html.js';
+import { headerHtml, tableHtml, refNoteHtml, endHtml, paragraphs } from '../report/html.js';
 import { inlineCell } from './panels.js';
 
 const byId = (model, id) => model.sections.flatMap((s) => s.tables).find((t) => t.id === id) ?? null;
@@ -23,52 +23,72 @@ export function slotHtml(slot, name) {
   return `<div class="rp-slot ${slot.span}" data-slot="${esc(name)}">${figs}</div>`;
 }
 
+/** Comment lines as a list, or '' when there are none. */
+const listHtml = (lines) => (lines.length ? `<ul>${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : '');
+
 /**
- * @param {object} model student-safe model (no grades, no key)
- * @param {{ spirometry: object|null, pleth: object|null, dlco: object|null, zstrip: object|null }} slots resolved figure slots
- * @param {{ zInline: Function|null, palette: object, llnZ: number }} z the inline z-score graphic and its inputs
- * @returns {{ pages: string[] }} inner HTML of each fixed page, in order
+ * Technologist comment box of the fallback summary: the comments that bear on interpretation, the quality statement when the
+ * visibility rule allows it, and the closing line.
+ * @param {{ interpretationLines: string[], qualityLines: string[], closing: string }} rt
  */
-export function buildPages(model, slots, { zInline = null, palette, llnZ = -1.645 } = {}) {
-  const extra = (measureOf) => (zInline ? {
-    label: 'z-score plot',
-    cell: (row) => inlineCell(zInline, measureOf(row), row, llnZ, palette),
-  } : null);
-  const zExtra = extra((row) => row.id);
+export function commentBoxHtml(rt, { showQualityLines }) {
+  const lines = [...rt.interpretationLines, ...(showQualityLines ? rt.qualityLines : [])];
+  return `<div class="rpt-boxes rp-one"><section class="rpt-box"><h2>Technologist comments</h2>${listHtml(lines)}${rt.closing ? `<p class="rp-closing">${esc(rt.closing)}</p>` : ''}</section></div>`;
+}
+
+/**
+ * Page 1 when src/sheets/summary.js is not available: the identification grid, the spirometry table with the panel, the
+ * reference note and the technologist comments, then a second sheet with the volume and diffusing-capacity tables. The
+ * plethysmography and DLCO panels are on the details sheet in every case.
+ * @param {object} model student-safe model (no grades, no key)
+ * @param {{ spirometry: object|null, zstrip: object|null }} slots resolved figure slots
+ * @param {{ zInline: Function|null, palette: object, llnZ: number, rt: object, showQualityLines: boolean }} z
+ * @returns {string[]} inner HTML of each fixed page
+ */
+export function fallbackSummaryPages(model, slots, { zInline = null, palette, llnZ = -1.645, rt, showQualityLines }) {
+  const zExtra = zInline ? { label: 'z-score plot', cell: (row) => inlineCell(zInline, row.id, row, llnZ, palette) } : null;
   const tbl = (id, title = null, withZ = false) => {
     const t = byId(model, id);
     return t ? tableHtml(t, {}, title, withZ ? zExtra : null) : '';
   };
-
   const spiro = section(model, 'spirometry');
   const vols = section(model, 'volumes');
   const dlco = section(model, 'dlco');
-
   const p1 = [
     headerHtml(model),
     `<section class="rpt-sec rp-sec" data-section="spirometry"><h2>${esc(spiro.title)}</h2>${tbl('spirometry', spiro.title, true)}${slotHtml(slots.spirometry, 'spirometry')}${slotHtml(slots.zstrip, 'zstrip')}</section>`,
+    refNoteHtml(model),
+    commentBoxHtml(rt, { showQualityLines }),
   ].join('');
-
-  let p2vols = '', dlcoSection = '';
-  if (vols) {
-    p2vols = (`<section class="rpt-sec rp-sec" data-section="volumes"><h2>${esc(vols.title)}</h2><div class="rp-vols${byId(model, 'pleth') ? '' : ' solo'}"><div>${tbl('volumes', vols.title, true)}</div>${byId(model, 'pleth') ? `<div>${tbl('pleth')}</div>` : ''}</div>${slotHtml(slots.pleth, 'pleth')}</section>`);
-  }
-  if (dlco) {
-    const half = slots.dlco?.span === 'half';
-    dlcoSection = (`<section class="rpt-sec rp-sec" data-section="dlco"><h2>${esc(dlco.title)}</h2><div class="rp-dlco${half ? ' side' : ''}"><div>${tbl('dlco', dlco.title, true)}</div>${slotHtml(slots.dlco, 'dlco')}</div></section>`);
-  }
-
-  const maneuvers = `<section class="rpt-sec rp-sec" data-section="maneuvers"><h2>Forced maneuvers</h2>${tbl('maneuvers-pre')}${tbl('maneuvers-post')}${slotHtml(slots.review, 'review')}</section>`;
-  const closing = [boxesHtml(model), refNoteHtml(model), endHtml(model)].join('');
-  // With volumes or diffusing capacity the clinical pages come first (spirometry; volumes) are fixed sheets; diffusing capacity, the comments, interpretation box and signature, and the
-  // maneuver log, which a reader consults for repeatability, flow on from page 3.
-  // Pages 1 and 2 are fixed sheets. Everything after them flows, so that a long list of maneuvers or technologist comments
-  // takes another sheet and nothing is shrunk to fit.
   const pages = [p1];
-  if (vols) pages.push(p2vols);
-  const continued = (dlcoSection ? dlcoSection : '') + closing + maneuvers;
-  return { pages, continued };
+  if (vols || dlco) {
+    const volumes = vols ? `<section class="rpt-sec rp-sec" data-section="volumes"><h2>${esc(vols.title)}</h2>${tbl('volumes', vols.title, true)}</section>` : '';
+    const diffusion = dlco ? `<section class="rpt-sec rp-sec" data-section="dlco"><h2>${esc(dlco.title)}</h2>${tbl('dlco', dlco.title, true)}</section>` : '';
+    pages.push(volumes + diffusion);
+  }
+  return pages;
 }
+
+/**
+ * The blank interpretation box with the signature and date lines and the simulation disclaimer. Nothing is written in the box:
+ * the reader's interpretation is written on paper or entered on the practice page.
+ */
+export function interpretationBlockHtml(model) {
+  return `<section class="rpt-sec rp-interp" data-section="interpretation"><h2>Interpretation</h2><div class="rpt-box rp-blank" role="group" aria-label="Interpretation, left blank for the reader"></div>${endHtml(model)}</section>`;
+}
+
+/**
+ * @param {object} model student-safe model (no grades, no key)
+ * @param {{ spirometry: object|null, zstrip: object|null }} slots figure slots of the fallback summary
+ * @param {{ summaryHtml?: string|null, detailsHtml: string, rt: object, showQualityLines: boolean, zInline?: Function|null, palette: object, llnZ?: number }} o
+ *   `summaryHtml` is the output of summarySheetHtml; without it the fallback summary is built
+ * @returns {{ pages: string[], continued: string }} the fixed pages, and the flowing page that holds the details and the interpretation block
+ */
+export function buildPages(model, slots, { summaryHtml = null, detailsHtml, rt, showQualityLines, zInline = null, palette, llnZ = -1.645 }) {
+  const pages = summaryHtml ? [summaryHtml] : fallbackSummaryPages(model, slots, { zInline, palette, llnZ, rt, showQualityLines });
+  return { pages, continued: detailsHtml + interpretationBlockHtml(model) };
+}
+
 
 /**
  * Instructor appendix: quality grades, per-maneuver acceptability, the interpretation statement, the notes on the simulation and

@@ -4,9 +4,11 @@
  * post-bronchodilator study, restriction, mixed, spirometry only, a full panel with a heavy scenario) at desktop and 390 px width,
  * and checks that:
  *   - the page renders without console or page errors (a missing optional module, z-inline.js or a panel, is not an error);
- *   - every Letter page fits its content, the page count is two (spirometry only) or three, and the pages scale to the window with no
- *     horizontal page scroll at 390 px;
- *   - the student copy prints to a PDF of at most three Letter pages, and holds no answer-key text;
+ *   - the report is the summary sheet (one fixed Letter page; the earlier page 1, plus a sheet of tables when volumes or DLCO exist, until
+ *     src/sheets/summary.js is present), then the flowing details sheet and the blank interpretation block; every fixed page fits its
+ *     content and the pages scale to the window with no horizontal page scroll at 390 px;
+ *   - the student copy prints to a Letter PDF, holds no answer-key text, shows grades by default, and with the quality challenge on
+ *     (qc=1) holds no grade, acceptability or quality text at all; the toolbar switches both settings and keeps them in the address;
  *   - the instructor copy is gated by a confirm box, shows no key text before it, and adds the appendix after;
  *   - a damaged link gives a readable message; the equation switch changes the page; the practice page links here.
  * Screenshots (and the printed PDFs) are written to the directory given as the first argument.
@@ -25,6 +27,7 @@ import { interpret, compareEquations, PATTERNS } from '../src/interpret/interpre
 import { interpretationFor } from '../src/report/statement.js';
 
 const port = 5198;
+const SUMMARY = fs.existsSync(new URL('../src/sheets/summary.js', import.meta.url));
 const shotDir = process.argv[2];
 if (shotDir) fs.mkdirSync(shotDir, { recursive: true });
 const CASES = [
@@ -77,7 +80,7 @@ try {
       const page = await open(viewport);
       await page.goto(`${base}/report.html?${query}`);
       await ready(page);
-      const expected = info.hasVolumes ? 3 : 2;
+      const expected = SUMMARY || !info.hasVolumes ? 2 : 3;
       const boxes = await page.locator('.rp-box').count();
       check(boxes === expected, `${name} ${label}: ${expected} pages (${boxes})`);
       const fit = await page.evaluate(() => window.__rpFit);
@@ -89,7 +92,9 @@ try {
       const text = await page.locator('#rp-stage').innerText();
       check(!text.includes(info.pattern) || info.pattern === 'Normal', `${name} ${label}: student copy has no pattern wording`);
       check(!text.includes(info.statement) && !/Answer key|Instructor appendix|Interpretation statement/i.test(text), `${name} ${label}: student copy has no statement or key section`);
-      check(!/\b(FEV1|FVC) - [A-FU]\b|Accept\./.test(text), `${name} ${label}: student copy has no grades`);
+      check(/\b(FEV1|FVC) - [A-FU]\b/.test(text) && /accept\./i.test(text), `${name} ${label}: grades and acceptability show with the quality challenge off`);
+      check((await page.locator('[data-sheet=details]').count()) === 1 && (await page.locator('.rp-box').last().locator('[data-sheet=details]').count()) === 1, `${name} ${label}: the details sheet is in the flowing page`);
+      check((await page.locator('.rp-box').last().locator('[data-section=interpretation] .rp-blank').count()) === 1 && /Date/.test(text), `${name} ${label}: blank interpretation block with signature and date lines`);
       check(info.hasVolumes ? /sRaw/.test(text) && /Raw/.test(text) : !/sRaw/.test(text), `${name} ${label}: airway-resistance rows ${info.hasVolumes ? 'present' : 'absent'}`);
       if (shotDir) await page.screenshot({ path: `${shotDir}/${name}-${label}.png`, fullPage: true });
       if (label === 'desktop') {
@@ -97,12 +102,47 @@ try {
         const file = `${shotDir ?? '/tmp'}/${name}-student.pdf`;
         await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
         const { pages, letter } = pdfPages(file);
-        check(pages >= expected && pages <= expected + 3, `${name}: student PDF has ${expected} boxes and prints to ${expected} to ${expected + 3} sheets (${pages})`);
+        check(pages >= expected && pages <= expected + 6, `${name}: student PDF has ${expected} boxes and prints to ${expected} to ${expected + 6} sheets (${pages})`);
         check(letter, `${name}: PDF page size is Letter`);
         if (!shotDir) fs.unlinkSync(file);
       }
       await page.close();
     }
+  }
+
+  // Quality challenge (qc=1, outside the descriptor): no grade, acceptability or quality text in the page source, and no sentence
+  // that says it is withheld; the toolbar switch and the flag setting are kept in the address.
+  {
+    const GRADE = /\b(FEV1|FVC) - [A-FU]\b|[Gg]rade [A-F]\b|Accept\.|[Aa]cceptab|Test quality|withheld|Criteria not met/;
+    const stripStyle = (h) => h.replace(/<style>[\s\S]*?<\/style>/g, '');
+    for (const [name, query] of [CASES[1], CASES[4], CASES[5]]) {
+      for (const [label, viewport] of [['desktop', { width: 1280, height: 900 }], ['phone', { width: 390, height: 800 }]]) {
+        const page = await open(viewport);
+        await page.goto(`${base}/report.html?${query}&qc=1`);
+        await ready(page);
+        check(await page.locator('#rp-qc').isChecked(), `${name} ${label}: the quality challenge switch is on for qc=1`);
+        check(!GRADE.test(stripStyle(await page.locator('#rp-stage').innerHTML())), `${name} ${label}: qc=1 page source has no grade, acceptability or quality text`);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        check(overflow <= 1, `${name} ${label}: qc=1 has no horizontal page overflow (${overflow})`);
+        if (label === 'desktop' && shotDir) for (let i = 0; i < (await page.locator('.rp-box').count()); i++) await page.locator('.rp-box').nth(i).screenshot({ path: `${shotDir}/${name}-qc-page${i + 1}.png` });
+        await page.close();
+      }
+    }
+    const page = await open({ width: 1280, height: 900 });
+    await page.goto(`${base}/report.html?${CASES[1][1]}`);
+    await ready(page);
+    check(/\b(FEV1|FVC) - [A-FU]\b/.test(await page.locator('#rp-stage').innerText()), 'grades show by default');
+    await page.check('#rp-qc');
+    await page.waitForFunction(() => !/\b(FEV1|FVC) - [A-FU]\b/.test(document.querySelector('#rp-stage').innerText));
+    check(new URL(page.url()).searchParams.get('qc') === '1' && new URL(page.url()).searchParams.has('c'), 'the quality challenge switch is kept in the address');
+    check(!GRADE.test(stripStyle(await page.locator('#rp-stage').innerHTML())), 'switching the quality challenge on removes every grade from the page source');
+    check(/qc=1/.test(await page.locator('#rp-back').getAttribute('href')), 'the link back to the practice page keeps qc');
+    await page.selectOption('#rp-flags', 'none');
+    check(new URL(page.url()).searchParams.get('flags') === 'none', 'the flag setting is kept in the address');
+    await page.uncheck('#rp-qc');
+    await page.waitForFunction(() => /\b(FEV1|FVC) - [A-FU]\b/.test(document.querySelector('#rp-stage').innerText));
+    check(!new URL(page.url()).searchParams.has('qc'), 'switching it off removes qc from the address');
+    await page.close();
   }
 
   // Instructor copy: gate, then appendix.
@@ -120,12 +160,12 @@ try {
     await ready(page);
     const text = await page.locator('#rp-stage').innerText();
     check(text.includes(info.statement) && /Instructor appendix/i.test(text) && /Answer key/i.test(text) && /Test quality grades/i.test(text) && /Notes on this simulation/i.test(text), 'instructor copy shows the statement, key, grades and notes');
-    check((await page.locator('.rp-box').count()) === 4, 'instructor copy has the pages and the appendix');
+    check((await page.locator('.rp-box').count()) === (SUMMARY ? 3 : 4), 'instructor copy has the pages and the appendix');
     const file = `${shotDir ?? '/tmp'}/obstruction-instructor.pdf`;
     await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
     const { pages } = pdfPages(file);
-    check(pages >= 4 && pages <= 8, `instructor PDF is the student pages plus a short appendix (${pages})`);
-    if (shotDir) { await page.locator('.rp-box').nth(3).screenshot({ path: `${shotDir}/obstruction-instructor-appendix.png` }); } else fs.unlinkSync(file);
+    check(pages >= 4 && pages <= 12, `instructor PDF is the student pages plus a short appendix (${pages})`);
+    if (shotDir) { await page.locator('.rp-box').last().screenshot({ path: `${shotDir}/obstruction-instructor-appendix.png` }); } else fs.unlinkSync(file);
     await page.selectOption('#rp-copy', 'student');
     await ready(page);
     check(!/Instructor appendix/i.test(await page.locator('#rp-stage').innerText()), 'switching back to the student copy removes the appendix');
@@ -175,7 +215,7 @@ try {
     check(/^report\.html\?c=[\w-]+&eq=GLIglobal$/.test(href), `"Open full report" link on the practice page (${href})`);
     await page.click('.pft-report .rpt-open a');
     await ready(page);
-    check((await page.locator('.rp-box').count()) === 3, 'the link opens the same case as a report');
+    check((await page.locator('.rp-box').count()) === (SUMMARY ? 2 : 3), 'the link opens the same case as a report');
     await page.close();
   }
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);

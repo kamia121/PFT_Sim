@@ -10,6 +10,7 @@
 .rp-main { max-width: none; padding: 12px 16px 28px; }
 .rp-main h1 { margin: .1em 0 .2em; }
 .rp-toolbar { align-items: flex-end; }
+.rp-toolbar label.field.check { flex-direction: row; align-items: center; gap: 6px; padding-bottom: 6px; }
 .rp-toolbar .linkbutton { display: inline-block; text-decoration: none; background: var(--surface); color: var(--text); }
 .rp-hint { color: var(--text-muted); margin: 0 0 12px; max-width: 60rem; }
 .rp-stage { --rp-s: 1; padding: 4px 0 8px; min-height: 12rem; }
@@ -61,9 +62,13 @@
 .rp-page .rpt-sign { margin: 6px 0 2px; }
 .rp-page .rpt-disc { font-size: calc(8pt * var(--rp-ts, 1)); }
 
+.rp-page .rpt-boxes.rp-one { grid-template-columns: 1fr; }
+.rp-page .rp-closing { margin: 4px 0 0; font-weight: 600; }
+
 /* inline z-score graphic */
 .rp-page .rpt-table th.zi, .rp-page .rpt-table td.zi { width: 1.25in; padding: 0 4px; text-align: center; white-space: nowrap; }
 .rp-page .rpt-table thead th.nw { white-space: nowrap; }
+.rp-page .rpt-table tbody th.l { white-space: nowrap; }
 .rp-page .rpt-table td.zi svg { display: block; width: 100%; height: auto; max-height: 17px; }
 
 /* figure slots: drawn 7 in wide (a full panel) or 3.6 in (a half); --rp-fs shrinks them when a page would overflow */

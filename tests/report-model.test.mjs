@@ -35,7 +35,7 @@ test('the case code and test date are deterministic functions of the seed', () =
 test('spirometry rows have the specified units, and the ratio has no percent predicted', () => {
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   const t = table(model, 'spirometry');
-  assert.deepEqual(t.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'fet', 'pef']);
+  assert.deepEqual(t.rows.map((r) => r.id), ['fvc', 'fev1', 'fev1_fvc', 'fet', 'pef', 'fef2575']);
   assert.equal(row(t, 'fvc').unit, 'L');
   assert.equal(row(t, 'fev1_fvc').unit, 'ratio');
   assert.equal(row(t, 'fet').unit, 's');

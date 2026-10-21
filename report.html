@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0E2B73">
-  <meta name="description" content="A simulated pulmonary function laboratory report on three printable Letter pages, for interpretation practice. Educational use only.">
+  <meta name="description" content="A simulated pulmonary function laboratory report, a one-page summary and a detailed report printable on Letter paper, for interpretation practice. Educational use only.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%230E2B73%27/%3E%3Cpath d=%27M5 22C9 22 9 9 14 9s4 13 13 13%27 stroke=%27%235FD0BD%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
   <title>PFT Sim report | Simulated laboratory printout</title>
   <script>try{const t=localStorage.getItem("pft-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch{}</script>
@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./src/report/report.css">
+  <link rel="stylesheet" href="./src/sheets/details.css">
   <link rel="stylesheet" href="./src/report-page/page.css">
   <script type="module" src="./src/report-page/main.js"></script>
 </head>
@@ -23,6 +24,8 @@
   <div class="toolbar rp-toolbar no-print" id="rp-toolbar" hidden>
     <button type="button" class="primary" id="rp-print">Print or save as PDF</button>
     <label class="field">Spirometry reference<select id="rp-eq"><option value="GLIglobal">GLI Global 2022</option><option value="GLI2012">GLI-2012</option></select></label>
+    <label class="field">Flags<select id="rp-flags"><option value="lln">Below the lower limit of normal</option><option value="none">None</option></select></label>
+    <label class="field check"><input type="checkbox" id="rp-qc"> Quality challenge</label>
     <label class="field">Copy<select id="rp-copy"><option value="student">Student copy</option><option value="instructor">Instructor copy</option></select></label>
     <a class="linkbutton" id="rp-back" href="./">Open this case on the practice page</a>
   </div>
