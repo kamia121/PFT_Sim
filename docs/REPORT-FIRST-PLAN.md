@@ -1,4 +1,4 @@
-# Report-first learner flow: plan and thread contract (revised after consultation)
+# Report-first learner flow: plan and thread contract (revised after consultation; implemented 2026-10-21)
 
 Teaching simulator only. This file is the contract between the parallel threads. It follows the project physician's requests of 2026-10-21 (a photo of a vendor printout, "COMPLETE PULMONARY FUNCTION TESTING"; then the ATS 2017 sample report, Culver et al., Figure 1, for the z-score graphic). Neither image is stored in the repository. The consultation record is at the end.
 

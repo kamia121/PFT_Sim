@@ -29,7 +29,17 @@ const optionLabel = (item, value) => item.options?.find(([v]) => v === value)?.[
 const listLabels = (item, values) => (values.length ? values.map((v) => optionLabel(item, v)).join('; ') : 'None selected');
 
 /** The learner's answer and the key of a challenge item in words. */
+function rowMapLabels(item, map) {
+  const lookup = (rowId, value) => (item.rowOptions?.[rowId] ?? item.options ?? []).find(([v]) => v === value)?.[1] ?? String(value);
+  return item.rows.map((r) => `${r.label}: ${map?.[r.id] === undefined || map?.[r.id] === null || map?.[r.id] === '' ? 'no answer' : lookup(r.id, map[r.id])}`).join('; ');
+}
+
 function itemTexts(item, answer) {
+  // Items with several rows (per maneuver, per set) keep their key and the answer as maps from row id to option value.
+  if (Array.isArray(item.rows) && item.key && typeof item.key === 'object' && !Array.isArray(item.key)) {
+    const answered = answer && typeof answer === 'object' && Object.values(answer).some((v) => v !== undefined && v !== null && v !== '');
+    return { answer: answered ? rowMapLabels(item, answer) : null, expected: rowMapLabels(item, item.key) };
+  }
   if (isMultiItem(item)) {
     const key = Array.isArray(item.key) ? item.key : [];
     return { answer: answer === null ? null : listLabels(item, answer), expected: listLabels(item, key) };
