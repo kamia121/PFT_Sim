@@ -230,7 +230,7 @@ try {
   }
 
   // Chart text collisions on a full panel (spirometry, volumes, DLCO, quality challenge, heavy notes) at each phone width, measured on glyph ink (lib/svg-ink.mjs).
-  // Two controls first: a descender over a capital that overlap in ink (Source Sans 3, 20 px, baselines 30 and 46.9) must be reported, and the same pair 50 px apart must not.
+  // Controls first: a descender over a capital (Source Sans 3, 20 px) at baselines 30 and 46.9 (a borderline overlap) and 30 and 40 must be reported, and the same pair 50 px apart must not.
   for (const w of PHONES) {
     const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
@@ -238,7 +238,7 @@ try {
     await page.waitForSelector('#answer-form');
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(600);
-    const control = await page.evaluate((fn) => {
+    const control = await page.evaluate(async (fn) => {
       const run = new Function(`return (${fn})`)();
       const add = (id, y2) => {
         const f = document.createElement('figure');
@@ -247,14 +247,19 @@ try {
         document.querySelector('#summary-slot .sheet').append(f);
         return f;
       };
-      const hit = add('control-overlap', 46.9), clear = add('control-apart', 80);
-      const all = run().filter((x) => x.startsWith('control-'));
-      hit.remove(); clear.remove();
+      const hit = add('control-overlap', 46.9), plain = add('control-plain', 40), clear = add('control-apart', 80);
+      await document.fonts.load('20px "Source Sans 3"'); // a face that nothing on the page has used yet is loaded on first use
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const res = run();
+      const all = res.collisions.filter((x) => x.startsWith('control-'));
+      if (!all.length) all.push(`diagnostic: ${res.measured} labels measured, skipped ${res.skipped.slice(0, 3).join(', ') || 'none'}; svg ${hit.querySelector('svg').getBoundingClientRect().width}px, text length ${hit.querySelector('text').getComputedTextLength()}, font ${getComputedStyle(hit.querySelector('text')).fontFamily}`);
+      hit.remove(); plain.remove(); clear.remove();
       return all;
     }, svgInkCollisions.toString());
-    check(control.some((x) => x.startsWith('control-overlap')) && !control.some((x) => x.startsWith('control-apart')), `${w} px: ink control: an overlapping g/T pair is reported and the same pair 50 px apart is not (${control.join('; ') || 'none reported'})`);
-    const found = await page.evaluate(svgInkCollisions);
-    check(!found.length, `${w} px: full panel: no chart label's ink overlaps another or leaves its figure${found.slice(0, 3).join('; ')}`);
+    check(control.some((x) => x.startsWith('control-overlap')) && control.some((x) => x.startsWith('control-plain')) && !control.some((x) => x.startsWith('control-apart')), `${w} px: ink controls: g over T at baselines 30 and 46.9 (about 0.1 px of ink overlap, 50 shared pixels at 4x) and at 30 and 40 are reported, and the same pair 50 px apart is not (${control.join('; ') || 'none reported'})`);
+    const ink = await page.evaluate(svgInkCollisions);
+    check(ink.measured >= 40 && !ink.skipped.length, `${w} px: full panel: the ink of ${ink.measured} chart labels was measured (at least 40, none skipped${ink.skipped.length ? `: ${ink.skipped.slice(0, 3).join(', ')}` : ''})`);
+    check(!ink.collisions.length, `${w} px: full panel: no chart label's ink overlaps another or leaves its figure${ink.collisions.slice(0, 3).join('; ')}`);
     await ctx.close();
   }
 } finally {
