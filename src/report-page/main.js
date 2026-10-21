@@ -13,6 +13,7 @@ import { assembleReport } from './assemble.js';
 import { loadZInline } from './panels.js';
 import { loadSheetModules } from './modules.js';
 import { fitPages, scalePages } from './fit.js';
+import { fitSheetContent } from '../sheets/summary.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = { link: null, caseData: null, resolve: null, zInline: null, sheets: {}, equation: 'GLIglobal', copy: 'student', flags: 'lln', qualityChallenge: false, confirmed: false };
@@ -33,10 +34,14 @@ function setTheme(theme) {
 
 /** The summary sheet brings its own stylesheet; it is linked only when that module exists. */
 function addStylesheet(href) {
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = href;
-  document.head.appendChild(link);
+  return new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    // The fit of the fixed sheet measures laid-out content, so the page waits for the sheet's rules.
+    link.onload = link.onerror = () => resolve();
+    document.head.appendChild(link);
+  });
 }
 
 function showError(message) {
@@ -71,6 +76,7 @@ async function render() {
   document.title = out.title;
   try { await document.fonts?.ready; } catch { /* fonts are a refinement */ }
   window.__rpFit = fitPages(stage);
+  try { fitSheetContent(stage); } catch { /* the sheet stays at its laid-out size */ }
   scalePages(stage);
   window.__rpErrors = out.errors;
   document.body.dataset.ready = '1';
@@ -101,7 +107,7 @@ async function boot() {
     state.caseData = buildCase(state.link.descriptor, datasets);
     state.zInline = await loadZInline();
     state.sheets = await loadSheetModules();
-    if (state.sheets.summarySheetHtml) addStylesheet('./src/sheets/sheets.css');
+    if (state.sheets.summarySheetHtml) await addStylesheet('./src/sheets/sheets.css');
   } catch (e) {
     showError(`The case could not be built: ${String(e?.message ?? e).slice(0, 200)}`);
     return;

@@ -16,6 +16,7 @@
  * default, as on a real report); the learner page passes false until answers are checked.
  */
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
+import { bdPctPredDp } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { createStream } from '../core/prng.js';
@@ -376,7 +377,7 @@ export function buildReportModel(caseData, interp, options = {}) {
       { key: 'postPct', label: '%Pred', group: G2, dp: 0 },
       { key: 'change', label: 'Change', group: G2, rowDp: true, signed: true, unit: 'row' },
       { key: 'changePct', label: '% change of baseline', group: G2, dp: 1, signed: true },
-      { key: 'changePctPred', label: 'Change, % of predicted', group: G2, dp: 1, signed: true },
+      { key: 'changePctPred', label: 'Change, % of predicted', group: G2, dp: 1, dpKey: 'changePctPredDp', signed: true },
     ] : []),
   ];
   const postRef = (measure, measured) => {
@@ -400,7 +401,13 @@ export function buildReportModel(caseData, interp, options = {}) {
         row.postPct = round((100 * row.post) / r.predicted, 0);
         row.change = round(row.post - row.pre, dp);
         row.changePct = round((100 * row.change) / row.pre, 1);
-        row.changePctPred = round((100 * row.change) / r.predicted, 1);
+        // The change as a percent of the predicted value is the quantity of the 2022 decision, so it comes from the unrounded values, as in
+        // interpret(), and not from the printed ones: 1.59 and 1.91 L can print as a change that crosses 10% of predicted when the unrounded change does not.
+        const raw = interp?.bd?.pctPred?.[id] ?? (100 * (pv - r.value)) / r.predicted;
+        row.changePctPred = round(raw, 1);
+        // Within a rounding step of the 10% threshold the printed value would hide the side the change is on, so it takes the digits that show it.
+        const dpPred = bdPctPredDp(raw);
+        if (dpPred > 1) { row.changePctPred = round(raw, dpPred); row.changePctPredDp = dpPred; }
       }
     }
     return row;
@@ -415,6 +422,8 @@ export function buildReportModel(caseData, interp, options = {}) {
     extraRow('fef2575', 'FEF25-75', 'L/s', 2, preSet.summary.fef2575, postSet?.summary.fef2575 ?? null),
   ];
   const spFootParts = [`Reference values: ${eqName(equation)}${equation === 'GLI2012' ? ` (equation for "${patient.group}")` : ' (group-neutral)'}.`];
+  // The change in volume and in percent of baseline are arithmetic on the printed values; the percent of predicted is not.
+  if (hasPost) spFootParts.push('Change, % of predicted, is computed from the unrounded values.');
   // gradesWithheld === null leaves the quality sentence out altogether: a sentence that says grades are withheld shows that there are grades.
   if (includeGrades) spFootParts.push(spirometryGradeLine(caseData));
   else if (options.gradesWithheld !== null) spFootParts.push(`Test quality: ${options.gradesWithheld ?? 'grades are shown after the answers are checked'}.`);

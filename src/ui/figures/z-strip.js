@@ -227,7 +227,10 @@ function renderAts(data, opts = {}) {
     g += lab(Z_MIN, 'severe', 0, 'start');
     g += lab((Z_SEVERITY.severe + Z_SEVERITY.moderate) / 2, 'moderate', 1);
     g += lab((Z_SEVERITY.moderate + llnZ) / 2, 'mild', 0);
-    g += lab((llnZ + Z_MAX) / 2, 'within limits', 1);
+    // Above the LLN the result is not reduced, which holds for every index; "within limits" is the reading between the LLN and the ULN of
+    // an index read on both sides, so the band over the whole green area is not named that, and the area beyond the ULN carries its own name.
+    g += lab((llnZ + Z_MAX) / 2, 'not reduced', 1);
+    if (p.rows.some((r) => r.twoSided)) g += lab((-llnZ + Z_MAX) / 2, 'above ULN', 0);
     for (const z of [Z_SEVERITY.severe, Z_SEVERITY.moderate, llnZ]) g += line(sx(z), top - 5, sx(z), top - 1, { stroke: palette.axis, width: 0.8 });
     // Gradient bars as stripes: one path per color, all rows of the panel in it.
     const barRects = (xa, xb) => p.rows.map((_, i) => `M${r1(xa)} ${r1(yc(i) - BAR / 2)}h${r1(xb - xa)}v${BAR}h${r1(xa - xb)}z`).join('');
@@ -273,7 +276,10 @@ function renderAts(data, opts = {}) {
     bottomMost = Math.max(bottomMost, side ? 4 + barsTop + nRowsMax * ROW + below : yNext);
   });
 
-  const caps = [`Bands apply to all measures: severe, z below ${fix(Z_SEVERITY.severe, 1)}; moderate, ${fix(Z_SEVERITY.severe, 1)} to ${fix(Z_SEVERITY.moderate, 1)}; mild, ${fix(Z_SEVERITY.moderate, 1)} to the LLN (${fix(llnZ, 3)}); within limits above the LLN. The star marks the result.`, 'Severity of impairment is not necessarily disease severity.'];
+  const twoSided = data.rows.some((r) => r.twoSided);
+  const caps = [`Bands apply to all measures: severe, z below ${fix(Z_SEVERITY.severe, 1)}; moderate, ${fix(Z_SEVERITY.severe, 1)} to ${fix(Z_SEVERITY.moderate, 1)}; mild, ${fix(Z_SEVERITY.moderate, 1)} to the LLN (${fix(llnZ, 3)}); not reduced above the LLN. The star marks the result.`,
+    ...(twoSided ? [`For the indices read on both sides, within limits means between the LLN and the ULN (+${fix(-llnZ, 3)}); a value above the ULN is marked above ULN and is not graded by severity.`] : []),
+    'Severity of impairment is not necessarily disease severity.'];
   const maxChars = Math.floor(W / 3.9);
   const capLines = [];
   for (const cap of caps) {
@@ -285,7 +291,7 @@ function renderAts(data, opts = {}) {
   capLines.forEach((l, i) => { g += text(0, cy + i * 10, l, { palette, size: FS_S }); });
   const height = Math.round(cy + capLines.length * 10 + 2);
 
-  const desc = opts.description ?? `${panels.map((p) => `${p.title}: ${p.rows.map((r) => `${r.label} z ${fix(r.z, 2)}, ${ATS_WORDS[atsWhere(r.z, r.twoSided)]}${r.z < Z_MIN || r.z > Z_MAX ? ' (off scale)' : ''}`).join('; ')}.`).join(' ')} Axis from ${Z_MIN} to ${Z_MAX}; gradient bars with the lower limit of normal at ${llnZ}, the predicted value at 0 and, for the two-sided indices, the upper limit at +1.645.`;
+  const desc = opts.description ?? `${panels.map((p) => `${p.title}: ${p.rows.map((r) => `${r.label} z ${fix(r.z, 2)}, ${ATS_WORDS[atsWhere(r.z, r.twoSided)]}${r.z < Z_MIN || r.z > Z_MAX ? ' (off scale)' : ''}`).join('; ')}.`).join(' ')} Axis from ${Z_MIN} to ${Z_MAX}; gradient bars with the lower limit of normal at ${llnZ}, the predicted value at 0 and, for the two-sided indices, the upper limit at +1.645, above which a value is marked above ULN and is not graded by severity.`;
   return wrapSvg({ palette, width: W, height: opts.height ?? height, title: opts.title ?? 'Z-score graphic', description: desc, body: g });
 }
 

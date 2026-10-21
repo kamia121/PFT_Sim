@@ -94,6 +94,12 @@ fieldset.inline.eq-select legend{padding:0;margin-right:8px;float:left}
 .interp-box .prompt{margin:.2em 0 .4em;color:var(--text-muted);font-size:.93rem}
 .interp-box .opts-multi{display:flex;flex-wrap:wrap;gap:2px 16px}
 .interp-box .opts-multi label{display:inline-flex;gap:6px;align-items:baseline}
+.interp-box .row-item{grid-column:1 / -1}
+.interp-box .rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:6px 12px;margin-top:6px}
+.interp-box .row-q{border:1px solid var(--border);border-radius:6px;margin:0;padding:4px 8px}
+.interp-box .row-q .opts{display:flex;flex-wrap:wrap;gap:2px 14px}
+.interp-box .row-q.many .opts{flex-direction:column;gap:0}
+.interp-box .row-q label{display:inline-flex;gap:6px;align-items:center}
 .interp-box .stage-block{margin:12px 0}
 .interp-box .impression{margin:14px 0 4px}
 .interp-box .impression label{display:block;margin-bottom:4px}

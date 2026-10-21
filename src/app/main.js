@@ -5,6 +5,7 @@ import { serializeDescriptor, parseDescriptor } from '../core/descriptor.js';
 import { decodeCase } from '../core/code.js';
 import { interpret, compareEquations } from '../interpret/interpret.js';
 import * as R from './render.js';
+import { esc } from './format.js';
 import { bindFigureDownloads } from './figure-downloads.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
 import { buildReportModel, allTables } from '../report/model.js';
@@ -17,7 +18,8 @@ import { createStage, showStatement, canCheck, check as checkStage, openDetails,
 import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
-import { renderPractice } from './practice-view.js';
+import { renderPractice, detailsBodyHtml } from './practice-view.js';
+import { pageRulesCss } from '../report-page/pages.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
@@ -28,7 +30,7 @@ const state = {
   showSchematic: false, figView: {},
   modelCache: null, itemsCache: null,
   reportModel: null, reportDark: false, reportInterp: false, printing: false,
-  tally: { answered: 0, matched: 0, items: 0 },
+  tally: { answered: 0, matched: 0, items: 0 }, fitContent: null,
 };
 
 /** Practice mix: weights are teaching choices, not prevalence. */
@@ -98,9 +100,8 @@ function announce(text) {
   if (el) el.textContent = text;
 }
 
-/** Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. */
-function render({ focus = null } = {}) {
-  if (!$('#panel-report').hidden) { renderReportView(); return; }
+/** The context of the practice area, from the state. The feedback is built only once the answers are checked. */
+function practiceContext() {
   const c = state.case;
   const { a, b, cmp } = interpretations();
   const vis = visibilityNow();
@@ -111,13 +112,19 @@ function render({ focus = null } = {}) {
   state.feedback = stage === 3
     ? buildFeedback({ caseData: c, interp: a, interpOther: b, equation: state.spirometryEquation, responses: state.responses, items, scoreChallenge: state.mods.scoreChallenge, rt: state.rt, detailsOpened: state.stage.detailsOpened })
     : null;
-  $('#case').innerHTML = renderPractice({
+  return {
     caseData: c, interp: a, cmp, equation: state.spirometryEquation, flags: state.flags,
     qualityChallenge: state.stage.qualityChallenge, stage, scored: state.stage.scored, detailsOpen: state.detailsOpen,
     vis, canCheck: canCheck(state.stage), rt: state.rt, items, responses: state.responses,
     model, sheets: { summarySheetHtml: state.mods.summarySheetHtml, detailsSheetHtml: state.mods.detailsSheetHtml },
     palette: PALETTES.white, figView: state.figView, showSchematic: state.showSchematic, resolve: state.resolve, feedback: state.feedback,
-  });
+  };
+}
+
+/** Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. */
+function render({ focus = null } = {}) {
+  if (!$('#panel-report').hidden) { renderReportView(); return; }
+  $('#case').innerHTML = renderPractice(practiceContext());
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
   fitSheets();
@@ -133,15 +140,29 @@ async function fitSheets() {
 let fitPending = 0;
 window.addEventListener('resize', () => { cancelAnimationFrame(fitPending); fitPending = requestAnimationFrame(fitSheets); });
 
-/** Redraws only the page-2 area (a figure view or chip change, or opening it), so the answers and the scroll position stay as they are. */
+/** Selector of the control that has focus, for the figure view controls (which have no id) and for controls that do. */
+function focusSelector(el) {
+  if (!el || el === document.body) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.dataset?.figView) return `input[data-fig-view="${CSS.escape(el.dataset.figView)}"][value="${CSS.escape(el.value)}"]`;
+  if (el.dataset?.figChip) return `input[data-fig-chip="${CSS.escape(el.dataset.figChip)}"][value="${CSS.escape(el.value)}"]`;
+  return null;
+}
+
+/**
+ * Redraws only page 2 (a figure view or chip change), so the answers, the checked state of the form and the scroll position stay as they
+ * are, and the control the learner used keeps focus. In the Lab report view the report is redrawn, which holds no answers.
+ */
 function renderDetailsOnly() {
+  const focus = focusSelector(document.activeElement);
+  if (!$('#panel-report').hidden) { renderReportView(); if (focus) $(focus)?.focus?.({ preventScroll: true }); return; }
   const slot = $('#details-slot');
   if (!slot) return render();
-  const { a } = interpretations();
-  const vis = visibilityNow();
+  const ctx = practiceContext();
   const figs = $('#figs');
-  if (figs && !state.mods.detailsSheetHtml) { figs.innerHTML = R.renderFigures(state.case, a, { revealed: vis.showGradeColumns, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve }); return; }
-  render({ focus: document.activeElement?.id ? `#${CSS.escape(document.activeElement.id)}` : null });
+  if (figs && !state.mods.detailsSheetHtml) { figs.innerHTML = R.renderFigures(state.case, ctx.interp, { revealed: ctx.vis.showGradeColumns, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve }); return; }
+  slot.innerHTML = detailsBodyHtml(ctx);
+  if (focus) $(focus)?.focus?.({ preventScroll: true });
 }
 
 function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false } = {}) {
@@ -199,6 +220,9 @@ function toggleDetails() {
   render({ focus: '#toggle-details' });
 }
 
+/** The page settings that ride in the address of the printable report page: the quality challenge as set for the case, and the flags. */
+const linkSettings = () => ({ qualityChallenge: state.stage.qualityChallenge, flags: state.flags });
+
 /** Lab report view: the same case and spirometry equation as the summary and details sheets, for printing and download. Nothing from the key appears before the visibility rule releases it. */
 function renderReportView() {
   if (!state.case) return;
@@ -217,11 +241,18 @@ function renderReportView() {
   if (sheets) {
     const common = { rt: state.rt, caseData: state.case, interp: a, equation: state.spirometryEquation, palette };
     const summary = state.mods.summarySheetHtml ? state.mods.summarySheetHtml(model, { ...common, flags: state.flags, showQualityLines: vis.showQualityLines }) : `<p class="muted">${'Summary sheet not available in this build.'}</p>`;
-    const details = state.mods.detailsSheetHtml ? state.mods.detailsSheetHtml(model, { ...common, showGrades: vis.showGradeColumns, view: state.figView }) : `<p class="muted">${'Details sheet not available in this build.'}</p>`;
-    const link = model.meta.caseToken ? `<p class="no-print"><a href="${reportPageHref(model)}">Open the printable report page</a></p>` : '';
-    $('#report-root').innerHTML = `${link}<div class="sheet-wrap">${summary}${details}</div>`;
+    const details = state.mods.detailsSheetHtml ? state.mods.detailsSheetHtml(model, { ...common, showGrades: vis.showGradeColumns, views: state.figView, controls: true, resolve: state.resolve }) : `<p class="muted">${'Details sheet not available in this build.'}</p>`;
+    const link = model.meta.caseToken ? `<p class="no-print"><a href="${esc(reportPageHref(model, linkSettings()))}">Open the printable report page</a></p>` : '';
+    const statement = state.mods.interpretationSectionHtml?.(model) ?? '';
+    // The print rules are the report page's: edge-to-edge summary sheet, then flowing pages with margins and a page number.
+    $('#report-root').innerHTML = `${link}<div class="sheet-wrap">${summary}<div class="report-flow pft-report rp-flow">${statement}${details}</div></div><style>${pageRulesCss(model, 'Student copy')}</style>`;
   } else {
-    $('#report-root').innerHTML = renderReportHtml(model, { interactive: true });
+    $('#report-root').innerHTML = renderReportHtml(model, { interactive: true, settings: linkSettings() });
+  }
+  if (sheets && state.fitContent) {
+    state.fitContent($('#report-root'));
+    // The first fit can precede the web font; the sheet is fitted again once fonts are ready.
+    document.fonts?.ready?.then(() => { if (!$('#panel-report').hidden) state.fitContent($('#report-root')); });
   }
   $('#report-eq').value = state.spirometryEquation;
   $('#report-interp').disabled = !revealed;
@@ -245,12 +276,17 @@ function setTheme(theme) {
 }
 
 function addSheetStyles() {
-  if (document.querySelector('link[data-sheets-css]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = './src/sheets/sheets.css';
-  link.dataset.sheetsCss = '1';
-  document.head.appendChild(link);
+  if (document.querySelector('link[data-sheets-css]')) return Promise.resolve();
+  // The details sheet's own rules (running header, figure frames, pagination) are the ones the report page loads. The fit of the fixed
+  // summary sheet measures laid-out content, so the page waits for the rules.
+  return Promise.all(['./src/sheets/sheets.css', './src/sheets/details.css'].map((href) => new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.dataset.sheetsCss = '1';
+    link.onload = link.onerror = () => resolve();
+    document.head.appendChild(link);
+  })));
 }
 
 async function boot() {
@@ -272,7 +308,9 @@ async function boot() {
     challenges: () => import('../challenges/index.js'),
     visibility: () => import('../challenges/visibility.js'),
   });
-  if (state.mods.summarySheetHtml || state.mods.detailsSheetHtml) addSheetStyles();
+  if (state.mods.summarySheetHtml || state.mods.detailsSheetHtml) await addSheetStyles();
+  // The fit of the fixed summary sheet runs synchronously at every redraw of the Lab report view (it must hold when the page prints), so the helper is held here.
+  try { state.fitContent = (await import('../sheets/summary.js')).fitSheetContent; } catch { state.fitContent = null; }
   bindFigureDownloads($('#case'), () => R.figureCaseData(state.case, interpretations().a, { revealed: state.stage.stage === 3, showSchematic: state.showSchematic, figView: state.figView, resolve: state.resolve }));
 
   // The practice page and the report page share the equation in the address; the quality challenge and the flag setting ride beside the case.

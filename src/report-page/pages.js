@@ -115,6 +115,18 @@ export function buildAppendix(full, { generatedAs }) {
 export const footHtml = (model, { n, label }) => `<div class="rp-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record. ${esc(label)}.</span><span>Page ${n}</span></div>`;
 
 /**
+ * The @page rules of the printed report: the fixed sheets print edge to edge on Letter, the flowing pages take real margins and carry
+ * the case code and the page number in their margin boxes. The report page and the Lab report view of the practice page both emit
+ * this text, so the two print paths paginate alike.
+ * @param {object} model @param {string} label copy label printed in the margin box
+ */
+export function pageRulesCss(model, label) {
+  const code = String(model.meta.caseCode).replace(/[^A-Z0-9-]/gi, '');
+  // Named page for the appendix: it flows over several sheets, so it takes real page margins and its own margin-box footer.
+  return `@page{size:8.5in 11in;margin:0}@page apx{size:8.5in 11in;margin:.5in .5in .6in}@page cont{size:8.5in 11in;margin:.5in .5in .6in}@media print{@page cont{@bottom-left{content:"SIMULATED REPORT - educational use only. PFT Sim, generator version ${model.meta.generatorVersion}. Case ${code}. Not a patient record. ${label}.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}@page apx{@bottom-left{content:"SIMULATED REPORT - educational use only. Case ${code}. Instructor appendix.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}}`;
+}
+
+/**
  * Wrap the page bodies in their frames.
  * @param {object} model
  * @param {string[]} pages inner HTML of the fixed pages
@@ -130,8 +142,5 @@ export function frameDocument(model, pages, { label, appendix = null, continued 
   const apx = appendix
     ? `<div class="rp-box flow" data-page-box="appendix"><article class="pft-report rp-page rp-flow" data-page="appendix" aria-label="Instructor appendix, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${appendix}</div><div class="rp-foot"><span>${esc(model.meta.marker)}. Case ${esc(model.meta.caseCode)}. Instructor appendix: contains the answer key.</span></div></article></div>`
     : '';
-  const code = String(model.meta.caseCode).replace(/[^A-Z0-9-]/gi, '');
-  // Named page for the appendix: it flows over several sheets, so it takes real page margins and its own margin-box footer.
-  const css = `@page{size:8.5in 11in;margin:0}@page apx{size:8.5in 11in;margin:.5in .5in .6in}@page cont{size:8.5in 11in;margin:.5in .5in .6in}@media print{@page cont{@bottom-left{content:"SIMULATED REPORT - educational use only. PFT Sim, generator version ${model.meta.generatorVersion}. Case ${code}. Not a patient record. ${label}.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}@page apx{@bottom-left{content:"SIMULATED REPORT - educational use only. Case ${code}. Instructor appendix.";font:7.5pt Arial,sans-serif;color:#000}@bottom-right{content:"Page " counter(page);font:7.5pt Arial,sans-serif;color:#000}}}`;
-  return `<style>${css}</style><div class="rp-doc" data-copy="${appendix ? 'instructor' : 'student'}">${fixed.join('')}${cont}${apx}</div>`;
+  return `<style>${pageRulesCss(model, label)}</style><div class="rp-doc" data-copy="${appendix ? 'instructor' : 'student'}">${fixed.join('')}${cont}${apx}</div>`;
 }

@@ -2,9 +2,11 @@ import { esc, num, signed, MEASURES, EQUATION_NAMES, hbKnown, hbLow, coHbMeasure
 import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT, bdArtifactText, ARCHETYPE_NOTE_OVERRIDES } from './explain.js';
 import { QUESTIONS, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
+import { bdPctPredDp } from '../interpret/precision.js';
 import { FIGURES, PANEL_IDS } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
+import { separableCount, figureView, viewControls } from '../ui/fig-view.js';
 import { archetypeNote } from '../core/physiology.js';
 import { faultWording } from '../core/quality.js';
 
@@ -62,29 +64,6 @@ const FIGURE_NOTES = {
   'z-strip': () => 'Each star is the z-score of a measured value against its reference equation. The dashed line is the predicted value (z = 0), the dotted line on the left is the lower limit of normal (z = −1.645), and, for indices that can be abnormal in either direction, the dotted line on the right is the upper limit (z = +1.645).',
 };
 
-/** Number of maneuvers or trials a panel can separate; 0 when it has nothing to separate. */
-function separableCount(id, c) {
-  if (id === 'panel-spirometry') return Math.max(c.spirometry.pre.maneuvers.length, c.spirometry.post?.maneuvers.length ?? 0);
-  if (id === 'panel-pleth') return c.pleth?.trials?.length ?? 0;
-  return 0;
-}
-
-const VIEW_LABELS = [['best', 'Best'], ['all', 'Overlay'], ['separate', 'Separate']];
-
-/** View switch and numbered chips for a panel with several maneuvers or trials. */
-function viewControls(id, n, view) {
-  const radios = VIEW_LABELS.map(([v, l]) => `<label><input type="radio" name="fv-${id}" data-fig-view="${id}" value="${v}" ${view.view === v ? 'checked' : ''}> ${l}</label>`).join(' ');
-  const noun = id === 'panel-pleth' ? 'trial' : 'maneuver';
-  const chips = view.view === 'best' ? '' : Array.from({ length: n }, (_, i) => `<label class="chip"><input type="checkbox" data-fig-chip="${id}" value="${i + 1}" ${view.selected.includes(i + 1) ? 'checked' : ''}><span class="visually-hidden">${noun} </span>${i + 1}</label>`).join('');
-  return `<div class="fig-view" role="group" aria-label="Show ${noun}s as"><span class="muted">${noun === 'trial' ? 'Panting trials' : 'Maneuvers'}:</span> ${radios}${chips ? `<span class="chips">${chips}</span>` : ''}</div>`;
-}
-
-/** The view state of a panel: best curve by default, every maneuver selected. */
-export function figureView(id, n, figView = {}) {
-  const v = figView[id] ?? {};
-  return { view: v.view ?? 'best', selected: (v.selected ?? Array.from({ length: n }, (_, i) => i + 1)).filter((k) => k >= 1 && k <= n) };
-}
-
 /**
  * The figure cards: the combined panels and the z-score strip first, each panel with its view switch, then the individual plots
  * they are built from inside a closed disclosure. `figView` holds each panel's { view, selected }.
@@ -133,7 +112,7 @@ export function renderBronchodilator(c, interp, { maneuvers = true } = {}) {
   if (!post) return '';
   const pre = c.report.spirometry, po = c.report.spirometry.post, bd = interp.bd;
   const rows = [['FEV₁', pre.fev1, po.fev1, bd.dFev1, bd.pctBase.fev1, bd.pctPred.fev1], ['FVC', pre.fvc, po.fvc, bd.dFvc, bd.pctBase.fvc, bd.pctPred.fvc]].map(([n, a, b, d, pb, pp]) =>
-    `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pb, 1)}%</td><td>${signed(pp, 1)}%</td></tr>`).join('');
+    `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pb, 1)}%</td><td>${signed(pp, bdPctPredDp(pp))}%</td></tr>`).join('');
   return `<section class="card" aria-labelledby="h-bd"><h2 id="h-bd">After bronchodilator</h2>
   ${maneuvers ? renderManeuvers(post, 'Post-bronchodilator maneuvers', { revealed: false, id: 'post-maneuvers' }) : ''}
   <div class="scroll"><table class="data"><caption>Change from baseline</caption><thead><tr><th class="l">Measure</th><th>Before (L)</th><th>After (L)</th><th>Change (L)</th><th>Change, % of baseline</th><th>Change, % of predicted</th></tr></thead><tbody>${rows}</tbody></table></div>

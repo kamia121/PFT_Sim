@@ -6,9 +6,10 @@
  *   { id, caption, columns: [{ key, label, unit?, align?, dp?, group?, rowDp?, signed? }], rows: object[], footnote }
  *
  * Cell values are numbers (already rounded to the displayed precision), strings, or null (blank).
- * `unit: 'row'` takes the unit from `row.unit`. `rowDp: true` takes the decimals from `row.dp`.
+ * `unit: 'row'` takes the unit from `row.unit`. `rowDp: true` takes the decimals from `row.dp`. `dpKey` names a row field that
+ * gives the decimals of that cell when the row has it (a value that needs more digits than its column to show which side of a threshold it is on).
  *
- * @typedef {{ key: string, label: string, unit?: string, align?: 'left'|'right', dp?: number, group?: string, rowDp?: boolean, signed?: boolean }} ReportColumn
+ * @typedef {{ key: string, label: string, unit?: string, align?: 'left'|'right', dp?: number, group?: string, rowDp?: boolean, dpKey?: string, signed?: boolean }} ReportColumn
  * @typedef {{ id: string, caption: string, columns: ReportColumn[], rows: Record<string, any>[], footnote: string }} ReportTable
  */
 
@@ -31,7 +32,7 @@ export function formatCell(value, col, row = {}, { unicodeMinus = false } = {}) 
   if (value === null || value === undefined || value === '') return '';
   if (typeof value === 'string') return value;
   if (!Number.isFinite(value)) return '';
-  const dp = col.rowDp ? (row.dp ?? 2) : (col.dp ?? 2);
+  const dp = col.dpKey && Number.isFinite(row[col.dpKey]) ? row[col.dpKey] : col.rowDp ? (row.dp ?? 2) : (col.dp ?? 2);
   let s = Math.abs(value).toFixed(dp);
   const negative = value < 0 && Number(s) !== 0;
   if (col.signed) s = (negative ? '-' : '+') + s;

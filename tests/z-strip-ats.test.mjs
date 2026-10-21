@@ -77,7 +77,11 @@ test('ats style: one star per bar, the z-score and the words in the text column,
       assert.ok(svg.includes(`>${words}</text>`), `${name}: ${r.id} ${words}`);
       assert.equal(r.twoSided, TWO_SIDED.has(r.id));
     }
-    for (const l of ['severe', 'moderate', 'mild', 'within limits', 'LLN', 'predicted']) assert.ok(svg.includes(`>${l}</text>`), `${name}: ${l}`);
+    // The band over the green area is "not reduced" (it holds for every index); "within limits" is a row's own reading between the LLN and the ULN (R8).
+    for (const l of ['severe', 'moderate', 'mild', 'not reduced', 'LLN', 'predicted']) assert.ok(svg.includes(`>${l}</text>`), `${name}: ${l}`);
+    const bandLabel = (w) => [...svg.matchAll(new RegExp(`<text[^>]*y="([\\d.]+)"[^>]*>${w}</text>`, 'g'))].some((m) => Number(m[1]) < 40); // the band names sit above the axes, the row words in the rows
+    assert.equal(bandLabel('above ULN'), rows.some((r) => r.twoSided), `${name}: the band beyond the ULN is named where an index is read on both sides`);
+    assert.ok(!bandLabel('within limits'), `${name}: no band over the green area is called within limits`);
     assert.equal(svg.includes('>ULN</text>'), rows.some((r) => r.twoSided), `${name}: ULN label`);
     // Lines: predicted and LLN per panel, ULN per run of two-sided rows (heavy dashed lines, width 1.9).
     const heavy = count(svg, /stroke-width="1\.9"/g);

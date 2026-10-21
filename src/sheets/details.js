@@ -19,6 +19,7 @@ import { tableHtml } from '../report/html.js';
 import { figureCaseData, trialObservation, qualityNotesFor } from '../report/model.js';
 import { FIGURES } from '../ui/figures/index.js';
 import { PALETTES } from '../ui/palettes.js';
+import { separableCount, viewControls } from '../ui/fig-view.js';
 
 /** Panel width: 7 in at 96 px per inch, as on the printed pages. */
 export const PANEL_WIDTH = 672;
@@ -28,6 +29,8 @@ const YES = 'yes', NO = 'no';
 /** @param {object} model @param {string} id */
 const tableOf = (model, id) => model.sections.flatMap((s) => s.tables).find((t) => t.id === id) ?? null;
 const fieldOf = (model, label) => model.header.fields.find((f) => f.label === label)?.value ?? '';
+
+const VIEWS = ['best', 'all', 'separate'];
 
 /** Spirometry views: 'auto' separates the maneuvers when eight or fewer are drawn and overlays them otherwise. */
 export function spirometryView(view, caseData) {
@@ -126,14 +129,21 @@ function truthOf(caseData, rt) {
  * Build the sheet.
  * @param {object} model report model (buildReportModel); may or may not hold grades
  * @param {{ rt?: object|null, caseData: object, interp: object, equation?: string, palette?: object|string, showGrades?: boolean,
- *   view?: 'auto'|'best'|'all'|'separate', selected?: number[] }} opts `rt` is the technologist's report (src/core/rt-report.js)
+ *   view?: 'auto'|'best'|'all'|'separate', selected?: number[], views?: Record<string, { view?: string, selected?: number[] }>|null,
+ *   controls?: boolean, resolve?: Function|null }} opts
+ *   `rt` is the technologist's report (src/core/rt-report.js). `view` and `selected` are the default for the printed report.
+ *   `views` is the state of each panel that can separate its maneuvers or trials, keyed by figure id ('panel-spirometry',
+ *   'panel-pleth'), and overrides `view` and `selected` for that panel; an object given as `view` is read as `views`. `controls`
+ *   adds the screen-only switch and numbered chips of each such panel. `resolve` is the reference resolver (src/reference/gli.js):
+ *   the z-score graphic needs it for the post-bronchodilator z-scores.
  * @returns {{ html: string, errors: { id: string, message: string }[] }}
  */
-export function detailsSheet(model, { rt = null, caseData, interp, equation, palette = PALETTES.white, showGrades = false, view = 'auto', selected } = {}) {
+export function detailsSheet(model, { rt = null, caseData, interp, equation, palette = PALETTES.white, showGrades = false, view = 'auto', selected, views = null, controls = false, resolve = null } = {}) {
   const errors = [];
+  if (view && typeof view === 'object') { views = views ?? view; view = 'auto'; }
   const pal = palette && typeof palette === 'object' ? palette : PALETTES[palette] ?? PALETTES.white;
   const eq = equation ?? model.meta.equation;
-  const cd = figureCaseData(caseData, interp, eq, null);
+  const cd = figureCaseData(caseData, interp, eq, resolve);
   const truth = truthOf(caseData, rt);
   const grades = { pre: showGrades ? truth.pre : null, post: showGrades ? truth.post : null };
   const draw = (id, opts) => figureHtml(id, cd, { palette: pal, showQuality: showGrades, errors, ...opts });
@@ -144,13 +154,23 @@ export function detailsSheet(model, { rt = null, caseData, interp, equation, pal
   const head = `<header class="dt-head"><div class="dt-lab"><strong>${esc(lab)}</strong><span>Pulmonary Function Report: detailed report</span></div>`
     + `<dl class="dt-id"><div><dt>Name</dt><dd>${esc(fieldOf(model, 'Name'))}</dd></div><div><dt>ID</dt><dd>${esc(fieldOf(model, 'ID'))}</dd></div><div><dt>Case</dt><dd>${esc(model.meta.caseCode)}</dd></div><div><dt>Test date</dt><dd>${esc(fieldOf(model, 'Test date (simulated)'))}</dd></div></dl></header>`;
 
-  const spView = spirometryView(view, caseData);
+  // A panel's own state, when the page holds one, takes the place of the sheet-wide default.
+  const panelView = (id, n, fallback, defaultSelected) => {
+    const v = views?.[id] ?? {};
+    const chosen = VIEWS.includes(v.view) ? v.view : fallback;
+    const sel = Array.isArray(v.selected) ? v.selected.filter((k) => Number.isInteger(k) && k >= 1 && k <= n) : (defaultSelected ?? Array.from({ length: n }, (_, i) => i + 1));
+    return { view: chosen, selected: sel };
+  };
+  const nSpiro = separableCount('panel-spirometry', caseData), nPleth = separableCount('panel-pleth', caseData);
+  const sp = panelView('panel-spirometry', nSpiro, spirometryView(view, caseData), Array.isArray(selected) ? selected : undefined);
+  const spControls = controls && nSpiro > 1 ? viewControls('panel-spirometry', nSpiro, sp) : '';
   const spiro = section('d-spirometry', 'Forced maneuvers',
-    `${tbl(maneuverTable(model, caseData, 'pre', { showGrades, grades }))}${tbl(maneuverTable(model, caseData, 'post', { showGrades, grades }))}${draw('panel-spirometry', { view: spView, selected })}`);
+    `${tbl(maneuverTable(model, caseData, 'pre', { showGrades, grades }))}${tbl(maneuverTable(model, caseData, 'post', { showGrades, grades }))}${spControls}${draw('panel-spirometry', { view: sp.view, selected: sp.selected })}`);
 
-  const plethView = view === 'best' ? 'best' : view === 'separate' ? 'separate' : 'all';
+  const pl = panelView('panel-pleth', nPleth, view === 'best' ? 'best' : view === 'separate' ? 'separate' : 'all');
+  const plControls = controls && nPleth > 1 ? viewControls('panel-pleth', nPleth, pl) : '';
   const pleth = caseData.pleth ? section('d-pleth', 'Plethysmography',
-    `${draw('panel-pleth', { view: plethView })}${tbl(plethTable(model, caseData, { showGrades, truth }))}`) : '';
+    `${plControls}${draw('panel-pleth', { view: pl.view, selected: pl.selected })}${tbl(plethTable(model, caseData, { showGrades, truth }))}`) : '';
 
   const dlco = caseData.dlco && caseData.dlcoTrace ? section('d-dlco', 'Diffusing capacity',
     draw('panel-dlco', { view: 'best' })) : '';
@@ -167,7 +187,7 @@ export function detailsSheet(model, { rt = null, caseData, interp, equation, pal
 /**
  * The details sheet as an HTML string.
  * @param {object} model report model
- * @param {{ rt?: object|null, caseData: object, interp: object, equation?: string, palette?: object|string, showGrades?: boolean, view?: string, selected?: number[] }} opts
+ * @param {Parameters<typeof detailsSheet>[1]} opts
  * @returns {string}
  */
 export const detailsSheetHtml = (model, opts) => detailsSheet(model, opts).html;

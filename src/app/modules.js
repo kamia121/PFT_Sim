@@ -10,6 +10,7 @@
 /**
  * @typedef {object} OptionalModules
  * @property {Function|null} summarySheetHtml (model, { rt, caseData, interp, equation, palette, flags, showQualityLines }) => string
+ * @property {Function|null} interpretationSectionHtml (model) => string; not required of the summary module, null when it lacks it
  * @property {Function|null} detailsSheetHtml (model, { rt, caseData, interp, equation, palette, showGrades, view }) => string
  * @property {Function|null} buildRtReport (caseData) => RtReport
  * @property {Function|null} buildChallenges (caseData, { rt, interp, qualityChallenge }) => item[]
@@ -17,6 +18,9 @@
  * @property {Function|null} visibility ({ qualityChallenge, stage }) => { showQualityLines, showGradeColumns, showStatementInSummary }
  * @property {string[]} missing names of the modules that could not be imported
  */
+
+/** Functions that are taken from a module when it has them and are not required of it. */
+const EXTRA = { summary: ['interpretationSectionHtml'] };
 
 const WANTED = {
   summary: ['summarySheetHtml'],
@@ -33,12 +37,13 @@ const WANTED = {
 export async function loadOptionalModules(importers) {
   /** @type {any} */
   const out = { missing: [] };
-  for (const names of Object.values(WANTED)) for (const n of names) out[n] = null;
+  for (const names of [...Object.values(WANTED), ...Object.values(EXTRA)]) for (const n of names) out[n] = null;
   await Promise.all(Object.entries(WANTED).map(async ([key, names]) => {
     try {
       const mod = await importers[key]();
       if (!names.every((n) => typeof mod?.[n] === 'function')) throw new TypeError(`${key} module lacks ${names.join(', ')}`);
       for (const n of names) out[n] = mod[n];
+      for (const n of EXTRA[key] ?? []) if (typeof mod[n] === 'function') out[n] = mod[n];
     } catch {
       out.missing.push(key);
     }

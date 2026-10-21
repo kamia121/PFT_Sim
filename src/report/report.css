@@ -139,7 +139,7 @@ body.rpt-standalone .pft-report { margin: 12px auto; }
   .pft-report .rpt-box { min-height: 1in; font-size: 8.5pt; }
   /* In the app, print only the report. */
   body.report-active .masthead, body.report-active .footer, body.report-active .tabs, body.report-active h1, body.report-active .lede, body.report-active .warn,
-  body.report-active .rpt-toolbar, body.report-active #panel-practice, body.report-active #panel-method { display: none !important; }
+  body.report-active .rpt-toolbar, body.report-active #panel-practice, body.report-active #panel-method, body.report-active #report-hint { display: none !important; }
   body.report-active main { max-width: none; padding: 0; }
 }
 /* Combined panels are drawn for the full 7 in page width. */

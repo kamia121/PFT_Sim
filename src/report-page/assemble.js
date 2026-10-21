@@ -57,7 +57,7 @@ export function assembleReport({ caseData, resolve, equation = 'GLIglobal', copy
       summaryHtml = sheets.summarySheetHtml(model, { rt, caseData, interp, equation, palette, flags, showQualityLines: vis.showQualityLines });
     } catch (e) { errors.push({ id: 'summary-sheet', message: String(e?.message ?? e) }); }
   }
-  const details = detailsSheet(model, { rt, caseData, interp, equation, palette, showGrades: vis.showGradeColumns, view });
+  const details = detailsSheet(model, { rt, caseData, interp, equation, palette, showGrades: vis.showGradeColumns, view, resolve });
   errors.push(...details.errors);
 
   const { pages, continued } = buildPages(model, slots, { summaryHtml: summaryHtml || null, detailsHtml: details.html, rt, showQualityLines: vis.showQualityLines, zInline, palette, llnZ: LLN_Z });

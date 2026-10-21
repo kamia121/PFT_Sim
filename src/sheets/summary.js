@@ -159,7 +159,7 @@ function sheetTable(table, id, { flags }) {
 const before = (text, stop) => { const i = text.indexOf(stop); return (i < 0 ? text : text.slice(0, i)).trim(); };
 
 function spirometryFootnote(table, { flags, rt, showQualityLines, hasVolumes }) {
-  const parts = [before(table.footnote, ' Test quality:')];
+  const parts = [before(before(table.footnote, ' Test quality:'), ' Change, % of predicted,')];
   if (flags === 'lln') parts.push(`Values below the LLN (z < ${String(LLN_Z).replace('-', '−')}) are printed in bold red${hasVolumes ? '; so are TLC, RV, RV/TLC, DLCO and KCO above the ULN (z > +1.645)' : ''}.`);
   else parts.push('Values are not flagged.');
   parts.push('FEF25-75 has no reference value.');
@@ -253,6 +253,28 @@ function curves(caseData, rt, palette) {
   }).join('');
 }
 
+/* ---------------------------------------------------------------------------------------------- interpretation */
+
+/** Line in the sheet's interpretation box once the statement has been released: the box holds about a hundred pixels, a statement runs to a paragraph. */
+export const INTERPRETATION_POINTER = 'The interpretation statement follows on the next sheet.';
+
+const interpParagraphs = (text) => String(text).split(/\n{2,}/).map((p) => p.trim()).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('');
+
+/**
+ * The interpretation statement as a section that flows after the summary sheet, for the sheet assembly of the Lab report view. The
+ * model carries the statement only after the key has been released and the statement asked for, so before that this is the empty
+ * string. The statement is the model's text, escaped; the notes on the simulation follow it under their own heading.
+ * @param {object} model report model
+ * @returns {string}
+ */
+export function interpretationSectionHtml(model) {
+  if (!model?.interpretation) return '';
+  const notes = model.interpretationNotes?.length ? `<div class="sheet-simnotes"><h3>Notes on this simulation</h3><ul>${model.interpretationNotes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
+  const foot = model.footer;
+  return `<section class="rpt-sec dt-sec sheet-interp-full" data-section="interpretation-statement"><h2>Interpretation</h2><div class="sheet-statement">${interpParagraphs(model.interpretation)}</div>${notes}`
+    + `<div class="sheet-sign"><div><span class="sheet-line"></span>${esc(foot.signatureLabel)}</div><div class="short"><span class="sheet-line"></span>${esc(foot.dateLabel)}</div></div></section>`;
+}
+
 /* ---------------------------------------------------------------------------------------------- the sheet */
 
 /**
@@ -288,7 +310,7 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
     + (zsvg ? `<figure class="sheet-z" data-figure-id="z-strip-ats">${zsvg}</figure>` : '')
     + (model.referenceNote?.length ? `<p class="sheet-refnote">${model.referenceNote.map((l) => esc(l)).join(' ')}</p>` : '')
     + `<div class="sheet-boxes${solo ? ' solo' : ''}">${solo ? '' : commentsBox}`
-    + `<section class="sheet-box sheet-interp"><h2>Interpretation</h2><div id="sheet-interpretation" class="sheet-interp-body"></div>`
+    + `<section class="sheet-box sheet-interp"><h2>Interpretation</h2><div id="sheet-interpretation" class="sheet-interp-body">${model.interpretation ? `<p class="sheet-interp-ref">${INTERPRETATION_POINTER}</p>` : ''}</div>`
     + `<div class="sheet-sign"><div><span class="sheet-line"></span>${esc(foot.signatureLabel)}</div><div class="short"><span class="sheet-line"></span>${esc(foot.dateLabel)}</div></div></section></div>`
     + `</div><div class="sheet-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record.</span><span>Page 1</span></div>`
     + `</article></div>`;
@@ -304,4 +326,49 @@ export function fitSheetScale(root, maxScale = 1.25) {
   const s = Math.max(0.2, Math.min(maxScale, avail / SHEET.width));
   root.style.setProperty('--sheet-s', String(Math.floor(s * 1000) / 1000));
   return s;
+}
+
+/**
+ * Browser helper for the fixed summary sheets (the Lab report view and the report page; never the live sheet of the practice page,
+ * which grows). The sheet is laid out at 816 by 1056 px, and a long reference note, a post-bronchodilator column or a long comment
+ * list can make its content taller than the space between the sheet's margins, which would put the last comment and the footer on
+ * top of each other or past the edge of the printed page. The content is then zoomed down by the least amount that makes it fit
+ * (never below `floor`). It is zoomed rather than transformed so that its layout height, which is what the printer paginates, shrinks
+ * with it; the offsets and the size of its box are given in the zoomed units, so that the box still spans the sheet's margins. The
+ * result is written to data-fit (the zoom) and data-overflow (px left over, 0 when it fits) on the sheet.
+ * @param {ParentNode} root @param {number} [floor]
+ * @returns {{ scale: number, overflowPx: number }[]}
+ */
+export function fitSheetContent(root, floor = 0.9) {
+  const out = [];
+  for (const sheet of root.querySelectorAll('.sheet-summary')) {
+    const c = sheet.querySelector('.sheet-content');
+    if (!c || sheet.closest('.sheet-live')) continue;
+    for (const p of ['zoom', 'transform', 'transform-origin', 'left', 'top', 'width', 'height', 'right', 'bottom']) c.style.removeProperty(p);
+    const cs = getComputedStyle(c);
+    const left = parseFloat(cs.left), top = parseFloat(cs.top);
+    const w = c.clientWidth, h = c.clientHeight;
+    let k = 1;
+    const over = () => c.scrollHeight - c.clientHeight;
+    if (over() > 0) {
+      // The first zoom comes from the overflow measured before the box is released from its insets (released, it would size itself to its content).
+      k = Math.max(floor, Math.floor((1000 * h) / (h + over())) / 1000);
+      c.style.right = 'auto';
+      c.style.bottom = 'auto';
+      for (let i = 0; i < 40; i++) {
+        c.style.zoom = String(k);
+        c.style.left = `${left / k}px`;
+        c.style.top = `${top / k}px`;
+        c.style.width = `${w / k}px`;
+        c.style.height = `${h / k}px`;
+        if (over() <= 0 || k <= floor) break;
+        k = Math.max(floor, Math.round((k - 0.005) * 1000) / 1000);
+      }
+    }
+    const rest = Math.max(0, Math.round(over() * k));
+    sheet.dataset.fit = String(k);
+    sheet.dataset.overflow = String(rest);
+    out.push({ scale: k, overflowPx: rest });
+  }
+  return out;
 }

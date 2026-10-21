@@ -4,6 +4,7 @@
  * Figures arrive as inline SVG strings from the model; nothing here loads an external resource.
  */
 import { esc, labelHtml, tableMatrix } from './table.js';
+import { reportQuery } from '../report-page/query.js';
 
 const WIDE_FIELDS = new Set(['Tests performed', 'Reference equations']);
 const HALF_FIELDS = new Set(['LLN definition']);
@@ -88,18 +89,25 @@ export function endHtml(model) {
     + `<p class="rpt-disc">${esc(foot.disclaimer)} <span class="rpt-gen">${esc(foot.generator)}. Case ${esc(foot.caseCode)}.</span></p></footer>`;
 }
 
-/** Address of the full report page for this case and spirometry equation (the same opaque code as the practice link). */
-export const reportPageHref = (model) => `report.html?c=${encodeURIComponent(model.meta.caseToken)}&eq=${encodeURIComponent(model.meta.equation)}`;
+/**
+ * Address of the full report page for this case and spirometry equation (the same opaque code as the practice link), built by the
+ * report page's own query writer. The quality challenge and the flag setting ride beside the case, so that the page opens in the
+ * state in which the link was followed: with the challenge on, the grades and the acceptability that are still withheld stay withheld.
+ * The link is always the student copy.
+ * @param {object} model @param {{ qualityChallenge?: boolean, flags?: 'lln'|'none' }} [settings]
+ */
+export const reportPageHref = (model, { qualityChallenge = false, flags = 'lln' } = {}) =>
+  `report.html${reportQuery({ token: model.meta.caseToken, equation: model.meta.equation, qualityChallenge, flags })}`;
 
 /**
  * @param {object} model from buildReportModel
- * @param {{ interactive?: boolean }} [opts] interactive adds a "Copy table" button to each table and the link to the full report page
+ * @param {{ interactive?: boolean, settings?: { qualityChallenge?: boolean, flags?: 'lln'|'none' } }} [opts] interactive adds a "Copy table" button to each table and the link to the full report page; settings are carried in that link
  * @returns {string} an HTML fragment (one <article>)
  */
-export function renderReportHtml(model, { interactive = false } = {}) {
+export function renderReportHtml(model, { interactive = false, settings = {} } = {}) {
   const head = headerHtml(model);
   // The preview is a summary; the full printable report is its own page. The link is a screen control and is not part of a saved file.
-  const open = interactive && model.meta.caseToken ? `<p class="rpt-open no-print"><a href="${esc(reportPageHref(model))}">Open full report</a> (summary page and detailed report, printable on Letter paper)</p>` : '';
+  const open = interactive && model.meta.caseToken ? `<p class="rpt-open no-print"><a href="${esc(reportPageHref(model, settings))}">Open full report</a> (summary page and detailed report, printable on Letter paper)</p>` : '';
   // Lung volumes and DLCO sit side by side, as on a one-page laboratory printout.
   // The reference equation note follows the spirometry table and figures, so equation statements sit with the numbers.
   const refNote = refNoteHtml(model);

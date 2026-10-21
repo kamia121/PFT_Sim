@@ -21,6 +21,7 @@
  */
 import { createStream } from '../core/prng.js';
 import { hbKnown, coHbMeasured, coHbUnmeasured, sexUndisclosed } from '../app/format.js';
+import { bdPctPredText } from './precision.js';
 
 export const NARRATIVE_VERSION = 2;
 
@@ -52,6 +53,8 @@ const sentence = (s) => { const t = s.trim(); return /[.!?]$/.test(t) ? t : `${t
 const list = (a) => (a.length <= 1 ? (a[0] ?? '') : a.length === 2 ? `${a[0]} and ${a[1]}` : `${a.slice(0, -1).join(', ')}, and ${a[a.length - 1]}`);
 const mL = (liters) => `${liters >= 0 ? '+' : MINUS}${Math.round(Math.abs(liters) * 1000)} mL`;
 const pct1 = (x) => `${x.toFixed(1)}%`;
+/** The change as a percent of predicted, with the digits that show which side of the 10% threshold it is on. */
+const pctPred = (x) => `${bdPctPredText(x)}%`;
 
 const EQ_NAMES = { GLIglobal: 'GLI Global (2022)', GLI2012: 'GLI-2012', GLI2021vol: 'GLI-2021', GLI2017tlco: 'GLI-2017', NHANES3: 'NHANES III' };
 const eqName = (id) => EQ_NAMES[id] ?? String(id);
@@ -793,10 +796,10 @@ function bdWhy(ctx) {
     const v = bd.rule2022.which[0]; const k = v.toLowerCase();
     const d = k === 'fev1' ? bd.dFev1 : bd.dFvc;
     const fail = bd.pctBase[k] < 12 ? `${pct1(bd.pctBase[k])} of the baseline value, under the 12% the earlier criterion requires` : `${Math.round(d * 1000)} mL, under the 200 mL the earlier criterion requires`;
-    return `the ${v} change is ${pct1(bd.pctPred[k])} of the predicted value, above the 10% the 2022 criterion requires, but ${fail}`;
+    return `the ${v} change is ${pctPred(bd.pctPred[k])} of the predicted value, above the 10% the 2022 criterion requires, but ${fail}`;
   }
   const v = bd.rule2005.which[0]; const k = v.toLowerCase();
-  return `the ${v} change is ${pct1(bd.pctBase[k])} of a low baseline value and at least 200 mL, which meets the earlier criterion, but only ${pct1(bd.pctPred[k])} of the predicted value, under the 10% the 2022 criterion requires`;
+  return `the ${v} change is ${pct1(bd.pctBase[k])} of a low baseline value and at least 200 mL, which meets the earlier criterion, but only ${pctPred(bd.pctPred[k])} of the predicted value, under the 10% the 2022 criterion requires`;
 }
 
 function equationDetail(ctx) {
@@ -1024,7 +1027,7 @@ function bronchodilatorSection(ctx, P) {
   const out = [];
   out.push(P('bs-change', {
     dFev1: mL(bd.dFev1), dFvc: mL(bd.dFvc),
-    ppFev1: pct1(bd.pctPred.fev1), ppFvc: pct1(bd.pctPred.fvc), pbFev1: pct1(bd.pctBase.fev1), pbFvc: pct1(bd.pctBase.fvc),
+    ppFev1: pctPred(bd.pctPred.fev1), ppFvc: pctPred(bd.pctPred.fvc), pbFev1: pct1(bd.pctBase.fev1), pbFvc: pct1(bd.pctBase.fvc),
   }));
   out.push(P('f-bd', { r22: bd.rule2022.significant, rE: bd.rule2005.significant }));
   const why = bdWhy(ctx);

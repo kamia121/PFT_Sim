@@ -12,7 +12,7 @@
 import { esc } from './format.js';
 import { PRACTICE_QUESTIONS, hasData, questionLabel } from './answers.js';
 import * as R from './render.js';
-import { challengeField, isMultiItem, isStatementItem } from './collect.js';
+import { challengeField, challengeRowField, isMultiItem, isStatementItem } from './collect.js';
 import { interpretationFor } from '../report/statement.js';
 
 export const SUMMARY_MISSING = 'Summary sheet not available in this build.';
@@ -48,8 +48,22 @@ function structuredFieldsets(c, structured, locked) {
   }).join('');
 }
 
+/** One row of a row item: its own labelled radio group, with the item's options or the row's own list. */
+function rowFieldsetHtml(item, row, held, locked) {
+  const name = challengeRowField(item.id, row.id);
+  const options = item.rowOptions?.[row.id] ?? item.options ?? [];
+  const opts = options.map(([v, l]) => optionHtml({ name, type: 'radio', value: v, label: l, checked: held?.[row.id] === v, disabled: locked })).join('');
+  return `<fieldset class="row-q${options.length > 2 ? ' many' : ''}" data-row="${esc(row.id)}"><legend>${esc(row.label)}</legend><div class="opts">${opts}</div></fieldset>`;
+}
+
 /** Fieldset of one challenge item. Title, prompt and option labels only: the key and the explanation are never written here. */
 export function itemFieldsetHtml(item, responses, locked) {
+  if (Array.isArray(item.rows)) {
+    const stored = responses.challenge[item.id];
+    const held = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    const pid = `p-${item.id}`;
+    return `<fieldset data-item="${esc(item.id)}" class="row-item"${item.prompt ? ` aria-describedby="${esc(pid)}"` : ''}><legend>${esc(item.title)}</legend>${item.prompt ? `<p class="prompt" id="${esc(pid)}">${esc(item.prompt)}</p>` : ''}<div class="rows">${item.rows.map((r) => rowFieldsetHtml(item, r, held, locked)).join('')}</div></fieldset>`;
+  }
   const multi = isMultiItem(item);
   const name = challengeField(item.id);
   const stored = responses.challenge[item.id];
@@ -132,15 +146,17 @@ function detailsFallbackHtml(ctx) {
   return `<section class="card sheet-missing" role="note"><p>${DETAILS_MISSING}</p></section><section class="card"><h2>Maneuvers</h2>${pre}${post}</section><div id="figs">${figs}</div>`;
 }
 
+/** Page 2 itself: the details sheet with its screen controls, or the card view when the module is missing. */
+export function detailsBodyHtml(ctx) {
+  return ctx.sheets.detailsSheetHtml && ctx.model
+    ? ctx.sheets.detailsSheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, showGrades: ctx.vis.showGradeColumns, views: ctx.figView, controls: true, resolve: ctx.resolve })
+    : detailsFallbackHtml(ctx);
+}
+
 /** The control for page 2 and, once opened, the sheet. */
 export function detailsAreaHtml(ctx) {
   const { detailsOpen } = ctx;
-  let body = '';
-  if (detailsOpen) {
-    body = ctx.sheets.detailsSheetHtml && ctx.model
-      ? ctx.sheets.detailsSheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, showGrades: ctx.vis.showGradeColumns, view: ctx.figView })
-      : detailsFallbackHtml(ctx);
-  }
+  const body = detailsOpen ? detailsBodyHtml(ctx) : '';
   return `<div class="details-bar"><button type="button" class="secondary" id="toggle-details" aria-expanded="${detailsOpen ? 'true' : 'false'}" aria-controls="details-slot">Page 2: detailed report</button><span class="muted">Every maneuver, trial and test with its technologist comments.</span></div><div id="details-slot" class="sheet-wrap" ${detailsOpen ? '' : 'hidden'}>${body}</div>`;
 }
 
