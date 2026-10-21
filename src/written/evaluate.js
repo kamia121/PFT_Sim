@@ -35,7 +35,8 @@ export function evaluate(extraction, rubric) {
   if (notes.truncated) notices.push('The text was long; only the first part was read.');
   for (const r of notes.repairs) notices.push(`Read “${r.from}” as “${r.to}”.`);
   if (notes.foreign) return { status: 'abstained', items: [{ domain: 'all', group: R, text: 'The text is not in English, or contains words this checker does not read, so nothing was scored. Write the impression in English to use this check.', quotes: [] }], notices };
-  if (claims.length === 0) return { status: 'abstained', items: [{ domain: 'all', group: R, text: 'No interpretation statements could be recognized, so nothing was scored. This checker reads short statements about pattern, severity, bronchodilator response, lung volumes, diffusing capacity and test quality.', quotes: [] }], notices };
+  // a severity word attached to nothing is not a recognized statement: an unrelated sentence containing "mild" must not turn every omission into an accusation
+  if (claims.filter((c) => c.scope !== 'unbound').length === 0) return { status: 'abstained', items: [{ domain: 'all', group: R, text: 'No interpretation statements could be recognized, so nothing was scored. This checker reads short statements about pattern, severity, bronchodilator response, lung volumes, diffusing capacity and test quality.', quotes: [] }], notices };
 
   const items = [];
   const mine = claims.filter((c) => c.attribution === 'self');
