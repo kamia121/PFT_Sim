@@ -36,7 +36,7 @@
   },
   {
     "file": "GLI-printed-tables-verification-packet",
-    "note": "Evidence for a comparison of stored numbers with the printed coefficient tables and the ERS lookup workbooks: Hall 2021 Table 3 (printed and PDF page 5, inspected visually) and the 2020 correction to Stanojevic 2017, corrected Table 2 (PDF page 2, inspected visually; both sexes changed), transcribed by the project. Script: tools/verify-gli-primary.py; result: docs/verification/gli-primary-2026-10-20.txt; packet provenance: docs/verification/gli-packet-2026-10-20/. This is not a validation of units, interpolation, age boundaries or LMS behavior; no official online-calculator case has been run; an independent Codex comparison was under way.",
+    "note": "Evidence for a comparison of stored numbers with the printed coefficient tables and the ERS lookup workbooks: Hall 2021 Table 3 (printed and PDF page 5, inspected visually) and the 2020 correction to Stanojevic 2017, corrected Table 2 (PDF page 2, inspected visually; both sexes changed), transcribed by the project. Script: tools/verify-gli-primary.py; result: docs/verification/gli-primary-2026-10-20.txt; packet provenance: docs/verification/gli-packet-2026-10-20/. This is not a validation of units, interpolation, age boundaries or LMS behavior; no official online-calculator case has been run; a separate Codex audit matched 120/120 coefficient values and 100 recomputations from the stored splines but could not rerun the workbook comparison (403).",
     "sources": [
       {
         "filename": "Hall2021.pdf",

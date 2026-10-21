@@ -12,8 +12,9 @@ Scope. This is a comparison of stored numbers with the printed coefficients and 
 units, of interpolation between the 0.25-year rows, of behavior at the age boundaries, or of the LMS calculation (src/reference/gli.js)
 against an official calculator. No official online-calculator case has been run (the calculator is behind a CAPTCHA and a paid key).
 The printed tables were inspected visually in the publisher PDFs (Hall 2021 Table 3, PDF page 5; 2020 correction to Stanojevic 2017,
-corrected Table 2, PDF page 2) and transcribed by the packet's author; the transcription is the weak link of this check. An independent
-comparison (Codex) was still under way when this was written. Source hashes are in src/reference/sources.json and in
+corrected Table 2, PDF page 2) and transcribed by the packet's author; the transcription is the weak link of this check. A separate Codex audit (2026-10-20)
+matched 120/120 coefficient values and recomputed 100 measurements with the stored splines to 1e-12, but could not rerun the workbook
+comparison (403), so the spline comparison is this script's alone. Source hashes are in src/reference/sources.json and in
 docs/verification/gli-packet-2026-10-20/provenance.json.
 
 Usage: python3 tools/verify-gli-primary.py PACKET_DIR

@@ -27,4 +27,5 @@ Table 2 (PDF page 2), inspected visually in the publisher PDFs and transcribed b
 the spline tables with the ERS lookup workbooks (tools/verify-gli-primary.py; hashes and result in
 src/reference/sources.json and docs/verification/). The coefficients and spline tables are equal to
 those sources. This is a comparison of numbers, not a validation of units, interpolation, age
-boundaries or the LMS calculation against an official calculator, which has not been run.
+boundaries or the LMS calculation against an official calculator, which has not been run. A separate audit (Codex) matched all 120 coefficient values and
+100 recomputations from the stored splines; it could not rerun the workbook comparison.

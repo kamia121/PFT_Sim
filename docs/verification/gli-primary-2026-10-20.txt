@@ -1,5 +1,5 @@
 GLI coefficient and lookup-table comparison, run 2026-10-20 with tools/verify-gli-primary.py against the packet (provenance and hashes: docs/verification/gli-packet-2026-10-20/provenance.json; src/reference/sources.json).
-Scope: stored coefficients and spline tables against the transcribed printed tables and the ERS lookup workbooks. Not a validation of units, interpolation, age boundaries or LMS evaluation; no official calculator case was run; an independent Codex comparison was still under way.
+Scope: stored coefficients and spline tables against the transcribed printed tables and the ERS lookup workbooks. Not a validation of units, interpolation, age boundaries or LMS evaluation; no official calculator case was run; a separate Codex audit matched 120/120 coefficient values and 100 recomputations from the stored splines, but could not rerun the workbook comparison (403).
 
 coefficients ok: volumes frc male
 coefficients ok: volumes frc female
