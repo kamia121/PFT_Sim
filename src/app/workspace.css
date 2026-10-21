@@ -29,7 +29,11 @@
     display: grid; grid-template-columns: 784px minmax(0, 1fr); column-gap: 20px; row-gap: 0; align-items: start;
     /* 1 equation, 2 view buttons, 3 sheet data, 4 comments, 5 sheet footer (rows 3 to 5 hold page 2 instead in the page-2 view),
        6 the page-2 control (not shown), 7 key and feedback */
-    grid-template-rows: repeat(7, auto); position: relative; isolation: isolate;
+    /* Row 3 is at least as tall as the window, so that the rows the answer column spans always contain it (an engine need not size
+       rows for a spanning box that scrolls inside itself) and the page can always scroll far enough for the column to stick. */
+    grid-template-rows: auto auto minmax(calc(100vh - 16px), auto) auto auto auto auto;
+    grid-template-rows: auto auto minmax(calc(100dvh - 16px), auto) auto auto auto auto;
+    position: relative; isolation: isolate;
   }
   #case[data-ws] > fieldset.eq-select { grid-column: 1 / -1; grid-row: 1; }
   #case[data-ws] #summary-slot, #case[data-ws] .sheet-live .sheet-frame, #case[data-ws] .sheet-live .sheet,
@@ -69,6 +73,9 @@
 }
 
 @media screen and (max-width: 1199.98px) {
+  /* The disclosure collapses content below its control; the page keeps the control in place itself (main.js), so the browser's own
+     scroll anchoring is not asked to choose a node in the case area. */
+  #case[data-ws] { overflow-anchor: none; }
   #case[data-ws] > .ws-bar { display: flex; margin: 0 0 10px; }
   #case[data-ws] .ws-views { display: none; }
   #case[data-ws] #ws-chart-toggle::before { content: "\25BE\00A0"; }

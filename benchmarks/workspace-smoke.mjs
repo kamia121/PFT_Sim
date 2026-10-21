@@ -124,6 +124,8 @@ try {
         await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50))));
         stick.push(await page.evaluate(() => { const b = document.querySelector('.sheet-interp').getBoundingClientRect(); return { y: Math.round(scrollY), top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, ok: b.top >= -0.5 && b.bottom <= innerHeight + 0.5 }; }));
       }
+      const room = await page.evaluate(() => ({ max: Math.round(document.documentElement.scrollHeight - innerHeight), bar: Math.round(document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY), col: Math.round(document.querySelector('.sheet-interp').getBoundingClientRect().height), doc: document.documentElement.scrollHeight }));
+      check(room.max >= room.bar - 8, `${tag}: the page scrolls far enough for the answer column to stick (largest scroll ${room.max}, column starts at ${room.bar} and is ${room.col} px; page ${room.doc} px)`);
       check(stick.every((x) => x.ok), `${tag}: the answer column stays in the window from the top to the end of page 1 (${stick.map((x) => `scroll ${x.y}: ${x.top}-${x.bottom} of ${x.h}`).join('; ')})`);
 
       // Each answer with the values it is read from.

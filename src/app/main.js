@@ -158,11 +158,14 @@ const wideWorkspace = () => Boolean($('#case[data-ws]')) && getComputedStyle($('
  * summary sheet is on the page, the report page beside the answers on a wide screen, and the narrow-screen disclosure of the tables
  * and curves. They change the screen layout only; the view buttons' pressed state follows.
  */
+const NARROW = window.matchMedia('(max-width: 1199.98px)');
 function syncWorkspace() {
   const c = $('#case');
   const on = Boolean(c.querySelector('.ws-bar'));
   c.toggleAttribute('data-ws', on);
-  if (on) { c.dataset.wsPage = state.wsView; c.dataset.wsChart = state.wsChart; } else { delete c.dataset.wsPage; delete c.dataset.wsChart; }
+  // The collapsed disclosure is a narrow-screen view: its attribute is set only while that layout applies (the state is kept for the
+  // next narrow view), so a wide layout never depends on the engine re-evaluating the narrow media rules.
+  if (on) { c.dataset.wsPage = state.wsView; c.dataset.wsChart = NARROW.matches ? state.wsChart : 'open'; } else { delete c.dataset.wsPage; delete c.dataset.wsChart; }
   for (const b of c.querySelectorAll('[data-ws-view]')) b.setAttribute('aria-pressed', String(b.dataset.wsView === state.wsView));
 }
 
@@ -203,6 +206,7 @@ async function fitSheets() {
  * from a pointer is left alone: the control is already where the pointer is, and moving it under the pointer would misplace the click.
  */
 document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.matches(':focus-visible')) keepInAnswerColumn(e.target); });
+NARROW.addEventListener?.('change', () => syncWorkspace());
 let fitPending = 0;
 window.addEventListener('resize', () => { cancelAnimationFrame(fitPending); fitPending = requestAnimationFrame(fitSheets); });
 
