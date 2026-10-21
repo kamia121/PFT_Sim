@@ -1,0 +1,335 @@
+- main:
+  - heading "Simulated pulmonary function reports" [level=1]
+  - paragraph: Read the report, write an interpretation on it, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.
+  - paragraph:
+    - strong: Educational use only.
+    - text: Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.
+  - tablist "Sections":
+    - tab "Practice" [selected]
+    - tab "Lab report"
+    - tab "Method and limits"
+  - tabpanel:
+    - button "New case"
+    - text: Test quality
+    - combobox "Test quality":
+      - option "Varies" [selected]
+      - option "Good"
+      - option "Fair"
+      - option "Poor"
+    - text: Technologist notes
+    - combobox "Technologist notes":
+      - option "Varies" [selected]
+      - option "None"
+      - option "One"
+      - option "Several"
+      - option "Many"
+    - text: Tests
+    - combobox "Tests":
+      - option "Varies" [selected]
+      - option "Spirometry, volumes, DLCO"
+      - option "Spirometry only"
+    - text: Quality challenge
+    - combobox "Quality challenge":
+      - option "Off"
+      - option "On" [selected]
+      - option "Varies"
+    - text: Quality review
+    - combobox "Quality review":
+      - option "Study level (basic)"
+      - option "Maneuver level (advanced)" [selected]
+    - text: Flags
+    - combobox "Flags":
+      - option "Below the LLN" [selected]
+      - option "None"
+    - button "Copy case link"
+    - text: Case link
+    - textbox "Case link": http://127.0.0.1:5470/?v=2&s=44&a=mixed&t=poor&p=spirometry&qc=1&qd=adv
+    - paragraph
+    - status: A new case is ready.
+    - group "Reference equation for spirometry":
+      - text: Reference equation for spirometry
+      - radio "GLI Global 2022 (group-neutral)" [checked]
+      - text: GLI Global 2022 (group-neutral)
+      - radio "GLI-2012 (selected by the group on the requisition)"
+      - text: GLI-2012 (selected by the group on the requisition)
+    - article "Summary sheet, case 0000018":
+      - strong: PFT Sim Pulmonary Function Laboratory
+      - text: Simulated laboratory. Educational use only. Pulmonary Function Report Case 0000018
+      - term: Name
+      - definition: Simulated patient
+      - term: ID
+      - definition: SIM-0000018
+      - term: Sex (used for reference)
+      - definition: Male
+      - term: Age
+      - definition: 75 years
+      - term: Date of test (simulated)
+      - definition: 2026-04-25 10:30
+      - term: Height
+      - definition: 164.5 cm (measured)
+      - term: Weight; BMI
+      - definition: 61 kg; 22.5 kg/m2
+      - term: Ethnicity (requisition)
+      - definition: White
+      - term: Smoking
+      - definition: Never smoker
+      - term: Referred by
+      - definition: Dr. Z. Jansen
+      - term: SpO2 at rest
+      - definition: 98% on room air
+      - term: Reason for test
+      - definition: Preoperative assessment
+      - term: Reference equations
+      - definition: "Spirometry: GLI Global 2022"
+      - region "Spirometry table; scrolls sideways when the screen is narrow":
+        - heading "Spirometry" [level=2]
+        - table:
+          - rowgroup:
+            - row "Pre":
+              - columnheader
+              - columnheader "Pre"
+            - row "Best LLN z %Pred":
+              - columnheader
+              - columnheader "Best"
+              - columnheader "LLN"
+              - columnheader "z"
+              - columnheader "%Pred"
+          - rowgroup:
+            - row "FVC (L) 1.93 2.35 −2.49 61":
+              - rowheader "FVC (L)"
+              - cell "1.93"
+              - cell "2.35"
+              - cell "−2.49"
+              - cell "61"
+            - row "FEV1 (L) 0.95 1.75 −3.45 39":
+              - rowheader "FEV1 (L)":
+                - text: FEV
+                - subscript: "1"
+                - text: (L)
+              - cell "0.95"
+              - cell "1.75"
+              - cell "−3.45"
+              - cell "39"
+            - row "FEV1/FVC 0.492 0.634 −2.87":
+              - rowheader "FEV1/FVC":
+                - text: FEV
+                - subscript: "1"
+                - text: /FVC
+              - cell "0.492"
+              - cell "0.634"
+              - cell "−2.87"
+              - cell
+            - row "FET (s) 5.2":
+              - rowheader "FET (s)"
+              - cell "5.2"
+              - cell
+              - cell
+              - cell
+            - row "PEF (L/s) 1.5":
+              - rowheader "PEF (L/s)"
+              - cell "1.5"
+              - cell
+              - cell
+              - cell
+            - row "FEF25-75 (L/s) 0.62":
+              - rowheader "FEF25-75 (L/s)"
+              - cell "0.62"
+              - cell
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI Global 2022 (group-neutral). Values below the LLN (z < −1.645) are printed in bold red. FEF25-75 has no reference value."
+      - heading "Technologist comments" [level=2]
+      - list:
+        - listitem: Official interpretation to follow.
+      - figure:
+        - img "Flow-volume loop, representative maneuver": "0 1 2 3 −4 −2 0 2 4 L/s L Measured Pre: maneuver 5 of 5"
+      - figure:
+        - img "Volume-time curve, representative maneuver": "Measured −1 0 1 2 3 4 5 6 0 1 2 3 L s Pre: maneuver 5 of 5"
+      - figure:
+        - img "Z-score graphic": "Spirometry severe moderate mild not reduced −5 −4 −3 −2 −1 0 1 2 3 LLN predicted z FVC −2.49 below LLN FEV1 −3.45 below LLN FEV1/FVC −2.87 below LLN Bands apply to all measures: severe, z below −4.0; moderate, −4.0 to −2.5; mild, −2.5 to the LLN (−1.645); not reduced above the LLN. The star marks the result. Severity of impairment is not necessarily disease severity."
+      - paragraph: "Spirometry reference: GLI Global 2022, a group-neutral equation; the reference group on the requisition is not an input."
+      - heading "Interpretation" [level=2]
+      - region "Interpretation":
+        - group "Pattern":
+          - text: Pattern
+          - radio "Normal"
+          - text: Normal
+          - radio "Obstruction"
+          - text: Obstruction
+          - radio "Obstruction with low FVC (volumes needed)"
+          - text: Obstruction with low FVC (volumes needed)
+          - radio "Restriction"
+          - text: Restriction
+          - radio "Mixed obstruction and restriction"
+          - text: Mixed obstruction and restriction
+          - radio "Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)"
+          - text: Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)
+          - radio "Preserved ratio with low FVC or FEV₁, no volumes (PRISm)"
+          - text: Preserved ratio with low FVC or FEV₁, no volumes (PRISm)
+        - group "Severity of obstruction (FEV₁ z-score)":
+          - text: Severity of obstruction (FEV₁ z-score)
+          - radio "Mild"
+          - text: Mild
+          - radio "Moderate"
+          - text: Moderate
+          - radio "Severe"
+          - text: Severe
+          - 'radio "Not graded: FEV₁ within normal limits"'
+          - text: "Not graded: FEV₁ within normal limits"
+          - radio "Not graded for this pattern"
+          - text: Not graded for this pattern
+          - radio "Not applicable (no obstruction)"
+          - text: Not applicable (no obstruction)
+        - group "Bronchodilator response (2022 rule)":
+          - text: Bronchodilator response (2022 rule)
+          - paragraph: Not performed in this case.
+          - radio "Significant"
+          - text: Significant
+          - radio "Not significant"
+          - text: Not significant
+          - radio "Not performed"
+          - text: Not performed
+        - group "Diffusing capacity (hemoglobin-adjusted)":
+          - text: Diffusing capacity (hemoglobin-adjusted)
+          - paragraph: Not performed in this case.
+          - radio "Reduced"
+          - text: Reduced
+          - radio "Normal"
+          - text: Normal
+          - radio "Raised"
+          - text: Raised
+          - radio "Not performed"
+          - text: Not performed
+        - heading "Test quality" [level=3]
+        - paragraph: "Advanced review: maneuver-level questions."
+        - paragraph: The technologist’s statement is withheld. Judge the tests from the maneuvers on page 2, then ask for the statement; the answers in this section are then fixed.
+        - group "Acceptable maneuvers before the bronchodilator":
+          - text: Acceptable maneuvers before the bronchodilator
+          - paragraph: For each forced expiration recorded before the bronchodilator, mark whether its FEV₁ and whether its FVC meet the acceptability criteria of the ATS/ERS 2019 statement.
+          - group "Maneuver 1, FEV₁":
+            - text: Maneuver 1, FEV₁
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 1, FVC":
+            - text: Maneuver 1, FVC
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 2, FEV₁":
+            - text: Maneuver 2, FEV₁
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 2, FVC":
+            - text: Maneuver 2, FVC
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 3, FEV₁":
+            - text: Maneuver 3, FEV₁
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 3, FVC":
+            - text: Maneuver 3, FVC
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 4, FEV₁":
+            - text: Maneuver 4, FEV₁
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 4, FVC":
+            - text: Maneuver 4, FVC
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 5, FEV₁":
+            - text: Maneuver 5, FEV₁
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+          - group "Maneuver 5, FVC":
+            - text: Maneuver 5, FVC
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Not acceptable"
+            - text: Not acceptable
+        - group "FEV₁ quality grade before the bronchodilator":
+          - text: FEV₁ quality grade before the bronchodilator
+          - paragraph: Assign the ATS/ERS 2019 quality grade (A to F) to the FEV₁ of the set recorded before the bronchodilator.
+          - radio "A"
+          - text: A
+          - radio "B"
+          - text: B
+          - radio "C"
+          - text: C
+          - radio "D"
+          - text: D
+          - radio "E"
+          - text: E
+          - radio "U"
+          - text: U
+          - radio "F"
+          - text: F
+        - group "FVC quality grade before the bronchodilator":
+          - text: FVC quality grade before the bronchodilator
+          - paragraph: Assign the ATS/ERS 2019 quality grade (A to F) to the FVC of the set recorded before the bronchodilator.
+          - radio "A"
+          - text: A
+          - radio "B"
+          - text: B
+          - radio "C"
+          - text: C
+          - radio "D"
+          - text: D
+          - radio "E"
+          - text: E
+          - radio "U"
+          - text: U
+          - radio "F"
+          - text: F
+        - group "Flow-volume loop on the summary page":
+          - text: Flow-volume loop on the summary page
+          - paragraph: For the forced expiration drawn on the summary page, state whether the maneuver is acceptable and, if it is not, which fault it shows.
+          - group "Before the bronchodilator":
+            - text: Before the bronchodilator
+            - radio "Acceptable"
+            - text: Acceptable
+            - radio "Cough in the first second"
+            - text: Cough in the first second
+            - radio "Abrupt cessation of flow, probable glottic closure"
+            - text: Abrupt cessation of flow, probable glottic closure
+            - radio "Early termination of expiration"
+            - text: Early termination of expiration
+            - radio "Expiration stopped before a plateau"
+            - text: Expiration stopped before a plateau
+            - radio "Hesitant start"
+            - text: Hesitant start
+            - radio "Air leak at the lips"
+            - text: Air leak at the lips
+            - radio "Tongue or teeth in front of the mouthpiece"
+            - text: Tongue or teeth in front of the mouthpiece
+            - radio "Pause at full inspiration before the blast"
+            - text: Pause at full inspiration before the blast
+        - button "Show the technologist’s statement"
+        - strong: Your impression
+        - text: (optional; not scored)
+        - textbox "Your impression (optional; not scored)"
+        - button "Check answers" [disabled]
+        - button "Show the key without scoring"
+        - text: Show the technologist’s statement and answer the last question before checking.
+      - text: Simulated interpreting physician (not signed) Date SIMULATED REPORT - educational use only. PFT Sim, generator version 2. Case 0000018. Not a patient record. Page 1
+    - 'button "Page 2: detailed report"'
+    - text: Every maneuver, trial and test with its technologist comments.

@@ -20,7 +20,7 @@ import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
 import { renderPractice, detailsBodyHtml, detailsAreaHtml } from './practice-view.js';
 import { pageRulesCss } from '../report-page/pages.js';
-import { watchScrollRegions } from '../ui/scroll-regions.js';
+import { watchScrollRegions, markScrollRegions } from '../ui/scroll-regions.js';
 watchScrollRegions();
 
 const $ = (sel) => document.querySelector(sel);
@@ -123,16 +123,35 @@ function practiceContext() {
   };
 }
 
-/** Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. */
-function render({ focus = null } = {}) {
+/**
+ * Draws the practice area from the state. `focus` is a selector to focus afterwards, because the markup is replaced. On a wide screen
+ * the answer column keeps its scroll position through the redraw (a new case starts at the top), and the focused control is brought
+ * into the column's view.
+ */
+function render({ focus = null, keepColumn = true } = {}) {
   if (!$('#panel-report').hidden) { renderReportView(); return; }
+  const column = keepColumn ? $('#case .sheet-interp')?.scrollTop ?? 0 : 0;
   $('#case').innerHTML = renderPractice(practiceContext());
   syncWorkspace();
+  const box = $('#case .sheet-interp');
+  if (box && column) box.scrollTop = column;
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
   fitSheets();
-  if (focus) $(focus)?.focus?.({ preventScroll: true });
+  if (focus) { const el = $(focus); el?.focus?.({ preventScroll: true }); keepInAnswerColumn(el); }
 }
+
+/** Scroll the wide-screen answer column (never the page) so that `el`, when it is in the column, is wholly in the column's view. */
+function keepInAnswerColumn(el) {
+  const box = el instanceof Element ? el.closest('#case[data-ws] .sheet-interp') : null;
+  if (!box || box === el || box.scrollHeight <= box.clientHeight + 1) return;
+  const b = box.getBoundingClientRect(), r = (el.closest('label, fieldset.row-q') ?? el).getBoundingClientRect(), pad = 8;
+  if (r.bottom > b.bottom - pad) box.scrollTop += Math.min(r.bottom - b.bottom + pad, r.top - b.top - pad);
+  else if (r.top < b.top + pad) box.scrollTop -= b.top + pad - r.top;
+}
+
+/** Whether the wide-screen workspace layout is the one on the screen. */
+const wideWorkspace = () => Boolean($('#case[data-ws]')) && getComputedStyle($('#case')).display === 'grid';
 
 /**
  * View attributes of the interpretation workspace (src/app/workspace.css) on the case area, which is not redrawn: `data-ws` when the
@@ -162,7 +181,11 @@ function selectView(view) {
 function toggleChart(button) {
   state.wsChart = state.wsChart === 'collapsed' ? 'open' : 'collapsed';
   button.setAttribute('aria-expanded', String(state.wsChart === 'open'));
+  // The control stays where it was in the window whatever the browser's scroll anchoring does with the content that collapses.
+  const top = button.getBoundingClientRect().top;
   syncWorkspace();
+  const moved = button.getBoundingClientRect().top - top;
+  if (Math.abs(moved) > 0.5) window.scrollBy(0, moved);
   announce(state.wsChart === 'open' ? 'The report tables and curves are shown.' : 'The report tables and curves are hidden; the values for each question are beside it.');
 }
 
@@ -171,19 +194,15 @@ async function fitSheets() {
   const el = $('#summary-slot');
   if (!el || !state.mods.summarySheetHtml) return;
   try { (await import('../sheets/summary.js')).fitSheetScale(el, 1); } catch { /* the sheet stays at full size */ }
+  // The scale changes the width of the boxes inside the sheet (the form is scaled back), so which of them overflow is decided again.
+  markScrollRegions();
 }
 /**
  * A control that takes keyboard focus inside the wide-screen answer column, when the column scrolls, is brought wholly into the
  * column's view (only the column scrolls, never the page), so that the answer being given is not cut off at the column's edge. Focus
  * from a pointer is left alone: the control is already where the pointer is, and moving it under the pointer would misplace the click.
  */
-document.addEventListener('focusin', (e) => {
-  const box = e.target instanceof Element ? e.target.closest('#case[data-ws] .sheet-interp') : null;
-  if (!box || box === e.target || box.scrollHeight <= box.clientHeight + 1 || !e.target.matches(':focus-visible')) return;
-  const b = box.getBoundingClientRect(), r = (e.target.closest('label, fieldset.row-q') ?? e.target).getBoundingClientRect(), pad = 8;
-  if (r.bottom > b.bottom - pad) box.scrollTop += Math.min(r.bottom - b.bottom + pad, r.top - b.top - pad);
-  else if (r.top < b.top + pad) box.scrollTop -= b.top + pad - r.top;
-});
+document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.matches(':focus-visible')) keepInAnswerColumn(e.target); });
 let fitPending = 0;
 window.addEventListener('resize', () => { cancelAnimationFrame(fitPending); fitPending = requestAnimationFrame(fitSheets); });
 
@@ -272,7 +291,7 @@ function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false, rev
   state.feedback = null;
   state.itemsCache = null;
   setUrl();
-  render();
+  render({ keepColumn: false });
   announce('A new case is ready.');
   $('#case').scrollIntoView?.({ block: 'start' });
 }
@@ -331,9 +350,11 @@ function releaseStatement() {
   const next = showStatement(state.stage);
   if (next === state.stage) return;
   state.stage = next;
-  // The statement is printed in the comment box of page 1, so the wide-screen view returns to page 1 (page 2 stays open).
+  // The statement is printed in the comment box of page 1, so the wide-screen view returns to page 1 (page 2 stays open), the note
+  // is brought into the answer column's view, and the page scrolls (as little as it must) to show the comment box beside it.
   state.wsView = 'summary';
   render({ focus: '#statement-note' });
+  if (wideWorkspace()) $('#case .sheet-comments')?.scrollIntoView({ block: 'nearest' });
   announce('The technologist’s statement is shown in the comment box on page 1.');
 }
 

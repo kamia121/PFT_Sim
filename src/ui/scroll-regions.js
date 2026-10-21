@@ -52,6 +52,8 @@ export function watchScrollRegions() {
   const mo = new MutationObserver(run);
   mo.observe(document.body, { childList: true, subtree: true });
   window.addEventListener('resize', run);
+  // A web font that arrives after the first layout can change which boxes overflow.
+  document.fonts?.ready?.then(run);
   run();
   return () => { mo.disconnect(); window.removeEventListener('resize', run); cancelAnimationFrame(pending); };
 }

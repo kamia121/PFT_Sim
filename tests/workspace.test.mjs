@@ -152,3 +152,36 @@ test('the data wrapper generates no box in any medium, and only the practice-pag
   assert.doesNotMatch(mods.summarySheetHtml(ctx.model, opts), /sheet-data/);
   assert.equal((mods.summarySheetHtml(ctx.model, { ...opts, narrowZ: true }).match(/class="sheet-data"/g) ?? []).length, 1);
 });
+
+test('the bronchodilator excerpt carries the data of the 2022 rule: the %Pred cells before and after give the change as a percentage of predicted', () => {
+  // Bronchodilator studies drawn from fixed seeds across the archetypes that have one; the excerpt is read alone, as a learner reads it
+  // with the tables collapsed. The difference of the two %Pred cells is the change as a percentage of the predicted value, to within
+  // their rounding (each to 1 %, so at most 1 point); where the true value lies further than that from the 10 % limit, the call made
+  // from the excerpt is the key's.
+  const inputs = [];
+  for (const archetype of ['obstruction', 'bd-discordant', 'mixed', 'normal', 'restriction-parenchymal']) for (let seed = 1; seed <= 12; seed++) inputs.push({ seed, archetype, technique: 'fair' });
+  let decided = 0, sig = 0, notSig = 0, studies = 0;
+  for (const input of inputs) {
+    const ctx = markupCtx(input, {});
+    if (!ctx.caseData.report.spirometry.post || !ctx.interp.bd) continue;
+    studies++;
+    const ex = excerptsIn(renderPractice(ctx)).find((e) => e.includes('data-ws-cell="spirometry/fev1/postPct"'));
+    assert.ok(ex, `${input.archetype} ${input.seed}: the bronchodilator excerpt has the %Pred cells`);
+    assert.match(ex, />Pre %Pred</); assert.match(ex, />Post %Pred</); assert.match(ex, />Change, % of baseline</);
+    const cell = (r, c) => Number((ex.match(new RegExp(`data-ws-cell="spirometry/${r}/${c}"[^>]*>([^<]*)<`)) ?? [])[1]?.replace('−', '-'));
+    const derived = { fev1: cell('fev1', 'postPct') - cell('fev1', 'pct'), fvc: cell('fvc', 'postPct') - cell('fvc', 'pct') };
+    for (const k of ['fev1', 'fvc']) {
+      assert.ok(Number.isFinite(derived[k]), `${input.archetype} ${input.seed} ${k}: both %Pred cells are numbers`);
+      assert.ok(Math.abs(derived[k] - ctx.interp.bd.pctPred[k]) <= 1 + 1e-9, `${input.archetype} ${input.seed} ${k}: %Pred difference ${derived[k]} against ${ctx.interp.bd.pctPred[k].toFixed(2)}`);
+    }
+    const margin = Math.min(...['fev1', 'fvc'].map((k) => Math.abs(ctx.interp.bd.pctPred[k] - 10)));
+    if (margin > 1) {
+      decided++;
+      const call = derived.fev1 > 10 || derived.fvc > 10 ? 'significant' : 'not-significant';
+      assert.equal(call, ctx.interp.key.bronchodilator, `${input.archetype} ${input.seed}: the call from the excerpt`);
+      if (call === 'significant') sig++; else notSig++;
+    }
+    assert.doesNotMatch(ex, /significant|responsive|response/i, 'no classification in the excerpt');
+  }
+  assert.ok(studies >= 20 && decided >= 15 && sig >= 3 && notSig >= 3, `coverage: ${studies} studies, ${decided} decided away from the limit (${sig} significant, ${notSig} not)`);
+});

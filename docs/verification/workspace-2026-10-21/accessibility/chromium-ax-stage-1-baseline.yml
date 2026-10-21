@@ -1,0 +1,397 @@
+- main:
+  - heading "Simulated pulmonary function reports" [level=1]
+  - paragraph: Read the report, write an interpretation on it, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.
+  - paragraph:
+    - strong: Educational use only.
+    - text: Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.
+  - tablist "Sections":
+    - tab "Practice" [selected]
+    - tab "Lab report"
+    - tab "Method and limits"
+  - tabpanel:
+    - button "New case"
+    - text: Test quality
+    - combobox "Test quality":
+      - option "Varies" [selected]
+      - option "Good"
+      - option "Fair"
+      - option "Poor"
+    - text: Technologist notes
+    - combobox "Technologist notes":
+      - option "Varies" [selected]
+      - option "None"
+      - option "One"
+      - option "Several"
+      - option "Many"
+    - text: Tests
+    - combobox "Tests":
+      - option "Varies" [selected]
+      - option "Spirometry, volumes, DLCO"
+      - option "Spirometry only"
+    - text: Quality challenge
+    - combobox "Quality challenge":
+      - option "Off"
+      - option "On" [selected]
+      - option "Varies"
+    - text: Quality review
+    - combobox "Quality review":
+      - option "Study level (basic)" [selected]
+      - option "Maneuver level (advanced)"
+    - text: Flags
+    - combobox "Flags":
+      - option "Below the LLN" [selected]
+      - option "None"
+    - button "Copy case link"
+    - text: Case link
+    - textbox "Case link": http://127.0.0.1:5470/?v=2&s=8&a=bd-discordant&t=poor&qc=1
+    - paragraph
+    - status: A new case is ready.
+    - group "Reference equation for spirometry":
+      - text: Reference equation for spirometry
+      - radio "GLI Global 2022 (group-neutral)" [checked]
+      - text: GLI Global 2022 (group-neutral)
+      - radio "GLI-2012 (selected by the group on the requisition)"
+      - text: GLI-2012 (selected by the group on the requisition)
+    - article "Summary sheet, case 0000008":
+      - strong: PFT Sim Pulmonary Function Laboratory
+      - text: Simulated laboratory. Educational use only. Pulmonary Function Report Case 0000008
+      - term: Name
+      - definition: Simulated patient
+      - term: ID
+      - definition: SIM-0000008
+      - term: Sex (used for reference)
+      - definition: Female
+      - term: Age
+      - definition: 76 years
+      - term: Date of test (simulated)
+      - definition: 2026-12-21 07:32
+      - term: Height
+      - definition: 146 cm (measured)
+      - term: Weight; BMI
+      - definition: 41 kg; 19.2 kg/m2
+      - term: Ethnicity (requisition)
+      - definition: Other or mixed
+      - term: Smoking
+      - definition: Former smoker, 6 pack-years, stopped 2 years ago
+      - term: Referred by
+      - definition: Dr. A. Okafor
+      - term: SpO2 at rest
+      - definition: 99% on room air
+      - term: Reason for test
+      - definition: Preoperative assessment
+      - term: Hemoglobin
+      - definition: 12.6 g/dL
+      - term: Reference equations
+      - definition: "Spirometry: GLI Global 2022; Lung volumes: GLI-2021 volumes (closest available; European-ancestry reference population); DLCO: GLI-2017 TLCO (closest available; European-ancestry reference population)"
+      - region "Spirometry table; scrolls sideways when the screen is narrow":
+        - heading "Spirometry" [level=2]
+        - table:
+          - rowgroup:
+            - row "Pre Post":
+              - columnheader
+              - columnheader "Pre"
+              - columnheader "Post"
+            - row "Best LLN z %Pred Best z %Pred Change %Chng":
+              - columnheader
+              - columnheader "Best"
+              - columnheader "LLN"
+              - columnheader "z"
+              - columnheader "%Pred"
+              - columnheader "Best"
+              - columnheader "z"
+              - columnheader "%Pred"
+              - columnheader "Change"
+              - columnheader "%Chng"
+          - rowgroup:
+            - row "FVC (L) 1.52 1.38 −1.27 76 1.92 −0.17 97 +0.40 +26.3":
+              - rowheader "FVC (L)"
+              - cell "1.52"
+              - cell "1.38"
+              - cell "−1.27"
+              - cell "76"
+              - cell "1.92"
+              - cell "−0.17"
+              - cell "97"
+              - cell "+0.40"
+              - cell "+26.3"
+            - row "FEV1 (L) 0.61 1.07 −3.04 39 0.66 −2.91 42 +0.05 +8.2":
+              - rowheader "FEV1 (L)":
+                - text: FEV
+                - subscript: "1"
+                - text: (L)
+              - cell "0.61"
+              - cell "1.07"
+              - cell "−3.04"
+              - cell "39"
+              - cell "0.66"
+              - cell "−2.91"
+              - cell "42"
+              - cell "+0.05"
+              - cell "+8.2"
+            - row "FEV1/FVC 0.403 0.662 −3.70 0.342 −4.00":
+              - rowheader "FEV1/FVC":
+                - text: FEV
+                - subscript: "1"
+                - text: /FVC
+              - cell "0.403"
+              - cell "0.662"
+              - cell "−3.70"
+              - cell
+              - cell "0.342"
+              - cell "−4.00"
+              - cell
+              - cell
+              - cell
+            - row "FET (s) 15.0 15.0":
+              - rowheader "FET (s)"
+              - cell "15.0"
+              - cell
+              - cell
+              - cell
+              - cell "15.0"
+              - cell
+              - cell
+              - cell
+              - cell
+            - row "PEF (L/s) 1.0 1.2":
+              - rowheader "PEF (L/s)"
+              - cell "1.0"
+              - cell
+              - cell
+              - cell
+              - cell "1.2"
+              - cell
+              - cell
+              - cell
+              - cell
+            - row "FEF25-75 (L/s) 0.24 0.24":
+              - rowheader "FEF25-75 (L/s)"
+              - cell "0.24"
+              - cell
+              - cell
+              - cell
+              - cell "0.24"
+              - cell
+              - cell
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI Global 2022 (group-neutral). Values below the LLN (z < −1.645) are printed in bold red; so are TLC, RV, RV/TLC, DLCO and KCO above the ULN (z > +1.645). FEF25-75 has no reference value."
+      - region "Lung volumes table; scrolls sideways when the screen is narrow":
+        - heading "Lung volumes" [level=2]
+        - table:
+          - rowgroup:
+            - row "Result LLN ULN z %Pred":
+              - columnheader
+              - columnheader "Result"
+              - columnheader "LLN"
+              - columnheader "ULN"
+              - columnheader "z"
+              - columnheader "%Pred"
+          - rowgroup:
+            - row "TLC (L) 4.30 3.02 4.82 0.78 111":
+              - rowheader "TLC (L)"
+              - cell "4.30"
+              - cell "3.02"
+              - cell "4.82"
+              - cell "0.78"
+              - cell "111"
+            - row "VC (L) 1.72 1.70 2.68 −1.56 79":
+              - rowheader "VC (L)"
+              - cell "1.72"
+              - cell "1.70"
+              - cell "2.68"
+              - cell "−1.56"
+              - cell "79"
+            - row "IC (L) 1.51 1.08 2.19 −0.37 92":
+              - rowheader "IC (L)"
+              - cell "1.51"
+              - cell "1.08"
+              - cell "2.19"
+              - cell "−0.37"
+              - cell "92"
+            - row "FRC (L) 2.79 1.52 2.91 1.42 131":
+              - rowheader "FRC (L)"
+              - cell "2.79"
+              - cell "1.52"
+              - cell "2.91"
+              - cell "1.42"
+              - cell "131"
+            - row "ERV (L) 0.21 0.11 1.11 −1.09 43":
+              - rowheader "ERV (L)"
+              - cell "0.21"
+              - cell "0.11"
+              - cell "1.11"
+              - cell "−1.09"
+              - cell "43"
+            - row "RV (L) 2.58 0.97 2.57 1.66 155":
+              - rowheader "RV (L)"
+              - cell "2.58"
+              - cell "0.97"
+              - cell "2.57"
+              - cell "1.66"
+              - cell "155"
+            - row "RV/TLC (%) 59.9 29.4 57.1 1.96":
+              - rowheader "RV/TLC (%)"
+              - cell "59.9"
+              - cell "29.4"
+              - cell "57.1"
+              - cell "1.96"
+              - cell
+            - row "sRaw (kPa·s) 2.13 1.20":
+              - rowheader "sRaw (kPa·s)"
+              - cell "2.13"
+              - cell
+              - cell "1.20"
+              - cell
+              - cell
+            - row "sGaw (1/(kPa·s)) 0.47 0.63":
+              - rowheader "sGaw (1/(kPa·s))"
+              - cell "0.47"
+              - cell "0.63"
+              - cell
+              - cell
+              - cell
+            - row "Raw (kPa/(L/s)) 0.76 0.38":
+              - rowheader "Raw (kPa/(L/s))"
+              - cell "0.76"
+              - cell
+              - cell "0.38"
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI-2021 volumes (reference population of European ancestry). Method: plethysmography (5 FRC determinations). ULN of the volumes: z = +1.645. Airway-resistance limits are teaching values from secondary sources."
+      - region "Diffusing capacity table; scrolls sideways when the screen is narrow":
+        - heading "Diffusing capacity" [level=2]
+        - table:
+          - rowgroup:
+            - row "Result LLN z %Pred":
+              - columnheader
+              - columnheader "Result"
+              - columnheader "LLN"
+              - columnheader "z"
+              - columnheader "%Pred"
+          - rowgroup:
+            - row "Hemoglobin (g/dL) 12.6":
+              - rowheader "Hemoglobin (g/dL)"
+              - cell "12.6"
+              - cell
+              - cell
+              - cell
+            - row "DLCO, measured (mL/min/mmHg) 15.6 11.3 0.14 102":
+              - rowheader "DLCO, measured (mL/min/mmHg)"
+              - cell "15.6"
+              - cell "11.3"
+              - cell "0.14"
+              - cell "102"
+            - row "VA (L) 3.81 2.82 0.55 107":
+              - rowheader "VA (L)"
+              - cell "3.81"
+              - cell "2.82"
+              - cell "0.55"
+              - cell "107"
+            - row "KCO, measured (mL/min/mmHg/L) 4.09 3.25 −0.30 95":
+              - rowheader "KCO, measured (mL/min/mmHg/L)"
+              - cell "4.09"
+              - cell "3.25"
+              - cell "−0.30"
+              - cell "95"
+            - row "VI/VC (%) 98":
+              - rowheader "VI/VC (%)"
+              - cell "98"
+              - cell
+              - cell
+              - cell
+            - row "Breath-hold time (s) 9.4":
+              - rowheader "Breath-hold time (s)"
+              - cell "9.4"
+              - cell
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI-2017 TLCO (reference population of European ancestry). LLN, z-score and %Pred refer to the measured DLCO and KCO against reference values adjusted for the hemoglobin (ATS/ERS 2017, eqs 31 and 32: predicted x 1.7Hb/(c+Hb), with c = 10.22 for males of 15 years and older and 9.38 for females and children; the multiplier is shown)."
+      - figure:
+        - img "Flow-volume loop, representative maneuver": "0 1 2 3 −4 −2 0 2 4 L/s L Pre Post Pre: maneuver 2 of 6; post: maneuver 1 of 8"
+      - figure:
+        - img "Volume-time curve, representative maneuver": "Pre Post −1 0 1 2 3 4 5 6 7 0 1 2 L s Pre: maneuver 2 of 6; post: maneuver 1 of 8"
+      - figure:
+        - img "Plethysmography shift loop, representative trial": "Shutter trace Slope −1 0 1 −5 0 5 Mouth pressure (kPa) Box pressure (Pa) Plethysmography: trial 2 of 5"
+      - figure:
+        - img "DLCO gas tracing, representative test": "CO (%) CH4 (%) Volume (L, right) 0 5 10 15 0 0.1 0.2 0.3 0.4 0 1 2 breath-hold Time (s) Single-breath DLCO: test 1 of 1"
+      - figure:
+        - img "Z-score graphic": "Pre-bronchodilator severe moderate mild not reduced −5 −4 −3 −2 −1 0 1 2 3 LLN predicted z FVC −1.27 within limits FEV1 −3.04 below LLN FEV1/FVC −3.70 below LLN Post-bronchodilator severe moderate mild not reduced −5 −4 −3 −2 −1 0 1 2 3 LLN predicted z FVC −0.17 within limits FEV1 −2.91 below LLN FEV1/FVC −4.00 below LLN Lung volumes and DLCO severe moderate mild not reduced above ULN −5 −4 −3 −2 −1 0 1 2 3 LLN predicted ULN z TLC 0.78 within limits RV 1.66 above ULN RV/TLC 1.96 above ULN DLCO 0.14 within limits VA 0.55 within limits KCO −0.30 within limits Bands apply to all measures: severe, z below −4.0; moderate, −4.0 to −2.5; mild, −2.5 to the LLN (−1.645); not reduced above the LLN. The star marks the result. For the indices read on both sides, within limits means between the LLN and the ULN (+1.645); a value above the ULN is marked above ULN and is not graded by severity. For the other indices, within limits means at or above the LLN. Severity of impairment is not necessarily disease severity."
+      - paragraph: "Spirometry reference: GLI Global 2022, a group-neutral equation; the reference group on the requisition is not an input. The GLI-2021 volume and GLI-2017 TLCO equations were derived in people of European ancestry, so the reference population may represent the group \"Other or mixed\" less well; this limits the result, and no ancestry adjustment is applied to volumes or DLCO."
+      - heading "Technologist comments" [level=2]
+      - list:
+        - listitem: Albuterol 400 µg (four inhalations of 100 µg) by metered-dose inhaler and valved holding chamber; repeat spirometry after 10 min.
+        - listitem: DLCO adjusted for hemoglobin 12.6 g/dL.
+        - listitem: Overall effort good.
+        - listitem: Official interpretation to follow.
+      - heading "Interpretation" [level=2]
+      - region "Interpretation":
+        - group "Pattern":
+          - text: Pattern
+          - radio "Normal"
+          - text: Normal
+          - radio "Obstruction"
+          - text: Obstruction
+          - radio "Obstruction with low FVC (volumes needed)"
+          - text: Obstruction with low FVC (volumes needed)
+          - radio "Restriction"
+          - text: Restriction
+          - radio "Mixed obstruction and restriction"
+          - text: Mixed obstruction and restriction
+          - radio "Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)"
+          - text: Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)
+          - radio "Preserved ratio with low FVC or FEV₁, no volumes (PRISm)"
+          - text: Preserved ratio with low FVC or FEV₁, no volumes (PRISm)
+        - group "Severity of obstruction (FEV₁ z-score)":
+          - text: Severity of obstruction (FEV₁ z-score)
+          - radio "Mild"
+          - text: Mild
+          - radio "Moderate"
+          - text: Moderate
+          - radio "Severe"
+          - text: Severe
+          - 'radio "Not graded: FEV₁ within normal limits"'
+          - text: "Not graded: FEV₁ within normal limits"
+          - radio "Not graded for this pattern"
+          - text: Not graded for this pattern
+          - radio "Not applicable (no obstruction)"
+          - text: Not applicable (no obstruction)
+        - group "Bronchodilator response (2022 rule)":
+          - text: Bronchodilator response (2022 rule)
+          - radio "Significant"
+          - text: Significant
+          - radio "Not significant"
+          - text: Not significant
+          - radio "Not performed"
+          - text: Not performed
+        - group "Diffusing capacity (hemoglobin-adjusted)":
+          - text: Diffusing capacity (hemoglobin-adjusted)
+          - radio "Reduced"
+          - text: Reduced
+          - radio "Normal"
+          - text: Normal
+          - radio "Raised"
+          - text: Raised
+          - radio "Not performed"
+          - text: Not performed
+        - heading "Test quality" [level=3]
+        - paragraph: "Study-level review: one judgement about the whole study. Maneuver-level questions are in the advanced review (Quality review in the toolbar)."
+        - paragraph: The technologist’s statement and the grades are withheld. Page 2 lists the maneuvers and tests behind the study. Showing the statement before the check locks the study-level answer.
+        - group "Quality of the study":
+          - text: Quality of the study
+          - paragraph: "Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable."
+          - radio "Interpretable"
+          - text: Interpretable
+          - radio "Interpretable with limitations"
+          - text: Interpretable with limitations
+          - radio "Insufficient to interpret"
+          - text: Insufficient to interpret
+        - button "Show the technologist’s statement and lock the study answer"
+        - strong: Your impression
+        - text: (optional; not scored)
+        - textbox "Your impression (optional; not scored)"
+        - button "Check answers"
+        - button "Show the key without scoring"
+      - text: Simulated interpreting physician (not signed) Date SIMULATED REPORT - educational use only. PFT Sim, generator version 2. Case 0000008. Not a patient record. Page 1
+    - 'button "Page 2: detailed report"'
+    - text: Every maneuver, trial and test with its technologist comments.

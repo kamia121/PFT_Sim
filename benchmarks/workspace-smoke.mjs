@@ -110,19 +110,21 @@ try {
       await checkIds(page, tag);
 
       // The answer column sticks while the data scroll past.
-      const stick = await page.evaluate(async () => {
-        const out = [];
+      // Each position is measured once the scroll has been applied and a frame has been drawn (a separate task, so that an engine that
+      // updates sticky offsets on its scroll event has done so); the numbers are reported with the result.
+      const ys = await page.evaluate(() => {
         const bar = document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY;
         const end = document.querySelector('.sheet-foot').getBoundingClientRect().bottom + scrollY - innerHeight;
-        for (const y of [bar - 8, (bar + Math.max(bar, end)) / 2, Math.max(bar, end)]) {
-          window.scrollTo(0, y);
-          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-          const b = document.querySelector('.sheet-interp').getBoundingClientRect();
-          out.push(b.top >= -0.5 && b.bottom <= innerHeight + 0.5);
-        }
-        return out;
+        return [bar - 8, (bar + Math.max(bar, end)) / 2, Math.max(bar, end)].map(Math.round);
       });
-      check(stick.every(Boolean), `${tag}: the answer column stays in the window from the top to the end of page 1 (${stick.join(', ')})`);
+      const stick = [];
+      for (const y of ys) {
+        await page.evaluate((y) => window.scrollTo(0, y), y);
+        await page.waitForFunction((y) => Math.abs(scrollY - y) < 1 || scrollY >= document.documentElement.scrollHeight - innerHeight - 1, y);
+        await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50))));
+        stick.push(await page.evaluate(() => { const b = document.querySelector('.sheet-interp').getBoundingClientRect(); return { y: Math.round(scrollY), top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, ok: b.top >= -0.5 && b.bottom <= innerHeight + 0.5 }; }));
+      }
+      check(stick.every((x) => x.ok), `${tag}: the answer column stays in the window from the top to the end of page 1 (${stick.map((x) => `scroll ${x.y}: ${x.top}-${x.bottom} of ${x.h}`).join('; ')})`);
 
       // Each answer with the values it is read from.
       await page.evaluate(() => window.scrollTo(0, document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY - 8));
@@ -191,6 +193,32 @@ try {
       check(back.summary !== 'none' && back.details === 'none' && await formKept(page), `${tag}: page 1 again: the view changes only (form node kept)`);
       await page.close();
     }
+  }
+
+  /* -------------------------- W3a: the statement released by a pointer from a scrolled answer column is in view, with the comment box */
+  for (const height of [768, 900]) {
+    const tag = `${ENGINE} 1280x${height} statement`;
+    const page = await browser.newPage({ viewport: { width: 1280, height } });
+    await open(page, Q.poorQc);
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY - 8));
+    await page.locator('#answer-form input[name="ch:studyInterpretable"]').first().click();
+    await page.evaluate(() => { const i = document.querySelector('.sheet-interp'), b = document.querySelector('#show-statement'); i.scrollTop += b.getBoundingClientRect().bottom - i.getBoundingClientRect().bottom + 20; });
+    const before = await page.evaluate(() => document.querySelector('.sheet-interp').scrollTop);
+    await page.locator('#show-statement').click();
+    await page.waitForSelector('#statement-note');
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50))));
+    const r = await page.evaluate(() => {
+      const box = document.querySelector('.sheet-interp').getBoundingClientRect(), note = document.querySelector('#statement-note').getBoundingClientRect(), com = document.querySelector('.sheet-comments').getBoundingClientRect();
+      return { note: [Math.round(note.top), Math.round(note.bottom)], box: [Math.round(box.top), Math.round(box.bottom)], com: [Math.round(com.top), Math.round(com.bottom)], h: innerHeight, focus: document.activeElement?.id,
+        noteIn: note.top >= box.top - 0.5 && note.bottom <= box.bottom + 0.5 && note.bottom <= innerHeight + 0.5 && note.top >= -0.5, comIn: com.top >= -0.5 && com.bottom <= innerHeight + 0.5, scrolled: document.querySelector('.sheet-interp').scrollTop };
+    });
+    check(before > 0, `${tag}: the answer column was scrolled to the statement button (${Math.round(before)} px)`);
+    check(r.focus === 'statement-note' && r.noteIn, `${tag}: after a pointer click the note is focused and wholly in the answer column and the window (note ${r.note.join('-')}, column ${r.box.join('-')} of ${r.h}; column scroll ${Math.round(r.scrolled)})`);
+    check(r.comIn, `${tag}: the comment box holding the statement is in the window beside it (${r.com.join('-')} of ${r.h})`);
+    const comments = await page.locator('.sheet-comments').innerText();
+    check(qualityLines(Q.poorQc).every((l) => comments.includes(l)), `${tag}: the comment box holds the statement`);
+    if (height === 768) await shot(page, 'workspace-1280x768-statement');
+    await page.close();
   }
 
   /* ------------------------------------------------------------------ W3: stage gates in the workspace */
@@ -267,7 +295,7 @@ try {
     await page.waitForTimeout(150);
     const d = await page.evaluate(() => ({ exp: document.querySelector('#ws-chart-toggle').getAttribute('aria-expanded'), tables: getComputedStyle(document.querySelector('#summary-slot .sheet-block')).display, focus: document.activeElement?.id, top: document.querySelector('#ws-chart-toggle').getBoundingClientRect().top, mut: window.__mut, ex: getComputedStyle(document.querySelector('.ws-ctx')).display }));
     check(d.exp === 'false' && d.tables === 'none' && d.ex !== 'none', `${tag}: the disclosure hides the tables and curves; the per-question values stay`);
-    check(d.focus === 'ws-chart-toggle' && Math.abs(d.top - top0) <= 1 && d.mut === 0 && await formKept(page), `${tag}: the disclosure keeps focus and its place, and nothing under the form changes (${d.mut} mutations)`);
+    check(d.focus === 'ws-chart-toggle' && Math.abs(d.top - top0) <= 1 && d.mut === 0 && await formKept(page), `${tag}: the disclosure keeps focus and its place, and nothing under the form changes (focus ${d.focus}; control at ${Math.round(top0)} then ${Math.round(d.top)} px; ${d.mut} mutations)`);
     if (width === 390) {
       await shot(page, 'workspace-390-collapsed');
       await page.evaluate(() => { const f = document.querySelector('#answer-form .answers > fieldset'); window.scrollTo(0, f.getBoundingClientRect().top + scrollY - 8); });
@@ -291,9 +319,10 @@ try {
       await page.locator('#impression').focus();
       await page.evaluate(() => document.querySelector('#impression').setSelectionRange(3, 8));
       await page.setViewportSize({ width: 1280, height: 900 });
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() => matchMedia('(min-width: 1200px)').matches && getComputedStyle(document.querySelector('#case')).display === 'grid', null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(100);
       const wide = await page.evaluate(() => ({ grid: getComputedStyle(document.querySelector('#case')).display, data: getComputedStyle(document.querySelector('#summary-slot .sheet-block')).display, ex: getComputedStyle(document.querySelector('.ws-ctx')).display, views: getComputedStyle(document.querySelector('.ws-views')).display }));
-      check(wide.grid === 'grid' && wide.data !== 'none' && wide.ex === 'none' && wide.views !== 'none', `${tag} -> 1280: the wide layout shows the data whatever the narrow disclosure says; the excerpts give way to the data column`);
+      check(wide.grid === 'grid' && wide.data !== 'none' && wide.ex === 'none' && wide.views !== 'none', `${tag} -> 1280: the wide layout shows the data whatever the narrow disclosure says; the excerpts give way to the data column (case area ${wide.grid}, tables ${wide.data}, excerpts ${wide.ex}, view buttons ${wide.views})`);
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(300);
       const after = await page.evaluate(() => ({ focus: document.activeElement?.id, sel: [document.querySelector('#impression').selectionStart, document.querySelector('#impression').selectionEnd].join(), val: document.querySelector('#impression').value, checked: document.querySelector('#answer-form input[name="pattern"]:checked')?.value, ex: getComputedStyle(document.querySelector('.ws-ctx')).display }));
@@ -324,23 +353,67 @@ try {
   }
 
   /* ------------------------------------------------------------------ W9: accessibility tree */
+  // Playwright's ariaSnapshot computes roles and names from the DOM and the computed styles (its own computation, not the platform
+  // accessibility API of the engine). The wide layout is compared with the same page under the baseline layout (workspace stylesheet
+  // off): nothing is stripped; the only difference allowed is one added region, the answer column when it scrolls (labelled by
+  // src/ui/scroll-regions.js), whose descendants must equal the baseline subtree line for line. Both snapshots are kept as artifacts.
+  const LABEL = 'Interpretation answers, scroll up and down';
   for (const [name, q, steps] of [['stage 1', Q.poorQc, []], ['page 2 open', Q.poorQc, ['details', 'summary']], ['spirometry only', Q.adv, []]]) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await open(page, q);
     for (const s of steps) { await page.locator(`[data-ws-view="${s}"]`).click(); await page.waitForTimeout(150); }
-    // The view buttons and excerpts are workspace additions; they are removed so that the comparison is of the page's own content.
-    await page.evaluate(() => { for (const e of document.querySelectorAll('[data-ws-ui]')) e.remove(); for (const e of document.querySelectorAll('[data-scroll-region]')) for (const a of ['role', 'tabindex', 'aria-label', 'data-scroll-region']) e.removeAttribute(a); });
-    const grid = await page.evaluate(() => getComputedStyle(document.querySelector('#case')).display);
-    // The wide layout also hides, on purpose, the narrow-layout page-2 control and the report page not chosen; those are undone here, so
-    // that the comparison isolates the boxes that generate no box.
+    // The view buttons and excerpts are workspace additions and are taken out of both; the intended view hides (the narrow-layout
+    // page-2 control, the report page not chosen) are undone, so that the same content is compared.
+    await page.evaluate(() => { for (const e of document.querySelectorAll('[data-ws-ui]')) e.remove(); });
     await page.addStyleTag({ content: '#case[data-ws] > .details-bar { display: flex !important; } #case[data-ws] > #details-slot:not([hidden]) { display: block !important; }' });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 100))));
+    const grid = await page.evaluate(() => getComputedStyle(document.querySelector('#case')).display);
+    const reg = await page.evaluate(() => { const i = document.querySelector('.sheet-interp'); return { over: i.scrollHeight > i.clientHeight + 1, role: i.getAttribute('role'), label: i.getAttribute('aria-label'), tab: i.getAttribute('tabindex') }; });
     const a = await page.locator('main').ariaSnapshot();
-    await page.evaluate(() => { for (const l of document.querySelectorAll('link[data-ws-css]')) l.disabled = true; });
-    await page.waitForTimeout(150);
+    await page.locator('.sheet-interp').focus();
+    const focusable = await page.evaluate(() => document.activeElement === document.querySelector('.sheet-interp'));
+    // The baseline layout: the stylesheet off, and the scroll-region marker run again for that layout (as on any resize).
+    await page.evaluate(() => { document.activeElement?.blur?.(); for (const l of document.querySelectorAll('link[data-ws-css]')) l.disabled = true; window.dispatchEvent(new Event('resize')); });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 150))));
     const b = await page.locator('main').ariaSnapshot();
-    const lines = (s) => s.split('\n');
-    const diff = lines(a).filter((l, i) => l !== lines(b)[i]).slice(0, 3);
-    check(grid === 'grid' && a === b, `${ENGINE} accessibility tree, ${name}: the wide layout keeps every role, name and order of the baseline layout${diff.length ? `; first differences: ${diff.join(' | ')}` : ''}`);
+    const slug = name.replace(/\W+/g, '-');
+    fs.writeFileSync(path.join(tmp, `${ENGINE}-ax-${slug}-wide.yml`), a);
+    fs.writeFileSync(path.join(tmp, `${ENGINE}-ax-${slug}-baseline.yml`), b);
+    // Take out of the wide snapshot every region line named LABEL and lift its descendants by one level; record what was taken out.
+    const A = a.split('\n'), added = [];
+    const lifted = [];
+    for (let i = 0; i < A.length; i++) {
+      const m = A[i].match(/^(\s*)- region "([^"]*)"/);
+      if (m) {
+        const ind = m[1].length;
+        let j = i + 1;
+        while (j < A.length && (A[j].match(/^(\s*)/)[1].length > ind)) j++;
+        if (m[2] === LABEL) { added.push(A[i].trim()); for (const l of A.slice(i + 1, j)) lifted.push(l.slice(2)); i = j - 1; continue; }
+      }
+      lifted.push(A[i]);
+    }
+    // Text that the added region splits from its neighbour (the signature lines inside the answer column, the sheet footer after it)
+    // is reported by the snapshot as two text lines where the baseline has one; adjacent text lines at one depth are compared as one
+    // run, in both snapshots. Nothing else is normalised.
+    const runs = (L) => {
+      const out = [];
+      for (const l of L) {
+        const m = l.match(/^(\s*)- text: (.*)$/);
+        const v = m ? m[2].replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1') : null;
+        const prev = out[out.length - 1];
+        if (m && prev?.text !== undefined && prev.ind === m[1].length) prev.text += ` ${v}`;
+        else out.push(m ? { ind: m[1].length, text: v } : { line: l });
+      }
+      return out.map((x) => (x.line !== undefined ? x.line : `${' '.repeat(x.ind)}- text: ${x.text}`));
+    };
+    const B = runs(b.split('\n'));
+    lifted.splice(0, lifted.length, ...runs(lifted));
+    const first = lifted.findIndex((l, i) => l !== B[i]);
+    const same = first < 0 && lifted.length === B.length;
+    const show = (L, i) => L.slice(Math.max(0, i - 1), i + 3).join(' / ');
+    check(grid === 'grid' && same && added.length === (reg.over ? 1 : 0),
+      `${ENGINE} accessibility tree, ${name}: the wide layout equals the baseline layout except ${reg.over ? 'one added region, the scrolling answer column' : 'nothing (the answers fit)'}; added ${JSON.stringify(added)}${same ? '' : `; first difference: wide ${show(lifted, first)} | baseline ${show(B, first)}`} (snapshots: ${ENGINE}-ax-${slug}-*.yml)`);
+    if (reg.over) check(reg.role === 'region' && reg.label === LABEL && reg.tab === '0' && focusable, `${ENGINE} accessibility tree, ${name}: the added region is labelled "${reg.label}" and takes keyboard focus (tabindex ${reg.tab}, focused ${focusable})`);
     check(/article "Summary sheet, case/.test(a) && /heading "Interpretation"/.test(a) && /heading "Technologist comments"/.test(a), `${ENGINE} accessibility tree, ${name}: the summary sheet, its comment box and the interpretation box keep their roles and names`);
     await page.close();
   }

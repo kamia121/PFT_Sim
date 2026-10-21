@@ -62,11 +62,13 @@ function structuredFieldsets(c, structured, locked, excerpts = {}) {
 export const EXCERPTS = {
   pattern: [['spirometry', ['fvc', 'fev1', 'fev1_fvc'], ['pre', 'lln', 'z']], ['volumes', ['tlc'], ['result', 'lln', 'z']]],
   severity: [['spirometry', ['fev1'], ['pre', 'z', 'pct']]],
-  bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'post', 'change', 'changePct']]],
+  // The 2022 rule reads the change as a percentage of the predicted value, which is the difference of the two %Pred cells; the sheet's
+  // own change column is a percentage of the baseline and is labelled so.
+  bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'pct', 'post', 'postPct', 'change', 'changePct'], { pct: 'Pre %Pred', postPct: 'Post %Pred', changePct: 'Change, % of baseline' }]],
   dlco: [['dlco', ['hb', 'dlco', 'kco', 'va'], ['result', 'lln', 'z']]],
 };
 const EXCERPT_TITLES = { spirometry: 'Spirometry', volumes: 'Lung volumes', dlco: 'Diffusing capacity' };
-const EXCERPT_HEADS = { pre: 'Pre', post: 'Post', lln: 'LLN', z: 'z', pct: '%Pred', change: 'Change', changePct: '%Chng', result: 'Result' };
+const EXCERPT_HEADS = { pre: 'Pre', post: 'Post', lln: 'LLN', z: 'z', pct: '%Pred', postPct: 'Post %Pred', change: 'Change', changePct: '%Chng', result: 'Result' };
 
 /**
  * The cells of a summary sheet, read back from its markup: `{ [table]: { [row]: { label, cells: { [column]: { text, flag } } } } }`.
@@ -85,12 +87,12 @@ export function sheetCells(sheetHtml) {
 
 /** The excerpt of one structured question, or '' when the sheet holds none of its rows. */
 export function excerptHtml(questionId, cells) {
-  const blocks = (EXCERPTS[questionId] ?? []).map(([t, rows, cols]) => {
+  const blocks = (EXCERPTS[questionId] ?? []).map(([t, rows, cols, heads = {}]) => {
     const present = rows.filter((r) => cells[t]?.[r]);
     const keep = cols.filter((k) => present.some((r) => cells[t][r].cells[k]?.text));
     if (!present.length || !keep.length) return '';
     // Without a bronchodilator study the sheet's one value column is the best value, not a pre-bronchodilator one.
-    const label = (k) => (k === 'pre' && !Object.values(cells[t]).some((x) => x.cells.post?.text) ? 'Best' : EXCERPT_HEADS[k]);
+    const label = (k) => heads[k] ?? (k === 'pre' && !Object.values(cells[t]).some((x) => x.cells.post?.text) ? 'Best' : EXCERPT_HEADS[k]);
     const head = `<tr><th scope="col"><span class="visually-hidden">Index</span></th>${keep.map((k) => `<th scope="col">${label(k)}</th>`).join('')}</tr>`;
     const body = present.map((r) => `<tr><th scope="row">${cells[t][r].label}</th>${keep.map((k) => {
       const cell = cells[t][r].cells[k];
