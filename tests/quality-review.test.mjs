@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { forEachCase, resolveReference, interpret, buildCase, ds } from './helpers/rt-cases.mjs';
 import { buildRtReport } from '../src/core/rt-report.js';
 import { buildChallenges, scoreChallenge, studyJudgement } from '../src/challenges/index.js';
-import { createStage, setReview, canSetReview, showStatement, check, setQualityChallenge, normalizeReview } from '../src/app/stage.js';
+import { createStage, setReview, canSetReview, showStatement, check, setQualityChallenge, canEnableQualityChallenge, normalizeReview, qualityAnswersLocked } from '../src/app/stage.js';
 import { parseAddress, buildSearch } from '../src/app/address.js';
 import { parseReportQuery, reportQuery, practiceHref } from '../src/report-page/query.js';
 import { emptyResponses, applyChange, answerFor } from '../src/app/collect.js';
@@ -23,7 +23,7 @@ const OPTIONAL_ONLY = [];
 
 forEachCase(14, (c, input) => {
   const rt = buildRtReport(c);
-  const j = studyJudgement(rt);
+  const j = studyJudgement(rt, c.report.caveatIds);
   seen[j.key].push(input);
   const baselineOk = !['D', 'E', 'U', 'F'].some((g) => g === rt.truth.pre.fev1 || g === rt.truth.pre.fvc);
   if (baselineOk && j.key === 'limited') OPTIONAL_ONLY.push({ input, limits: j.limits });
@@ -38,7 +38,7 @@ test('the sample holds every study-level key, so no assertion below is vacuous',
 test('the key agrees with the engine under both equations: insufficient exactly when the pattern is indeterminate, never interpretable when qualityLimited', () => {
   forEachCase(14, (c, input) => {
     const rt = buildRtReport(c);
-    const { key } = studyJudgement(rt);
+    const { key } = studyJudgement(rt, c.report.caveatIds);
     for (const eq of ['GLIglobal', 'GLI2012']) {
       const i = interpret(c.report, resolveReference, eq);
       assert.equal(key === 'insufficient', i.pattern === 'indeterminate', `${JSON.stringify(input)} ${eq}`);
@@ -51,9 +51,9 @@ test('the key agrees with the engine under both equations: insufficient exactly 
 test('the key does not depend on the technologist’s statement, the honesty type or the stated grades', () => {
   forEachCase(8, (c) => {
     const rt = buildRtReport(c);
-    const k = studyJudgement(rt).key;
+    const k = studyJudgement(rt, c.report.caveatIds).key;
     const altered = { ...rt, honesty: 'optimistic', stated: { pre: { fev1: 'A', fvc: 'A' }, post: null, dlco: 'acceptable', pleth: 'acceptable' }, qualityLines: [] };
-    assert.equal(studyJudgement(altered).key, k);
+    assert.equal(studyJudgement(altered, c.report.caveatIds).key, k);
   });
 });
 
@@ -62,7 +62,7 @@ test('a poor optional test limits the study and never invalidates a usable basel
   for (const { input, limits } of OPTIONAL_ONLY) {
     assert.ok(limits.length > 0 && !limits.includes('the baseline spirometry'));
     const rt = buildRtReport(buildCase(input, ds));
-    assert.equal(studyJudgement(rt).key, 'limited');
+    assert.equal(studyJudgement(rt, buildCase(input, ds).report.caveatIds).key, 'limited');
   }
 });
 
@@ -222,4 +222,151 @@ test('every grade pair maps by the stated rule', () => {
   assert.equal(studyJudgement(mk(['C', 'C'], ['C', 'C'], { acceptable: true, reasons: [] }, { acceptable: true, reasons: [] })).key, 'interpretable');
   assert.equal(studyJudgement(mk(['B', 'B'], null, { acceptable: false, reasons: ['x'] })).key, 'limited');
   assert.equal(studyJudgement(mk(['F', 'A'], null, { acceptable: true, reasons: [] })).key, 'insufficient');
+});
+
+// ---- review round 1 (Codex): the supported bronchodilator caveats, the disclosure lock, the wording of the reported value ----
+
+import { parseDescriptor } from '../src/core/descriptor.js';
+
+for (const si of ['qs-bd-timing-short', 'qs-bd-better-effort']) {
+  test(`basic review: ${si} limits the study through the bronchodilator comparison and leaves the usable baseline interpretable (agrees with the advanced item)`, () => {
+    const c = buildCase(parseDescriptor(`v=2&s=1&a=obstruction&sc=light&si=${si}`), ds);
+    const rt = buildRtReport(c);
+    const interp = interpret(c.report, resolveReference, 'GLIglobal');
+    // The premise of the repro: every grade is A and every optional test is acceptable, so only the caveat can limit the study.
+    assert.deepEqual([rt.truth.pre.fev1, rt.truth.pre.fvc, rt.truth.post.fev1, rt.truth.post.fvc], ['A', 'A', 'A', 'A']);
+    assert.ok(!rt.truth.dlco || rt.truth.dlco.acceptable);
+    const item = buildChallenges(c, { rt, interp, review: 'basic' })[0];
+    assert.equal(item.key, 'limited');
+    assert.match(item.why, /bronchodilator/);
+    const adv = buildChallenges(c, { rt, interp, review: 'advanced' }).find((i) => i.id === 'bdInterpretable');
+    assert.equal(adv.key.interpretable, 'no', 'the advanced item calls the comparison unreliable');
+    // Never insufficient, and the same under the other equation.
+    const other = interpret(c.report, resolveReference, 'GLI2012');
+    assert.equal(buildChallenges(c, { rt, interp: other, review: 'basic' })[0].key, 'limited');
+  });
+}
+
+test('basic review: the same scenario without the caveat, and a caveat on a case with no post-bronchodilator set, do not limit the study', () => {
+  const plain = buildCase(parseDescriptor('v=2&s=1&a=obstruction'), ds);
+  const rt = buildRtReport(plain);
+  assert.equal(buildChallenges(plain, { rt, review: 'basic' })[0].key, studyJudgement(rt, plain.report.caveatIds).key);
+  const noPost = { ...plain, spirometry: { ...plain.spirometry, post: null }, report: { ...plain.report, caveatIds: ['bd-timing-short'] } };
+  assert.ok(!studyJudgement({ ...rt, truth: { ...rt.truth, post: null } }, ['bd-timing-short']).limits.includes('the bronchodilator comparison'));
+  assert.equal(noPost.spirometry.post, null);
+});
+
+test('explanation: a reported value is the largest acceptable value, or the largest usable value when no maneuver is acceptable (grade U)', () => {
+  const c = buildCase({ seed: 12, archetype: 'obstruction', technique: 'fair' }, ds);
+  const item = buildChallenges(c, { rt: buildRtReport(c), review: 'basic' })[0];
+  assert.match(item.why, /among the usable ones/);
+  assert.match(item.why, /grade U/);
+});
+
+// ---- the disclosure lock ----
+
+const vis = (s) => visibility({ qualityChallenge: s.qualityChallenge, stage: s.stage });
+
+test('disclosure history: set at creation with the challenge off, by the statement, by either check, and by turning the challenge off; never reset', () => {
+  assert.equal(createStage({ qualityChallenge: true }).disclosed, false);
+  assert.equal(createStage({ qualityChallenge: false }).disclosed, true);
+  assert.equal(showStatement(createStage({ qualityChallenge: true })).disclosed, true);
+  assert.equal(check(createStage({ qualityChallenge: true }), { scored: false }).disclosed, true);
+  assert.equal(check(showStatement(createStage({ qualityChallenge: true })), { scored: true }).disclosed, true);
+  for (const stage2 of [false, true]) {
+    let s = createStage({ qualityChallenge: true });
+    if (stage2) s = showStatement(s);
+    const off = setQualityChallenge(s, false);
+    assert.equal(off.disclosed, true);
+    assert.equal(off.stage, 1);
+  }
+  // Turning the challenge on again is refused once anything was disclosed; the state object is returned unchanged.
+  for (const s of [createStage({ qualityChallenge: false }), setQualityChallenge(showStatement(createStage({ qualityChallenge: true })), false)]) {
+    assert.equal(canEnableQualityChallenge(s), false);
+    assert.equal(setQualityChallenge(s, true), s);
+  }
+  // Before any disclosure the setting can be turned on; turning it off is itself a disclosure and cannot be undone.
+  const fresh = createStage({ qualityChallenge: true });
+  assert.equal(canEnableQualityChallenge(fresh), true);
+  assert.equal(canEnableQualityChallenge(setQualityChallenge(fresh, false)), false);
+  assert.equal(setQualityChallenge(setQualityChallenge(fresh, false), true).qualityChallenge, false);
+});
+
+test('the reviewer’s chain: basic, challenge on, statement shown, challenge off, advanced, challenge on ends with the challenge off, advanced, everything visible and the address free of qc', () => {
+  let s = createStage({ qualityChallenge: true, review: 'basic' });
+  s = showStatement(s);
+  assert.equal(qualityAnswersLocked(s), true);
+  s = setQualityChallenge(s, false);
+  s = setReview(s, 'advanced');
+  assert.equal(s.review, 'advanced');
+  s = setQualityChallenge(s, true);
+  assert.equal(s.qualityChallenge, false, 'refused');
+  assert.deepEqual(vis(s), { showQualityLines: true, showGradeColumns: true, showStatementInSummary: true });
+  assert.equal(qualityAnswersLocked(s), false, 'nothing is withheld, so nothing is a withheld judgement');
+  assert.ok(!buildSearch({ query: 'v=2&s=7&a=normal', qualityChallenge: s.qualityChallenge, review: s.review }).includes('qc=1'));
+  // Stage 3 is unaffected by any of it.
+  const done = check(createStage({ qualityChallenge: true }), { scored: false });
+  assert.equal(done.stage, 3);
+  assert.equal(setQualityChallenge(done, false), done);
+  assert.equal(setQualityChallenge(done, true), done);
+});
+
+test('every action sequence of length up to 6 from both starting states keeps the invariant: with the challenge on and nothing released (stage 1), nothing has been disclosed, and the quality answers never unlock while the challenge stays on', () => {
+  const actions = {
+    on: (s) => setQualityChallenge(s, true),
+    off: (s) => setQualityChallenge(s, false),
+    adv: (s) => setReview(s, 'advanced'),
+    basic: (s) => setReview(s, 'basic'),
+    statement: (s) => showStatement(s),
+    check: (s) => check(s, { scored: true }),
+    key: (s) => check(s, { scored: false }),
+  };
+  const names = Object.keys(actions);
+  let visited = 0;
+  const walk = (s, depth, trail) => {
+    visited++;
+    if (s.qualityChallenge && s.stage === 1) assert.equal(s.disclosed, false, `disclosed while the challenge is on and nothing was released: ${trail.join(' > ')}`);
+    if (s.qualityChallenge && s.stage === 1) assert.equal(qualityAnswersLocked(s), false);
+    if (depth === 0) return;
+    for (const n of names) {
+      const next = actions[n](s);
+      // A locked judgement stays locked while the challenge stays on: stage never decreases unless the challenge was turned off.
+      if (s.qualityChallenge && next.qualityChallenge) assert.ok(next.stage >= s.stage, `stage fell with the challenge on: ${[...trail, n].join(' > ')}`);
+      // Once disclosed, always disclosed.
+      if (s.disclosed) assert.ok(next.disclosed, `disclosure forgotten: ${[...trail, n].join(' > ')}`);
+      // A level change is applied only at stage 1.
+      if (s.stage !== 1) assert.equal(next.review, s.review);
+      walk(next, depth - 1, [...trail, n]);
+    }
+  };
+  walk(createStage({ qualityChallenge: true }), 6, []);
+  walk(createStage({ qualityChallenge: false }), 6, []);
+  assert.ok(visited > 100000, `visited ${visited}`);
+});
+
+test('a new case starts fresh: the previous case’s disclosure does not carry', () => {
+  const old = setQualityChallenge(showStatement(createStage({ qualityChallenge: true })), false);
+  assert.equal(old.disclosed, true);
+  const next = createStage({ qualityChallenge: true, review: old.review });
+  assert.equal(next.disclosed, false);
+  assert.equal(next.stage, 1);
+  assert.equal(canEnableQualityChallenge(next), true);
+});
+
+test('over the sample: whenever a post-bronchodilator set exists and a supported caveat applies, the basic key is limited (or insufficient only with a failed baseline), the advanced comparison item says unreliable, and the key is the same under both equations', () => {
+  let n = 0;
+  forEachCase(30, (c) => {
+    const ids = c.report.caveatIds ?? [];
+    if (!c.spirometry.post || !ids.some((id) => id === 'bd-timing-short' || id === 'bd-effort-artifact')) return;
+    n++;
+    const rt = buildRtReport(c);
+    for (const eq of ['GLIglobal', 'GLI2012']) {
+      const interp = interpret(c.report, resolveReference, eq);
+      const key = buildChallenges(c, { rt, interp, review: 'basic' })[0].key;
+      assert.equal(key, rt.truth.pre.fev1 === 'F' || rt.truth.pre.fvc === 'F' ? 'insufficient' : 'limited');
+      const adv = buildChallenges(c, { rt, interp, review: 'advanced' }).find((i) => i.id === 'bdInterpretable');
+      if (adv) assert.equal(adv.key.interpretable, 'no');
+    }
+  });
+  assert.ok(n > 0, 'the sample holds a case with a supported bronchodilator caveat');
 });

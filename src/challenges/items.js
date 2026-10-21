@@ -20,6 +20,11 @@ const INTERPRETABLE_GRADES = ['A', 'B', 'C'];
 /** Existing caveat ids (src/scenarios) under which the measured response is unreliable whatever the grades: a short wait and better effort after the dose. */
 const UNRELIABLE_RESPONSE_CAVEATS = ['bd-timing-short', 'bd-effort-artifact'];
 
+/** The caveat ids of the bronchodilator study that the scenario applied to the data (a short wait, better effort after the dose) and that make the measured response unreliable; each has a printed technologist note. */
+export function bdComparisonUnreliable(caveatIds) {
+  return (caveatIds ?? []).some((id) => UNRELIABLE_RESPONSE_CAVEATS.includes(id));
+}
+
 const sameGrades = (a, b) => Boolean(a) && Boolean(b) && a.fev1 === b.fev1 && a.fvc === b.fvc;
 /** The summary page settles the grades: the statement gives them for every set that exists, and they equal the engine's. */
 const gradesOnSummary = (rt) => sameGrades(rt.stated.pre, rt.truth.pre) && (!rt.truth.post || sameGrades(rt.stated.post, rt.truth.post));
@@ -36,14 +41,19 @@ const LIMITING_GRADES = ['D', 'E', 'U', 'F'];
  * pattern 'indeterminate'. Limited: a reported value rests on a grade D, E or U (the engine's `qualityLimited`), or a test that was performed
  * beside the baseline (post-bronchodilator set, single-breath DLCO, plethysmography) is not acceptable; a poor optional test limits that test
  * and never invalidates a usable baseline. No threshold is introduced: the grades, the acceptability and the missing-value rule are the engine's.
+ * Exception to "quality truth only": the two bronchodilator caveats above are facts about the data (the scenario shortened the wait or changed the effort, and
+ * the measured response was altered), not decoration, so they limit the comparison when a post-bronchodilator set exists; they never limit the baseline.
+ * @param {import('../core/rt-report.js').RtReport} rt
+ * @param {string[]} [caveatIds] the case's caveat ids (c.report.caveatIds)
  * @returns {{ key: 'interpretable'|'limited'|'insufficient', limits: string[] }}
  */
-export function studyJudgement(rt) {
+export function studyJudgement(rt, caveatIds = []) {
   const pre = rt.truth.pre;
   if (pre.fev1 === 'F' || pre.fvc === 'F') return { key: 'insufficient', limits: [] };
   const limits = [];
   if (LIMITING_GRADES.some((g) => g === pre.fev1 || g === pre.fvc)) limits.push('the baseline spirometry');
   if (rt.truth.post && ['fev1', 'fvc'].some((k) => LIMITING_GRADES.includes(rt.truth.post[k]))) limits.push('the post-bronchodilator spirometry');
+  if (rt.truth.post && bdComparisonUnreliable(caveatIds)) limits.push('the bronchodilator comparison');
   if (rt.truth.dlco && !rt.truth.dlco.acceptable) limits.push('the single-breath diffusing capacity');
   if (rt.truth.pleth && !rt.truth.pleth.acceptable) limits.push('the plethysmographic lung volumes');
   return { key: limits.length ? 'limited' : 'interpretable', limits };
@@ -52,12 +62,12 @@ export function studyJudgement(rt) {
 const joinList = (xs) => (xs.length < 3 ? xs.join(' and ') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
 function studyItem(c, rt) {
-  const { key, limits } = studyJudgement(rt);
+  const { key, limits } = studyJudgement(rt, c.report?.caveatIds);
   const pre = rt.truth.pre;
   const whichF = ['fev1', 'fvc'].filter((k) => pre[k] === 'F').map((k) => VAR[k]);
   const outcome = {
     interpretable: 'Here every test that was performed meets the criteria on which its values rest, so the study can be interpreted as recorded.',
-    limited: `Here the study can be interpreted, with the limits that attach to ${joinList(limits)}; values from tests that meet the criteria are not made unusable by them.`,
+    limited: `Here the study can be interpreted, with the limits that attach to ${joinList(limits)}${limits.includes('the bronchodilator comparison') ? ' (a short wait after the dose, or better effort after it than before, changes the measured response whatever the grades)' : ''}; values from tests that meet the criteria are not made unusable by them.`,
     insufficient: `Here no usable maneuver yielded a ${joinList(whichF)}, so the baseline spirometry cannot be classified (the ratio and the pattern need both values) and the study cannot be interpreted as recorded; a diffusing capacity or lung volume that was acceptable is still a result of its own.`,
   }[key];
   return {
@@ -67,7 +77,7 @@ function studyItem(c, rt) {
     prompt: 'Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with stated limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable.',
     options: [['interpretable', 'Interpretable'], ['limited', 'Interpretable with limitations'], ['insufficient', 'Insufficient to interpret']],
     key,
-    why: `Each reported value is the largest acceptable value of its own variable, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The grouping is the simulator's, built on the grades and acceptability of ATS/ERS 2019 (grades A to F and U) and ATS/ERS 2017 (DLCO); neither statement sets a cut point for interpretability.`,
+    why: `Each reported FEV₁ and FVC is the largest value of its own variable among the acceptable maneuvers or, when none is acceptable (grade U), among the usable ones, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The grouping is the simulator's, built on the grades and acceptability of ATS/ERS 2019 (grades A to F and U) and ATS/ERS 2017 (DLCO); neither statement sets a cut point for interpretability.`,
     needsDetails: true,
   };
 }
@@ -158,7 +168,7 @@ function loopItem(c, rt) {
     rows,
     key,
     alsoCorrect,
-    why: `Flow in the first second follows the effort and the airway mechanics, so a cough appears as a notch on the expiratory limb, a hesitant start as a rounded, late peak, an abrupt end at nonzero flow as glottic closure or early termination, and an incomplete expiration as a volume-time curve without a plateau. ${notes.join(' ')} A loop whose volume falls short of the tabulated FVC is not thereby flawed: the tabulated FEV₁ and FVC are the largest acceptable values, usually from different maneuvers.`,
+    why: `Flow in the first second follows the effort and the airway mechanics, so a cough appears as a notch on the expiratory limb, a hesitant start as a rounded, late peak, an abrupt end at nonzero flow as glottic closure or early termination, and an incomplete expiration as a volume-time curve without a plateau. ${notes.join(' ')} A loop whose volume falls short of the tabulated FVC is not thereby flawed: the tabulated FEV₁ and FVC are the largest values among the acceptable maneuvers (among the usable ones when none is acceptable), usually from different maneuvers.`,
     needsDetails: false,
   };
 }
@@ -171,9 +181,8 @@ function bdItem(c, rt, interp, interpOther) {
   const response = bd.rule2022.significant ? 'significant' : 'not-significant';
   const grades = [...Object.values(rt.truth.pre), ...Object.values(rt.truth.post ?? {})];
   const caveats = interp.key?.caveatIds ?? c.report.caveatIds ?? [];
-  const blocking = caveats.filter((id) => UNRELIABLE_RESPONSE_CAVEATS.includes(id));
   const poorGrades = grades.some((g) => !INTERPRETABLE_GRADES.includes(g));
-  const interpretable = !poorGrades && blocking.length === 0 ? 'yes' : 'no';
+  const interpretable = !poorGrades && !bdComparisonUnreliable(caveats) ? 'yes' : 'no';
   const otherBd = interpOther?.bd;
   const otherKey = otherBd ? { response: otherBd.rule2022.significant ? 'significant' : 'not-significant', interpretable } : undefined;
   const agreement = bd.rulesAgree

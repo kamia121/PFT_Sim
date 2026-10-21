@@ -14,7 +14,7 @@ import { toCsv, reportFilename, downloadCsv, copyTable, printReport, downloadRep
 import { interpretationFor } from '../report/statement.js';
 import { PALETTES } from '../ui/palettes.js';
 import { loadOptionalModules } from './modules.js';
-import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, setReview, canSetReview, fallbackVisibility } from './stage.js';
+import { createStage, showStatement, canCheck, check as checkStage, openDetails, setQualityChallenge, canEnableQualityChallenge, setReview, canSetReview, fallbackVisibility } from './stage.js';
 import { parseAddress, buildSearch } from './address.js';
 import { emptyResponses, applyChange } from './collect.js';
 import { buildFeedback, addToTally } from './feedback.js';
@@ -429,7 +429,14 @@ async function boot() {
     else if (t.id === 'flags') { state.flags = t.value === 'none' ? 'none' : 'lln'; setUrl(); render(); }
     else if (t.id === 'qc') {
       // On and Off apply to the case on the page until its answers are checked; Varies is drawn at the next new case.
-      if (t.value !== 'varies' && state.case) { state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render(); }
+      if (t.value !== 'varies' && state.case) {
+        if (t.value === 'on' && !state.stage.qualityChallenge && !canEnableQualityChallenge(state.stage)) {
+          // The grades or the statement were already shown for this case: it continues without the challenge, and the setting applies to the next case.
+          announce('This case has already shown the grades and the statement, so it continues without the quality challenge. The setting applies to the next case.');
+          return;
+        }
+        state.stage = setQualityChallenge(state.stage, t.value === 'on'); state.itemsCache = null; setUrl(); render();
+      }
     }
     else if (t.id === 'qd') changeReview(t.value);
     else if (t.id === 'schematic') { state.showSchematic = t.checked; render(); }

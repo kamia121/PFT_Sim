@@ -94,7 +94,8 @@ function comparisonHtml(ctx) {
  * Static text: it depends on the two settings and never on the case, so it cannot carry the key.
  */
 function reviewNoteHtml(review, qualityChallenge) {
-  if (review === 'basic') return '<p class="muted" id="review-note">Study-level review: one judgement about the whole study. Maneuver-level questions are in the advanced review (Quality review in the toolbar).</p>';
+  const off = qualityChallenge ? '' : ' This case is running without the quality challenge: the grades and the technologist’s statement are already shown.';
+  if (review === 'basic') return `<p class="muted" id="review-note">Study-level review: one judgement about the whole study. Maneuver-level questions are in the advanced review (Quality review in the toolbar).${off}</p>`;
   if (review === 'advanced') {
     return `<p class="muted" id="review-note">Advanced review: maneuver-level questions.${qualityChallenge ? '' : ' The quality challenge is off, so the grades and the acceptability of each maneuver are already printed on page 2 and the statement is on page 1; these questions then check how the report is read, not an independent judgement. Turn the quality challenge on to withhold them.'}</p>`;
   }

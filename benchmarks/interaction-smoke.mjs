@@ -478,7 +478,7 @@ try {
   {
     const rtQ = buildRtReport(buildCase(parseDescriptor(POOR), ds));
     const studyItem = buildChallenges(buildCase(parseDescriptor(POOR), ds), { rt: rtQ, review: 'basic' })[0];
-    const study = studyJudgement(rtQ).key;
+    const study = studyJudgement(rtQ, buildCase(parseDescriptor(POOR), ds).report.caveatIds).key;
     const rows = () => page.locator('fieldset.row-item').count();
     await page.goto(`${base}?${POOR}&qc=1`);
     await page.waitForSelector('#answer-form');
@@ -541,6 +541,36 @@ try {
     await page.goto(`${base}?${POOR}&qd=adv`);
     await page.waitForSelector('#answer-form');
     check(/quality challenge is off, so the grades and the acceptability/.test(await page.locator('#review-note').innerText()), 'Q1: advanced with the challenge off states that the answers are printed on page 2');
+  }
+
+  // ---- Q2: review round 1: the supported bronchodilator caveats and the disclosure lock ----
+  {
+    const CAV = 'v=2&s=1&a=obstruction&sc=light&si=qs-bd-timing-short';
+    const cv = buildCase(parseDescriptor(CAV), ds);
+    const rtC = buildRtReport(cv);
+    check(studyJudgement(rtC, cv.report.caveatIds).key === 'limited', 'Q2: the key for the short-wait case is limited');
+    await page.goto(`${base}?${CAV}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await page.click('#toggle-details');
+    check(/Post-dose wait shortened to 8 min|8 min/.test(await page.locator('#case').innerText()), 'Q2: the cue (the printed wait) is on the page at stage 1 with the challenge on');
+    // The reviewer's chain.
+    await page.click('#show-statement');
+    await page.selectOption('#qc', 'off');
+    check(await page.locator('#show-statement').count() === 0 && !page.url().includes('qc=1'), 'Q2: turning the challenge off after the statement discloses everything and drops qc');
+    await page.selectOption('#qd', 'advanced');
+    check(page.url().includes('qd=adv') && await page.locator('fieldset.row-item').count() > 0, 'Q2: the level can change while the challenge is off');
+    await page.selectOption('#qc', 'on');
+    check(/already shown the grades and the statement/.test(await page.locator('#status').innerText()), 'Q2: turning the challenge back on is refused and announced');
+    check(!page.url().includes('qc=1') && await page.locator('#show-statement').count() === 0 && /running without the quality challenge|quality challenge is off/.test(await page.locator("#review-note").innerText()), 'Q2: the case stays open without the challenge, says so on the page, and the address keeps qc off');
+    check(await page.locator('#qc').inputValue() === 'on', 'Q2: the toolbar keeps the setting for the next case');
+    await page.click('#new-case');
+    await page.waitForSelector('#answer-form');
+    check(page.url().includes('qc=1') && await page.locator('#show-statement').count() === 1 && await page.locator('#review-note').innerText().then((t) => !/running without/.test(t)), 'Q2: the next case honours the challenge and starts undisclosed');
+    // A case opened with the challenge off cannot be turned into a challenge either.
+    await page.goto(`${base}?${CAV}`);
+    await page.waitForSelector('#answer-form');
+    await page.selectOption('#qc', 'on');
+    check(await page.locator('#show-statement').count() === 0 && !page.url().includes('qc=1'), 'Q2: a case that began with the challenge off stays without it');
   }
 
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);
