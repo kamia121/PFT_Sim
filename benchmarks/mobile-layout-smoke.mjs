@@ -23,6 +23,11 @@ const check = (ok, msg) => { if (!ok) { failures++; console.error('FAIL', msg); 
 const base = `http://127.0.0.1:${port}/`;
 const PHONES = [320, 375, 390, 430];
 const FLOOR_PX = 11; // effective size of report text on a phone
+// Layout assertions run on a fixed case with usable values (spirometry, volumes, DLCO, post-bronchodilator, quality notes). A random case can have none: for instance
+// ?v=2&s=1774&a=mixed&t=poor&p=spirometry&sc=moderate has null FEV1 and FEV1/FVC, grades F/F and no interpretation measures, and the sheet then correctly has no z-score
+// graphic (55 text labels at 390 px). Random cases are still loaded, with their URL and DOM state logged, and that case is checked on its own as an expected absence.
+const FIXTURE = '?v=2&s=485924449&a=obstruction&t=poor&sc=heavy';
+const NO_USABLE_VALUES = '?v=2&s=1774&a=mixed&t=poor&p=spirometry&sc=moderate';
 
 /** Runs in the page. Content that is clipped (overflow hidden or clip) or hidden in a scroller that is not a labelled region. */
 function clipReport() {
@@ -90,12 +95,12 @@ function effectiveSizes() {
   return { rows, svgs };
 }
 
-async function openPractice(width, height = 844) {
+async function openPractice(width, height = 844, query = FIXTURE) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2, isMobile: width < 700, hasTouch: width < 700 });
   const page = await ctx.newPage();
   const problems = [];
   page.on('pageerror', (e) => problems.push(e.message));
-  await page.goto(base);
+  await page.goto(`${base}${query}`);
   await page.waitForSelector('#answer-form');
   await page.waitForTimeout(500);
   return { ctx, page, problems };
@@ -216,8 +221,8 @@ try {
     await page.waitForTimeout(700);
     const lab = await page.evaluate(() => ({ doc: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1, frame: document.querySelector('#report-root .sheet-frame')?.getBoundingClientRect().width ?? 0, clip: null }));
     check(lab.doc && Math.abs(lab.frame - 816) < 2, `${tag}: Lab report view keeps its 816 px paper sheet (${Math.round(lab.frame)} px) without document scroll`);
-    const code = new URL(page.url()).searchParams.get('c');
-    await page.goto(`${base}report.html?c=${code}`);
+    const caseQuery = new URL(page.url()).search;
+    await page.goto(`${base}report.html${caseQuery}`);
     await page.waitForTimeout(1500);
     const rp = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
     const rpc = await page.evaluate(clipReport);
@@ -226,6 +231,27 @@ try {
     await page.waitForTimeout(1200);
     check((await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)) && !(await page.evaluate(clipReport)).length, `${tag}: quiz page: no document scroll and no clipped content`);
     check(!problems.length, `${tag}: no page errors${problems.length ? ` (${problems[0]})` : ''}`);
+    await ctx.close();
+  }
+
+  // Random cases, as the page loads them: the case URL and the state of the DOM are logged before anything waits, and the two z-score figures must agree with each other.
+  // A case without usable values has neither, and is reported as such; it is not a failure of the layout.
+  for (const w of PHONES) {
+    for (let i = 0; i < 4; i++) {
+      const { ctx, page, problems } = await openPractice(w, 844, '');
+      const st = await page.evaluate(() => ({ url: location.search, wide: document.querySelectorAll('[data-figure-id="z-strip-ats"]').length, narrow: document.querySelectorAll('[data-figure-id="z-strip-ats-narrow"]').length, svgTexts: document.querySelectorAll('#summary-slot .sheet svg text').length, doc: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1 }));
+      check(st.wide === st.narrow && st.wide <= 1 && st.doc && !problems.length, `${w} px: random case ${st.url}: z-score figures wide ${st.wide}, narrow ${st.narrow} (${st.wide ? 'usable values' : 'no usable values: none expected'}), ${st.svgTexts} chart labels, no document scroll, no page errors`);
+      await ctx.close();
+    }
+  }
+
+  // A case with no usable values: its sheet has no z-score graphic, wide or stacked, and still lays out inside the screen.
+  for (const w of PHONES) {
+    const { ctx, page, problems } = await openPractice(w, 844, NO_USABLE_VALUES);
+    const st = await page.evaluate(() => ({ wide: document.querySelectorAll('[data-figure-id="z-strip-ats"]').length, narrow: document.querySelectorAll('[data-figure-id="z-strip-ats-narrow"]').length, doc: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1, sheet: document.querySelectorAll('#summary-slot .sheet').length, texts: [...document.querySelectorAll('#summary-slot .sheet *')].filter((e) => !e.closest('svg, #answer-form, .sheet-mark') && e.tagName !== 'SUB' && getComputedStyle(e).display !== 'none' && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())).length }));
+    const clip = await page.evaluate(clipReport);
+    check(st.sheet === 1 && st.wide === 0 && st.narrow === 0, `${w} px: no usable values (${NO_USABLE_VALUES}): the sheet renders (${st.texts} text labels) with no z-score figure, wide ${st.wide}, narrow ${st.narrow}`);
+    check(st.doc && !clip.length && !problems.length, `${w} px: no usable values: no document scroll, no clipped content, no page errors${clip.slice(0, 2).join('; ')}`);
     await ctx.close();
   }
 
