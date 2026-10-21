@@ -22,9 +22,8 @@
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { chromium } from 'playwright';
+import { startServer, launchBrowser, artifactDir } from './lib/harness.mjs';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { loadDatasets } from '../src/reference/load.js';
 import { createReference } from '../src/reference/gli.js';
@@ -36,11 +35,9 @@ import { buildRtReport } from '../src/core/rt-report.js';
 import { interpretationFor } from '../src/report/statement.js';
 
 const port = 5198;
-const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
-await new Promise((r) => setTimeout(r, 800));
-const executablePath = process.env.PFT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
-const browser = await chromium.launch({ executablePath });
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pft-interaction-'));
+const server = await startServer(port);
+const browser = await launchBrowser();
+const tmp = artifactDir('interaction');
 let failures = 0;
 const check = (ok, msg) => { if (!ok) { failures++; console.error('FAIL', msg); } else console.log('ok  ', msg); };
 const skip = (msg) => console.log('skip', msg);

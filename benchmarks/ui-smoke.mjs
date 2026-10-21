@@ -13,16 +13,13 @@
  * Usage: node benchmarks/ui-smoke.mjs [screenshotDir]
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
-import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
 import fs from 'node:fs';
 
 const port = 5199;
 const shotDir = process.argv[2];
-const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
-await new Promise((r) => setTimeout(r, 800));
-const executablePath = process.env.PFT_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
-const browser = await chromium.launch({ executablePath });
+const server = await startServer(port);
+const browser = await launchBrowser();
 let failures = 0;
 const check = (ok, msg) => { if (!ok) { failures++; console.error('FAIL', msg); } else console.log('ok  ', msg); };
 const skip = (msg) => console.log('skip', msg);
