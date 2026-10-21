@@ -106,12 +106,12 @@ export function endHtml(model) {
  * The link is always the student copy.
  * @param {object} model @param {{ qualityChallenge?: boolean, flags?: 'lln'|'none', stage?: 1|2|3 }} [settings]
  */
-export const reportPageHref = (model, { qualityChallenge = false, flags = 'lln', stage = 1 } = {}) =>
-  `report.html${reportQuery({ token: model.meta.caseToken, equation: model.meta.equation, qualityChallenge, flags, stage })}`;
+export const reportPageHref = (model, { qualityChallenge = false, flags = 'lln', stage = 1, review = 'basic' } = {}) =>
+  `report.html${reportQuery({ token: model.meta.caseToken, equation: model.meta.equation, qualityChallenge, flags, stage, review })}`;
 
 /**
  * @param {object} model from buildReportModel
- * @param {{ interactive?: boolean, settings?: { qualityChallenge?: boolean, flags?: 'lln'|'none' } }} [opts] interactive adds a "Copy table" button to each table and the link to the full report page; settings are carried in that link
+ * @param {{ interactive?: boolean, settings?: { qualityChallenge?: boolean, flags?: 'lln'|'none', review?: 'basic'|'advanced' } }} [opts] interactive adds a "Copy table" button to each table and the link to the full report page; settings are carried in that link
  * @returns {string} an HTML fragment (one <article>)
  */
 export function renderReportHtml(model, { interactive = false, settings = {} } = {}) {

@@ -281,16 +281,18 @@ export function interpretationSectionHtml(model) {
 /**
  * @param {object} model report model (buildReportModel); build it with includeGrades false, though the sheet does not read grades
  * @param {{ rt?: object|null, caseData: object, interp: object, equation?: string, palette?: string|object,
- *   flags?: 'lln'|'none', showQualityLines?: boolean }} o
+ *   flags?: 'lln'|'none', showQualityLines?: boolean, narrowZ?: boolean }} o
  *   rt is an RtReport (docs/REPORT-FIRST-PLAN.md); without it the comment box is empty and the best maneuvers are drawn.
  * @returns {string} an HTML fragment: one <article class="sheet sheet-summary"> in its frame
  */
-export function summarySheetHtml(model, { rt = null, caseData, interp, equation, palette = 'white', flags = 'lln', showQualityLines = false } = {}) {
+export function summarySheetHtml(model, { rt = null, caseData, interp, equation, palette = 'white', flags = 'lln', showQualityLines = false, narrowZ = false } = {}) {
   const pal = typeof palette === 'string' ? (PALETTES[palette] ?? PALETTES.white) : palette;
   const sp = spirometryTable(model, caseData);
   const vols = byId(model, 'volumes'), dl = byId(model, 'dlco');
   const fl = flags === 'none' ? 'none' : 'lln';
-  const block = (title, table, id, foot) => `<section class="sheet-block" data-block="${id}"><h2>${esc(title)}</h2>${sheetTable(table, id, { flags: fl })}<p class="sheet-fn">${labelHtml(foot)}</p></section>`;
+  // On the practice page (narrowZ) a table wider than a phone scrolls inside its block, so the block is a labelled, focusable region.
+  const reach = (title) => (narrowZ ? ` role="region" tabindex="0" aria-label="${esc(title)} table; scrolls sideways when the screen is narrow"` : '');
+  const block = (title, table, id, foot) => `<section class="sheet-block" data-block="${id}"${reach(title)}><h2>${esc(title)}</h2>${sheetTable(table, id, { flags: fl })}<p class="sheet-fn">${labelHtml(foot)}</p></section>`;
   const tables = [
     sp ? block('Spirometry', sp, 'spirometry', spirometryFootnote(sp, { flags: fl, rt, showQualityLines, hasVolumes: Boolean(vols || dl) })) : '',
     vols ? block('Lung volumes', vols, 'volumes', volumesFootnote(vols)) : '',
@@ -298,6 +300,8 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
   ].join('');
   const zd = zData(model, interp, caseData);
   const zsvg = zd ? zStrip.render(zd, { palette: pal, style: 'ats', width: 744 }) : '';
+  // narrowZ: a second, stacked z-score graphic drawn 260 px wide, which the practice page shows instead of the 744 px one on a phone (sheets.css).
+  const zsvgNarrow = narrowZ && zd ? zStrip.render(zd, { palette: pal, style: 'ats', width: 280 }) : '';
   const comments = [...(rt?.interpretationLines ?? []), ...(showQualityLines ? rt?.qualityLines ?? [] : []), ...(rt?.closing ? [rt.closing] : [])];
   const commentsHtml = comments.length ? `<ul>${comments.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="sheet-none">No comments recorded.</p>';
   const commentsBox = `<section class="sheet-box sheet-comments"><h2>Technologist comments</h2>${commentsHtml}</section>`;
@@ -309,6 +313,7 @@ export function summarySheetHtml(model, { rt = null, caseData, interp, equation,
     + `<div class="sheet-content">${identity(model, caseData, interp)}`
     + `<div class="sheet-main"><div class="sheet-tables">${tables}${solo ? commentsBox : ''}</div><div class="sheet-curves">${curves(caseData, rt, pal)}</div></div>`
     + (zsvg ? `<figure class="sheet-z" data-figure-id="z-strip-ats">${zsvg}</figure>` : '')
+    + (zsvgNarrow ? `<figure class="sheet-z sheet-z-narrow" data-figure-id="z-strip-ats-narrow">${zsvgNarrow}</figure>` : '')
     + (model.referenceNote?.length ? `<p class="sheet-refnote">${model.referenceNote.map((l) => esc(l)).join(' ')}</p>` : '')
     + `<div class="sheet-boxes${solo ? ' solo' : ''}">${solo ? '' : commentsBox}`
     + `<section class="sheet-box sheet-interp"><h2>Interpretation</h2><div id="sheet-interpretation" class="sheet-interp-body">${model.interpretation ? `<p class="sheet-interp-ref">${INTERPRETATION_POINTER}</p>` : ''}</div>`

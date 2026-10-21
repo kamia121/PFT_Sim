@@ -7,7 +7,7 @@
   <meta name="description" content="Practice interpreting simulated pulmonary function reports, and see how the same values are classified under different GLI reference equations.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%230E2B73%27/%3E%3Cpath d=%27M5 22C9 22 9 9 14 9s4 13 13 13%27 stroke=%27%235FD0BD%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
   <title>PFT Sim | Simulated pulmonary function reports</title>
-  <script>try{const t=localStorage.getItem("pft-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch{}</script>
+  <script src="./src/ui/theme-boot.js"></script>
   <link rel="stylesheet" href="./fonts.css">
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./styles.css">
@@ -28,6 +28,7 @@
       <label class="field">Technologist notes<select id="scenario"><option value="varies">Varies</option><option value="none">None</option><option value="light">One</option><option value="moderate">Several</option><option value="heavy">Many</option></select></label>
       <label class="field">Tests<select id="panel"><option value="varies">Varies</option><option value="full">Spirometry, volumes, DLCO</option><option value="spirometry">Spirometry only</option></select></label>
       <label class="field">Quality challenge<select id="qc"><option value="off">Off</option><option value="on">On</option><option value="varies">Varies</option></select></label>
+      <label class="field">Quality review<select id="qd"><option value="basic">Study level (basic)</option><option value="advanced">Maneuver level (advanced)</option></select></label>
       <label class="field">Flags<select id="flags"><option value="lln">Below the LLN</option><option value="none">None</option></select></label>
       <button type="button" class="secondary" id="copy-link">Copy case link</button>
       <label class="field">Case link<input type="text" id="caseCode" readonly size="30" aria-label="Case link"></label>
@@ -44,7 +45,6 @@
       <button type="button" class="secondary" id="report-html">Download report HTML</button>
       <label class="field">Spirometry reference<select id="report-eq"><option value="GLIglobal">GLI Global 2022</option><option value="GLI2012">GLI-2012</option></select></label>
       <label><input type="checkbox" id="report-interp" disabled> Add the interpretation statement</label>
-      <label><input type="checkbox" id="report-dark"> Dark figure panels (screen only)</label>
     </div>
     <p class="muted" id="report-hint">Quality grades, per-maneuver acceptability and the interpretation statement appear when the Practice tab releases them: the technologist’s statement when it is shown, the rest after you check your answers.</p>
     <div id="report-root" aria-live="polite"></div>

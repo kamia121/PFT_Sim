@@ -1,32 +1,31 @@
 /*
  * Report sheets (src/sheets/): page 1, the summary sheet, at Letter size (816 by 1056 CSS px, 8.5 by 11 in).
  *
- * The sheet is a paper document and stays black on white in both screen themes, as src/report/report.css does; the colors that
- * carry meaning come from the shared tokens: --mcw-navy for the rules and titles, and --z-severe, --z-moderate, --z-mild and
- * --z-ok for the flag color and the z-score graphic (the integrator adds the four --z-* tokens to src/styles/tokens.css; the
- * fallbacks below are the light values, so the sheet works before they exist). Flag color is text only, in bold, never a fill; the
+ * The sheet is a paper document: black on white in print, and on screen it follows the light or dark theme through the --paper-*
+ * tokens of src/styles/tokens.css (the fallbacks below are the printed values). The rules and titles take --paper-accent, the flag
+ * color is --paper-flag, and --z-severe, --z-moderate, --z-mild and --z-ok color the z-score graphic. Flag color is text only, in bold, never a fill; the
  * one fill that carries a flag is the z-score graphic, drawn inside its SVG from the palette (src/ui/palettes.js).
  *
  * Screen: the fixed-size sheet scales to its container. fitSheetScale() in summary.js sets --sheet-s on the container; without
  * it the scale is 1. Print: scale 1, exact Letter size, no chrome.
  */
+
+:root, .sheet-frame {
+  --sheet-ink: var(--paper-ink, #000);
+  --sheet-muted: var(--paper-muted, #3d3d3d);
+  --sheet-hair: var(--paper-hair, #9a9a9a);
+  --sheet-paper: var(--paper-bg, #fff);
+  --sheet-shade: var(--paper-shade, #efefef);
+  --sheet-rule: var(--paper-accent, #0E2B73);
+  --sheet-flag: var(--paper-flag, #A8321E);
+}
 .sheet-frame {
-  --sheet-ink: #000;
-  --sheet-muted: #3d3d3d;
-  --sheet-hair: #9a9a9a;
-  --sheet-paper: #fff;
-  --sheet-shade: #efefef;
-  --sheet-rule: var(--mcw-navy, #0E2B73);
-  --sheet-flag: #A8321E;
   position: relative;
   width: calc(816px * var(--sheet-s, 1));
   height: calc(1056px * var(--sheet-s, 1));
   margin: 0 auto 14px;
   background: var(--sheet-paper);
   box-shadow: 0 1px 8px rgba(0, 0, 0, .28);
-}
-@supports (color: color-mix(in srgb, red 50%, blue)) {
-  .sheet-frame { --sheet-flag: color-mix(in srgb, var(--z-severe, #c8553d) 76%, #000); }
 }
 .sheet-frame * { box-sizing: border-box; }
 
@@ -40,7 +39,7 @@
 .sheet p { margin: 0; }
 .sheet sub { font-size: .75em; line-height: 0; }
 .sheet-content { position: absolute; left: 36px; right: 36px; top: 24px; bottom: 36px; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
-.sheet-mark { position: absolute; left: 50%; top: 50%; width: 1000px; transform: translate(-50%, -50%) rotate(-32deg); text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(0, 0, 0, .05); white-space: nowrap; pointer-events: none; user-select: none; z-index: 0; }
+.sheet-mark { position: absolute; left: 50%; top: 50%; width: 1000px; transform: translate(-50%, -50%) rotate(-32deg); text-align: center; font-size: 30pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--paper-mark, rgba(0, 0, 0, .05)); white-space: nowrap; pointer-events: none; user-select: none; z-index: 0; }
 .sheet-foot { position: absolute; left: 36px; right: 36px; bottom: 14px; display: flex; justify-content: space-between; gap: 12px; font-size: 6.5pt; color: var(--sheet-muted); border-top: .5pt solid var(--sheet-hair); padding-top: 2px; z-index: 1; }
 
 /* identity block */
@@ -90,14 +89,14 @@
 .sheet-tables > .sheet-comments { flex: 1 1 auto; margin-top: 3px; }
 /* A box takes the height of its text (the comment list varies from case to case); the fit of the whole sheet (summary.js, fitSheetContent) then makes room for it, so that no comment is clipped. */
 .sheet-box { border: 1.4px solid var(--sheet-rule); padding: 3px 7px 4px; font-size: 7.5pt; line-height: 1.25; display: flex; flex-direction: column; }
-.sheet-box ul { margin: 0; padding-left: 14px; }
+.sheet-box ul { margin: 0; padding-left: 1.4em; }
 .sheet-box li { margin-bottom: 1px; }
 .sheet-none { color: var(--sheet-muted); font-style: italic; }
 .sheet-interp-body { flex: 1 1 auto; min-height: 20px; font-size: 8pt; white-space: pre-wrap; }
 .sheet-interp-ref { font-style: italic; color: var(--sheet-muted); }
 
 /* The interpretation statement, once released: a flowing section after the summary sheet (src/sheets/summary.js, interpretationSectionHtml). */
-.sheet-interp-full { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--sheet-ink, #000); background: var(--sheet-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 6px 10px 8px; margin: 0 auto 14px; max-width: 816px; }
+.sheet-interp-full { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--sheet-ink, #000); background: var(--sheet-paper, #fff); border: 1.4px solid var(--paper-accent, #0E2B73); padding: 6px 10px 8px; margin: 0 auto 14px; max-width: 816px; }
 .sheet-interp-full .sheet-statement p { margin: 0 0 6px; font-size: 10pt; line-height: 1.35; }
 .sheet-interp-full .sheet-simnotes h3 { font-size: 8.5pt; margin: 6px 0 2px; }
 .sheet-interp-full .sheet-simnotes ul { margin: 0; padding-left: 16px; font-size: 8.5pt; color: var(--sheet-muted, #3d3d3d); }
@@ -157,8 +156,8 @@
 }
 
 /* Comments or the reference note that did not fit the fixed summary sheet at the smallest legible size (summary.js, fitSheetContent). */
-.sheet-cont-ref { list-style: none; margin-left: -14px; font-style: italic; color: var(--sheet-muted, #3d3d3d); }
-.sheet-continuation { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--rpt-ink, #000); background: var(--rpt-paper, #fff); border: 1.4px solid var(--mcw-navy, #0E2B73); padding: 8px 12px; margin: 0 auto 14px; max-width: 816px; font-size: 9pt; }
+.sheet-cont-ref { list-style: none; margin-left: -1.4em; font-style: italic; color: var(--sheet-muted, #3d3d3d); }
+.sheet-continuation { font-family: "Source Sans 3", "Segoe UI", Arial, Helvetica, sans-serif; color: var(--rpt-ink, #000); background: var(--rpt-paper, #fff); border: 1.4px solid var(--paper-accent, #0E2B73); padding: 8px 12px; margin: 0 auto 14px; max-width: 816px; font-size: 9pt; }
 .sheet-continuation h2 { font-size: 9pt; margin: 6px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
 .sheet-continuation ul { margin: 0; padding-left: 16px; }
 @media print {
@@ -169,3 +168,37 @@
 .sheet-interp-full .stmt-impression { margin: 0 0 6px; font-size: 10.5pt; line-height: 1.3; }
 .sheet-interp-full .stmt-lines { margin: 0; padding-left: 16px; font-size: 9.5pt; line-height: 1.3; }
 .sheet-interp-full .stmt-lines li { margin: 0 0 3px; }
+
+/* Phone layout (screen only, practice page): below 700 px the live sheet is reflowed at readable type instead of being scaled down.
+   Scaling the 816 px Letter layout to a 360 px screen drew its 10 px text at about 4.5 px, beside a form that is counter-scaled to full
+   size. Here --sheet-s is reset to 1 on the frame itself, which also makes the frame width, the zoom and the form's counter-zoom 1.
+   The fixed sheets (Lab report view, report page, print) are not touched: the rules are scoped to .sheet-live and to screen media. */
+.sheet-live .sheet-z-narrow { display: none; }
+@media screen and (max-width: 700px) {
+  .sheet-live .sheet-frame { --sheet-s: 1; width: auto; max-width: 100%; margin-bottom: 10px; }
+  .sheet-live .sheet { width: auto; min-height: 0; font-size: 12px; }
+  .sheet-live .sheet h2 { font-size: 12px; }
+  .sheet-live .sheet-content { margin: 10px 10px 6px; gap: 10px; }
+  .sheet-live .sheet-foot { margin: 0 10px 8px; flex-wrap: wrap; font-size: 11px; }
+  .sheet-live .sheet-lab { flex-wrap: wrap; }
+  .sheet-live .sheet-lab strong { font-size: 14px; }
+  .sheet-live .sheet-lab span, .sheet-live .sheet-ttl span { font-size: 11px; }
+  .sheet-live .sheet-ttl { font-size: 14px; flex: 1 1 100%; border-left: 0; border-top: 1.4px solid var(--sheet-rule); align-items: flex-start; }
+  .sheet-live .sheet-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sheet-live .sheet-fields > div, .sheet-live .sheet-fields > .s2, .sheet-live .sheet-fields > .s3 { grid-column: auto; border-right: 0; }
+  .sheet-live .sheet-fields > .s5, .sheet-live .sheet-fields > .s6 { grid-column: 1 / -1; }
+  .sheet-live .sheet-fields dt { font-size: 11px; }
+  .sheet-live .sheet-sign { font-size: 11px; flex-wrap: wrap; }
+  .sheet-live .sheet-fields dd { font-size: 12px; }
+  .sheet-live .sheet-main { flex-direction: column; gap: 10px; }
+  .sheet-live .sheet-tables, .sheet-live .sheet-curves { flex: 0 0 auto; width: 100%; }
+  .sheet-live .sheet-block { overflow-x: auto; background: linear-gradient(to right, var(--sheet-paper, #fff) 30%, transparent) left / 24px 100% no-repeat local, linear-gradient(to left, var(--sheet-paper, #fff) 30%, transparent) right / 24px 100% no-repeat local, linear-gradient(to right, rgba(0, 0, 0, .22), transparent) left / 10px 100% no-repeat scroll, linear-gradient(to left, rgba(0, 0, 0, .22), transparent) right / 10px 100% no-repeat scroll; }
+  .sheet-live .sheet-table tbody th.l { position: sticky; left: 0; background: var(--sheet-paper); white-space: normal; min-width: 5.5em; max-width: 9.5em; }
+  .sheet-live .sheet-table { font-size: 12px; }
+  .sheet-live .sheet-table th, .sheet-live .sheet-table td { padding: 1px 4px; }
+  .sheet-live .sheet-fn, .sheet-live .sheet-refnote { font-size: 11px; }
+  .sheet-live .sheet-box { font-size: 12px; padding: 4px 8px 6px; }
+  .sheet-live .sheet-z:not(.sheet-z-narrow) { display: none; }
+  .sheet-live .sheet-z-narrow { display: block; }
+  .sheet-live .sheet-z-narrow svg { width: 100%; overflow: visible; }
+}

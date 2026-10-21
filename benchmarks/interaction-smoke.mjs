@@ -15,6 +15,8 @@
  *   R7  the Lab report view and the report page print the summary identity, tables, last comment and "Page 1" footer on one sheet.
  *   R8  the z-score graphic does not name the area above the ULN "within limits".
  *   R9  the details z-score graphic carries the post-bronchodilator rows.
+ *   Q1  the quality review level: the default is one study-level question; the advanced level is an explicit opt-in that survives reload
+ *       and the report page; a change applies only while the answers are open; nothing of the verdict is in the source before the key.
  *
  * PDF text is read with pdftotext when it is installed; the print checks are skipped, and said to be skipped, when it is not.
  *
@@ -30,7 +32,7 @@ import { createReference } from '../src/reference/gli.js';
 import { buildCase } from '../src/core/case.js';
 import { parseDescriptor } from '../src/core/descriptor.js';
 import { interpret, compareEquations } from '../src/interpret/interpret.js';
-import { buildChallenges } from '../src/challenges/index.js';
+import { buildChallenges, studyJudgement } from '../src/challenges/index.js';
 import { buildRtReport } from '../src/core/rt-report.js';
 import { interpretationFor } from '../src/report/statement.js';
 
@@ -93,7 +95,7 @@ try {
   {
     const { items } = keyFor(POOR);
     const rowItems = items.filter((i) => Array.isArray(i.rows));
-    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
     await page.waitForSelector('#answer-form');
     for (const item of rowItems) {
       check((await page.locator(`[data-item="${item.id}"] fieldset.row-q`).count()) === item.rows.length, `R1: ${item.id} renders a group for each of its ${item.rows.length} rows`);
@@ -160,7 +162,7 @@ try {
     const { items } = keyFor(POOR);
     void items;
     const lines = buildRtReport(buildCase(parseDescriptor(POOR), ds)).qualityLines;
-    for (const [stage, act] of [[1, async () => {}], [2, async () => { await page.click('#show-statement'); }], [3, async () => { await page.click('#show-key'); }]]) {
+    for (const [stage, act] of [[1, async () => {}], [2, async () => { await page.locator('input[name="ch:studyInterpretable"]').first().check(); await page.click('#show-statement'); }], [3, async () => { await page.click('#show-key'); }]]) {
       await page.goto(`${base}?${POOR}&qc=1`);
       await page.waitForSelector('#answer-form');
       await act();
@@ -423,7 +425,7 @@ try {
   /* --------------------------------------------------- R3: phone width, size, keyboard and pointer, persistence */
   {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
     await page.waitForSelector('#answer-form');
     await page.waitForTimeout(400);
     const geometry = () => page.evaluate(() => {
@@ -470,6 +472,153 @@ try {
     await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"][value="yes"]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(tmp, 'phone-rows.png') });
     await page.setViewportSize({ width: 1280, height: 900 });
+  }
+
+  // ---- Q1: basic (study-level) and advanced (maneuver-level) quality review ----
+  {
+    const rtQ = buildRtReport(buildCase(parseDescriptor(POOR), ds));
+    const studyItem = buildChallenges(buildCase(parseDescriptor(POOR), ds), { rt: rtQ, review: 'basic' })[0];
+    const study = studyJudgement(rtQ, buildCase(parseDescriptor(POOR), ds).report.caveatIds).key;
+    const rows = () => page.locator('fieldset.row-item').count();
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'basic', 'Q1: a link without qd opens at the basic (study-level) review');
+    check((await page.locator('#qd option').allInnerTexts()).join('|') === 'Study level (basic)|Maneuver level (advanced)', 'Q1: the toolbar offers the two levels, with no Varies');
+    check(await rows() === 0 && await page.locator('fieldset[data-item="studyInterpretable"] input[type=radio]').count() === 3, 'Q1: basic shows one study-level question with three options and no per-maneuver rows');
+    check(await page.locator('#answer-form fieldset[data-item]').count() === 1, 'Q1: the study question is the only quality item');
+    const src1 = await page.content();
+    check(!src1.includes(studyItem.why) && !/ch:(acceptableManeuvers|grade|representativeLoopOk|rtConsistent|dlcoAcceptable|plethAcceptable|bdInterpretable)/.test(src1), 'Q1: stage 1 source holds no explanation and no maneuver, grade, loop or statement item');
+    // Keyboard: Tab to the group, Space to choose, arrows to move.
+    await page.locator('fieldset[data-item="studyInterpretable"] input[type=radio]').first().focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
+    check(await page.locator('input[name="ch:studyInterpretable"][value="limited"]').isChecked(), 'Q1: the study question is operable by keyboard');
+    await page.locator('input[name="ch:studyInterpretable"][value="' + study + '"]').check();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobile = await page.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, r: document.querySelector('input[name="ch:studyInterpretable"]').getBoundingClientRect().width }));
+    check(mobile.over <= 1 && mobile.r >= 20, `Q1: the study question fits a 390 px screen (overflow ${mobile.over}, radio ${mobile.r})`);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Stage 2: the answer locks and is kept; the statement item is not part of the basic review.
+    await page.click('#show-statement');
+    check(await page.locator('input[name="ch:studyInterpretable"]:checked').count() === 1 && await page.locator('input[name="ch:studyInterpretable"]:disabled').count() === 3, 'Q1: stage 2 locks the study answer and keeps it');
+    check(await page.locator('fieldset[data-item="rtConsistent"]').count() === 0 && !(await page.locator('#check-answers').isDisabled()), 'Q1: no statement adjudication in the basic review, and the check is available');
+    // A change of the toolbar setting after the statement is shown waits for the next case.
+    await page.selectOption('#qd', 'advanced');
+    check(await rows() === 0 && !page.url().includes('qd=adv') && /fixed once the statement is shown/.test(await page.locator('#status').innerText()), 'Q1: after the statement a level change does not apply to this case, and says so');
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(/Quality of the study/.test(await page.locator('#reveal').innerText()), 'Q1: the checked answers include the study-level item');
+    await page.click('#new-case');
+    await page.waitForSelector('#answer-form');
+    check(await rows() > 0 && page.url().includes('qd=adv'), 'Q1: the next case uses the chosen advanced level and the address records it');
+    check(/Advanced review: maneuver-level questions\./.test(await page.locator('#review-note').innerText()), 'Q1: the advanced level says what it is');
+    // Reload and navigation keep the level.
+    await page.reload();
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'advanced' && await rows() > 0, 'Q1: reload keeps the advanced level');
+    await page.click('[data-tab=report]');
+    await page.waitForSelector('#report-root .sheet');
+    const rhref = await page.locator('#report-root a', { hasText: 'Open the printable report page' }).getAttribute('href');
+    check(new URL(rhref, base).searchParams.get('qd') === 'adv', 'Q1: the link to the printable report page carries the level');
+    await page.goto(new URL(rhref, base).href);
+    await page.waitForSelector('#rp-back');
+    check(new URL(await page.locator('#rp-back').getAttribute('href'), page.url()).searchParams.get('qd') === 'adv', 'Q1: the way back to the practice page keeps the level');
+    // Open the practice page again at the basic level: a fresh attempt, answers of the other level do not carry.
+    await page.goto(`${base}?${POOR}&qc=1&qd=adv`);
+    await page.waitForSelector('#answer-form');
+    await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"][value="yes"]').check();
+    await page.locator('input[name=pattern]').first().check();
+    await page.selectOption('#qd', 'basic');
+    check(await rows() === 0 && !page.url().includes('qd=') && await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"]').count() === 0, 'Q1: a change at stage 1 swaps the items and drops qd from the address');
+    check(await page.locator('input[name=pattern]:checked').count() === 1 && await page.locator('input[name="ch:studyInterpretable"]:checked').count() === 0, 'Q1: the change keeps the ordinary interpretation answers and starts the quality items afresh');
+    await page.selectOption('#qd', 'advanced');
+    check(await page.locator('input[name="ch:acceptableManeuversPre#fev1:0"]:checked').count() === 0, 'Q1: the earlier maneuver answers were cleared and do not return');
+    // Invalid values fall back to basic.
+    await page.goto(`${base}?${POOR}&qd=junk`);
+    await page.waitForSelector('#answer-form');
+    check(await page.locator('#qd').inputValue() === 'basic' && await rows() === 0, 'Q1: an invalid level opens at basic');
+    // Challenge off with the advanced level: the page says the answers are printed.
+    await page.goto(`${base}?${POOR}&qd=adv`);
+    await page.waitForSelector('#answer-form');
+    check(/quality challenge is off, so the grades and the acceptability/.test(await page.locator('#review-note').innerText()), 'Q1: advanced with the challenge off states that the answers are printed on page 2');
+  }
+
+  // ---- Q2: review round 1: the supported bronchodilator caveats and the disclosure lock ----
+  {
+    const CAV = 'v=2&s=1&a=obstruction&sc=light&si=qs-bd-timing-short';
+    const cv = buildCase(parseDescriptor(CAV), ds);
+    const rtC = buildRtReport(cv);
+    check(studyJudgement(rtC, cv.report.caveatIds).key === 'limited', 'Q2: the key for the short-wait case is limited');
+    await page.goto(`${base}?${CAV}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await page.click('#toggle-details');
+    check(/Post-dose wait shortened to 8 min|8 min/.test(await page.locator('#case').innerText()), 'Q2: the cue (the printed wait) is on the page at stage 1 with the challenge on');
+    // The reviewer's chain.
+    await page.click('#show-statement');
+    await page.selectOption('#qc', 'off');
+    check(await page.locator('#show-statement').count() === 0 && !page.url().includes('qc=1'), 'Q2: turning the challenge off after the statement discloses everything and drops qc');
+    await page.selectOption('#qd', 'advanced');
+    check(page.url().includes('qd=adv') && await page.locator('fieldset.row-item').count() > 0, 'Q2: the level can change while the challenge is off');
+    await page.selectOption('#qc', 'on');
+    check(/already shown the grades and the statement/.test(await page.locator('#status').innerText()), 'Q2: turning the challenge back on is refused and announced');
+    check(!page.url().includes('qc=1') && await page.locator('#show-statement').count() === 0 && /running without the quality challenge|quality challenge is off/.test(await page.locator("#review-note").innerText()), 'Q2: the case stays open without the challenge, says so on the page, and the address keeps qc off');
+    check(await page.locator('#qc').inputValue() === 'on', 'Q2: the toolbar keeps the setting for the next case');
+    await page.click('#new-case');
+    await page.waitForSelector('#answer-form');
+    check(page.url().includes('qc=1') && await page.locator('#show-statement').count() === 1 && await page.locator('#review-note').innerText().then((t) => !/running without/.test(t)), 'Q2: the next case honours the challenge and starts undisclosed');
+    // A case opened with the challenge off cannot be turned into a challenge either.
+    await page.goto(`${base}?${CAV}`);
+    await page.waitForSelector('#answer-form');
+    await page.selectOption('#qc', 'on');
+    check(await page.locator('#show-statement').count() === 0 && !page.url().includes('qc=1'), 'Q2: a case that began with the challenge off stays without it');
+  }
+
+  // ---- Q3: the basic flow has no forced technologist-statement step ----
+  {
+    const radio = (v) => page.locator(`input[name="ch:studyInterpretable"][value="${v}"]`);
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    const note = await page.locator('#h-quality-items ~ p.muted').allInnerTexts();
+    check(!(await page.locator('#case').innerText()).includes('Judge the tests from the maneuvers'), 'Q3: the basic page does not send the learner to the maneuvers');
+    check(note.some((t) => /Page 2 lists the maneuvers and tests behind the study\. Showing the statement before the check locks the study-level answer\./.test(t)), 'Q3: the basic stage-1 note is the study-level wording');
+    check(!(await page.locator('#check-answers').isDisabled()) && await page.locator('#check-hint').count() === 0, 'Q3: the check is available at stage 1 with no hint');
+    check(await page.locator('#show-statement').innerText() === 'Show the technologist’s statement and lock the study answer', 'Q3: the optional release says that it locks the study answer');
+    // The release is refused while the study answer is empty.
+    await page.click('#show-statement');
+    check(await page.locator('#show-statement').count() === 1 && /Answer the study-level question first/.test(await page.locator('#status').innerText()), 'Q3: the release is refused, and says why, while the study answer is empty');
+    // Direct check, never releasing the statement.
+    await radio('limited').check();
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(await page.locator('#h-quality').count() === 1 && /Quality of the study/.test(await page.locator('#reveal').innerText()), 'Q3: a direct check scores the study item and shows the quality feedback');
+    // Optional release, then check.
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await radio('interpretable').check();
+    await page.click('#show-statement');
+    check(await radio('interpretable').isDisabled() && !(await page.locator('input[name=pattern]').first().isDisabled()), 'Q3: the release locks the study answer and leaves the interpretation answers open');
+    check(/The study-level answer is locked; the other answers remain open\./.test(await page.locator('#statement-note').innerText()), 'Q3: the stage-2 note says what is locked');
+    await page.locator('input[name=pattern]').first().check();
+    await page.click('#check-answers');
+    await page.waitForSelector('#reveal');
+    check(await page.locator('#reveal').count() === 1, 'Q3: a check after the release works');
+    // Switching the level re-gates the check; switching back ungates it.
+    await page.goto(`${base}?${POOR}&qc=1`);
+    await page.waitForSelector('#answer-form');
+    await page.selectOption('#qd', 'advanced');
+    check(await page.locator('#check-answers').isDisabled() && /Judge the tests from the maneuvers on page 2/.test(await page.locator('#case').innerText()), 'Q3: the advanced review keeps its maneuver instruction and its gate');
+    await page.selectOption('#qd', 'basic');
+    check(!(await page.locator('#check-answers').isDisabled()), 'Q3: switching back to basic ungates the check');
+    // Disclosure lock on the basic flow: release, challenge off, advanced, challenge on is refused.
+    await radio('limited').check();
+    await page.click('#show-statement');
+    await page.selectOption('#qc', 'off');
+    await page.selectOption('#qd', 'advanced');
+    await page.selectOption('#qc', 'on');
+    check(!page.url().includes('qc=1') && /already shown the grades and the statement/.test(await page.locator('#status').innerText()), 'Q3: the disclosure lock holds after a basic release');
+    // The quiz states its scope.
+    await page.goto(`${base}quiz.html`);
+    check(/Scope: the quiz asks the FEV₁ and FVC quality grades as items of their own/.test(await page.locator('#quiz-scope').innerText()), 'Q3: the quiz states its scope');
   }
 
   check(problems.length === 0, `no console or page errors${problems.length ? ': ' + problems.slice(0, 3).join(' | ') : ''}`);

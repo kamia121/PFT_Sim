@@ -185,11 +185,15 @@ try {
     check(new URL(page.url()).searchParams.get('eq') === 'GLI2012' && new URL(page.url()).searchParams.has('c'), 'equation choice is kept in the address with the opaque case code');
     const back = await page.locator('#rp-back').getAttribute('href');
     check(/^\.\/\?c=/.test(back), `link back to the practice page for the same case (${back.slice(0, 30)}...)`);
-    // Dark screen theme keeps white paper.
+    // The paper follows the screen theme (dark paper on a dark screen) and is white in print whatever the screen theme is.
+    const paperOf = () => page.locator('.rp-page').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    check((await paperOf()) === 'rgb(255, 255, 255)', 'paper is white in the light theme');
     await page.click('#theme-toggle');
-    const paper = await page.locator('.rp-page').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    check(paper === 'rgb(255, 255, 255)', 'paper stays white in the dark theme');
+    check((await paperOf()) === 'rgb(24, 30, 29)', 'paper is dark in the dark theme');
     if (shotDir) await page.screenshot({ path: `${shotDir}/theme-dark.png`, fullPage: false });
+    await page.emulateMedia({ media: 'print' });
+    check((await paperOf()) === 'rgb(255, 255, 255)', 'paper is white in print while the screen theme is dark');
+    await page.emulateMedia({ media: 'screen' });
     await page.click('#theme-toggle');
     await page.emulateMedia({ media: 'print' });
     check(!(await page.locator('.rp-toolbar').isVisible()) && !(await page.locator('.masthead').isVisible()), 'print view hides the toolbar and page chrome');

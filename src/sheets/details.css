@@ -35,3 +35,10 @@
   .dt-fig, .dt-sheet .rpt-block, .dt-notes li { break-inside: avoid; }
   .dt-sheet h2 { break-after: avoid; }
 }
+
+/* Phone screens: the identity fields of the details header wrap under the laboratory name instead of running past the sheet. */
+@media screen and (max-width: 700px) {
+  .dt-id { flex: 1 1 100%; flex-wrap: wrap; border-left: 0; border-top: 1.5px solid var(--rpt-rule, #000); }
+  .dt-id > div { flex: 1 1 40%; }
+  .dt-id dd { white-space: normal; overflow-wrap: anywhere; }
+}

@@ -30,6 +30,19 @@
   --z-ok: #CFE8CC;
   --flag-bg: #FBF4E6;
   --focus: #0E2B73;
+  /* paper: the laboratory report sheets and the figures drawn on them (src/ui/palettes.js PAGE_PALETTE reads --fig-*) */
+  --paper-bg: #FFFFFF;
+  --paper-ink: #000000;
+  --paper-muted: #3D3D3D;
+  --paper-rule: #000000;
+  --paper-hair: #9A9A9A;
+  --paper-shade: #EFEFEF;
+  --paper-accent: #0E2B73;
+  --paper-flag: #A8321E;
+  --paper-mark: rgba(0, 0, 0, .06);
+  --fig-bg: #FFFFFF; --fig-grid: #E6E9E8; --fig-axis: #56615E; --fig-text: #1C2321;
+  --fig-measured: #2F6E66; --fig-predicted: #6B7774; --fig-lln: #0E2B73; --fig-rejected: #9AA3A0; --fig-second: #9A6B12; --fig-third: #0E2B73; --fig-mark: #56615E;
+  --fig-z-severe: #C8553D; --fig-z-moderate: #E8A04C; --fig-z-mild: #F2D95C; --fig-z-ok: #CFE8CC; --fig-star: #1C2321; --fig-halo: #FFFFFF;
   color-scheme: light;
 }
 
@@ -57,6 +70,18 @@
     --z-mild: #B79D2F;
     --z-ok: #3E7F63;
     --focus: #9DB2EC;
+    --paper-bg: #181E1D;
+    --paper-ink: #E4E9E7;
+    --paper-muted: #A9B5B2;
+    --paper-rule: #B9C5C1;
+    --paper-hair: #4A5754;
+    --paper-shade: #1F2726;
+    --paper-accent: #9DB2EC;
+    --paper-flag: #F0907A;
+    --paper-mark: rgba(255, 255, 255, .06);
+    --fig-bg: #0A1311; --fig-grid: #16251F; --fig-axis: #7E918B; --fig-text: #D5E2DE;
+    --fig-measured: #5FD0BD; --fig-predicted: #8FA19B; --fig-lln: #A9BCF2; --fig-rejected: #6A7572; --fig-second: #E8B962; --fig-third: #A9BCF2; --fig-mark: #7E918B;
+    --fig-z-severe: #B5432F; --fig-z-moderate: #C27A2C; --fig-z-mild: #B79D2F; --fig-z-ok: #3E7F63; --fig-star: #D5E2DE; --fig-halo: #0A1311;
     color-scheme: dark;
   }
 }
@@ -84,7 +109,62 @@
   --z-mild: #B79D2F;
   --z-ok: #3E7F63;
   --focus: #9DB2EC;
+  --paper-bg: #181E1D;
+  --paper-ink: #E4E9E7;
+  --paper-muted: #A9B5B2;
+  --paper-rule: #B9C5C1;
+  --paper-hair: #4A5754;
+  --paper-shade: #1F2726;
+  --paper-accent: #9DB2EC;
+  --paper-flag: #F0907A;
+  --paper-mark: rgba(255, 255, 255, .06);
+  --fig-bg: #0A1311; --fig-grid: #16251F; --fig-axis: #7E918B; --fig-text: #D5E2DE;
+  --fig-measured: #5FD0BD; --fig-predicted: #8FA19B; --fig-lln: #A9BCF2; --fig-rejected: #6A7572; --fig-second: #E8B962; --fig-third: #A9BCF2; --fig-mark: #7E918B;
+  --fig-z-severe: #B5432F; --fig-z-moderate: #C27A2C; --fig-z-mild: #B79D2F; --fig-z-ok: #3E7F63; --fig-star: #D5E2DE; --fig-halo: #0A1311;
   color-scheme: dark;
+}
+
+/* Paper is light whatever the screen theme is: a printed page keeps the light tokens even when the screen is dark (Ctrl+P from the practice
+   page, the quiz page or the Lab report). The tripled :root outranks both dark rules above. */
+@media print {
+  :root:root:root {
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --surface-2: #F1F3F2;
+    --border: #D9DEDC;
+    --text: #1C2321;
+    --text-muted: #56615E;
+    --header-bg: var(--mcw-navy);
+    --header-text: #FFFFFF;
+    --accent-bar: var(--mcw-green);
+    --link: #245A53;
+    --series-current: #2F6E66;
+    --series-ref: #9AA3A0;
+    --series-snap: #0E2B73;
+    --grid: #E6E9E8;
+    --axis: #56615E;
+    --flag: #9A6B12;
+    --flag-bg: #FBF4E6;
+    --z-severe: #C8553D;
+    --z-moderate: #E8A04C;
+    --z-mild: #F2D95C;
+    --z-ok: #CFE8CC;
+    --focus: #0E2B73;
+    /* paper: the laboratory report sheets and the figures drawn on them (src/ui/palettes.js PAGE_PALETTE reads --fig-*) */
+    --paper-bg: #FFFFFF;
+    --paper-ink: #000000;
+    --paper-muted: #3D3D3D;
+    --paper-rule: #000000;
+    --paper-hair: #9A9A9A;
+    --paper-shade: #EFEFEF;
+    --paper-accent: #0E2B73;
+    --paper-flag: #A8321E;
+    --paper-mark: rgba(0, 0, 0, .06);
+    --fig-bg: #FFFFFF; --fig-grid: #E6E9E8; --fig-axis: #56615E; --fig-text: #1C2321;
+    --fig-measured: #2F6E66; --fig-predicted: #6B7774; --fig-lln: #0E2B73; --fig-rejected: #9AA3A0; --fig-second: #9A6B12; --fig-third: #0E2B73; --fig-mark: #56615E;
+    --fig-z-severe: #C8553D; --fig-z-moderate: #E8A04C; --fig-z-mild: #F2D95C; --fig-z-ok: #CFE8CC; --fig-star: #1C2321; --fig-halo: #FFFFFF;
+    color-scheme: light;
+  }
 }
 
 /* Dark "monitor" panels used for PV loops, pressure traces and echo screens in both themes.

@@ -19,7 +19,7 @@ h3{font-size:1.02rem;margin:1.1em 0 .4em;font-weight:600}
 .card>h2:first-child,.card>h3:first-child{margin-top:.2em}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
 button.primary,button.secondary,.linkbutton{font:inherit;border-radius:4px;padding:7px 14px;cursor:pointer;border:1px solid var(--accent-bar)}
-button.primary{background:var(--accent-bar);color:#fff}
+button.primary{background:var(--mcw-green);color:#fff}
 button.secondary{background:var(--surface);color:var(--text)}
 button:disabled{opacity:.5;cursor:not-allowed}
 label.field{display:flex;flex-direction:column;font-size:.85rem;color:var(--text-muted);gap:2px}
@@ -120,3 +120,25 @@ fieldset.inline.eq-select legend{padding:0;margin-right:8px;float:left}
 .impression-compare .stmt-lines{margin:0 0 .5rem;padding-left:1.1rem}
 .impression-compare .stmt-lines li{margin:0 0 .25rem}
 .impression-compare details.supporting{margin:.4rem 0}
+
+/* Print never depends on background graphics: the navy masthead and the green buttons lose their fills when a browser drops backgrounds,
+   which left their white text near-invisible on paper. The chrome prints as dark ink on white; the toggle has no use on paper. */
+@media print {
+  .masthead{background:none;color:#000;border-bottom:1.5px solid #000}
+  .masthead a,.wordmark{color:#000}
+  .theme-button{display:none}
+  button.primary,button.secondary,.linkbutton{background:none;color:#000;border-color:#000}
+}
+/* iOS Safari inflates the text of wide, text-heavy blocks (lists, notes) but not their padding, so bullets can land on a box border. Page text is sized by this stylesheet. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* Width-safe grids and long text: a grid track never needs more than its container, and learner-entered text (the impression, shown again with the key) wraps anywhere. */
+.answers{grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr))}
+.grid2{grid-template-columns:repeat(auto-fit,minmax(min(21rem,100%),1fr))}
+.compare-grid{grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr))}
+.compare-grid>*,.interp-box .rows>*,.result-row>*{min-width:0}
+.compare-grid,.explain,.result-row,.interp-box .prompt{overflow-wrap:anywhere}
+
+/* A table wider than the screen scrolls inside its box: edge shadows show that there is more, and the caption stays in view at the left. */
+.scroll,.sheet-wrap:not(.sheet-live){background:linear-gradient(to right,var(--surface,#fff) 30%,transparent) left/24px 100% no-repeat local,linear-gradient(to left,var(--surface,#fff) 30%,transparent) right/24px 100% no-repeat local,linear-gradient(to right,rgba(0,0,0,.2),transparent) left/10px 100% no-repeat scroll,linear-gradient(to left,rgba(0,0,0,.2),transparent) right/10px 100% no-repeat scroll}
+@media (max-width:700px){table.data caption{position:sticky;left:0;width:min(100%,calc(100vw - 80px));white-space:normal}}
