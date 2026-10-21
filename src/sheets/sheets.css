@@ -108,3 +108,22 @@
 
 /* Notes on the reference values (fallbacks, height and sex used, age limits): small print under the z-score graphic. */
 .sheet-refnote { margin: 2px 0 0; font-size: 7pt; line-height: 1.25; color: var(--sheet-muted, #444); flex: 0 0 auto; }
+
+/* Live mode (the practice page): the learner works inside the interpretation box, so the sheet grows with its content instead of
+   clipping at Letter height, and scales to the width of the page with zoom. The printed and report-page sheets stay fixed. */
+.sheet-live { overflow-x: hidden; }
+.sheet-live .sheet-frame { height: auto; width: 816px; zoom: var(--sheet-s, 1); margin: 0 auto 14px; }
+.sheet-live .sheet { position: relative; height: auto; min-height: 1056px; overflow: visible; transform: none; display: flex; flex-direction: column; }
+.sheet-live .sheet-content { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin: 24px 36px 12px; flex: 1 1 auto; }
+.sheet-live .sheet-foot { position: relative; left: auto; right: auto; bottom: auto; margin: 0 36px 14px; }
+.sheet-live .sheet-boxes { flex: 0 0 auto; }
+/* In live mode the comment box and the interpretation box stack, and the questions run in columns across the full sheet width. */
+.sheet-live .sheet-boxes { grid-template-columns: minmax(0, 1fr); }
+.sheet-live .sheet-interp-body { white-space: normal; font-size: 8.5pt; }
+.sheet-live .sheet-interp .answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 14px; align-items: start; }
+.sheet-live .sheet-interp .answers fieldset { margin: 0; min-width: 0; }
+.sheet-live .sheet-interp h2 + .muted, .sheet-live .sheet-interp-body > .interp-box > h2 { display: none; }
+.sheet-live .sheet-interp { font-size: 8.5pt; }
+.sheet-live .sheet-interp fieldset { font-size: 8.5pt; padding: 4px 8px; }
+.sheet-live .sheet-interp legend, .sheet-live .sheet-interp h3 { font-size: 9pt; }
+.sheet-live .sheet-interp .answers p { font-size: 8pt; margin: 2px 0; }

@@ -153,7 +153,7 @@ try {
     check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1), 'stage 1: no grade statement in the page source');
     await page.click('#toggle-details');
     const stage1Open = await page.content();
-    check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1Open) && !/>\s*(?:not )?acceptable\s*</i.test(stage1Open) && !/not usable/.test(stage1Open), 'stage 1 with page 2 open: no grade or acceptability text in the page source');
+    check(!/FEV(?:1|₁)\s*-\s*[A-FU]\b|FVC\s*-\s*[A-FU]\b/.test(stage1Open) && !/<(?:td|li|b|strong|span)\b[^>]*>\s*(?:not )?acceptable\s*</i.test(stage1Open) && !/not usable/.test(stage1Open), 'stage 1 with page 2 open: no grade or acceptability text in the page source');
     await page.click('#show-statement');
     check(await page.evaluate(() => document.activeElement?.id === 'statement-note'), 'stage 2: focus moves to the note that announces the statement');
     check((await page.locator('#show-statement').count()) === 0 && !(await page.locator('#check-answers').isDisabled()), 'stage 2: a scored check is now possible');

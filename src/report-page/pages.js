@@ -122,7 +122,8 @@ export const footHtml = (model, { n, label }) => `<div class="rp-foot"><span>${e
  */
 export function frameDocument(model, pages, { label, appendix = null, continued = '' }) {
   const mark = `<div class="rp-markwrap" aria-hidden="true"><div class="rp-mark">${esc(model.meta.marker)}</div></div>`;
-  const fixed = pages.map((body, i) => `<div class="rp-box" data-page-box="${i + 1}"><article class="pft-report rp-page" data-page="${i + 1}" aria-label="Report page ${i + 1} of ${pages.length}, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${body}</div>${footHtml(model, { n: i + 1, label })}</article></div>`);
+  // The summary sheet is a complete Letter sheet with its own frame, identity block and footer; it is not wrapped in a page frame.
+  const fixed = pages.map((body, i) => body.startsWith('<div class="sheet-frame">') ? `<div class="rp-box sheet-box" data-page-box="${i + 1}">${body}</div>` : `<div class="rp-box" data-page-box="${i + 1}"><article class="pft-report rp-page" data-page="${i + 1}" aria-label="Report page ${i + 1} of ${pages.length}, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${body}</div>${footHtml(model, { n: i + 1, label })}</article></div>`);
   const cont = continued
     ? `<div class="rp-box flow cont" data-page-box="continued"><article class="pft-report rp-page rp-flow" data-page="continued" aria-label="Report, continued, case ${esc(model.meta.caseCode)}">${mark}<div class="rp-content">${continued}</div><div class="rp-foot"><span>${esc(model.meta.marker)}. PFT Sim, generator version ${esc(model.meta.generatorVersion)}. Case ${esc(model.meta.caseCode)}. Not a patient record. ${esc(label)}.</span></div></article></div>`
     : '';

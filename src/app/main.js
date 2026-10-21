@@ -120,8 +120,18 @@ function render({ focus = null } = {}) {
   });
   $('#tally').textContent = state.tally.answered ? `Cases checked: ${state.tally.answered}. Items matching the key: ${state.tally.matched} of ${state.tally.items}.` : '';
   $('#caseCode').value = location.href;
+  fitSheets();
   if (focus) $(focus)?.focus?.({ preventScroll: true });
 }
+
+/** Scale the summary sheet (816 px wide) to the width of the page; the sheet grows downward with the interpretation form. */
+async function fitSheets() {
+  const el = $('#summary-slot');
+  if (!el || !state.mods.summarySheetHtml) return;
+  try { (await import('../sheets/summary.js')).fitSheetScale(el, 1); } catch { /* the sheet stays at full size */ }
+}
+let fitPending = 0;
+window.addEventListener('resize', () => { cancelAnimationFrame(fitPending); fitPending = requestAnimationFrame(fitSheets); });
 
 /** Redraws only the page-2 area (a figure view or chip change, or opening it), so the answers and the scroll position stay as they are. */
 function renderDetailsOnly() {

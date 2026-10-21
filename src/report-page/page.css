@@ -121,3 +121,8 @@
   .rp-toolbar > * { flex: 1 1 100%; }
   .rp-toolbar label.field select { width: 100%; }
 }
+
+/* The summary sheet fills its Letter box; it takes the page scale of the report page instead of its own. */
+.rp-box.sheet-box { overflow: hidden; }
+.rp-box.sheet-box .sheet-frame { --sheet-s: var(--rp-s); margin: 0; box-shadow: none; }
+@media print { .rp-box.sheet-box .sheet-frame { --sheet-s: 1; } }

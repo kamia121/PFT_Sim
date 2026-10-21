@@ -207,13 +207,13 @@ try {
   {
     const page = await open({ width: 1280, height: 900 });
     await page.goto(`${base}/?${CASES[1][1]}`);
-    await page.waitForSelector('#pre-maneuvers');
+    await page.waitForSelector('#summary-slot .sheet, #pre-maneuvers');
     await page.click('[data-tab=report]');
-    await page.waitForSelector('.pft-report');
-    check((await page.locator('.pft-report table.rpt-table').count()) >= 2, 'practice report tab keeps its preview tables');
-    const href = await page.locator('.pft-report .rpt-open a').getAttribute('href');
+    await page.waitForSelector('#report-root a[href^="report.html"], .rpt-open a');
+    check((await page.locator('.sheet table, .pft-report table.rpt-table').count()) >= 2, 'practice report tab keeps its preview tables');
+    const href = await page.locator('#report-root a[href^="report.html"], .rpt-open a').first().getAttribute('href');
     check(/^report\.html\?c=[\w-]+&eq=GLIglobal$/.test(href), `"Open full report" link on the practice page (${href})`);
-    await page.click('.pft-report .rpt-open a');
+    await page.click('#report-root a[href^="report.html"], .rpt-open a');
     await ready(page);
     check((await page.locator('.rp-box').count()) === (SUMMARY ? 2 : 3), 'the link opens the same case as a report');
     await page.close();
