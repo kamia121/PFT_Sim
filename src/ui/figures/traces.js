@@ -21,8 +21,9 @@ export const artifactSeed = (seed, index, set) => ((seed >>> 0) + (index + (set 
  *   - the trace is a pure function of the fields it reads: curve (A, a, k, r, T), fet, fvc, faults, inspiratory (when present),
  *     the case seed, the set, the index, the faults of the scenario, and the trace-rendering version;
  *   - the cache is a WeakMap keyed by the maneuver object, so entries live only as long as the case that holds them;
- *   - each entry stores a fingerprint of those fields and is used only when the fingerprint matches, so a maneuver whose fields were
- *     changed after a first call is computed again, never answered from a stale entry;
+ *   - inputs may be changed in place: each entry stores a fingerprint of the values of those fields (the contents of the faults and
+ *     of a supplied inspiratory limb, not their identity) and is used only when the fingerprint matches, so a maneuver changed after
+ *     a first call, by replacement or in place, is computed again and never answered from a stale entry;
  *   - the returned object and its arrays are frozen and shared between callers: a caller that needs to change them copies them
  *     (writing into a frozen array throws in module code, so a mistake cannot silently alter what another figure draws).
  * computeManeuverTrace is the uncached computation.
@@ -40,10 +41,13 @@ export function computeManeuverTrace(m, { seed, index, set = 'pre', scenario = n
 }
 
 const traceCache = new WeakMap();
-/** Fingerprint of every input the trace reads; numbers are written in full precision. */
+/**
+ * Fingerprint of the values of every input the trace reads, numbers in full precision: a supplied inspiratory limb is included by
+ * content (every field textureInspiration copies or reads), so changing one of its samples in place changes the fingerprint.
+ */
 export const traceFingerprint = (m, { seed, index, set = 'pre', scenario = null }) => {
   const c = m.curve;
-  return JSON.stringify([TRACE_RENDERING_ID, seed >>> 0, set, index, c.A, c.a, c.k, c.r, c.T, m.fet, m.fvc, m.faults ?? [], scenario?.faults ?? []]);
+  return JSON.stringify([TRACE_RENDERING_ID, seed >>> 0, set, index, c.A, c.a, c.k, c.r, c.T, m.fet, m.fvc, m.faults ?? [], scenario?.faults ?? [], m.inspiratory ?? null]);
 };
 const deepFreeze = (x) => {
   if (x && typeof x === 'object' && !Object.isFrozen(x)) { Object.freeze(x); for (const v of Object.values(x)) deepFreeze(v); }
@@ -57,9 +61,9 @@ export function maneuverTrace(m, opts) {
   if (!byM) { byM = new Map(); traceCache.set(m, byM); }
   const slot = `${opts.seed >>> 0}|${opts.set ?? 'pre'}|${opts.index}`;
   const hit = byM.get(slot);
-  if (hit && hit.fp === fp && hit.inspiratory === m.inspiratory) return hit.value;
+  if (hit && hit.fp === fp) return hit.value;
   const value = deepFreeze(computeManeuverTrace(m, opts));
-  byM.set(slot, { fp, inspiratory: m.inspiratory, value });
+  byM.set(slot, { fp, value });
   return value;
 }
 

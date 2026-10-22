@@ -1,5 +1,5 @@
 {
- "traceRendering": "spirometry-texture-v1",
+ "traceRendering": "spirometry-texture-v2",
  "generatorVersion": 2,
  "note": "sha256 of the plotted traces (maneuverTrace, rounded to 1e-9); see tools/trace-rendering-hashes.mjs",
  "cases": [
@@ -114,6 +114,19 @@
     "post:5": "a3cdc89286edbdcaf64c0b017f5125035bafaa2bda4fb6f6e1eb26ad18af90f2",
     "post:6": "2f86463fd2726f3a9b30e1af7dfed11d56abca52f9e7c8500d6c40f63b8946c0",
     "post:7": "fdc3e188b75ea36f73501d276c66e7edbaf459739cda5576437bf07e1ec31672"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 18,
+    "archetype": "normal",
+    "technique": "good"
+   },
+   "traces": {
+    "pre:0": "cda2294819bbeb2db5d4ff1eb448c1d0afe5baab6bb220dfbd852ef89cf5c874",
+    "pre:1": "8776eee65ea3fac0aa8943651342970d29cb0fbd9068e8ca9e96d208af337068",
+    "pre:2": "9f48ebb885120a30c7e72a099194ae54465f22717506951c86f42cd21dcde38e",
+    "pre:3": "9c5cdc0a647b0127dd1ce6a9686c86bc18ef9c869161eaef6c3e53f1826d1370"
    }
   }
  ]

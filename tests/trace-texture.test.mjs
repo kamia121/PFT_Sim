@@ -14,9 +14,9 @@ import { loadDatasets } from '../src/reference/load.js';
 import { buildCase } from '../src/core/case.js';
 import { ARCHETYPES, TECHNIQUE_LEVELS } from '../src/core/descriptor.js';
 import { GENERATOR_VERSION } from '../src/core/standards.js';
-import { volume, flow, peakFlow, timeAtVolume } from '../src/core/curve.js';
+import { volume, flow, peakFlow, timeAtVolume, solveCurve } from '../src/core/curve.js';
 import { sampleExpiration, applyArtifacts, buildInspiratory, loopClosure } from '../src/core/inspiratory.js';
-import { expiratoryTexture, sampleTextured, warpAt, TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
+import { expiratoryTexture, sampleTextured, warpAt, textureInspiration, TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
 import { maneuverTrace, computeManeuverTrace, traceFingerprint, artifactSeed } from '../src/ui/figures/traces.js';
 import { spirometryData } from '../src/ui/figures/panel-spirometry.js';
 import { createReference } from '../src/reference/gli.js';
@@ -310,4 +310,65 @@ test('trace cache: a new case, an equation change and the quality setting give t
     assert.deepEqual(n.sets[k].maneuvers[i].insp, m.insp);
   }));
   assert.equal(a.sets.length, 2, 'pre and post');
+});
+
+test('trace cache: in-place changes of mutable inputs recompute (review repro: inspiratory flow sample 50 halved after a first call)', () => {
+  const { curve } = solveCurve({ fvc: 4, fev1: 3, k: 1, r: 0.05, T: 8 });
+  const m = { curve, fvc: 4, fet: 8, faults: [] };
+  m.inspiratory = buildInspiratory(m, { seed: 11, index: 0 });
+  const o = { seed: 11, index: 0, set: 'pre' };
+  const first = maneuverTrace(m, o);
+  const f50 = first.insp.f[50];
+  m.inspiratory.f[50] *= 0.5;
+  const second = maneuverTrace(m, o);
+  assert.notEqual(second, first, 'an in-place change of a supplied inspiratory array is not answered from the cache');
+  assert.deepEqual(second, computeManeuverTrace(m, o));
+  assert.ok(Math.abs(second.insp.f[50] - f50) > 1, `sample 50 follows the input: ${f50} then ${second.insp.f[50]}`);
+  // Other in-place changes: a time sample and the FIVC of the supplied limb, a fault pushed into the array, a curve parameter, the end time,
+  // and the faults of the scenario object.
+  m.inspiratory.t[10] += 1e-4;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o));
+  m.inspiratory.fivc *= 0.99;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o));
+  m.faults.push('variable-effort');
+  assert.deepEqual(maneuverTrace(m, o).exp.applied, ['variable-effort']);
+  m.curve.r *= 1.1;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o));
+  m.fet = 7;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o));
+  delete m.inspiratory;
+  const scenario = { faults: [] };
+  const os = { ...o, scenario };
+  const before = maneuverTrace(m, os);
+  scenario.faults.push('leak');
+  const after = maneuverTrace(m, os);
+  assert.notEqual(after, before);
+  assert.deepEqual(after, computeManeuverTrace(m, os), 'a fault pushed into the scenario array is seen');
+  // Unchanged inputs are still a cache hit.
+  assert.equal(maneuverTrace(m, os), after);
+});
+
+test('inspiratory cap: the final modulation never exceeds 12%, FIVC is kept (review repro: seed 23 and seed 9010; seeds 0 to 9999)', () => {
+  const ratio = (inp, out) => {
+    let worst = 0;
+    for (let j = 1; j < inp.f.length - 1; j++) if (Math.abs(inp.f[j]) > 1e-12) worst = Math.max(worst, Math.abs(out.f[j] / inp.f[j] - 1));
+    return worst;
+  };
+  let violations = 0, worst = 0, binding = 0;
+  for (let seed = 0; seed < 10000; seed++) {
+    const inp = buildInspiratory({ fvc: 4, faults: [] }, { seed, index: 0 });
+    const out = textureInspiration(inp, { seed, set: 'pre', index: 0 });
+    const r = ratio(inp, out);
+    worst = Math.max(worst, r);
+    if (r > 0.12 + 1e-12) violations++;
+    if (r > 0.12 - 1e-9) binding++;
+    assert.ok(Math.abs((out.v[0] - out.v[out.v.length - 1]) - inp.fivc) < 1e-9, `seed ${seed}: FIVC kept`);
+  }
+  assert.equal(violations, 0, `largest final modulation ${worst}`);
+  assert.ok(binding >= 20, `the cap binds in ${binding} seeds (the review found 23 above it before the correction)`);
+  for (const seed of [23, 9010]) {
+    const inp = buildInspiratory({ fvc: 4, faults: [] }, { seed, index: 0 });
+    const r = ratio(inp, textureInspiration(inp, { seed, set: 'pre', index: 0 }));
+    assert.ok(r <= 0.12 + 1e-12 && r > 0.1199, `seed ${seed}: ${r} (was 0.1278 and 0.1402 before the correction)`);
+  }
 });

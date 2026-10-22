@@ -23,6 +23,8 @@ export const TRACE_DESCRIPTORS = [
   { seed: 5, archetype: 'normal', technique: 'poor' },
   { seed: 8, archetype: 'bd-discordant', technique: 'fair', severity: 3 },
   { seed: 3, archetype: 'obstruction', technique: 'poor', scenarioIds: ['qs-cough-first-second', 'qs-leak'] },
+  // The inspiratory cap binds on maneuver 2 of this case (added with spirometry-texture-v2, which enforces the cap after the correction).
+  { seed: 18, archetype: 'normal', technique: 'good' },
 ];
 
 const r9 = (a) => a.map((x) => Math.round(x * 1e9) / 1e9);

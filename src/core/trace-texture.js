@@ -27,7 +27,7 @@ import { createStream } from './prng.js';
 import { volume as curveVolume, flow as curveFlow, peakFlow, backExtrapolation, timeAtVolume } from './curve.js';
 
 export const TRACE_TEXTURE_MODEL = {
-  version: 1,
+  version: 2,
   expiratory: {
     fineSd: 0.02, fineLengthOfFvc: 0.04, fineMinCorrelationS: 0.04,
     broadSd: 0.015, broadLengthOfFvc: 0.2, broadMinCorrelationS: 0.25,
@@ -241,7 +241,10 @@ export function textureInspiration(insp, { seed, set, index }) {
     b += 0.5 * (f[j] * phi[j] + f[j - 1] * phi[j - 1]) * h;
   }
   const c = b !== 0 ? a / b : 0;
-  const m = m0.map((q, j) => q - c * phi[j]);
+  const mc = m0.map((q, j) => q - c * phi[j]);
+  // The cap holds after the correction too: the whole modulation is scaled (not clipped), which keeps the flow-weighted integral zero.
+  const mMax = Math.max(...mc.map(Math.abs));
+  const m = mMax > P.cap ? mc.map((q) => (q * P.cap) / mMax) : mc;
   const ft = f.map((q, j) => q * (1 + m[j]));
   const v0 = insp.v[0];
   const v = new Array(n);
