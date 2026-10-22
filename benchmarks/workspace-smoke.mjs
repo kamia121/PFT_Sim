@@ -16,7 +16,14 @@
  *   W7  390 -> 1280 -> 390 px keeps the answers, the impression, its selection, the focus and the form node.
  *   W8  light and dark themes: the answer column and page 1 take the paper token.
  *   W9  the accessibility tree of the page in the wide layout equals the tree of the same page with the workspace stylesheet off (the
- *       boxes that generate no box on wide screens keep their roles and names).
+ *       boxes that generate no box on wide screens keep their roles and names), before and after the answers are checked.
+ *   W10 after the answers are checked (Check or Show the key; basic and advanced review; long and short feedback; page 1 or page 2 in view;
+ *       light and dark; 1280, 1440 and 1920 px, a resize across 1200 px and back, and zoom): the key and feedback are in the data column
+ *       and the sticky answer column never covers them, by geometry (no visible feedback item meets the column) and by paint order (the
+ *       topmost element at both ends of every visible item is the item's own); the column stays in the window and inside the case area;
+ *       the reveal lands at the top of the window; its tables do not overflow (with text at 200 % a wide table scrolls in its own labelled
+ *       region); a redraw keeps the column's scroll position; a resize to a phone width and back; keyboard focus is never hidden under
+ *       another box, Page Down scrolls the answer column and End reaches the end of the page.
  *
  * Usage: node benchmarks/workspace-smoke.mjs   (PFT_SERVE_DIR=dist in CI; PFT_SHOTS_DIR copies the named screenshots there)
  */
@@ -49,6 +56,10 @@ const Q = {
   obstruction: 'v=2&s=12&a=obstruction&t=fair',
   notes: 'v=2&s=31&a=restriction-parenchymal&sc=heavy',
   adv: 'v=2&s=44&a=mixed&t=poor&p=spirometry&qc=1&qd=adv',
+  // Mixed obstruction and restriction with a bronchodilator study, quality challenge off (the reported case: long feedback after Check).
+  mixedLong: 'v=2&s=21&a=mixed',
+  mixedLongAdv: 'v=2&s=21&a=mixed&qd=adv',
+  short: 'v=2&s=5&a=normal&p=spirometry',
 };
 const ds = await loadDatasets();
 const qualityLines = (q) => buildRtReport(buildCase(parseDescriptor(q.replace(/&q[cd]=[^&]*/g, '')), ds)).qualityLines;
@@ -385,16 +396,196 @@ try {
     await ctx.close();
   }
 
+  /* ------------------------------------------------------------------ W10: after the answers are checked */
+  // The answer column is sticky with the case area as its containing block, so it stays in the window down to the end of the case area,
+  // the key and feedback included; it paints above in-flow content. The key must therefore never be under it. Each position is measured
+  // after the scroll and a drawn frame; item boxes are clipped to the window, and the topmost element is sampled at both ends of each item.
+  const settle = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 60))));
+  const revealState = (page) => page.evaluate(() => {
+    const pane = document.querySelector('.sheet-interp'), rv = document.querySelector('#reveal'), cs = document.querySelector('#case');
+    const P = pane.getBoundingClientRect(), R = rv.getBoundingClientRect(), C = cs.getBoundingClientRect();
+    const wide = getComputedStyle(cs).display === 'grid';
+    const clip = (r) => ({ l: Math.max(r.left, 0), t: Math.max(r.top, 0), r: Math.min(r.right, innerWidth), b: Math.min(r.bottom, innerHeight) });
+    const meet = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+    const p = clip(P);
+    let seen = 0, area = 0, covered = 0, outside = 0;
+    const bad = [];
+    for (const el of rv.querySelectorAll('h3, h4, p, li, table, .result-row, dt, dd')) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight) continue;
+      seen++;
+      // A table that scrolls sideways is drawn only inside its scroll box.
+      const sc = el.closest('.scroll')?.getBoundingClientRect();
+      const c0 = clip(r), c = sc ? { l: Math.max(c0.l, sc.left), t: Math.max(c0.t, sc.top), r: Math.min(c0.r, sc.right), b: Math.min(c0.b, sc.bottom) } : c0;
+      if (c.r - c.l < 4 || c.b - c.t < 1) continue;
+      const a = meet(c, p);
+      area += a;
+      if (!el.closest('.scroll') && r.right > R.right + 0.5) outside++;
+      const y = (c.t + c.b) / 2;
+      for (const x of [c.l + 2, c.r - 2]) {
+        if (x < 0 || x >= innerWidth) continue;
+        const top = document.elementFromPoint(x, y);
+        if (!top || !rv.contains(top)) { covered++; if (bad.length < 2) bad.push(`${el.tagName.toLowerCase()} at ${Math.round(x)},${Math.round(y)} under ${top ? (top.closest('.sheet-interp') ? 'the answer column' : top.tagName.toLowerCase()) : 'nothing'}`); }
+      }
+    }
+    const over = [...rv.querySelectorAll('.scroll')].filter((e) => e.scrollWidth > e.clientWidth + 1);
+    const scrolls = over.length, unmarked = over.filter((e) => e.getAttribute('role') !== 'region' || e.getAttribute('tabindex') !== '0').length;
+    return {
+      wide, y: Math.round(scrollY), seen, area: Math.round(area), covered, outside, bad, scrolls, unmarked,
+      side: !wide || R.right <= P.left - 19, inCase: P.bottom <= C.bottom + 0.5,
+      // In the window, or (at the end of the page, where the case area ends above the footer) resting on the end of the case area.
+      inWindow: P.bottom <= innerHeight + 0.5 && (P.top >= -0.5 || Math.abs(P.bottom - C.bottom) <= 1),
+      sticky: getComputedStyle(pane).position, pane: [Math.round(P.left), Math.round(P.top), Math.round(P.right), Math.round(P.bottom)], reveal: [Math.round(R.left), Math.round(R.right)],
+    };
+  });
+  /** Scroll from the start of the key to the end of the page, checking at each stop; returns the stops. */
+  async function sweep(page, tag, { wideTables = false } = {}) {
+    const [start, end] = await page.evaluate(() => [document.querySelector('#reveal').getBoundingClientRect().top + scrollY - 40, document.documentElement.scrollHeight - innerHeight].map(Math.round));
+    const stops = [];
+    for (const f of [0, 0.25, 0.5, 0.75, 1]) {
+      const y = Math.max(0, Math.round(start + (end - start) * f));
+      await page.evaluate((y) => window.scrollTo(0, y), y);
+      await settle(page);
+      stops.push(await revealState(page));
+    }
+    const ok = stops.every((x) => x.area === 0 && x.covered === 0 && x.outside === 0 && x.side && x.inCase && (!x.wide || (x.inWindow && x.sticky === 'sticky')));
+    check(ok && stops.some((x) => x.seen > 0), `${tag}: the answer column never covers the key or the feedback (${stops.map((x) => `scroll ${x.y}: ${x.seen} items, overlap ${x.area} px², ${x.covered} hits under another box, column ${x.pane.join(',')}, key ${x.reveal.join('-')}`).join('; ')})${ok ? '' : `; ${stops.flatMap((x) => x.bad).slice(0, 3).join('; ')}`}`);
+    // At the page's own text size every table of the key fits the data column; with larger text a wide table scrolls sideways inside its own
+    // box, which is then a labelled, focusable region (src/ui/scroll-regions.js), and nothing is cut off.
+    // Below 1200 px (the earlier layout) a wide table scrolls in its own region at any text size, as before the workspace.
+    if (wideTables || stops.some((x) => !x.wide)) check(stops.every((x) => x.unmarked === 0), `${tag}: a table of the key wider than its column scrolls inside a labelled, focusable region (${Math.max(...stops.map((x) => x.scrolls))} such tables)`);
+    else check(stops.every((x) => x.scrolls === 0), `${tag}: no table of the key overflows the data column`);
+    return stops;
+  }
+  /** Check (or Show the key) and the landing of the reveal at the top of the window. */
+  async function reveal(page, how, tag) {
+    await page.click(how === 'key' ? '#show-key' : '#check-answers');
+    await page.waitForSelector('#reveal');
+    await settle(page);
+    const land = await page.evaluate(() => ({ top: Math.round(document.querySelector('#reveal').getBoundingClientRect().top), atEnd: scrollY >= document.documentElement.scrollHeight - innerHeight - 1 }));
+    check(Math.abs(land.top) <= 2 || land.atEnd, `${tag}: the key is brought to the top of the window (its top at ${land.top} px${land.atEnd ? ', page at its end' : ''})`);
+  }
+  async function openThemed(scheme, viewport, q, extra = {}) {
+    const ctx = await browser.newContext({ colorScheme: scheme, viewport, ...extra });
+    await ctx.addInitScript((t) => { try { localStorage.setItem('pft-theme', t); } catch { /* storage may be unavailable */ } }, scheme);
+    const page = await ctx.newPage();
+    await open(page, q);
+    return { ctx, page };
+  }
+  for (const width of [1280, 1440, 1920]) {
+    for (const [mode, q] of [['basic', Q.mixedLong], ['advanced', Q.mixedLongAdv]]) {
+      const tag = `${ENGINE} ${width} after Check, ${mode} review, dark`;
+      const { ctx, page } = await openThemed('dark', { width, height: 900 }, q);
+      await reveal(page, 'check', tag);
+      await sweep(page, tag);
+      if (width === 1440 && mode === 'basic') await shot(page, 'workspace-1440-checked-dark');
+      await ctx.close();
+    }
+  }
+  for (const [name, q, how, steps, scheme] of [['Show the key', Q.mixedLong, 'key', [], 'light'], ['short feedback', Q.short, 'check', [], 'light'], ['page 2 in view', Q.mixedLong, 'check', ['details'], 'dark']]) {
+    const tag = `${ENGINE} 1280 after ${name}, ${scheme}`;
+    const { ctx, page } = await openThemed(scheme, { width: 1280, height: 900 }, q);
+    for (const st of steps) { await page.click(`button[data-ws-view="${st}"]`); await settle(page); }
+    await reveal(page, how, tag);
+    await sweep(page, tag);
+    await ctx.close();
+  }
+  {
+    // A redraw after the check (the equation changed) keeps the answer column's scroll position, and the key stays clear of it; then the
+    // window is resized across the wide layout's 1200 px limit and back.
+    const tag = `${ENGINE} after Check, redraw and resize`;
+    const { ctx, page } = await openThemed('dark', { width: 1920, height: 900 }, Q.mixedLongAdv);
+    await reveal(page, 'check', tag);
+    const before = await page.evaluate(() => { const i = document.querySelector('.sheet-interp'); i.scrollTop = Math.round((i.scrollHeight - i.clientHeight) / 2); return { top: i.scrollTop, over: i.scrollHeight > i.clientHeight + 1 }; });
+    await page.check('input[name="eq"][value="GLI2012"]');
+    await page.waitForFunction(() => document.querySelector('input[name="eq"][value="GLI2012"]')?.checked && document.querySelector('#reveal'));
+    await settle(page);
+    const after = await page.evaluate(() => document.querySelector('.sheet-interp').scrollTop);
+    check(!before.over || Math.abs(after - before.top) <= 2, `${tag}: the redraw keeps the answer column's scroll position (${before.top} -> ${after} px${before.over ? '' : '; the answers fit'})`);
+    await sweep(page, `${tag}, 1920 after the redraw`);
+    for (const width of [1280, 1440, 1100, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await settle(page);
+      await sweep(page, `${tag}, resized to ${width}`);
+    }
+    await ctx.close();
+  }
+  {
+    // Keyboard: every control that Tab reaches in the key or in the answer column is drawn in the window and is not under another box; the
+    // answer column, a focusable region when it scrolls, moves with Page Down; End takes the page to its end with the key still clear.
+    const tag = `${ENGINE} 1440 keyboard after Check`;
+    const { ctx, page } = await openThemed('dark', { width: 1440, height: 900 }, Q.mixedLong);
+    await reveal(page, 'check', tag);
+    const seen = { reveal: 0, column: 0 }, hidden = [];
+    for (let i = 0; i < 90; i++) {
+      await page.keyboard.press('Tab');
+      // The engine scrolls the focused control into view itself, possibly a frame after the key (WebKit on CI was measured mid-scroll once);
+      // the control is measured after a drawn frame, as every scroll position in this file is.
+      await settle(page);
+      const r = await page.evaluate(() => {
+        const el = document.activeElement, rv = document.querySelector('#reveal'), col = document.querySelector('.sheet-interp');
+        const where = rv?.contains(el) ? 'reveal' : col?.contains(el) ? 'column' : null;
+        if (!where) return null;
+        const b = el.getBoundingClientRect();
+        const x = Math.min(Math.max((b.left + b.right) / 2, 1), innerWidth - 1), y = Math.min(Math.max((b.top + b.bottom) / 2, 1), innerHeight - 1);
+        const top = document.elementFromPoint(x, y);
+        const inView = b.bottom > 0 && b.top < innerHeight && b.right > 0 && b.left < innerWidth;
+        return { where, ok: inView && Boolean(top) && (el === top || el.contains(top) || (el.labels && [...el.labels].some((l) => l.contains(top)))), what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} (${Math.round(b.top)}-${Math.round(b.bottom)} of ${innerHeight}) at ${Math.round(x)},${Math.round(y)} under ${top?.tagName.toLowerCase()}` };
+      });
+      if (!r) continue;
+      seen[r.where]++;
+      if (!r.ok && hidden.length < 3) hidden.push(r.what);
+    }
+    check(seen.column > 0 && hidden.length === 0, `${tag}: each control Tab reaches is in the window and on top (${seen.column} in the answer column, ${seen.reveal} in the key)${hidden.length ? `; hidden: ${hidden.join('; ')}` : ''}`);
+    const pd = await page.evaluate(() => { const i = document.querySelector('.sheet-interp'); i.scrollTop = 0; i.focus(); return { region: i.getAttribute('role') === 'region', focused: document.activeElement === i }; });
+    if (pd.region) {
+      await page.keyboard.press('PageDown');
+      await settle(page);
+      const moved = await page.evaluate(() => document.querySelector('.sheet-interp').scrollTop);
+      check(pd.focused && moved > 0, `${tag}: Page Down scrolls the focused answer column (${moved} px)`);
+    } else skip(`${tag}: the answers fit, so the column is not a scroll region`);
+    await page.evaluate(() => document.activeElement?.blur?.());
+    await page.keyboard.press('End');
+    await page.waitForFunction(() => scrollY >= document.documentElement.scrollHeight - innerHeight - 1);
+    await settle(page);
+    const end = await revealState(page);
+    check(end.area === 0 && end.covered === 0 && end.inCase, `${tag}: End reaches the end of the page with the key clear of the column (${end.seen} items, overlap ${end.area} px², column ${end.pane.join(',')})`);
+    await ctx.close();
+  }
+  {
+    // Larger text (text-only zoom to 200 %): the page's 17 px root becomes 34 px; the wide layout keeps its columns.
+    const tag = `${ENGINE} 1440 text at 200% after Check`;
+    const { ctx, page } = await openThemed('light', { width: 1440, height: 900 }, Q.mixedLong);
+    await page.addStyleTag({ content: 'html { font-size: 34px !important; }' });
+    await settle(page);
+    await reveal(page, 'check', tag);
+    await sweep(page, tag, { wideTables: true });
+    await ctx.close();
+  }
+  // Browser zoom shrinks the window in CSS px and raises the device pixel ratio: 1920 x 900 at 150 % is 1280 x 600 CSS px, and 1440 x 900 at
+  // 200 % is 720 x 450 and 1920 x 900 at 200 % is 960 x 450 (the narrow layout). The ratio only tests sub-pixel rounding; the media queries
+  // follow the CSS width.
+  for (const [w, h, dpr] of [[1280, 600, 1.5], [720, 450, 2], [960, 450, 2]]) {
+    const tag = `${ENGINE} zoom ${w}x${h} at ${dpr}x after Check`;
+    const { ctx, page } = await openThemed('dark', { width: w, height: h }, Q.mixedLong, { deviceScaleFactor: dpr });
+    await reveal(page, 'check', tag);
+    await sweep(page, tag);
+    await ctx.close();
+  }
+
   /* ------------------------------------------------------------------ W9: accessibility tree */
   // Playwright's ariaSnapshot computes roles and names from the DOM and the computed styles (its own computation, not the platform
   // accessibility API of the engine). The wide layout is compared with the same page under the baseline layout (workspace stylesheet
   // off): nothing is stripped; the only difference allowed is one added region, the answer column when it scrolls (labelled by
   // src/ui/scroll-regions.js), whose descendants must equal the baseline subtree line for line. Both snapshots are kept as artifacts.
   const LABEL = 'Interpretation answers, scroll up and down';
-  for (const [name, q, steps] of [['stage 1', Q.poorQc, []], ['page 2 open', Q.poorQc, ['details', 'summary']], ['spirometry only', Q.adv, []]]) {
+  for (const [name, q, steps] of [['stage 1', Q.poorQc, []], ['page 2 open', Q.poorQc, ['details', 'summary']], ['spirometry only', Q.adv, []], ['stage 3', Q.mixedLong, ['check']]]) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await open(page, q);
-    for (const s of steps) { await page.locator(`[data-ws-view="${s}"]`).click(); await page.waitForTimeout(150); }
+    for (const s of steps) {
+      if (s === 'check') { await page.click('#check-answers'); await page.waitForSelector('#reveal'); } else await page.locator(`[data-ws-view="${s}"]`).click();
+      await page.waitForTimeout(150);
+    }
     // The view buttons and excerpts are workspace additions and are taken out of both; the intended view hides (the narrow-layout
     // page-2 control, the report page not chosen) are undone, so that the same content is compared.
     await page.evaluate(() => { for (const e of document.querySelectorAll('[data-ws-ui]')) e.remove(); });

@@ -73,6 +73,8 @@
 .sheet-table thead tr.grp th { text-align: center; background: var(--sheet-shade); border-bottom: .5pt solid var(--sheet-ink); border-top: 1px solid var(--sheet-ink); }
 .sheet-table thead tr.grp th.empty { background: none; border: 0; }
 .sheet-table td.best { font-weight: 700; }
+/* A change within 0.005 of 10% of predicted prints its side, "+10.00 (below 10)"; the words wrap under the digits rather than widen the table. */
+.sheet-table td[data-c="changePctPred"] { white-space: normal; }
 .sheet-table tbody tr:last-child th, .sheet-table tbody tr:last-child td { border-bottom: 1px solid var(--sheet-ink); }
 .sheet-table td.flag { color: var(--sheet-flag); font-weight: 800; }
 .sheet-fn { font-size: 6.5pt; line-height: 1.25; color: var(--sheet-muted); margin-top: 1px; }

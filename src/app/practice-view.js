@@ -21,6 +21,7 @@ import * as R from './render.js';
 import { challengeField, challengeRowField, isMultiItem, isStatementItem } from './collect.js';
 import { interpretationFor } from '../report/statement.js';
 import { statementHtml } from '../report/html.js';
+import { BD_PCT_PRED_LABEL } from '../interpret/precision.js';
 
 export const SUMMARY_MISSING = 'Summary sheet not available in this build.';
 export const DETAILS_MISSING = 'Details sheet not available in this build.';
@@ -62,13 +63,13 @@ function structuredFieldsets(c, structured, locked, excerpts = {}) {
 export const EXCERPTS = {
   pattern: [['spirometry', ['fvc', 'fev1', 'fev1_fvc'], ['pre', 'lln', 'z']], ['volumes', ['tlc'], ['result', 'lln', 'z']]],
   severity: [['spirometry', ['fev1'], ['pre', 'z', 'pct']]],
-  // The 2022 rule reads the change as a percentage of the predicted value, which is the difference of the two %Pred cells; the sheet's
-  // own change column is a percentage of the baseline and is labelled so.
-  bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'pct', 'post', 'postPct', 'change', 'changePct'], { pct: 'Pre %Pred', postPct: 'Post %Pred', changePct: 'Change, % of baseline' }]],
+  // The 2022 rule reads the change as a percentage of the predicted value: the sheet's own change column, computed from the unrounded values
+  // (the difference of the two rounded %Pred cells can differ from it by up to a point).
+  bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'pct', 'post', 'postPct', 'change', 'changePctPred'], { pct: 'Pre %Pred', postPct: 'Post %Pred' }]],
   dlco: [['dlco', ['hb', 'dlco', 'kco', 'va'], ['result', 'lln', 'z']]],
 };
 const EXCERPT_TITLES = { spirometry: 'Spirometry', volumes: 'Lung volumes', dlco: 'Diffusing capacity' };
-const EXCERPT_HEADS = { pre: 'Pre', post: 'Post', lln: 'LLN', z: 'z', pct: '%Pred', postPct: 'Post %Pred', change: 'Change', changePct: '%Chng', result: 'Result' };
+const EXCERPT_HEADS = { pre: 'Pre', post: 'Post', lln: 'LLN', z: 'z', pct: '%Pred', postPct: 'Post %Pred', change: 'Change', changePctPred: BD_PCT_PRED_LABEL, result: 'Result' };
 
 /**
  * The cells of a summary sheet, read back from its markup: `{ [table]: { [row]: { label, cells: { [column]: { text, flag } } } } }`.

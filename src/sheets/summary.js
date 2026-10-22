@@ -10,7 +10,9 @@
  * data-t (table id), data-r (row id) and data-c (column key) so that a test compares them one by one. Two things are not in the
  * model today and are added here from the case, with the model's own rounding (`round` of src/report/table.js): the FEF25-75 row
  * (printed with no reference value) when the model has no row with an id starting "fef". The page-1 tables leave out rows that
- * belong to the details (the hemoglobin adjustment factor, the change as percent of predicted).
+ * belong to the details (the hemoglobin adjustment factor). The bronchodilator change is printed as a percent of the predicted value,
+ * the quantity of the ERS/ATS 2022 rule (model column changePctPred, from the unrounded values); the percent of baseline of the 2005 criterion
+ * is in the exports only.
  *
  * Flags: with `flags: 'lln'` a value is printed in bold red when its z-score is below the LLN (z < -1.645) and, for the
  * indices that are read on both sides (TLC, RV, RV/TLC, DLCO, KCO), above the ULN. The airway-resistance rows, which have no z-score,
@@ -28,6 +30,7 @@
 import { tableMatrix, esc, labelHtml, round } from '../report/table.js';
 import { statementHtml } from '../report/html.js';
 import { LLN_Z, borderlineOf } from '../interpret/interpret.js';
+import { BD_PCT_PRED_LABEL, BD_PCT_BASE_NOTE } from '../interpret/precision.js';
 import { createStream } from '../core/prng.js';
 import zStrip, { TWO_SIDED } from '../ui/figures/z-strip.js';
 import { PALETTES } from '../ui/palettes.js';
@@ -93,10 +96,17 @@ function spirometryTable(model, caseData) {
   return { ...t, rows };
 }
 
-const HEADS = { index: '', pre: 'Best', lln: 'LLN', uln: 'ULN', z: 'z', pct: '%Pred', post: 'Best', postZ: 'z', postPct: '%Pred', change: 'Change', changePct: '%Chng', result: 'Result' };
+const HEADS = { index: '', pre: 'Best', lln: 'LLN', uln: 'ULN', z: 'z', pct: '%Pred', post: 'Best', postZ: 'z', postPct: '%Pred', change: 'Change', changePctPred: BD_PCT_PRED_LABEL, result: 'Result' };
+/**
+ * The two change columns sit under a group header of their own, "Change", over "(L)" and "(% predicted)", so that the column reads
+ * Change (% predicted) without a second header line (page 1 has no height to spare) and is no wider than its values. The cell keeps the
+ * full name for assistive technology.
+ */
+const SHEET_GROUP = { change: 'Change', changePctPred: 'Change' };
+const SUB_HEADS = { change: '(L)', changePctPred: '(% predicted)' };
 
 const COLS = {
-  spirometry: ['index', 'pre', 'lln', 'z', 'pct', 'post', 'postZ', 'postPct', 'change', 'changePct'],
+  spirometry: ['index', 'pre', 'lln', 'z', 'pct', 'post', 'postZ', 'postPct', 'change', 'changePctPred'],
   volumes: ['index', 'result', 'lln', 'uln', 'z', 'pct'],
   dlco: ['index', 'result', 'lln', 'z', 'pct'],
 };
@@ -132,13 +142,16 @@ function sheetTable(table, id, { flags }) {
   const mx = tableMatrix(table, { unicodeMinus: true });
   // Group header over the kept columns.
   const groups = [];
-  for (const i of colIdx) {
-    const label = table.columns[i].group ?? '';
+  for (const [j, i] of colIdx.entries()) {
+    const label = (keep.includes('changePctPred') ? SHEET_GROUP[keep[j]] : null) ?? table.columns[i].group ?? '';
     const last = groups[groups.length - 1];
     if (last && last.label === label) last.span += 1; else groups.push({ label, span: 1 });
   }
   const groupRow = groups.some((g) => g.label) ? `<tr class="grp">${groups.map((g) => `<th colspan="${g.span}" scope="colgroup"${g.label ? '' : ' class="empty"'}>${esc(g.label.replace('-bronchodilator', ''))}</th>`).join('')}</tr>` : '';
-  const head = `<tr>${keep.map((k, j) => `<th scope="col" class="${j === 0 ? 'l' : 'r'}">${esc(HEADS[k] ?? table.columns[colIdx[j]].label)}</th>`).join('')}</tr>`;
+  const headCell = (k, j) => (SUB_HEADS[k] && keep.includes('changePctPred')
+    ? `<th scope="col" class="r" aria-label="${esc(HEADS[k] === 'Change' ? 'Change (L)' : HEADS[k])}">${esc(SUB_HEADS[k])}</th>`
+    : `<th scope="col" class="${j === 0 ? 'l' : 'r'}">${esc(HEADS[k] ?? table.columns[colIdx[j]].label)}</th>`);
+  const head = `<tr>${keep.map(headCell).join('')}</tr>`;
   const body = table.rows.map((row, ri) => {
     if (SKIP_ROWS.has(row.id)) return '';
     const cells = keep.map((k, j) => {
@@ -160,7 +173,8 @@ function sheetTable(table, id, { flags }) {
 const before = (text, stop) => { const i = text.indexOf(stop); return (i < 0 ? text : text.slice(0, i)).trim(); };
 
 function spirometryFootnote(table, { flags, rt, showQualityLines, hasVolumes }) {
-  const parts = [before(before(table.footnote, ' Test quality:'), ' Change, % of predicted,')];
+  // Page 1 keeps the model's definition of the change as a percent of predicted and leaves out the note of the exports' percent-of-baseline column.
+  const parts = [before(table.footnote, ' Test quality:').replace(` ${BD_PCT_BASE_NOTE}`, '')];
   if (flags === 'lln') parts.push(`Values below the LLN (z < ${String(LLN_Z).replace('-', '−')}) are printed in bold red${hasVolumes ? '; so are TLC, RV, RV/TLC, DLCO and KCO above the ULN (z > +1.645)' : ''}.`);
   else parts.push('Values are not flagged.');
   parts.push('FEF25-75 has no reference value.');
@@ -361,7 +375,10 @@ function restoreMoved(sheet) {
  * its box are given in the zoomed units, so that the box still spans the margins. The step is skipped where CSS zoom is not supported.
  * (2) What still does not fit at the floor is moved, not shrunk: trailing comments first, then the reference note, go to a labelled
  * continuation section placed after the sheet's frame (a flowing page with margins when printed), and the sheet keeps a pointer line.
- * The result is written to data-fit (the zoom), data-moved (the number of items moved) and data-overflow (px left over, 0 when it fits).
+ * (3) Only if the content still overflows, the blank writing space of the interpretation box is lowered, never below one line or what it
+ * holds (shrinkWritingSpace); a sheet that fits never reaches this step and keeps its writing space.
+ * The result is written to data-fit (the zoom), data-moved (the number of items moved), data-overflow (px left over, 0 when it fits)
+ * and, when step 3 ran, data-writing (the writing space left, px).
  * @param {ParentNode} root @param {number} [floor]
  * @returns {{ scale: number, overflowPx: number, moved: number }[]}
  */
@@ -373,6 +390,7 @@ export function fitSheetContent(root, floor = FIT_FLOOR) {
     if (!c || sheet.closest('.sheet-live')) continue;
     restoreMoved(sheet);
     sheet.querySelector('.sheet-boxes')?.style.removeProperty('min-height');
+    sheet.querySelector('.sheet-interp-body')?.style.removeProperty('min-height');
     for (const p of ['zoom', 'transform', 'transform-origin', 'left', 'top', 'width', 'height', 'right', 'bottom']) c.style.removeProperty(p);
     const cs = getComputedStyle(c);
     const left = parseFloat(cs.left), top = parseFloat(cs.top);
@@ -402,13 +420,43 @@ export function fitSheetContent(root, floor = FIT_FLOOR) {
       if (zoomOk && k === 1) { c.style.right = 'auto'; c.style.bottom = 'auto'; apply(k); }
       movedCount = moveExcess(sheet, c, over, zoomOk ? apply : null, k);
     }
+    // (3) Only on overflow that is still left: the blank writing space of the interpretation box gives up height.
+    const writing = over() > 0 ? shrinkWritingSpace(c, over) : null;
     const rest = Math.max(0, Math.round(over() * k));
     sheet.dataset.fit = String(k);
     sheet.dataset.moved = String(movedCount);
     sheet.dataset.overflow = String(rest);
-    out.push({ scale: k, overflowPx: rest, moved: movedCount });
+    if (writing === null) delete sheet.dataset.writing; else sheet.dataset.writing = String(writing);
+    out.push({ scale: k, overflowPx: rest, moved: movedCount, writing });
   }
   return out;
+}
+
+/**
+ * Step 3 of fitSheetContent, after the comments and the reference note have moved and the boxes have their 72 px minimum: the blank
+ * writing space gives up height a pixel at a time until the content fits, first the row's 72 px minimum (down to what its boxes hold),
+ * then the interpretation box's own 20 px, never below one line of its text or below what it holds (the pointer to the statement), so
+ * nothing printed is shrunk or cut. No font size changes.
+ * @returns {number|null} the minimum height left, in px, or null when the box is missing
+ */
+function shrinkWritingSpace(c, over) {
+  const body = c.querySelector('.sheet-interp-body');
+  if (!body) return null;
+  const cs = getComputedStyle(body);
+  const start = parseFloat(cs.minHeight) || 0;
+  // What the box holds (the box itself is stretched by its row, so its own height says nothing): its children with their margins.
+  const held = [...body.children].reduce((sum, e) => { const m = getComputedStyle(e); return sum + e.offsetHeight + parseFloat(m.marginTop) + parseFloat(m.marginBottom); }, 0)
+    + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const lh = parseFloat(cs.lineHeight);
+  const floor = Math.ceil(Math.max(held, Number.isFinite(lh) ? lh : (parseFloat(cs.fontSize) || 10) * 1.25));
+  // The row first gives up the 72 px minimum it was given in step 2 (down to what its boxes hold), then the writing space its own.
+  const boxes = c.querySelector('.sheet-boxes');
+  let row = parseFloat(boxes?.style.minHeight) || 0;
+  while (over() > 0 && row > 0) { row -= 1; boxes.style.minHeight = `${row}px`; }
+  let h = Math.max(floor, Math.floor(start));
+  body.style.minHeight = `${h}px`;
+  while (over() > 0 && h > floor) { h -= 1; body.style.minHeight = `${h}px`; }
+  return h;
 }
 
 /** Step 2 of fitSheetContent. Returns how many items were moved. */
