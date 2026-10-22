@@ -5,13 +5,17 @@
  * Parity: with the workspace additions taken out (the screen controls, the per-question excerpts and the print-transparent data
  * wrapper), the practice markup of every state in tests/helpers/practice-markup.mjs hashes to what ec5f6cd rendered, and the fixed
  * sheets, the details sheet, the Lab report fallback and the report page are byte-identical to ec5f6cd
- * (tests/fixtures/practice-markup-baseline.json, written by tools/practice-markup-hashes.mjs at that commit).
+ * (tests/fixtures/practice-markup-baseline.json, written by tools/practice-markup-hashes.mjs at that commit). The keys listed under `amended`
+ * were re-recorded on 9822a77 for the deliberate page-1 change of the bronchodilator column (Change (% predicted) instead of %Chng).
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { renderPractice, workspaceBarHtml, sheetCells, EXCERPTS } from '../src/app/practice-view.js';
+import { tableMatrix } from '../src/report/table.js';
+import { SAMPLE_INPUTS, ds } from './report-helpers.mjs';
+import { buildCase } from '../src/core/case.js';
 import { markupCtx, markupStates, MARKUP_CASES, mods } from './helpers/practice-markup.mjs';
 import { referenceMarkup } from './helpers/reference-markup.mjs';
 
@@ -36,6 +40,17 @@ const STATES = markupStates();
 test('the fixture was recorded at ec5f6cd and covers every state', () => {
   assert.equal(baseline.commit, 'ec5f6cd82e39f0b45eac5f0929dae98f1de96d74');
   assert.deepEqual(Object.keys(baseline.practice).sort(), STATES.map((s) => s.key).sort());
+});
+
+test('the hashes re-recorded for the Change (% predicted) column are those of cases with a bronchodilator study, and only those', () => {
+  // The page-1 change column became the change as a percent of predicted (9822a77 + this change); every other hash is still the ec5f6cd one.
+  const withBd = new Set();
+  for (const { key, input, opts } of STATES) if (markupCtx(input, opts).caseData.report.spirometry.post) withBd.add(key);
+  for (const input of SAMPLE_INPUTS) if (buildCase({ technique: 'fair', ...input }, ds).report.spirometry.post) withBd.add(`${input.archetype}-${input.seed}`);
+  const keys = baseline.amended?.keys ?? [];
+  assert.ok(keys.length > 0 && keys.length < Object.keys(baseline.practice).length + Object.keys(baseline.reference).length);
+  for (const k of keys) assert.ok(withBd.has(k) || k.split('|').some((p) => withBd.has(p)), `${k}: re-recorded without a bronchodilator study`);
+  for (const k of keys) assert.ok(!/^details\|/.test(k), `${k}: page 2 has no change column`);
 });
 
 test('without the workspace additions, the practice markup of every state is the ec5f6cd markup', () => {
@@ -153,35 +168,39 @@ test('the data wrapper generates no box in any medium, and only the practice-pag
   assert.equal((mods.summarySheetHtml(ctx.model, { ...opts, narrowZ: true }).match(/class="sheet-data"/g) ?? []).length, 1);
 });
 
-test('the bronchodilator excerpt carries the data of the 2022 rule: the %Pred cells before and after give the change as a percentage of predicted', () => {
+test('the bronchodilator excerpt carries the quantity of the 2022 rule: the sheet\'s Change (% predicted) cells, from the unrounded change', () => {
   // Bronchodilator studies drawn from fixed seeds across the archetypes that have one; the excerpt is read alone, as a learner reads it
-  // with the tables collapsed. The difference of the two %Pred cells is the change as a percentage of the predicted value, to within
-  // their rounding (each to 1 %, so at most 1 point); where the true value lies further than that from the 10 % limit, the call made
-  // from the excerpt is the key's.
+  // with the tables collapsed. The change column is the model's changePctPred (interp.bd.pctPred with the digits that show the side of 10),
+  // so the call made from the excerpt is the key's for every study, including those within a point of the limit, where the difference of
+  // the two rounded %Pred cells can fall on the other side.
   const inputs = [];
   for (const archetype of ['obstruction', 'bd-discordant', 'mixed', 'normal', 'restriction-parenchymal']) for (let seed = 1; seed <= 12; seed++) inputs.push({ seed, archetype, technique: 'fair' });
-  let decided = 0, sig = 0, notSig = 0, studies = 0;
+  let sig = 0, notSig = 0, studies = 0, near = 0;
   for (const input of inputs) {
     const ctx = markupCtx(input, {});
     if (!ctx.caseData.report.spirometry.post || !ctx.interp.bd) continue;
     studies++;
     const ex = excerptsIn(renderPractice(ctx)).find((e) => e.includes('data-ws-cell="spirometry/fev1/postPct"'));
     assert.ok(ex, `${input.archetype} ${input.seed}: the bronchodilator excerpt has the %Pred cells`);
-    assert.match(ex, />Pre %Pred</); assert.match(ex, />Post %Pred</); assert.match(ex, />Change, % of baseline</);
-    const cell = (r, c) => Number((ex.match(new RegExp(`data-ws-cell="spirometry/${r}/${c}"[^>]*>([^<]*)<`)) ?? [])[1]?.replace('−', '-'));
-    const derived = { fev1: cell('fev1', 'postPct') - cell('fev1', 'pct'), fvc: cell('fvc', 'postPct') - cell('fvc', 'pct') };
+    assert.match(ex, />Pre %Pred</); assert.match(ex, />Post %Pred</); assert.match(ex, />Change \(% predicted\)</);
+    assert.doesNotMatch(ex, /%Chng|of baseline/, 'no percent of baseline in the excerpt');
+    const text = (r, c) => (ex.match(new RegExp(`data-ws-cell="spirometry/${r}/${c}"[^>]*>([^<]*)<`)) ?? [])[1];
+    const t = ctx.model.sections.flatMap((x) => x.tables).find((x) => x.id === 'spirometry');
+    const mx = tableMatrix(t, { unicodeMinus: true });
+    const col = t.columns.findIndex((x) => x.key === 'changePctPred');
+    const above = {};
     for (const k of ['fev1', 'fvc']) {
-      assert.ok(Number.isFinite(derived[k]), `${input.archetype} ${input.seed} ${k}: both %Pred cells are numbers`);
-      assert.ok(Math.abs(derived[k] - ctx.interp.bd.pctPred[k]) <= 1 + 1e-9, `${input.archetype} ${input.seed} ${k}: %Pred difference ${derived[k]} against ${ctx.interp.bd.pctPred[k].toFixed(2)}`);
+      const shown = text(k, 'changePctPred');
+      assert.equal(shown, mx.body[t.rows.findIndex((r) => r.id === k)][col], `${input.archetype} ${input.seed} ${k}: the excerpt prints the model's cell`);
+      const v = Number(shown.replace('−', '-').replace(/\s*\(.*$/, ''));
+      assert.ok(Math.abs(v - ctx.interp.bd.pctPred[k]) <= 0.05 + 1e-9, `${input.archetype} ${input.seed} ${k}: ${shown} against ${ctx.interp.bd.pctPred[k]}`);
+      above[k] = /\(above 10\)/.test(shown) || (!/\(below 10\)/.test(shown) && v > 10);
+      if (Math.abs(ctx.interp.bd.pctPred[k] - 10) <= 1) near++;
     }
-    const margin = Math.min(...['fev1', 'fvc'].map((k) => Math.abs(ctx.interp.bd.pctPred[k] - 10)));
-    if (margin > 1) {
-      decided++;
-      const call = derived.fev1 > 10 || derived.fvc > 10 ? 'significant' : 'not-significant';
-      assert.equal(call, ctx.interp.key.bronchodilator, `${input.archetype} ${input.seed}: the call from the excerpt`);
-      if (call === 'significant') sig++; else notSig++;
-    }
+    const call = above.fev1 || above.fvc ? 'significant' : 'not-significant';
+    assert.equal(call, ctx.interp.key.bronchodilator, `${input.archetype} ${input.seed}: the call from the excerpt`);
+    if (call === 'significant') sig++; else notSig++;
     assert.doesNotMatch(ex, /significant|responsive|response/i, 'no classification in the excerpt');
   }
-  assert.ok(studies >= 20 && decided >= 15 && sig >= 3 && notSig >= 3, `coverage: ${studies} studies, ${decided} decided away from the limit (${sig} significant, ${notSig} not)`);
+  assert.ok(studies >= 20 && sig >= 3 && notSig >= 3, `coverage: ${studies} studies (${sig} significant, ${notSig} not; ${near} values within a point of 10)`);
 });

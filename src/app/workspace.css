@@ -11,10 +11,11 @@
  * Wide screens (1200 px and up): the case area is a grid with fixed lines. Two view buttons choose the report page in the left column:
  * page 1 (the sheet's data, its comments and footer) or page 2 (the detailed report, in the same rows). The right column holds the
  * interpretation box, which spans those rows and sticks to the top of the window, bounded to the window height, scrolling inside itself
- * only when the answers are taller. Page 1 keeps its printed layout at scale 1 (744 px of content). The page-2 control of the narrow
- * layout is not shown here (the view button takes its place and opens page 2 the same way); it stays in the markup, which prints. The
- * boxes between the case area and those items (the slot, the frame, the sheet, its content box and the comment/interpretation pair)
- * generate no box on these screens.
+ * only when the answers are taller. After the answers are checked, the key and the feedback follow in the data column, and the answer
+ * column, with the composed statement, stays in view beside them. Page 1 keeps its printed layout at scale 1 (744 px of content). The
+ * page-2 control of the narrow layout is not shown here (the view button takes its place and opens page 2 the same way); it stays in the
+ * markup, which prints. The boxes between the case area and those items (the slot, the frame, the sheet, its content box and the
+ * comment/interpretation pair) generate no box on these screens.
  *
  * Narrow screens: the page keeps its layout; each structured question shows the report values it is read from, and a disclosure
  * hides or shows the report's tables and curves.
@@ -28,7 +29,7 @@
   #case[data-ws] {
     display: grid; grid-template-columns: 784px minmax(0, 1fr); column-gap: 20px; row-gap: 0; align-items: start;
     /* 1 equation, 2 view buttons, 3 sheet data, 4 comments, 5 sheet footer (rows 3 to 5 hold page 2 instead in the page-2 view),
-       6 the page-2 control (not shown), 7 key and feedback */
+       6 the page-2 control (not shown), 7 key and feedback (data column) */
     grid-template-rows: repeat(7, auto);
     position: relative; isolation: isolate;
   }
@@ -43,7 +44,11 @@
   #case[data-ws] .sheet-live .sheet-mark { grid-column: 1; grid-row: 3 / 6; width: 100%; white-space: normal; }
   #case[data-ws] > .details-bar { display: none; }
   #case[data-ws] > #details-slot { grid-column: 1; grid-row: 3 / 6; min-width: 0; }
-  #case[data-ws] > #reveal { grid-column: 1 / -1; grid-row: 7; margin-top: 16px; }
+  /* The key and the feedback sit in the data column, under page 1 or 2 and beside the answers. The answer column is sticky with #case as its
+     containing block (the boxes between them generate none), so in every engine it stays in the window down to the end of #case, row 7
+     included; a key across both columns ran under it there and was covered (the sticky box paints above in-flow content). In the data
+     column the answers and the composed statement stay in view beside the key, with nothing under them. */
+  #case[data-ws] > #reveal { grid-column: 1; grid-row: 7; margin-top: 16px; min-width: 0; }
   /* The view buttons, drawn as tabs over the data column. */
   #case[data-ws] > .ws-bar { display: flex; grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--border); margin: 0 0 8px; }
   #case[data-ws] .ws-views { display: flex; gap: 2px; }
