@@ -34,6 +34,7 @@ import { sampleExpiration } from '../../core/inspiratory.js';
 import { faultWording } from '../../core/quality.js';
 import { interpret } from '../../interpret/interpret.js';
 import { wrapSvg, line, text, resolvePalette, tickValues, DASH, fix, r1 } from './svg.js';
+import { TRACE_RENDERING_ATTRS } from '../../core/trace-texture.js';
 import { maneuverTrace, bestIndex, isAcceptable } from './traces.js';
 
 export const SET_LABEL = { pre: 'Pre-bronchodilator', post: 'Post-bronchodilator' };
@@ -648,7 +649,7 @@ function render(data, opts = {}) {
 
   const title = opts.title ?? 'Spirometry: flow-volume loop and volume-time curve';
   const description = opts.description ?? describe(data, shown, view);
-  return wrapSvg({ palette, width: W, height: H, title, description, body: g });
+  return wrapSvg({ palette, width: W, height: H, title, description, body: g, attrs: TRACE_RENDERING_ATTRS });
 }
 
 /** Notes under the volume-time plot (outside the curves): back-extrapolated volume and the last-second volume change. */

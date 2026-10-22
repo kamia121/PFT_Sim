@@ -3,22 +3,29 @@
  * tidal baseline that precedes the forced maneuver on the volume-time curve. Everything is derived from the
  * maneuver's curve and the case seed, so a figure is a pure function of the case.
  */
-import { volume, flow, peakFlow } from '../../core/curve.js';
-import { sampleExpiration, applyArtifacts, buildInspiratory } from '../../core/inspiratory.js';
+import { peakFlow, backExtrapolation } from '../../core/curve.js';
+import { plotGrid, applyArtifacts, artifactSpanEnd, buildInspiratory } from '../../core/inspiratory.js';
+import { expiratoryTexture, sampleTextured, textureInspiration } from '../../core/trace-texture.js';
 import { createStream } from '../../core/prng.js';
 
 /** Seed for the artifact stream of one maneuver; post-bronchodilator maneuvers are offset by 100. */
 export const artifactSeed = (seed, index, set) => ((seed >>> 0) + (index + (set === 'post' ? 100 : 0)) * 0x9e3779b1) >>> 0;
 
 /**
+ * The one plotted representation of a maneuver, shared by the flow-volume loop and the volume-time curve: the curve sampled
+ * through the within-blow texture of src/core/trace-texture.js (display only; the tabulated values keep the curve's own), then the
+ * named fault artifacts on top (the texture is kept out of their windows), and the textured inspiratory limb.
  * @param {object} m maneuver from generateManeuvers (needs curve, fet, fvc, faults); m.inspiratory is used when present
  * @param {{ seed: number, index: number, set?: 'pre'|'post', scenario?: object|null }} o
  */
 export function maneuverTrace(m, { seed, index, set = 'pre', scenario = null }) {
-  const sampled = sampleExpiration({ volume, flow }, m.curve, m.fet);
+  const protectUntil = artifactSpanEnd(m.faults, backExtrapolation(m.curve));
+  const texture = expiratoryTexture(m.curve, m.fet, { seed, set, index, protectUntil });
+  const sampled = sampleTextured(m.curve, plotGrid(m.fet), texture);
   const exp = applyArtifacts(sampled, m.faults ?? [], artifactSeed(seed, index, set));
-  const insp = m.inspiratory ?? buildInspiratory(m, { seed, index: index + (set === 'post' ? 100 : 0), scenario });
-  return { exp, insp };
+  const insp0 = m.inspiratory ?? buildInspiratory(m, { seed, index: index + (set === 'post' ? 100 : 0), scenario });
+  const insp = textureInspiration(insp0, { seed, set, index });
+  return { exp, insp, texture };
 }
 
 /** Index of the maneuver shown on the volume-time curve: acceptable first, then the largest FVC + FEV1. */

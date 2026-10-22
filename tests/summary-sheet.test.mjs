@@ -149,7 +149,8 @@ test('layout: identity block, tables, four curves, z graphic, comment box, inter
   for (const label of ['Referred by', 'Reason for test', 'SpO2 at rest', 'Smoking', 'Hemoglobin', 'Ethnicity (requisition)', 'Reference equations', 'Sex (used for reference)', 'Height']) assert.ok(html.includes(`<dt>${label}</dt>`), label);
   for (const id of ['rep-flow-volume', 'rep-volume-time', 'rep-pleth-loop', 'rep-dlco']) assert.ok(html.includes(`data-figure-id="${id}"`), id);
   assert.match(html, /Pre: maneuver \d of \d; post: maneuver \d of \d/);
-  assert.match(html, /Plethysmography: trial \d of \d/);
+  assert.match(html, /Shutter closed: trial \d of \d, TGV \d+\.\d\d L; reported FRC \d+\.\d\d L/);
+  assert.ok(html.includes('Specific airway-resistance loop, shutter open'));
   assert.ok(html.includes('Bands apply to all measures'));
   assert.ok(html.includes('Severity of impairment is not necessarily disease severity.'));
   assert.ok(html.includes('Official interpretation to follow.'));
