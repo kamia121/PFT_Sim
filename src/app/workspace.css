@@ -57,9 +57,10 @@
   #case[data-ws][data-ws-page="details"]::before { display: none; }
   #case[data-ws][data-ws-page="summary"] > #details-slot { display: none; }
   /* The answers: beside every row of the data column, in view while the data scroll past, never taller than the window. Scroll
-     chaining is left on, so the wheel moves the page once the answers reach their end. */
+     chaining is left on, so the wheel moves the page once the answers reach their end. The column is no scroll anchor: Firefox
+     otherwise anchored on it and returned a programmatic scroll of the page to where the case was first scrolled into view. */
   #case[data-ws] .sheet-live .sheet-interp {
-    grid-column: 2; grid-row: 2 / 6; align-self: start; position: sticky; top: 8px; min-width: 0;
+    grid-column: 2; grid-row: 2 / 6; align-self: start; position: sticky; top: 8px; min-width: 0; overflow-anchor: none;
     max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto;
     background: var(--sheet-paper); padding: 8px 12px 12px; font-size: 14px;
   }
@@ -73,9 +74,6 @@
 }
 
 @media screen and (max-width: 1199.98px) {
-  /* The disclosure collapses content below its control; the page keeps the control in place itself (main.js), so the browser's own
-     scroll anchoring is not asked to choose a node in the case area. */
-  #case[data-ws] { overflow-anchor: none; }
   #case[data-ws] > .ws-bar { display: flex; margin: 0 0 10px; }
   #case[data-ws] .ws-views { display: none; }
   #case[data-ws] #ws-chart-toggle::before { content: "\25BE\00A0"; }

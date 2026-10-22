@@ -117,6 +117,11 @@ try {
         const end = document.querySelector('.sheet-foot').getBoundingClientRect().bottom + scrollY - innerHeight;
         return [bar - 8, (bar + Math.max(bar, end)) / 2, Math.max(bar, end)].map(Math.round);
       });
+      // Layout at the moment of the stick test and again afterwards, reported with both checks below (Firefox showed a page shorter at
+      // this moment than a moment later; these numbers say which part of the layout grew).
+      const layoutNow = () => page.evaluate(() => { const c = document.querySelector('#case'), i = document.querySelector('.sheet-interp').getBoundingClientRect(), d = document.querySelector('.sheet-data').getBoundingClientRect();
+        return `page ${document.documentElement.scrollHeight}, rows [${getComputedStyle(c).gridTemplateRows}], case ${Math.round(c.getBoundingClientRect().height)}, data ${Math.round(d.height)}, column ${Math.round(i.top + scrollY)}+${Math.round(i.height)}, window ${innerHeight}, visual ${Math.round(visualViewport?.height ?? 0)}, t ${Math.round(performance.now())} ms`; });
+      const before = await layoutNow();
       const stick = [];
       for (const y of ys) {
         await page.evaluate((y) => window.scrollTo(0, y), y);
@@ -125,8 +130,9 @@ try {
         stick.push(await page.evaluate(() => { const b = document.querySelector('.sheet-interp').getBoundingClientRect(); return { y: Math.round(scrollY), top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, ok: b.top >= -0.5 && b.bottom <= innerHeight + 0.5 }; }));
       }
       const room = await page.evaluate(() => ({ max: Math.round(document.documentElement.scrollHeight - innerHeight), bar: Math.round(document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY), col: Math.round(document.querySelector('.sheet-interp').getBoundingClientRect().height), doc: document.documentElement.scrollHeight }));
+      const after = await layoutNow();
       check(room.max >= room.bar - 8, `${tag}: the page scrolls far enough for the answer column to stick (largest scroll ${room.max}, column starts at ${room.bar} and is ${room.col} px; page ${room.doc} px)`);
-      check(stick.every((x) => x.ok), `${tag}: the answer column stays in the window from the top to the end of page 1 (${stick.map((x) => `scroll ${x.y}: ${x.top}-${x.bottom} of ${x.h}`).join('; ')})`);
+      check(stick.every((x) => x.ok), `${tag}: the answer column stays in the window from the top to the end of page 1 (${stick.map((x) => `scroll ${x.y}: ${x.top}-${x.bottom} of ${x.h}`).join('; ')})${stick.every((x) => x.ok) ? '' : `; layout at the stick test: ${before}; afterwards: ${after}`}`);
 
       // Each answer with the values it is read from.
       await page.evaluate(() => window.scrollTo(0, document.querySelector('.ws-bar').getBoundingClientRect().top + scrollY - 8));
@@ -291,8 +297,13 @@ try {
       window.__mut = 0;
       new MutationObserver((l) => { window.__mut += l.length; }).observe(document.querySelector('#answer-form'), { subtree: true, childList: true, attributes: true, characterData: true });
     });
+    // Playwright's Firefox actions scroll their target into view with a scroll the engine can still apply a frame later, over a scroll
+    // made in the meantime (here the one of focusing the control, which then ended about 1100 px above the window in 10 of 20 runs; none
+    // in 20 runs after this pause, and none when the same position was reached by a page script). The pause lets it land first.
+    await page.waitForTimeout(500);
     await page.locator('#ws-chart-toggle').focus();
     const top0 = await page.evaluate(() => document.querySelector('#ws-chart-toggle').getBoundingClientRect().top);
+    check(top0 >= 0 && top0 <= await page.evaluate(() => innerHeight), `${tag}: the focused disclosure control is in the window before it is used (at ${Math.round(top0)} px)`);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(150);
     const d = await page.evaluate(() => ({ exp: document.querySelector('#ws-chart-toggle').getAttribute('aria-expanded'), tables: getComputedStyle(document.querySelector('#summary-slot .sheet-block')).display, focus: document.activeElement?.id, top: document.querySelector('#ws-chart-toggle').getBoundingClientRect().top, mut: window.__mut, ex: getComputedStyle(document.querySelector('.ws-ctx')).display }));
@@ -323,11 +334,31 @@ try {
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.waitForFunction(() => matchMedia('(min-width: 1200px)').matches && getComputedStyle(document.querySelector('#case')).display === 'grid', null, { timeout: 5000 }).catch(() => {});
       await page.waitForTimeout(100);
-      const wide = await page.evaluate(() => ({ grid: getComputedStyle(document.querySelector('#case')).display, data: getComputedStyle(document.querySelector('#summary-slot .sheet-block')).display, ex: getComputedStyle(document.querySelector('.ws-ctx')).display, views: getComputedStyle(document.querySelector('.ws-views')).display }));
-      check(wide.grid === 'grid' && wide.data !== 'none' && wide.ex === 'none' && wide.views !== 'none', `${tag} -> 1280: the wide layout shows the data whatever the narrow disclosure says; the excerpts give way to the data column (case area ${wide.grid}, tables ${wide.data}, excerpts ${wide.ex}, view buttons ${wide.views})`);
+      // What is drawn is measured by the boxes (the computed display of an element inside a hidden subtree is engine dependent: WebKit
+      // reports none there, Chromium and Firefox the element's own value). Page 2 was opened above, so the wide layout shows it beside
+      // the answers (the Detailed maneuvers tab) and page 1's data give way to it; choosing page 1 then shows the tables, which the
+      // narrow disclosure, collapsed, does not reach in this layout.
+      const drawn = () => page.evaluate(() => {
+        const h = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+        const c = document.querySelector('#case');
+        return { grid: getComputedStyle(c).display, page: c.dataset.wsPage, attr: c.dataset.wsChart, narrow: matchMedia('(max-width: 1199.98px)').matches,
+          pressed: document.querySelector('[data-ws-view][aria-pressed="true"]')?.dataset.wsView, tables: h('#summary-slot .sheet-block'), p2: h('#details-slot .dt-sheet'),
+          ex: Math.max(...[...document.querySelectorAll('.ws-ctx')].map((e) => e.getBoundingClientRect().height)), views: h('.ws-views'),
+          exp: document.querySelector('#ws-chart-toggle').getAttribute('aria-expanded') };
+      });
+      const wide = await drawn();
+      check(wide.grid === 'grid' && wide.page === 'details' && wide.pressed === 'details' && wide.p2 > 0 && wide.tables === 0 && wide.ex === 0 && wide.views > 0,
+        `${tag} -> 1280: page 2, opened on the narrow screen, is the page beside the answers; the excerpts give way to the data column (case area ${wide.grid}, page ${wide.page}, tab ${wide.pressed}, page 2 ${wide.p2} px, tables ${wide.tables} px, excerpts ${wide.ex} px, view buttons ${wide.views} px; data-ws-chart ${wide.attr}, narrow query ${wide.narrow})`);
+      // A click event, not a pointer click, so that the focus and the selection under test stay where they are.
+      await page.evaluate(() => document.querySelector('[data-ws-view="summary"]').click());
+      await page.waitForTimeout(100);
+      const wide1 = await drawn();
+      check(wide1.page === 'summary' && wide1.pressed === 'summary' && wide1.tables > 0 && wide1.p2 === 0 && wide1.attr === 'open' && wide1.exp === 'false',
+        `${tag} -> 1280, page 1: the wide layout shows the tables whatever the narrow disclosure says (tables ${wide1.tables} px, page 2 ${wide1.p2} px; data-ws-chart ${wide1.attr}, disclosure aria-expanded ${wide1.exp})`);
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(300);
-      const after = await page.evaluate(() => ({ focus: document.activeElement?.id, sel: [document.querySelector('#impression').selectionStart, document.querySelector('#impression').selectionEnd].join(), val: document.querySelector('#impression').value, checked: document.querySelector('#answer-form input[name="pattern"]:checked')?.value, ex: getComputedStyle(document.querySelector('.ws-ctx')).display }));
+      const after = await page.evaluate(() => ({ focus: document.activeElement?.id, sel: [document.querySelector('#impression').selectionStart, document.querySelector('#impression').selectionEnd].join(), val: document.querySelector('#impression').value, checked: document.querySelector('#answer-form input[name="pattern"]:checked')?.value, ex: getComputedStyle(document.querySelector('.ws-ctx')).display, attr: document.querySelector('#case').dataset.wsChart, exp: document.querySelector('#ws-chart-toggle').getAttribute('aria-expanded'), tables: Math.round(document.querySelector('#summary-slot .sheet-block').getBoundingClientRect().height) }));
+      check(after.attr === 'collapsed' && after.exp === 'false' && after.tables === 0, `${tag} -> 1280 -> 390: the narrow disclosure is collapsed again, as it was left (data-ws-chart ${after.attr}, aria-expanded ${after.exp}, tables ${after.tables} px)`);
       check(await formKept(page) && after.focus === 'impression' && after.sel === '3,8' && after.val === 'Narrow screen impression' && after.checked === 'obstruction' && after.ex !== 'none',
         `${tag} -> 1280 -> 390: answers, impression, selection, focus and form node kept`);
       await checkIds(page, tag);
