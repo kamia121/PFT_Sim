@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Stylized flow-volume loop: expiratory limb above the zero-flow axis, inspiratory limb below.
+       Colors are the tokens.css values mcw-navy, mon-current and mon-snap. Edges sit on the 16 px grid. -->
+  <rect width="32" height="32" rx="7" fill="#0E2B73"/>
+  <path d="M4 18C4.2 12.4 6.4 6.6 9.6 4.5C13 6.2 23 12.2 28 18Z" fill="#5FD0BD"/>
+  <path d="M4 20C4 29.3 28 29.3 28 20Z" fill="#A9BCF2"/>
+</svg>
