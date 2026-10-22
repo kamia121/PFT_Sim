@@ -227,6 +227,9 @@ test('summary plethysmography figure: the open-shutter resistance loop from the 
     assert.doesNotMatch(svg, /accept|usable|reject|grade/i, 'the figure does not state quality');
     assert.match(svg, /expiration/); assert.match(svg, /inspiration/);
     assert.ok(svg.includes('shift + = alveolar compression'));
+    // The unit label is right-aligned inside the figure (a 0.8 px overflow of an earlier draft failed the mobile-layout ink check).
+    const unit = /<text x="([\d.]+)" y="[\d.]+"[^>]*text-anchor="end"[^>]*>mL<\/text>/.exec(svg);
+    assert.ok(unit && Number(unit[1]) <= 336 - 4, 'mL label is anchored at its end inside the figure');
     // One polyline point per stored sample.
     const paths = [...svg.matchAll(/<path d="([^"]+)"/g)].map((x) => x[1].split(/[ML]/).filter((q) => q.trim()).length);
     assert.ok(paths.includes(c.pleth.raw.flow.length), 'every stored sample is drawn');

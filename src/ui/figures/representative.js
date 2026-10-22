@@ -169,7 +169,7 @@ function renderPleth(data, opts = {}) {
   const W = opts.width ?? 250, H = opts.height ?? 210;
   const raw = data.raw;
   const mlPerPa = (data.box.freeVolumeL / data.box.barometricPa) * 1000;
-  const top = 16, bottom = 2 * FS + FS + 10, left = 30, right = 22;
+  const top = 16, bottom = 2 * FS + FS + 10, left = 30, right = 30;
   const w = W - left - right, h = H - top - bottom;
   const xmax = niceMax(Math.max(...raw.shiftMl.map(Math.abs))), ymax = niceMax(Math.max(...raw.flow.map(Math.abs)));
   const sx = (v) => left + ((v + xmax) / (2 * xmax)) * w, sy = (v) => top + h - ((v + ymax) / (2 * ymax)) * h;
@@ -182,7 +182,8 @@ function renderPleth(data, opts = {}) {
   g += line(sx(0), top, sx(0), top + h, { stroke: palette.axis, width: 1 });
   g += line(left, sy(0), left + w, sy(0), { stroke: palette.axis, width: 1 });
   g += `<rect x="${left}" y="${top}" width="${r1(w)}" height="${r1(h)}" fill="none" stroke="${palette.axis}" stroke-width="1"/>`;
-  g += text(left + w + 10, top + h + FS + 2, 'mL', { palette, size: FS, fill: palette.axis });
+  // The unit sits right-aligned inside the figure, clear of the last tick label (whose half-width reaches past the plot edge).
+  g += text(W - 4, top + h + FS + 2, 'mL', { palette, anchor: 'end', size: FS, fill: palette.axis });
   g += text(left - 4, top - 3, 'L/s', { palette, anchor: 'end', size: FS, fill: palette.axis });
   // Expiration (flow positive) lies in the upper half, inspiration in the lower; the empty quadrants carry the words.
   g += text(left + 3, top + FS, 'expiration', { palette, size: FS - 1, fill: palette.axis, italic: true });
