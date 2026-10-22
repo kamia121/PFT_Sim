@@ -39,3 +39,15 @@ export function artifactDir(label) {
   if (base) { const d = path.join(base, label); fs.mkdirSync(d, { recursive: true }); return d; }
   return fs.mkdtempSync(path.join(os.tmpdir(), `pft-${label}-`));
 }
+
+/**
+ * Open page 2 of the practice page with the control the layout shows: the page-2 view button of the interpretation workspace on a wide
+ * screen (src/app/workspace.css), the page-2 control below the summary sheet otherwise. Both open page 2 the same way.
+ * @returns {Promise<string>} the selector of the control used
+ */
+export async function openPage2(page) {
+  const view = page.locator('button[data-ws-view="details"]');
+  const sel = (await view.count()) && (await view.isVisible()) ? 'button[data-ws-view="details"]' : '#toggle-details';
+  await page.click(sel);
+  return sel;
+}

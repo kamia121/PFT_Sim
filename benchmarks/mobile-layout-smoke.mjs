@@ -8,7 +8,7 @@
  *
  * Usage: node benchmarks/mobile-layout-smoke.mjs [screenshotDir]   (PFT_BROWSER = chromium | firefox | webkit)
  */
-import { startServer, launchBrowser, ENGINE } from './lib/harness.mjs';
+import { startServer, launchBrowser, ENGINE, openPage2 } from './lib/harness.mjs';
 import { svgInkCollisions } from './lib/svg-ink.mjs';
 import { loadDatasets } from '../src/reference/load.js';
 import { createReference } from '../src/reference/gli.js';
@@ -216,12 +216,14 @@ try {
       const frame = await page.evaluate(() => document.querySelector('#summary-slot .sheet-frame').getBoundingClientRect().width);
       const narrow = await page.evaluate(() => { const f = document.querySelector('[data-figure-id="z-strip-ats-narrow"]'); return f ? getComputedStyle(f).display : 'none'; });
       check(narrow === 'none', `${tag}: the stacked z-score graphic is not shown above 700 px`);
-      if (w === 1280) check(Math.abs(frame - 816) < 2, `${tag}: the sheet is 816 px wide at scale 1 (${Math.round(frame)})`);
+      // At 1280 px the interpretation workspace lays page 1 out beside the answers: the frame generates no box, and the tables and curves
+      // keep their printed 744 px (scale 1). The printed sheet is checked by benchmarks/print-parity.mjs.
+      if (w === 1280) { const main = await page.evaluate(() => document.querySelector('#summary-slot .sheet-main').getBoundingClientRect().width); check(Math.abs(main - 744) < 2, `${tag}: page 1 is at scale 1 beside the answers (tables and curves ${Math.round(main)} px)`); }
       else check(frame > 600 && frame <= w, `${tag}: the sheet is scaled to the width of the window (${Math.round(frame)} px)`);
     }
 
     // Page 2, the Lab report view, the report page and the quiz at the same width.
-    await page.click('#toggle-details');
+    await openPage2(page);
     await page.waitForTimeout(400);
     check(!(await page.evaluate(clipReport)).length && (await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)), `${tag}: page 2 open: no clipped content and no document scroll`);
     const dh = await page.evaluate(() => { const h = document.querySelector('#details-slot .dt-head'); return h ? { sw: h.scrollWidth, cw: h.clientWidth, id: document.querySelector('#details-slot .dt-id').getBoundingClientRect().right, right: h.getBoundingClientRect().right } : null; });

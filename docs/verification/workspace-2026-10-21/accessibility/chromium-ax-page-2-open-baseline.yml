@@ -1,0 +1,701 @@
+- main:
+  - heading "Simulated pulmonary function reports" [level=1]
+  - paragraph: Read the report, write an interpretation on it, then check it against the key. The same values are shown under GLI-2012 and GLI Global so reclassification is visible.
+  - paragraph:
+    - strong: Educational use only.
+    - text: Cases are simulated and uncalibrated. This tool does not provide patient-treatment recommendations and must not be used for clinical decisions.
+  - tablist "Sections":
+    - tab "Practice" [selected]
+    - tab "Lab report"
+    - tab "Method and limits"
+  - tabpanel:
+    - button "New case"
+    - text: Test quality
+    - combobox "Test quality":
+      - option "Varies" [selected]
+      - option "Good"
+      - option "Fair"
+      - option "Poor"
+    - text: Technologist notes
+    - combobox "Technologist notes":
+      - option "Varies" [selected]
+      - option "None"
+      - option "One"
+      - option "Several"
+      - option "Many"
+    - text: Tests
+    - combobox "Tests":
+      - option "Varies" [selected]
+      - option "Spirometry, volumes, DLCO"
+      - option "Spirometry only"
+    - text: Quality challenge
+    - combobox "Quality challenge":
+      - option "Off"
+      - option "On" [selected]
+      - option "Varies"
+    - text: Quality review
+    - combobox "Quality review":
+      - option "Study level (basic)" [selected]
+      - option "Maneuver level (advanced)"
+    - text: Flags
+    - combobox "Flags":
+      - option "Below the LLN" [selected]
+      - option "None"
+    - button "Copy case link"
+    - text: Case link
+    - textbox "Case link": http://127.0.0.1:5470/?v=2&s=8&a=bd-discordant&t=poor&qc=1
+    - paragraph
+    - status: Page 1, the summary, is beside the answers.
+    - group "Reference equation for spirometry":
+      - text: Reference equation for spirometry
+      - radio "GLI Global 2022 (group-neutral)" [checked]
+      - text: GLI Global 2022 (group-neutral)
+      - radio "GLI-2012 (selected by the group on the requisition)"
+      - text: GLI-2012 (selected by the group on the requisition)
+    - article "Summary sheet, case 0000008":
+      - strong: PFT Sim Pulmonary Function Laboratory
+      - text: Simulated laboratory. Educational use only. Pulmonary Function Report Case 0000008
+      - term: Name
+      - definition: Simulated patient
+      - term: ID
+      - definition: SIM-0000008
+      - term: Sex (used for reference)
+      - definition: Female
+      - term: Age
+      - definition: 76 years
+      - term: Date of test (simulated)
+      - definition: 2026-12-21 07:32
+      - term: Height
+      - definition: 146 cm (measured)
+      - term: Weight; BMI
+      - definition: 41 kg; 19.2 kg/m2
+      - term: Ethnicity (requisition)
+      - definition: Other or mixed
+      - term: Smoking
+      - definition: Former smoker, 6 pack-years, stopped 2 years ago
+      - term: Referred by
+      - definition: Dr. A. Okafor
+      - term: SpO2 at rest
+      - definition: 99% on room air
+      - term: Reason for test
+      - definition: Preoperative assessment
+      - term: Hemoglobin
+      - definition: 12.6 g/dL
+      - term: Reference equations
+      - definition: "Spirometry: GLI Global 2022; Lung volumes: GLI-2021 volumes (closest available; European-ancestry reference population); DLCO: GLI-2017 TLCO (closest available; European-ancestry reference population)"
+      - region "Spirometry table; scrolls sideways when the screen is narrow":
+        - heading "Spirometry" [level=2]
+        - table:
+          - rowgroup:
+            - row "Pre Post":
+              - columnheader
+              - columnheader "Pre"
+              - columnheader "Post"
+            - row "Best LLN z %Pred Best z %Pred Change %Chng":
+              - columnheader
+              - columnheader "Best"
+              - columnheader "LLN"
+              - columnheader "z"
+              - columnheader "%Pred"
+              - columnheader "Best"
+              - columnheader "z"
+              - columnheader "%Pred"
+              - columnheader "Change"
+              - columnheader "%Chng"
+          - rowgroup:
+            - row "FVC (L) 1.52 1.38 −1.27 76 1.92 −0.17 97 +0.40 +26.3":
+              - rowheader "FVC (L)"
+              - cell "1.52"
+              - cell "1.38"
+              - cell "−1.27"
+              - cell "76"
+              - cell "1.92"
+              - cell "−0.17"
+              - cell "97"
+              - cell "+0.40"
+              - cell "+26.3"
+            - row "FEV1 (L) 0.61 1.07 −3.04 39 0.66 −2.91 42 +0.05 +8.2":
+              - rowheader "FEV1 (L)":
+                - text: FEV
+                - subscript: "1"
+                - text: (L)
+              - cell "0.61"
+              - cell "1.07"
+              - cell "−3.04"
+              - cell "39"
+              - cell "0.66"
+              - cell "−2.91"
+              - cell "42"
+              - cell "+0.05"
+              - cell "+8.2"
+            - row "FEV1/FVC 0.403 0.662 −3.70 0.342 −4.00":
+              - rowheader "FEV1/FVC":
+                - text: FEV
+                - subscript: "1"
+                - text: /FVC
+              - cell "0.403"
+              - cell "0.662"
+              - cell "−3.70"
+              - cell
+              - cell "0.342"
+              - cell "−4.00"
+              - cell
+              - cell
+              - cell
+            - row "FET (s) 15.0 15.0":
+              - rowheader "FET (s)"
+              - cell "15.0"
+              - cell
+              - cell
+              - cell
+              - cell "15.0"
+              - cell
+              - cell
+              - cell
+              - cell
+            - row "PEF (L/s) 1.0 1.2":
+              - rowheader "PEF (L/s)"
+              - cell "1.0"
+              - cell
+              - cell
+              - cell
+              - cell "1.2"
+              - cell
+              - cell
+              - cell
+              - cell
+            - row "FEF25-75 (L/s) 0.24 0.24":
+              - rowheader "FEF25-75 (L/s)"
+              - cell "0.24"
+              - cell
+              - cell
+              - cell
+              - cell "0.24"
+              - cell
+              - cell
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI Global 2022 (group-neutral). Values below the LLN (z < −1.645) are printed in bold red; so are TLC, RV, RV/TLC, DLCO and KCO above the ULN (z > +1.645). FEF25-75 has no reference value."
+      - region "Lung volumes table; scrolls sideways when the screen is narrow":
+        - heading "Lung volumes" [level=2]
+        - table:
+          - rowgroup:
+            - row "Result LLN ULN z %Pred":
+              - columnheader
+              - columnheader "Result"
+              - columnheader "LLN"
+              - columnheader "ULN"
+              - columnheader "z"
+              - columnheader "%Pred"
+          - rowgroup:
+            - row "TLC (L) 4.30 3.02 4.82 0.78 111":
+              - rowheader "TLC (L)"
+              - cell "4.30"
+              - cell "3.02"
+              - cell "4.82"
+              - cell "0.78"
+              - cell "111"
+            - row "VC (L) 1.72 1.70 2.68 −1.56 79":
+              - rowheader "VC (L)"
+              - cell "1.72"
+              - cell "1.70"
+              - cell "2.68"
+              - cell "−1.56"
+              - cell "79"
+            - row "IC (L) 1.51 1.08 2.19 −0.37 92":
+              - rowheader "IC (L)"
+              - cell "1.51"
+              - cell "1.08"
+              - cell "2.19"
+              - cell "−0.37"
+              - cell "92"
+            - row "FRC (L) 2.79 1.52 2.91 1.42 131":
+              - rowheader "FRC (L)"
+              - cell "2.79"
+              - cell "1.52"
+              - cell "2.91"
+              - cell "1.42"
+              - cell "131"
+            - row "ERV (L) 0.21 0.11 1.11 −1.09 43":
+              - rowheader "ERV (L)"
+              - cell "0.21"
+              - cell "0.11"
+              - cell "1.11"
+              - cell "−1.09"
+              - cell "43"
+            - row "RV (L) 2.58 0.97 2.57 1.66 155":
+              - rowheader "RV (L)"
+              - cell "2.58"
+              - cell "0.97"
+              - cell "2.57"
+              - cell "1.66"
+              - cell "155"
+            - row "RV/TLC (%) 59.9 29.4 57.1 1.96":
+              - rowheader "RV/TLC (%)"
+              - cell "59.9"
+              - cell "29.4"
+              - cell "57.1"
+              - cell "1.96"
+              - cell
+            - row "sRaw (kPa·s) 2.13 1.20":
+              - rowheader "sRaw (kPa·s)"
+              - cell "2.13"
+              - cell
+              - cell "1.20"
+              - cell
+              - cell
+            - row "sGaw (1/(kPa·s)) 0.47 0.63":
+              - rowheader "sGaw (1/(kPa·s))"
+              - cell "0.47"
+              - cell "0.63"
+              - cell
+              - cell
+              - cell
+            - row "Raw (kPa/(L/s)) 0.76 0.38":
+              - rowheader "Raw (kPa/(L/s))"
+              - cell "0.76"
+              - cell
+              - cell "0.38"
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI-2021 volumes (reference population of European ancestry). Method: plethysmography (5 FRC determinations). ULN of the volumes: z = +1.645. Airway-resistance limits are teaching values from secondary sources."
+      - region "Diffusing capacity table; scrolls sideways when the screen is narrow":
+        - heading "Diffusing capacity" [level=2]
+        - table:
+          - rowgroup:
+            - row "Result LLN z %Pred":
+              - columnheader
+              - columnheader "Result"
+              - columnheader "LLN"
+              - columnheader "z"
+              - columnheader "%Pred"
+          - rowgroup:
+            - row "Hemoglobin (g/dL) 12.6":
+              - rowheader "Hemoglobin (g/dL)"
+              - cell "12.6"
+              - cell
+              - cell
+              - cell
+            - row "DLCO, measured (mL/min/mmHg) 15.6 11.3 0.14 102":
+              - rowheader "DLCO, measured (mL/min/mmHg)"
+              - cell "15.6"
+              - cell "11.3"
+              - cell "0.14"
+              - cell "102"
+            - row "VA (L) 3.81 2.82 0.55 107":
+              - rowheader "VA (L)"
+              - cell "3.81"
+              - cell "2.82"
+              - cell "0.55"
+              - cell "107"
+            - row "KCO, measured (mL/min/mmHg/L) 4.09 3.25 −0.30 95":
+              - rowheader "KCO, measured (mL/min/mmHg/L)"
+              - cell "4.09"
+              - cell "3.25"
+              - cell "−0.30"
+              - cell "95"
+            - row "VI/VC (%) 98":
+              - rowheader "VI/VC (%)"
+              - cell "98"
+              - cell
+              - cell
+              - cell
+            - row "Breath-hold time (s) 9.4":
+              - rowheader "Breath-hold time (s)"
+              - cell "9.4"
+              - cell
+              - cell
+              - cell
+        - paragraph: "Reference values: GLI-2017 TLCO (reference population of European ancestry). LLN, z-score and %Pred refer to the measured DLCO and KCO against reference values adjusted for the hemoglobin (ATS/ERS 2017, eqs 31 and 32: predicted x 1.7Hb/(c+Hb), with c = 10.22 for males of 15 years and older and 9.38 for females and children; the multiplier is shown)."
+      - figure:
+        - img "Flow-volume loop, representative maneuver": "0 1 2 3 −4 −2 0 2 4 L/s L Pre Post Pre: maneuver 2 of 6; post: maneuver 1 of 8"
+      - figure:
+        - img "Volume-time curve, representative maneuver": "Pre Post −1 0 1 2 3 4 5 6 7 0 1 2 L s Pre: maneuver 2 of 6; post: maneuver 1 of 8"
+      - figure:
+        - img "Plethysmography shift loop, representative trial": "Shutter trace Slope −1 0 1 −5 0 5 Mouth pressure (kPa) Box pressure (Pa) Plethysmography: trial 2 of 5"
+      - figure:
+        - img "DLCO gas tracing, representative test": "CO (%) CH4 (%) Volume (L, right) 0 5 10 15 0 0.1 0.2 0.3 0.4 0 1 2 breath-hold Time (s) Single-breath DLCO: test 1 of 1"
+      - figure:
+        - img "Z-score graphic": "Pre-bronchodilator severe moderate mild not reduced −5 −4 −3 −2 −1 0 1 2 3 LLN predicted z FVC −1.27 within limits FEV1 −3.04 below LLN FEV1/FVC −3.70 below LLN Post-bronchodilator severe moderate mild not reduced −5 −4 −3 −2 −1 0 1 2 3 LLN predicted z FVC −0.17 within limits FEV1 −2.91 below LLN FEV1/FVC −4.00 below LLN Lung volumes and DLCO severe moderate mild not reduced above ULN −5 −4 −3 −2 −1 0 1 2 3 LLN predicted ULN z TLC 0.78 within limits RV 1.66 above ULN RV/TLC 1.96 above ULN DLCO 0.14 within limits VA 0.55 within limits KCO −0.30 within limits Bands apply to all measures: severe, z below −4.0; moderate, −4.0 to −2.5; mild, −2.5 to the LLN (−1.645); not reduced above the LLN. The star marks the result. For the indices read on both sides, within limits means between the LLN and the ULN (+1.645); a value above the ULN is marked above ULN and is not graded by severity. For the other indices, within limits means at or above the LLN. Severity of impairment is not necessarily disease severity."
+      - paragraph: "Spirometry reference: GLI Global 2022, a group-neutral equation; the reference group on the requisition is not an input. The GLI-2021 volume and GLI-2017 TLCO equations were derived in people of European ancestry, so the reference population may represent the group \"Other or mixed\" less well; this limits the result, and no ancestry adjustment is applied to volumes or DLCO."
+      - heading "Technologist comments" [level=2]
+      - list:
+        - listitem: Albuterol 400 µg (four inhalations of 100 µg) by metered-dose inhaler and valved holding chamber; repeat spirometry after 10 min.
+        - listitem: DLCO adjusted for hemoglobin 12.6 g/dL.
+        - listitem: Overall effort good.
+        - listitem: Official interpretation to follow.
+      - heading "Interpretation" [level=2]
+      - region "Interpretation":
+        - group "Pattern":
+          - text: Pattern
+          - radio "Normal"
+          - text: Normal
+          - radio "Obstruction"
+          - text: Obstruction
+          - radio "Obstruction with low FVC (volumes needed)"
+          - text: Obstruction with low FVC (volumes needed)
+          - radio "Restriction"
+          - text: Restriction
+          - radio "Mixed obstruction and restriction"
+          - text: Mixed obstruction and restriction
+          - radio "Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)"
+          - text: Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)
+          - radio "Preserved ratio with low FVC or FEV₁, no volumes (PRISm)"
+          - text: Preserved ratio with low FVC or FEV₁, no volumes (PRISm)
+        - group "Severity of obstruction (FEV₁ z-score)":
+          - text: Severity of obstruction (FEV₁ z-score)
+          - radio "Mild"
+          - text: Mild
+          - radio "Moderate"
+          - text: Moderate
+          - radio "Severe"
+          - text: Severe
+          - 'radio "Not graded: FEV₁ within normal limits"'
+          - text: "Not graded: FEV₁ within normal limits"
+          - radio "Not graded for this pattern"
+          - text: Not graded for this pattern
+          - radio "Not applicable (no obstruction)"
+          - text: Not applicable (no obstruction)
+        - group "Bronchodilator response (2022 rule)":
+          - text: Bronchodilator response (2022 rule)
+          - radio "Significant"
+          - text: Significant
+          - radio "Not significant"
+          - text: Not significant
+          - radio "Not performed"
+          - text: Not performed
+        - group "Diffusing capacity (hemoglobin-adjusted)":
+          - text: Diffusing capacity (hemoglobin-adjusted)
+          - radio "Reduced"
+          - text: Reduced
+          - radio "Normal"
+          - text: Normal
+          - radio "Raised"
+          - text: Raised
+          - radio "Not performed"
+          - text: Not performed
+        - heading "Test quality" [level=3]
+        - paragraph: "Study-level review: one judgement about the whole study. Maneuver-level questions are in the advanced review (Quality review in the toolbar)."
+        - paragraph: The technologist’s statement and the grades are withheld. Page 2 lists the maneuvers and tests behind the study. Showing the statement before the check locks the study-level answer.
+        - group "Quality of the study":
+          - text: Quality of the study
+          - paragraph: "Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable."
+          - radio "Interpretable"
+          - text: Interpretable
+          - radio "Interpretable with limitations"
+          - text: Interpretable with limitations
+          - radio "Insufficient to interpret"
+          - text: Insufficient to interpret
+        - button "Show the technologist’s statement and lock the study answer"
+        - strong: Your impression
+        - text: (optional; not scored)
+        - textbox "Your impression (optional; not scored)"
+        - button "Check answers"
+        - button "Show the key without scoring"
+      - text: Simulated interpreting physician (not signed) Date SIMULATED REPORT - educational use only. PFT Sim, generator version 2. Case 0000008. Not a patient record. Page 1
+    - 'button "Page 2: detailed report" [expanded]'
+    - text: Every maneuver, trial and test with its technologist comments.
+    - strong: PFT Sim Pulmonary Function Laboratory
+    - text: "Pulmonary Function Report: detailed report"
+    - term: Name
+    - definition: Simulated patient
+    - term: ID
+    - definition: SIM-0000008
+    - term: Case
+    - definition: "0000008"
+    - term: Test date
+    - definition: 2026-12-21 07:32
+    - heading "Forced maneuvers" [level=2]
+    - heading "Forced maneuvers before bronchodilator" [level=3]
+    - table:
+      - rowgroup:
+        - row "No. FVC (L) FEV1 (L) FEV1/FVC PEF (L/s) FEF25-75 (L/s) FET (s) BEV (L) Comment":
+          - columnheader "No."
+          - columnheader "FVC (L)"
+          - columnheader "FEV1 (L)":
+            - text: FEV
+            - subscript: "1"
+            - text: (L)
+          - columnheader "FEV1/FVC":
+            - text: FEV
+            - subscript: "1"
+            - text: /FVC
+          - columnheader "PEF (L/s)"
+          - columnheader "FEF25-75 (L/s)"
+          - columnheader "FET (s)"
+          - columnheader "BEV (L)"
+          - columnheader "Comment"
+      - rowgroup:
+        - row "1 0.65 0.61 0.934 0.7 0.63 1.2 0.015 slow start, glottic closure":
+          - rowheader "1"
+          - cell "0.65"
+          - cell "0.61"
+          - cell "0.934"
+          - cell "0.7"
+          - cell "0.63"
+          - cell "1.2"
+          - cell "0.015"
+          - cell "slow start, glottic closure"
+        - row "2 1.06 0.59 0.555 1.0 0.39 3.0 0.004 early stop":
+          - rowheader "2"
+          - cell "1.06"
+          - cell "0.59"
+          - cell "0.555"
+          - cell "1.0"
+          - cell "0.39"
+          - cell "3.0"
+          - cell "0.004"
+          - cell "early stop"
+        - row "3 1.52 0.52 0.343 0.6 0.24 15.0 0.014 slow start, cough":
+          - rowheader "3"
+          - cell "1.52"
+          - cell "0.52"
+          - cell "0.343"
+          - cell "0.6"
+          - cell "0.24"
+          - cell "15.0"
+          - cell "0.014"
+          - cell "slow start, cough"
+        - row "4 1.43 0.50 0.347 0.9 0.19 15.0 0.003 variable effort, cough":
+          - rowheader "4"
+          - cell "1.43"
+          - cell "0.50"
+          - cell "0.347"
+          - cell "0.9"
+          - cell "0.19"
+          - cell "15.0"
+          - cell "0.003"
+          - cell "variable effort, cough"
+        - row "5 1.03 0.49 0.479 0.8 0.29 4.0 0.004 early stop, variable effort, cough":
+          - rowheader "5"
+          - cell "1.03"
+          - cell "0.49"
+          - cell "0.479"
+          - cell "0.8"
+          - cell "0.29"
+          - cell "4.0"
+          - cell "0.004"
+          - cell "early stop, variable effort, cough"
+        - row "6 1.35 0.49 0.364 0.6 0.21 15.0 0.010 slow start, variable effort":
+          - rowheader "6"
+          - cell "1.35"
+          - cell "0.49"
+          - cell "0.364"
+          - cell "0.6"
+          - cell "0.21"
+          - cell "15.0"
+          - cell "0.010"
+          - cell "slow start, variable effort"
+    - paragraph: "BEV: back-extrapolated volume."
+    - heading "Forced maneuvers after bronchodilator" [level=3]
+    - table:
+      - rowgroup:
+        - row "No. FVC (L) FEV1 (L) FEV1/FVC PEF (L/s) FEF25-75 (L/s) FET (s) BEV (L) Comment":
+          - columnheader "No."
+          - columnheader "FVC (L)"
+          - columnheader "FEV1 (L)":
+            - text: FEV
+            - subscript: "1"
+            - text: (L)
+          - columnheader "FEV1/FVC":
+            - text: FEV
+            - subscript: "1"
+            - text: /FVC
+          - columnheader "PEF (L/s)"
+          - columnheader "FEF25-75 (L/s)"
+          - columnheader "FET (s)"
+          - columnheader "BEV (L)"
+          - columnheader "Comment"
+      - rowgroup:
+        - row "1 1.48 0.60 0.406 1.0 0.31 5.5 0.004 early stop, cough":
+          - rowheader "1"
+          - cell "1.48"
+          - cell "0.60"
+          - cell "0.406"
+          - cell "1.0"
+          - cell "0.31"
+          - cell "5.5"
+          - cell "0.004"
+          - cell "early stop, cough"
+        - row "2 1.22 0.54 0.441 0.9 0.31 4.4 0.003 early stop, variable effort, cough":
+          - rowheader "2"
+          - cell "1.22"
+          - cell "0.54"
+          - cell "0.441"
+          - cell "0.9"
+          - cell "0.31"
+          - cell "4.4"
+          - cell "0.003"
+          - cell "early stop, variable effort, cough"
+        - row "3 1.92 0.57 0.299 0.7 0.22 15.0 0.011 slow start, cough":
+          - rowheader "3"
+          - cell "1.92"
+          - cell "0.57"
+          - cell "0.299"
+          - cell "0.7"
+          - cell "0.22"
+          - cell "15.0"
+          - cell "0.011"
+          - cell "slow start, cough"
+        - row "4 1.22 0.56 0.456 1.0 0.31 4.5 0.004 early stop, variable effort":
+          - rowheader "4"
+          - cell "1.22"
+          - cell "0.56"
+          - cell "0.456"
+          - cell "1.0"
+          - cell "0.31"
+          - cell "4.5"
+          - cell "0.004"
+          - cell "early stop, variable effort"
+        - row "5 1.44 0.66 0.457 1.2 0.36 4.6 0.004 early stop":
+          - rowheader "5"
+          - cell "1.44"
+          - cell "0.66"
+          - cell "0.457"
+          - cell "1.2"
+          - cell "0.36"
+          - cell "4.6"
+          - cell "0.004"
+          - cell "early stop"
+        - row "6 1.77 0.60 0.340 1.1 0.22 15.0 0.004 variable effort":
+          - rowheader "6"
+          - cell "1.77"
+          - cell "0.60"
+          - cell "0.340"
+          - cell "1.1"
+          - cell "0.22"
+          - cell "15.0"
+          - cell "0.004"
+          - cell "variable effort"
+        - row "7 0.94 0.53 0.563 0.9 0.37 2.7 0.004 early stop, variable effort, cough":
+          - rowheader "7"
+          - cell "0.94"
+          - cell "0.53"
+          - cell "0.563"
+          - cell "0.9"
+          - cell "0.37"
+          - cell "2.7"
+          - cell "0.004"
+          - cell "early stop, variable effort, cough"
+        - row "8 1.86 0.64 0.344 1.1 0.24 15.0 0.005":
+          - rowheader "8"
+          - cell "1.86"
+          - cell "0.64"
+          - cell "0.344"
+          - cell "1.1"
+          - cell "0.24"
+          - cell "15.0"
+          - cell "0.005"
+          - cell
+    - paragraph: "BEV: back-extrapolated volume."
+    - group "Maneuvers shown as":
+      - text: Maneuvers shown as
+      - radio "Best"
+      - text: Best
+      - radio "Overlay" [checked]
+      - text: Overlay
+      - radio "Separate"
+      - text: Separate
+    - group "Maneuvers drawn":
+      - text: Maneuvers drawn
+      - checkbox "maneuver 1" [checked]
+      - text: maneuver 1
+      - checkbox "maneuver 2" [checked]
+      - text: maneuver 2
+      - checkbox "maneuver 3" [checked]
+      - text: maneuver 3
+      - checkbox "maneuver 4" [checked]
+      - text: maneuver 4
+      - checkbox "maneuver 5" [checked]
+      - text: maneuver 5
+      - checkbox "maneuver 6" [checked]
+      - text: maneuver 6
+      - checkbox "maneuver 7" [checked]
+      - text: maneuver 7
+      - checkbox "maneuver 8" [checked]
+      - text: maneuver 8
+    - figure:
+      - 'img "Spirometry: flow-volume loop and volume-time curve"': "Flow-volume 0 1 2 3 −4 −2 0 2 4 Exhaled volume (L) Flow (L/s) expiration inspiration tidal PEF Volume-time 0 2 4 6 8 10 12 14 16 0 1 2 3 Time (s); 0 is the back-extrapolated start Exhaled volume (L) predicted FVC 6 1 2 3 4 5 8 1 2 3 4 5 6 7 FEV1 Back-extrapolated volume: pre 0.010 L, post 0.005 L (best maneuver) Volume change in the last 1 s: pre 0.006 L, post 0.015 L (best maneuver) Pre-bronchodilator, maneuvers 1, 2, 3, 4, 5, 6 (best emphasized) Post-bronchodilator, maneuvers 1, 2, 3, 4, 5, 6, 7, 8 (best emphasized) Predicted, constructed from FEV1 and FVC (GLI Global 2022) Tidal breathing at the end-expiratory level (from IC) Back-extrapolation line"
+    - heading "Plethysmography" [level=2]
+    - group "Panting trials shown as":
+      - text: Panting trials shown as
+      - radio "Best"
+      - text: Best
+      - radio "Overlay" [checked]
+      - text: Overlay
+      - radio "Separate"
+      - text: Separate
+    - group "Trials drawn":
+      - text: Trials drawn
+      - checkbox "trial 1" [checked]
+      - text: trial 1
+      - checkbox "trial 2" [checked]
+      - text: trial 2
+      - checkbox "trial 3" [checked]
+      - text: trial 3
+      - checkbox "trial 4" [checked]
+      - text: trial 4
+      - checkbox "trial 5" [checked]
+      - text: trial 5
+    - figure:
+      - 'img "Plethysmography: volume-time record, occlusion loops, resistance loop and volume partition"': "A Volume-time record trial 1 of 5; axis anchored at the reported mean FRC 0 5 10 25 30 2 3 4 5 Time (s) Volume (L) quiet breathing closed open to RV to TLC TLC 4.30 IC 1.51 FRC 2.79 ERV 0.21 RV 2.58 0 1 -1.5 0 1.5 Time from closure (s) kPa Lane: mouth pressure while closed, expanded time scale B Occlusion loops mouth pressure against shift volume; trials overlaid -40 -20 0 20 40 -1 0 1 Mouth pressure (kPa) Trial Hz FRC (L) 1 1.11 2.84 2 0.68 2.70 3 1.30 3.08 4 0.70 2.87 5 1.90 3.14 Reported 2.79 L C Resistance loop, shutter open flow against shift volume; tidal breathing, same x axis as B -40 -20 0 20 40 -1 0 1 Shift volume (mL), compression positive Flow (L/s) ULN expiration inspiration sRaw 2.13 kPa·s Raw 0.76 kPa·s/L sGaw 0.47 1/(kPa·s) sRaw: least-squares slope of shift signal on flow, |flow| ≤ 0.5 L/s (dashed line). Breathing: tidal breathing, VT 0.77 L, 19 per min. Raw = sRaw / reported FRC (2.79 L); sGaw = 1 / sRaw. Tick: sRaw upper limit 1.2 kPa·s. D Partition of total lung capacity 0 2 4 6 Volume (L) RV 2.58 IC 1.51 Measured TLC 4.30 RV 1.66 IC 1.63 Predicted Predicted: GLI-2021 volumes reference population of European ancestry TLC ULN 4.82 TLC LLN 3.02 RV ULN 2.57"
+    - 'heading "Plethysmography: panting trials" [level=3]'
+    - table:
+      - rowgroup:
+        - row "Trial FRCpleth (L) Pant frequency (Hz) Difference from mean (%) Comment":
+          - columnheader "Trial"
+          - columnheader "FRCpleth (L)":
+            - text: FRC
+            - subscript: pleth
+            - text: (L)
+          - columnheader "Pant frequency (Hz)"
+          - columnheader "Difference from mean (%)"
+          - columnheader "Comment"
+      - rowgroup:
+        - row "1 2.84 1.11 +1.9 rapid panting (1.11 Hz)":
+          - rowheader "1"
+          - cell "2.84"
+          - cell "1.11"
+          - cell "+1.9"
+          - cell "rapid panting (1.11 Hz)"
+        - row "2 2.70 0.68 −3.1":
+          - rowheader "2"
+          - cell "2.70"
+          - cell "0.68"
+          - cell "−3.1"
+          - cell
+        - row "3 3.08 1.30 +10.5 rapid panting (1.30 Hz)":
+          - rowheader "3"
+          - cell "3.08"
+          - cell "1.30"
+          - cell "+10.5"
+          - cell "rapid panting (1.30 Hz)"
+        - row "4 2.87 0.70 +3.1":
+          - rowheader "4"
+          - cell "2.87"
+          - cell "0.70"
+          - cell "+3.1"
+          - cell
+        - row "5 3.14 1.90 +12.6 rapid panting (1.90 Hz)":
+          - rowheader "5"
+          - cell "3.14"
+          - cell "1.90"
+          - cell "+12.6"
+          - cell "rapid panting (1.90 Hz)"
+    - paragraph:
+      - text: Mean FRC
+      - subscript: pleth
+      - text: 2.79 L; repeatability (highest minus lowest, over mean) 15.6%.
+    - heading "Diffusing capacity" [level=2]
+    - figure:
+      - 'img "Single-breath DLCO: gas fractions against expired volume"': "Single-breath DLCO: gas fractions against expired volume CO CH4 tracer washout, discarded alveolar sample dead space VD 0.0 0.5 1.0 1.5 0.0 0.1 0.2 0.3 0.4 Expired volume (L) Gas fraction (%) washout (discarded) sample window VD 0.22 L Inspired gas FI,CO 0.300 % FI,tr (CH4) 0.300 % Alveolar sample FA,tr 0.116 % FA,CO 0.067 % FA,CO,0 (from tracer) 0.116 % VI/VC % Time to 85% of VI (s) Breath-hold (s) Washout (L) Sample (L) VA (L, BTPS) DLCO (mL/min/mmHg) KCO (mL/min/mmHg/L) 98 1.4 9.4 0.65 0.70 3.81 15.6 4.09 VA from tracer dilution; DLCO and KCO are before hemoglobin adjustment. Breath-hold from 30% of VI to the sample midpoint. PB 760 mmHg."
+    - heading "Z-scores" [level=2]
+    - figure:
+      - img "Z-score strip": −5 −4 −3 −2 −1 0 1 2 3 Predicted LLN −1.645 ULN +1.645 z-score FVC pre z −1.27 within limits post z −0.17 within limits FEV1 pre z −3.04 below LLN post z −2.91 below LLN FEV1/FVC pre z −3.70 below LLN post z −4.00 below LLN TLC z 0.78 within limits RV z 1.66 above ULN, borderline RV/TLC z 1.96 above ULN DLCO z 0.14 within limits VA z 0.55 within limits KCO z −0.30 within limits pre-bronchodilator post-bronchodilator
+    - heading "Technical notes" [level=2]
+    - list:
+      - listitem: "Pre-bronchodilator: hesitant start (maneuvers 1, 3 and 6); abrupt cessation of flow, probable glottic closure (maneuver 1); early termination of expiration (maneuvers 2 and 5); cough in the first second (maneuvers 3, 4 and 5); variable effort (maneuvers 4, 5 and 6)."
+      - listitem: "Post-bronchodilator: early termination of expiration (maneuvers 1, 2, 4, 5 and 7); cough in the first second (maneuvers 1, 2, 3 and 7); variable effort (maneuvers 2, 4, 6 and 7); hesitant start (maneuver 3)."
+      - listitem: "Plethysmography trial 1: rapid panting (1.11 Hz)."
+      - listitem: "Plethysmography trial 3: rapid panting (1.30 Hz)."
+      - listitem: "Plethysmography trial 5: rapid panting (1.90 Hz)."

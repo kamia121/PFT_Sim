@@ -55,6 +55,20 @@ jobs:
         run: timeout 400 node benchmarks/mobile-layout-smoke.mjs
       - name: Combined theme and review mode harness
         run: timeout 300 node benchmarks/combined-ui-smoke.mjs
+      - name: Interpretation workspace harness
+        if: ${{ !cancelled() }}
+        run: timeout 400 node benchmarks/workspace-smoke.mjs
+      - name: Practice-page print parity (in-run invariant; the ec5f6cd fixture where the Chromium version matches)
+        if: ${{ !cancelled() }}
+        run: timeout 900 node benchmarks/print-parity.mjs
+      - name: Keep the accessibility snapshots of the workspace harness (pass or fail)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-accessibility-${{ matrix.engine }}
+          path: browser-artifacts/${{ matrix.engine }}/workspace/*-ax-*.yml
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Keep what the run produced when it failed
         if: failure()
         uses: actions/upload-artifact@v4

@@ -24,7 +24,7 @@
  * Set PFT_CHROMIUM to a Chromium executable if Playwright's own download is not installed.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { startServer, launchBrowser, artifactDir, ENGINE } from './lib/harness.mjs';
+import { startServer, launchBrowser, artifactDir, ENGINE, openPage2 } from './lib/harness.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadDatasets } from '../src/reference/load.js';
@@ -263,14 +263,14 @@ try {
     await page.goto(`${base}?${POOR}&qc=1`);
     await page.waitForSelector('#answer-form');
     await page.locator('input[name=pattern]').first().check();
-    await page.click('#toggle-details');
+    await openPage2(page);
     await page.waitForSelector('#details-slot .dt-sheet');
     const nPre = await page.evaluate(() => document.querySelectorAll('#details-slot table[id$="d-maneuvers-pre"] tbody tr').length);
     check(nPre >= 6 && await page.locator('#details-slot input[data-fig-view="panel-spirometry"]').count() === 3, 'R6: page 2 offers Best, Overlay and Separate for the spirometry panel');
     const figOf = () => page.locator('#details-slot figure[data-figure-id="panel-spirometry"] svg').evaluate((e) => ({ d: e.querySelector('desc')?.textContent ?? '', n: e.outerHTML.length }));
     const startView = await figOf();
     check(/all view/.test(startView.d), 'R6: more than eight maneuvers are overlaid at first');
-    await page.evaluate(() => window.scrollTo(0, document.querySelector('#toggle-details').getBoundingClientRect().top + scrollY));
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('#details-slot').getBoundingClientRect().top + scrollY));
     const scrollBefore = await page.evaluate(() => scrollY);
     await page.locator('#details-slot input[data-fig-view="panel-spirometry"][value="separate"]').click();
     const sep = await figOf();
@@ -303,7 +303,7 @@ try {
       await page.goto(`${base}?${POOR}&qc=1`);
       await page.waitForSelector('#answer-form');
       await page.locator('input[name=pattern]').first().check();
-      if (where === 'practice') { await page.click('#toggle-details'); await page.waitForSelector('#details-slot .dt-sheet'); }
+      if (where === 'practice') { await openPage2(page); await page.waitForSelector('#details-slot .dt-sheet'); }
       else { await page.click('[data-tab=report]'); await page.waitForSelector('#report-root .sheet'); }
       const root = where === 'practice' ? '#details-slot' : '#report-root';
       const radios = page.locator(`${root} input[data-fig-view="panel-spirometry"]`);
@@ -551,7 +551,7 @@ try {
     check(studyJudgement(rtC, cv.report.caveatIds).key === 'limited', 'Q2: the key for the short-wait case is limited');
     await page.goto(`${base}?${CAV}&qc=1`);
     await page.waitForSelector('#answer-form');
-    await page.click('#toggle-details');
+    await openPage2(page);
     check(/Post-dose wait shortened to 8 min|8 min/.test(await page.locator('#case').innerText()), 'Q2: the cue (the printed wait) is on the page at stage 1 with the challenge on');
     // The reviewer's chain.
     await page.click('#show-statement');

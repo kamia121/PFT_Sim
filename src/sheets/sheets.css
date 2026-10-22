@@ -124,6 +124,9 @@
 /* Live mode (the practice page): the learner works inside the interpretation box, so the sheet grows with its content instead of
    clipping at Letter height, and scales to the width of the page with zoom. The printed and report-page sheets stay fixed. */
 .sheet-live { overflow-x: hidden; }
+/* The data wrapper of the practice-page sheet (summary.js, narrowZ) generates no box, in every medium, so the sheet lays out and
+   prints exactly as without it. Only the wide-screen interpretation workspace (src/app/workspace.css) gives it a box. */
+.sheet-data { display: contents; }
 .sheet-live .sheet-frame { height: auto; width: 816px; zoom: var(--sheet-s, 1); margin: 0 auto 14px; }
 .sheet-live .sheet { position: relative; height: auto; min-height: 1056px; overflow: visible; transform: none; display: flex; flex-direction: column; }
 .sheet-live .sheet-content { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin: 24px 36px 12px; flex: 1 1 auto; }
