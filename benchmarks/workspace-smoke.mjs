@@ -519,6 +519,9 @@ try {
     const seen = { reveal: 0, column: 0 }, hidden = [];
     for (let i = 0; i < 90; i++) {
       await page.keyboard.press('Tab');
+      // The engine scrolls the focused control into view itself, possibly a frame after the key (WebKit on CI was measured mid-scroll once);
+      // the control is measured after a drawn frame, as every scroll position in this file is.
+      await settle(page);
       const r = await page.evaluate(() => {
         const el = document.activeElement, rv = document.querySelector('#reveal'), col = document.querySelector('.sheet-interp');
         const where = rv?.contains(el) ? 'reveal' : col?.contains(el) ? 'column' : null;
@@ -527,7 +530,7 @@ try {
         const x = Math.min(Math.max((b.left + b.right) / 2, 1), innerWidth - 1), y = Math.min(Math.max((b.top + b.bottom) / 2, 1), innerHeight - 1);
         const top = document.elementFromPoint(x, y);
         const inView = b.bottom > 0 && b.top < innerHeight && b.right > 0 && b.left < innerWidth;
-        return { where, ok: inView && Boolean(top) && (el === top || el.contains(top) || (el.labels && [...el.labels].some((l) => l.contains(top)))), what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} at ${Math.round(x)},${Math.round(y)} under ${top?.tagName.toLowerCase()}` };
+        return { where, ok: inView && Boolean(top) && (el === top || el.contains(top) || (el.labels && [...el.labels].some((l) => l.contains(top)))), what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} (${Math.round(b.top)}-${Math.round(b.bottom)} of ${innerHeight}) at ${Math.round(x)},${Math.round(y)} under ${top?.tagName.toLowerCase()}` };
       });
       if (!r) continue;
       seen[r.where]++;
