@@ -17,7 +17,10 @@ import { GENERATOR_VERSION } from '../src/core/standards.js';
 import { volume, flow, peakFlow, timeAtVolume } from '../src/core/curve.js';
 import { sampleExpiration, applyArtifacts, buildInspiratory, loopClosure } from '../src/core/inspiratory.js';
 import { expiratoryTexture, sampleTextured, warpAt, TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
-import { maneuverTrace, artifactSeed } from '../src/ui/figures/traces.js';
+import { maneuverTrace, computeManeuverTrace, traceFingerprint, artifactSeed } from '../src/ui/figures/traces.js';
+import { spirometryData } from '../src/ui/figures/panel-spirometry.js';
+import { createReference } from '../src/reference/gli.js';
+import { interpret } from '../src/interpret/interpret.js';
 import { FIGURES } from '../src/ui/figures/index.js';
 import { repPlethLoop } from '../src/ui/figures/representative.js';
 import { TRACE_DESCRIPTORS, traceHashes } from '../tools/trace-rendering-hashes.mjs';
@@ -240,4 +243,71 @@ test('summary plethysmography figure: the open-shutter resistance loop from the 
     assert.ok(Math.abs(c.pleth.raw.sGawPerKpaS - 1 / c.pleth.raw.sRawKpaS) < 1e-3);
   }
   assert.equal(repPlethLoop.dataFor(buildCase({ seed: 11, archetype: 'normal', panel: 'spirometry' }, ds)), null);
+});
+
+test('trace cache: a hit is the same frozen object and equals the uncached computation; it never alters the case', () => {
+  const c = buildCase({ seed: 11, archetype: 'obstruction' }, ds);
+  const h0 = createHash('sha256').update(JSON.stringify(c)).digest('hex');
+  for (const [set, ms] of [['pre', c.spirometry.pre], ['post', c.spirometry.post]]) ms.maneuvers.forEach((m, i) => {
+    const o = { seed: 11, index: i, set, scenario: c.scenario ?? null };
+    const a = maneuverTrace(m, o), b = maneuverTrace(m, o);
+    assert.equal(a, b, 'second call is a cache hit');
+    assert.deepEqual(a, computeManeuverTrace(m, o), 'cached output equals the uncached computation');
+    assert.ok(Object.isFrozen(a) && Object.isFrozen(a.exp.f) && Object.isFrozen(a.insp.v) && Object.isFrozen(a.exp.applied));
+    assert.throws(() => { a.exp.f[3] = 0; }, TypeError, 'writing into a cached array throws');
+    assert.throws(() => { a.insp.flags.push('x'); }, TypeError);
+    assert.ok(!Object.isFrozen(m) && !Object.isFrozen(m.faults) && !Object.isFrozen(m.curve), 'the maneuver is not frozen');
+  });
+  assert.equal(createHash('sha256').update(JSON.stringify(c)).digest('hex'), h0);
+});
+
+test('trace cache: seed, set, index and scenario faults select different traces, each equal to its uncached computation', () => {
+  const c = buildCase({ seed: 11, archetype: 'mixed' }, ds);
+  const m = c.spirometry.pre.maneuvers[0];
+  const variants = [{ seed: 11, index: 0, set: 'pre' }, { seed: 12, index: 0, set: 'pre' }, { seed: 11, index: 0, set: 'post' }, { seed: 11, index: 1, set: 'pre' }, { seed: 11, index: 0, set: 'pre', scenario: { faults: ['leak'] } }];
+  const got = variants.map((o) => maneuverTrace(m, o));
+  variants.forEach((o, k) => assert.deepEqual(got[k], computeManeuverTrace(m, o), JSON.stringify(o)));
+  for (let k = 1; k < got.length; k++) assert.notDeepEqual(got[k], got[0], `variant ${k} differs from the first`);
+  // Asking for the first variant again after the others still returns its own trace.
+  assert.deepEqual(maneuverTrace(m, variants[0]), got[0]);
+  // The fingerprint names the trace rendering, so a version change can never reuse an entry.
+  assert.ok(traceFingerprint(m, variants[0]).includes(TRACE_RENDERING_ID));
+});
+
+test('trace cache: changing a maneuver after a first call recomputes; no stale artifact or curve is returned', () => {
+  const c = buildCase({ seed: 11, archetype: 'normal' }, ds);
+  const m = structuredClone(c.spirometry.pre.maneuvers[0]);
+  const o = { seed: 11, index: 0, set: 'pre' };
+  const first = maneuverTrace(m, o);
+  assert.deepEqual(first.exp.applied, []);
+  m.faults.push('cough');
+  const cough = maneuverTrace(m, o);
+  assert.notEqual(cough, first);
+  assert.deepEqual(cough.exp.applied, ['cough'], 'the newly added fault is drawn');
+  assert.deepEqual(cough, computeManeuverTrace(m, o));
+  m.faults = [];
+  assert.deepEqual(maneuverTrace(m, o).exp.applied, [], 'removing the fault removes the artifact');
+  m.curve.k += 0.05;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o), 'a changed curve recomputes');
+  m.fet = Math.min(m.fet, 6);
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o), 'a changed end of expiration recomputes');
+  const insp = { ...computeManeuverTrace(m, o).insp, fivc: m.fvc };
+  m.inspiratory = insp;
+  assert.deepEqual(maneuverTrace(m, o), computeManeuverTrace(m, o), 'an inspiratory limb set on the maneuver is used');
+  assert.ok(!Object.isFrozen(insp.t), 'freezing the result never reaches an input array');
+});
+
+test('trace cache: a new case, an equation change and the quality setting give the same traces', () => {
+  const d = { seed: 11, archetype: 'obstruction' };
+  const c1 = buildCase(d, ds), c2 = buildCase(d, ds);
+  const { resolveReference } = createReference(ds);
+  const a = spirometryData({ ...c1, revealed: false }, interpret(c1.report, resolveReference, 'GLIglobal'));
+  const b = spirometryData({ ...c1, revealed: true }, interpret(c1.report, resolveReference, 'GLI2012'));
+  const n = spirometryData({ ...c2, revealed: false }, interpret(c2.report, resolveReference, 'GLIglobal'));
+  a.sets.forEach((set, k) => set.maneuvers.forEach((m, i) => {
+    assert.equal(b.sets[k].maneuvers[i].exp.f, m.exp.f, 'equation and quality setting reuse the cached arrays');
+    assert.deepEqual(n.sets[k].maneuvers[i].exp, m.exp, 'a new case object with the same descriptor draws the same trace');
+    assert.deepEqual(n.sets[k].maneuvers[i].insp, m.insp);
+  }));
+  assert.equal(a.sets.length, 2, 'pre and post');
 });

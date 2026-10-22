@@ -226,7 +226,7 @@ export function textureInspiration(insp, { seed, set, index }) {
   const { amp, fine, broad } = drawCoefficients(rng);
   const { t, f } = insp;
   const n = t.length;
-  if (n < 4 || !(insp.fivc > 0)) return { ...insp, texture: { model: TRACE_TEXTURE_MODEL.version, applied: false } };
+  if (n < 4 || !(insp.fivc > 0)) return { ...insp, t: t.slice(), v: insp.v.slice(), f: f.slice(), flags: [...insp.flags], texture: { model: TRACE_TEXTURE_MODEL.version, applied: false } };
   const fivc = insp.fivc, Ti = t[n - 1] - t[0];
   const absF = f.map((q) => Math.abs(q));
   const uFine = cumtrapz(t, absF.map((q) => knotRate(q, P.fineLengthOfFivc * fivc, P.fineMinCorrelationS)));
@@ -250,5 +250,6 @@ export function textureInspiration(insp, { seed, set, index }) {
     if (j > 0) acc += 0.5 * (-ft[j - 1] - ft[j]) * (t[j] - t[j - 1]);
     v[j] = v0 - acc;
   }
-  return { ...insp, v, f: ft, pif: Math.max(...ft.map((q) => -q)), texture: { model: TRACE_TEXTURE_MODEL.version, applied: true } };
+  // t and flags are copied, so the result shares no array with its input (callers may freeze the result).
+  return { ...insp, t: t.slice(), flags: [...insp.flags], v, f: ft, pif: Math.max(...ft.map((q) => -q)), texture: { model: TRACE_TEXTURE_MODEL.version, applied: true } };
 }

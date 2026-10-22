@@ -66,6 +66,33 @@ The generator version (2) reproduces the case: every value, grade, key and store
 
 The markup fixture was re-baselined once for this change. The markup outside the svg figures was verified byte-identical to ec5f6cd before re-baselining, for all 88 practice states and 96 reference pages: the stripping function was first shown to reproduce every stored ec5f6cd hash on main, and the figure-free hashes on this branch equal main's. That figure-free parity is now a permanent test. The only figures that changed are the spirometry figures (the panel, the two stand-alone figures and the two summary curves) and the summary plethysmography figure. The DLCO figures, the z-score graphics and the details-sheet plethysmography panel are byte-identical.
 
+## 5a. Cost and the trace cache
+
+The texture is computed on a 1 ms grid over the active window, which costs about 17 ms per maneuver in Node on the development machine (0.4 ms before). Every figure of a page asks for the same maneuvers again, so `maneuverTrace` (`src/ui/figures/traces.js`) caches its result. The cache follows this contract:
+
+- The cache is a `WeakMap` keyed by the maneuver object, so entries live only as long as the case.
+- An entry is used only when a fingerprint of every input the trace reads matches: the trace-rendering identifier, seed, set, index, the curve parameters, FET, FVC, the faults, the scenario faults and the identity of a supplied inspiratory limb.
+- A maneuver changed after a first call is computed again and never answered from a stale entry.
+- Results are deep-frozen and shared, and no result shares an array with its inputs.
+
+Equation, quality-challenge and view changes do not enter the trace and reuse the cached arrays. The tests compare every cached result with the uncached computation (`computeManeuverTrace`), and they cover each option, input mutation, new case objects, pre and post, and frozenness. Removing the fingerprint check fails them. The output is byte-identical; the trace fixture is unchanged.
+
+Measured latency on a bounded representative set (seed 11: normal; obstruction and mixed, each with pre and post sets; restriction), Node, development machine:
+
+| | case generation | first render of all figures | rerender of all figures |
+|---|---|---|---|
+| main 9822a77 | 9 to 16 ms | 16 to 36 ms | 16 to 27 ms |
+| this change, with the cache | 10 to 22 ms | 79 to 223 ms | 14 to 25 ms |
+
+In Chromium with the CPU throttled four times (a mobile-class emulation, not a measured phone), the practice page took longer to show the summary figures:
+
+| Case | main 9822a77 | this change |
+|---|---|---|
+| obstruction, seed 11, pre and post, 6 maneuvers | 1424 ms | 2067 ms |
+| obstruction, poor technique, seed 34, 16 maneuvers (the largest found in 120 poor-technique cases) | 1545 ms | 2217 ms |
+
+The time to open page 2 and to switch the reference equation was not longer (141 against 179 ms, and 360 against 450 ms, in the larger case). The remaining cost, about 0.65 s at the first display of a case under that emulation, is a known limitation of this release; no further optimization was made.
+
 ## 6. Limitations
 
 - The amplitudes, correlation lengths, caps, guard fractions and quiet end are unverified heuristics. They need face-plausibility review by clinicians against real tracings; no standard prescribes them, and ATS/ERS 2019 gives no noise or irregularity amplitude.
@@ -76,4 +103,5 @@ The markup fixture was re-baselined once for this change. The markup outside the
 - Maneuvers whose faults have long artifact windows (variable effort, leak) are textured only after FEV1 time + 2 s, where flow is low; their visible irregularity is mostly that of the artifact model.
 - Integration of the plotted arrays does not meet a 1 mL absolute target. Trapezoid integration of the plotted flow on the existing plot grid (5 ms to 0.4 s, 10 ms to 1.5 s, 50 ms later, 5 ms in the last 0.12 s) differs from the plotted volume by up to 2.5 mL for maneuvers without faults (13 of 263 above 1 mL in the test sweep) and up to 3.8 mL for maneuvers with fault artifacts (51 of 496). This baseline error predates the texture: it arises in the rise to the peak, which the texture does not touch, and in the cough and glottic-closure artifact shapes. The texture adds at most 0.25 mL to it. Adding 1 ms grid points over the first second and the last 0.12 s brought every maneuver below 0.7 mL in a trial outside the code. That sampling change is deferred for this feature, because it would change sample-dependent fault-artifact amplitudes (the cough amplitude is read from the sampled flow, and the non-negativity scale is a minimum over samples) and would enlarge the figures (about 3.5 times as many points). What this release bounds is non-regression: `tests/trace-texture.test.mjs` requires that the texture add no more than 0.5 mL to the existing error of each maneuver without faults.
 - The resistance figure is limited by the existing loop model, whose bend and opening are assigned rather than derived from mechanics. The least-squares estimator has no published counterpart. Raw uses FRCpleth as its basis, which is misleadingly low with hyperinflation (Kraemer et al. 2021). At the summary size (about 336 by 106 px) the loop is compressed vertically.
+- The first display of a case costs more than before (section 5a: about 0.65 s more under four-times CPU throttling for obstructive cases with pre and post sets); rerenders are not slower.
 - The ERS/ATS 2023 lung-volume standard could not be opened (HTTP 403) and was not read for this change. The Physiol Rep 2021 paper was read through its PubMed Central copy and PMC8223795 through a summarizing fetch, not line by line.
