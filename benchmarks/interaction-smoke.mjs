@@ -408,6 +408,31 @@ try {
         check(g.maxBottom <= g.footTop + 0.5 && g.over === 0 && g.fit >= 0.95, `${ENGINE}, ${where}, ${query.slice(4, 24)}: summary content ends above its footer (${g.maxBottom.toFixed(1)} <= ${g.footTop.toFixed(1)}, zoom ${g.fit}, moved ${g.moved})`);
       }
     }
+    // The last fit step (src/sheets/summary.js, shrinkWritingSpace) runs only on overflow that the zoom floor and the moves leave: it lowers
+    // the blank writing space and nothing else. Worst case: v=2&s=5&a=obstruction&t=poor&sc=heavy, whose page 1, with the Change (% predicted)
+    // footnote line, still overflowed by 2 px with every comment but one moved. Negative controls: a heavy case that fits (with a study) and
+    // one without a study; neither may reach the step. In the Lab report the statement is added, so the box holds its one-line pointer.
+    const probe = () => page.locator('.sheet-summary').evaluate((sheet) => {
+      const body = sheet.querySelector('.sheet-interp-body'), ptr = body.querySelector('.sheet-interp-ref');
+      const B = body.getBoundingClientRect(), P = ptr?.getBoundingClientRect();
+      return { over: Number(sheet.dataset.overflow), writing: sheet.dataset.writing ?? null, rowMin: sheet.querySelector('.sheet-boxes').style.minHeight, bodyMin: body.style.minHeight,
+        font: getComputedStyle(body).fontSize, ptrIn: P ? P.top >= B.top - 0.5 && P.bottom <= B.bottom + 0.5 && P.height > 0 : null };
+    });
+    const fonts = new Set();
+    for (const [query, worst] of [['v=2&s=5&a=obstruction&t=poor&sc=heavy', true], ['v=2&s=8&a=bd-discordant&t=poor&sc=heavy', false], ['v=2&s=20&a=normal&t=poor', false]]) {
+      for (const where of ['report', 'lab']) {
+        if (where === 'report') { await page.goto(`${base}report.html?${query}`); await page.waitForSelector('body[data-ready="1"]'); }
+        else { await page.goto(`${base}?${query}`); await page.waitForSelector('#answer-form'); await page.click('#show-key'); await page.click('[data-tab=report]'); await page.waitForSelector('#report-root .sheet'); await page.check('#report-interp'); await page.waitForSelector('#report-root .sheet-interp-ref'); await page.waitForTimeout(200); }
+        await page.emulateMedia({ media: 'print' });
+        const f = await probe();
+        await page.emulateMedia({ media: 'screen' });
+        fonts.add(f.font);
+        const tag = `${ENGINE}, ${where}, ${query.slice(4)}`;
+        if (worst) check(f.over === 0 && f.writing !== null && Number(f.writing) >= 10 && f.ptrIn !== false, `${tag}: on overflow only the blank writing space gives up height (writing space ${f.writing} px, row minimum ${f.rowMin || 'none'}; pointer inside its box: ${f.ptrIn})`);
+        else check(f.over === 0 && f.writing === null && f.bodyMin === '' && ['', '72px'].includes(f.rowMin) && f.ptrIn !== false, `${tag}: a sheet that fits keeps its writing space (row minimum ${f.rowMin || 'none'}, writing step ${f.writing ?? 'not run'})`);
+      }
+    }
+    check(fonts.size === 1, `${ENGINE}: the writing-space step changes no font size (interpretation box text ${[...fonts].join(', ')})`);
   }
   {
     // The fit leaves nothing over, whatever the case: heavy technologist notes, poor sessions, both equations.
