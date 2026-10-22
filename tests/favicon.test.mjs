@@ -41,8 +41,16 @@ test('the SVG source is a self-contained 32 unit square drawn only in theme toke
   for (const [, body] of svg.matchAll(/<!--([\s\S]*?)-->/g)) assert.ok(!body.includes('--'), 'XML forbids a double hyphen inside a comment');
   const tokens = read('src/styles/tokens.css').toString('utf8');
   const colors = [...new Set(svg.match(/#[0-9A-Fa-f]{6}\b/g))];
-  assert.deepEqual(colors.sort(), ['#0E2B73', '#5FD0BD', '#A9BCF2']);
-  for (const [name, hex] of [['--mcw-navy', '#0E2B73'], ['--mon-current', '#5FD0BD'], ['--mon-snap', '#A9BCF2']]) assert.match(tokens, new RegExp(`${name}: ${hex};`), name);
+  assert.deepEqual(colors.sort(), ['#0E2B73', '#5FD0BD']);
+  for (const [name, hex] of [['--mcw-navy', '#0E2B73'], ['--mon-current', '#5FD0BD']]) assert.match(tokens, new RegExp(`${name}: ${hex};`), name);
+});
+
+test('the loop is one closed stroked outline, so that it reads as a loop at 16 px and not as two shapes', () => {
+  const svg = read('assets/icons/favicon.svg').toString('utf8');
+  const outlines = [...svg.matchAll(/<path d="([^"]+)"[^>]*stroke="#5FD0BD"[^>]*>/g)];
+  assert.equal(outlines.length, 1, 'one stroked path');
+  assert.match(outlines[0][1], /Z$/, 'the outline is closed');
+  assert.equal((outlines[0][1].match(/M/g) || []).length, 1, 'a single subpath');
 });
 
 test('favicon.ico holds PNG images at 16, 32 and 48 px', () => {
