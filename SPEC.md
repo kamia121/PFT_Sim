@@ -1,5 +1,13 @@
 # PFT_Sim specification
 
+## Advanced case-puzzler extension (2026-10-24, local feature branch)
+
+`puzzlers.html` is a separate authored exercise, not a generated descriptor. `src/puzzlers/catalog.js` holds fixed synthetic measured values with units, one whole-study quality description and progressive reference/clinical disclosures. It calls no generator and authors no numerical GLI outputs. `session.js` validates/freezes cases, locks each submitted answer, prevents advancing before submission, and exposes only released disclosures and the current question. `view.js` renders that projection with the existing escaping helper; `app.js` manages a versioned `pz=<id>@<version>` URL and in-memory responses. Mixed/unknown link parameters and unknown revisions fail explicitly. Restart/reload clears responses. Existing practice/quality review is unchanged.
+
+Each question declares a reasoning domain and claim IDs resolved in `sources.js`, with reader/date/citation/locator. Only verified-primary claims count toward scores; others produce unscored feedback. This denotes rule evidence, not model/output validation. The initial two cases teach reference metadata and uncertainty; neither assigns an uncomputed pattern. Gender identity is display context, distinct from the documented reference input; hormone history selects no equation. Measured values are immutable across every reveal.
+
+Actual consultation: Chrome, PFT Simulator group, Opus 5.5 / High, https://claude.ai/code/session_01GZTU9WWmPzxJrqNfXkLgQ7 . Accepted: bypass generator, immutable values, stage-local prompts, no hand-authored reference outputs, source-gated scoring and explicit unresolved severity rules. Adapted its staging recommendation: separate case-stage state avoids conflating clinical disclosures with the existing technologist/quality disclosure stages. Do not import its recollections as primary evidence. Findings and accepted/deferred recommendations: `docs/ADVANCED-PUZZLERS-PLAN.md`. Broad rule/source audit: `docs/verification/rule-source-audit.md`; pending source/correction work is not declared complete. Population limits and generator calibration disclaimers remain.
+
 Revision 2. This revision replaces the scope memo with an implementable specification. Every clinical threshold, criterion and coefficient in it carries a source column and a verification state. Nothing marked "unverified" may be coded until someone has read the primary source and recorded the check next to the value.
 
 ## Status

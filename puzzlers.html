@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Advanced case puzzlers | PFT Sim</title>
+  <link rel="icon" href="./assets/icons/favicon.svg" type="image/svg+xml">
+  <script src="./src/ui/theme-boot.js"></script>
+  <link rel="stylesheet" href="./fonts.css">
+  <link rel="stylesheet" href="./src/styles/tokens.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./src/puzzlers/puzzlers.css">
+  <script type="module" src="./src/puzzlers/app.js"></script>
+</head>
+<body>
+  <header class="masthead"><a class="wordmark" href="./">PFT Sim</a><button id="theme-toggle" type="button" class="theme-button" aria-label="Toggle light or dark theme">Dark mode</button></header>
+  <main>
+    <h1>Advanced case puzzlers</h1>
+    <p class="lede">Read the available data, choose the next check, then reveal the missing context.</p>
+    <p class="warn">Synthetic teaching cases. These exercises do not provide patient-treatment recommendations.</p>
+    <label class="field">Case<select id="puzzler-case"></select></label>
+    <div id="puzzler" aria-live="polite"></div>
+    <noscript>JavaScript is required for the case exercises.</noscript>
+  </main>
+</body>
+</html>

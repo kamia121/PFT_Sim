@@ -1,0 +1,11 @@
+.pz-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; margin-top: 1rem; }
+.pz-workspace .card { min-width: 0; }
+.pz-option { display: block; margin: 1rem 0; }
+.pz-workspace fieldset { min-width: 0; }
+.pz-workspace button { margin: .6rem .5rem .6rem 0; }
+.pz-feedback { border-left: 3px solid var(--accent-bar); padding-left: .8rem; }
+.pz-workspace table { width: 100%; border-collapse: collapse; }
+.pz-workspace th, .pz-workspace td { padding: .45rem .65rem; text-align: left; }
+.pz-workspace td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; }
+.pz-workspace details { margin: 1rem 0; }
+@media (max-width: 800px) { .pz-workspace { grid-template-columns: 1fr; } }

@@ -1,0 +1,23 @@
+# Advanced case puzzlers — local implementation plan
+
+Base: `9822a77`; branch: `feature/advanced-case-puzzlers`. Remote main inspected on 2026-10-24: `01fe8bc`, already containing PR17. PR16/17 are not imported into this worktree. No PR10 code is imported. No push, merge or deployment is authorized.
+
+The current practice screen uses `src/challenges/items.js` for pure item descriptions, `score.js` for deterministic scoring, and `src/app/practice-view.js` for presentation. Its quality reveal concerns technologist statements and is distinct from a clinical case reveal. Leave that flow and the default study-level quality review intact.
+
+Add a separate `src/puzzlers/` authored catalog and pure session engine. Each case has a stable ID/version, fixed synthetic measurements with units, initial context, successive metadata disclosures, questions and explicit accepted answers. Return only the released context/questions to the view; never render future disclosures or answer keys in hidden HTML. Keep data beside the current question. Display explanations after submission, with a separate next-stage action. Preserve earlier responses. Grade metadata checks and calibrated uncertainty independently of pattern labels. Reject unknown answers rather than silently awarding credit.
+
+The first two case themes are reference-equation discordance and a transgender patient whose reference input is incompletely documented. Do not claim numerical GLI classifications until numerical fixtures and source review are complete. Never turn identity or hormone duration into a universal equation-selection rule. Measured FEV1/FVC/TLC remain fixed across reference comparisons. A change in the reference lens changes predicted values, limits, z-scores and possibly labels. GLI2012 is spirometry; GLI2021 is static volumes; Global is race-neutral spirometry.
+
+Primary-source evidence is arriving separately. Record source-specific status before enabling each authored case. Consultation: actual Claude Code session, Opus 5.5 / High, Chrome, under PFT Simulator: https://claude.ai/code/session_01GZTU9WWmPzxJrqNfXkLgQ7 . Consultation requested before interaction code; response and accepted/rejected recommendations will be recorded separately.
+
+Verification: deterministic state transitions, no future disclosure/key leakage, immutable measured values, independent scoring for checks/uncertainty, unknown IDs/options rejected, restart and case switching, keyboard/mobile/browser QA after UI integration. Run the complete suite and build; distinguish baseline failures from regressions.
+
+Baseline `npm test` on the unedited base (Node 24.4.0): 732 tests, 729 pass, 3 fail. Existing failures: `numerical identity: every non-resistance value of 2230 cases ... is unchanged` (`pleth.test.mjs`), and the two baseline-hash tests in `scenario-regression.test.mjs`. Do not regenerate fixtures to hide them. Log: `/tmp/pft-puzzlers-baseline.log`.
+
+## Consultation outcome and local feature
+
+Actual consultation completed in the session linked above, with Opus 5.5 / High visibly selected. Accepted: bypass `buildCase` and its mutable measurement assembly; fixed raw inputs and deep freeze; stage-local questions; no authored numerical GLI outputs; source-gated scoring; no severity-dependent puzzlers while the existing rule conflicts with the new clarification; keep provenance, population and calibration limits separate. Accepted as audit findings, not fixes: floating-point spread/EOFE boundaries, FVC clamp, age fallback, derivation note gated by requisition race, and generated transgender scenarios treating birth-sex physiology as ground truth.
+
+Adapted: a separate session/view uses the existing app's escaping and theme conventions rather than extending the quality-statement `stage.js`. Those stages disclose different information, and sharing state would entangle the current practice workflow. The catalog is an ES module for native browser loading, not JSON fetched at runtime. No descriptor/generator/reference/interpretation/scenario files are changed. Core-rule corrections need a coordinated follow-up against the source matrix; no assertion that the broad rule audit is finished.
+
+Implemented `puzzlers.html`, linked from the practice page, and included it in the static build. Two authored cases have three stages each: historical spirometry-reference change and transgender registration/reference input change. They score metadata and uncertainty, not uncomputed labels. Synthetic raw values are not represented as official GLI outputs. Claims cite the parent primary-source handoff with reader/date/locator; pending claims become unscored. Reload/restart resets answers; the versioned case URL identifies the authored case, not saved learner responses.

@@ -1,0 +1,2314 @@
+{
+  "status": "inventory-only",
+  "scope": "Reference, interpretation, quality, scenario and learner scoring implementation; source review is recorded separately.",
+  "constants": {
+    "SPIROMETRY_2019": {
+      "source": "ATS/ERS 2019 spirometry standardization (Graham et al., AJRCCM 2019;200:e70)",
+      "bevFractionOfFvc": {
+        "value": 0.05,
+        "verification": "verified-primary"
+      },
+      "bevAbsoluteLiters": {
+        "value": 0.1,
+        "verification": "verified-primary"
+      },
+      "plateauLiters": {
+        "value": 0.025,
+        "verification": "verified-primary"
+      },
+      "plateauWindowSeconds": {
+        "value": 1,
+        "verification": "verified-primary"
+      },
+      "longFetSeconds": {
+        "value": 15,
+        "verification": "verified-primary"
+      },
+      "eofeRepeatabilityOfLargestFvc": {
+        "value": 0.15,
+        "verification": "verified-primary"
+      },
+      "repeatabilityLitersAdult": {
+        "value": 0.15,
+        "verification": "verified-primary"
+      },
+      "gradeSpreadLiters": {
+        "A": 0.15,
+        "B": 0.15,
+        "C": 0.2,
+        "D": 0.25,
+        "verification": "verified-primary"
+      }
+    },
+    "INTERPRETATION_2022": {
+      "source": "ERS/ATS interpretive strategies technical standard (Stanojevic et al., Eur Respir J 2022;60:2101499)",
+      "llnZ": {
+        "value": -1.645,
+        "verification": "secondary-source-agreement"
+      },
+      "bronchodilatorPercentOfPredicted": {
+        "value": 10,
+        "verification": "secondary-source-agreement"
+      },
+      "severityZ": {
+        "mildLower": -2.5,
+        "moderateLower": -4,
+        "verification": "secondary-source-agreement"
+      }
+    },
+    "DLCO_MODEL": {
+      "version": 1,
+      "testGas": {
+        "value": {
+          "tracer": "CH4",
+          "fiTracerPct": 0.3,
+          "fiCoPct": 0.3,
+          "o2Pct": 21,
+          "balance": "N2"
+        },
+        "verification": "secondary"
+      },
+      "waterVaporMmHg": {
+        "value": 47,
+        "verification": "secondary"
+      },
+      "viOverVcMin": {
+        "value": 0.9,
+        "alternative": 0.85,
+        "verification": "secondary"
+      },
+      "inspiration85PctMaxS": {
+        "value": 4,
+        "verification": "secondary"
+      },
+      "breathHoldWindowS": {
+        "value": [
+          8,
+          12
+        ],
+        "verification": "secondary"
+      },
+      "sampleCompleteWithinS": {
+        "value": 4,
+        "verification": "secondary"
+      },
+      "washoutVolumeL": {
+        "value": [
+          0.75,
+          1
+        ],
+        "smallVcMin": 0.5,
+        "smallVcLimitL": 2,
+        "verification": "secondary"
+      },
+      "sampleVolumeL": {
+        "value": [
+          0.5,
+          1
+        ],
+        "smallVcAllowanceL": 1.1,
+        "verification": "secondary"
+      },
+      "apparatusDeadSpaceL": {
+        "value": 0.1,
+        "verification": "unverified"
+      },
+      "anatomicDeadSpaceMlPerKg": {
+        "value": 2.2,
+        "verification": "secondary"
+      },
+      "phaseIIWidthL": {
+        "value": [
+          0.07,
+          0.13
+        ],
+        "verification": "unverified"
+      },
+      "alveolarPlateauSlopePerL": {
+        "value": [
+          0.01,
+          0.08
+        ],
+        "verification": "unverified"
+      },
+      "lowViDlcoExponent": {
+        "value": 0.5,
+        "verification": "unverified"
+      },
+      "valsalvaDlcoFall": {
+        "value": [
+          0.1,
+          0.25
+        ],
+        "verification": "unverified"
+      },
+      "muellerDlcoRise": {
+        "value": [
+          0.1,
+          0.25
+        ],
+        "verification": "unverified"
+      },
+      "pressureFlagCmH2O": {
+        "value": 8,
+        "verification": "unverified"
+      },
+      "gradeRules": {
+        "value": "A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)",
+        "verification": "unverified"
+      }
+    },
+    "PLETH_MODEL": {
+      "version": 1,
+      "barometricMmHg": {
+        "value": 760,
+        "verification": "convention"
+      },
+      "waterVaporMmHg": {
+        "value": 47,
+        "verification": "secondary"
+      },
+      "boxFreeVolumeL": {
+        "value": 600,
+        "verification": "unverified"
+      },
+      "pantAcceptableHz": {
+        "value": [
+          0.5,
+          1
+        ],
+        "verification": "secondary"
+      },
+      "pantToleratedMaxHzNoObstruction": {
+        "value": 1.5,
+        "verification": "secondary"
+      },
+      "repeatability": {
+        "value": 0.05,
+        "gradeC": 0.1,
+        "verification": "secondary"
+      },
+      "mouthPressureAmplitudeKpa": {
+        "value": [
+          0.85,
+          1.15
+        ],
+        "verification": "unverified"
+      },
+      "fastPantInflationCap": {
+        "value": 0.2,
+        "verification": "unverified"
+      },
+      "rawMedianKpaSL": {
+        "value": 0.2,
+        "verification": "secondary"
+      },
+      "sRawUpperLimitKpaS": {
+        "value": 1.2,
+        "verification": "secondary"
+      }
+    },
+    "COHB": {
+      "referencePercent": {
+        "value": 1.5,
+        "verification": "teaching baseline inside the standard's endogenous range of 1-2%"
+      },
+      "dlcoFractionPerPercent": {
+        "value": 0.01,
+        "verification": "teaching slope inside the standard's 0.8-1% per 1% COHb (eq. 37 uses 1%)"
+      },
+      "adjustAbovePercent": {
+        "value": 2,
+        "verification": "ATS/ERS 2017 (text and eq. 37)"
+      }
+    }
+  },
+  "files": [
+    {
+      "path": "src/core/standards.js",
+      "sha256": "80a2ebc82d4557142f53de9cb3d1d944963bd02790b4489dbad48f664195f4a1",
+      "reviewLines": [
+        {
+          "line": 12,
+          "text": "bevFractionOfFvc: { value: 0.05, verification: 'verified-primary' },"
+        },
+        {
+          "line": 13,
+          "text": "bevAbsoluteLiters: { value: 0.1, verification: 'verified-primary' },"
+        },
+        {
+          "line": 14,
+          "text": "plateauLiters: { value: 0.025, verification: 'verified-primary' },"
+        },
+        {
+          "line": 15,
+          "text": "plateauWindowSeconds: { value: 1, verification: 'verified-primary' },"
+        },
+        {
+          "line": 16,
+          "text": "longFetSeconds: { value: 15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 17,
+          "text": "eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 18,
+          "text": "repeatabilityLitersAdult: { value: 0.15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 19,
+          "text": "gradeSpreadLiters: { A: 0.15, B: 0.15, C: 0.2, D: 0.25, verification: 'verified-primary' },"
+        },
+        {
+          "line": 24,
+          "text": "llnZ: { value: -1.645, verification: 'secondary-source-agreement' },"
+        },
+        {
+          "line": 25,
+          "text": "bronchodilatorPercentOfPredicted: { value: 10, verification: 'secondary-source-agreement' },"
+        },
+        {
+          "line": 26,
+          "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'secondary-source-agreement' },"
+        }
+      ]
+    },
+    {
+      "path": "src/core/quality.js",
+      "sha256": "eca54e5b75046d7e7a5169942030a2df14933e241435c75f8d8a1fdedd971e9b",
+      "reviewLines": [
+        {
+          "line": 8,
+          "text": "export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };"
+        },
+        {
+          "line": 28,
+          "text": "/** Phrases for the technologist comment of a maneuver set (\"<phrase> (maneuver 2)\"). */"
+        },
+        {
+          "line": 88,
+          "text": "const bevBad = m.bev >= bevLimit;"
+        },
+        {
+          "line": 89,
+          "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
+        },
+        {
+          "line": 90,
+          "text": "const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;"
+        },
+        {
+          "line": 101,
+          "text": "const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];"
+        },
+        {
+          "line": 109,
+          "text": "const eofe = m.plateau < S.plateauLiters.value"
+        },
+        {
+          "line": 110,
+          "text": "|| m.fet >= S.longFetSeconds.value"
+        },
+        {
+          "line": 111,
+          "text": "|| m.fvc >= maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value;"
+        },
+        {
+          "line": 124,
+          "text": "const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);"
+        },
+        {
+          "line": 127,
+          "text": "if (acceptableValues.length >= 3 && spread <= g.A) return 'A';"
+        },
+        {
+          "line": 128,
+          "text": "if (spread <= g.B) return 'B';"
+        },
+        {
+          "line": 129,
+          "text": "if (spread <= g.C) return 'C';"
+        },
+        {
+          "line": 130,
+          "text": "if (spread <= g.D) return 'D';"
+        },
+        {
+          "line": 134,
+          "text": "const largestTwoSpread = (xs) => {"
+        },
+        {
+          "line": 135,
+          "text": "if (xs.length < 2) return null;"
+        },
+        {
+          "line": 136,
+          "text": "const [hi, next] = xs.slice().sort((a, b) => b - a);"
+        },
+        {
+          "line": 142,
+          "text": "* @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },"
+        },
+        {
+          "line": 147,
+          "text": "const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;"
+        },
+        {
+          "line": 148,
+          "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maxFvcInSet));"
+        },
+        {
+          "line": 149,
+          "text": "const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);"
+        },
+        {
+          "line": 156,
+          "text": "value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,"
+        },
+        {
+          "line": 157,
+          "text": "grade: gradeVariable(acc.map((m) => m[key]), use.length),"
+        },
+        {
+          "line": 159,
+          "text": "spread: largestTwoSpread(acc.map((m) => m[key])),"
+        },
+        {
+          "line": 164,
+          "text": "const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;"
+        },
+        {
+          "line": 166,
+          "text": "const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));"
+        },
+        {
+          "line": 167,
+          "text": "const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);"
+        },
+        {
+          "line": 179,
+          "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && x <= S.repeatabilityLitersAdult.value),"
+        }
+      ]
+    },
+    {
+      "path": "src/core/dlco-trace.js",
+      "sha256": "77d3ceddaf6d95548efc83b82d990392e003833738e0f2be0dea175829e8cc17",
+      "reviewLines": [
+        {
+          "line": 31,
+          "text": "testGas: { value: { tracer: 'CH4', fiTracerPct: 0.3, fiCoPct: 0.3, o2Pct: 21, balance: 'N2' }, verification: 'secondary' },"
+        },
+        {
+          "line": 32,
+          "text": "waterVaporMmHg: { value: 47, verification: 'secondary' },"
+        },
+        {
+          "line": 33,
+          "text": "viOverVcMin: { value: 0.9, alternative: 0.85, verification: 'secondary' },"
+        },
+        {
+          "line": 34,
+          "text": "inspiration85PctMaxS: { value: 4.0, verification: 'secondary' },"
+        },
+        {
+          "line": 35,
+          "text": "breathHoldWindowS: { value: [8, 12], verification: 'secondary' },"
+        },
+        {
+          "line": 36,
+          "text": "sampleCompleteWithinS: { value: 4.0, verification: 'secondary' },"
+        },
+        {
+          "line": 37,
+          "text": "washoutVolumeL: { value: [0.75, 1.0], smallVcMin: 0.5, smallVcLimitL: 2.0, verification: 'secondary' },"
+        },
+        {
+          "line": 38,
+          "text": "sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.1, verification: 'secondary' }, // the standard allows under 0.5 L for VC under 1 L; the simulator extends this to 1.1 L so that very small lungs can be graded"
+        },
+        {
+          "line": 39,
+          "text": "apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },"
+        },
+        {
+          "line": 40,
+          "text": "anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },"
+        },
+        {
+          "line": 41,
+          "text": "phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },"
+        },
+        {
+          "line": 42,
+          "text": "alveolarPlateauSlopePerL: { value: [0.01, 0.08], verification: 'unverified' },"
+        },
+        {
+          "line": 43,
+          "text": "lowViDlcoExponent: { value: 0.5, verification: 'unverified' },"
+        },
+        {
+          "line": 44,
+          "text": "valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },"
+        },
+        {
+          "line": 45,
+          "text": "muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },"
+        },
+        {
+          "line": 46,
+          "text": "pressureFlagCmH2O: { value: 8, verification: 'unverified' },"
+        },
+        {
+          "line": 47,
+          "text": "gradeRules: { value: 'A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },"
+        },
+        {
+          "line": 52,
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+        },
+        {
+          "line": 53,
+          "text": "const round = (x, d) => { const p = 10 ** d; return Math.round(x * p) / p; };"
+        },
+        {
+          "line": 54,
+          "text": "const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;"
+        },
+        {
+          "line": 55,
+          "text": "const gridDown = (x, g = 0.05) => Math.round(x / g) * g;"
+        },
+        {
+          "line": 59,
+          "text": "const s = x < 0 ? -1 : 1, a = Math.abs(x) / Math.SQRT2;"
+        },
+        {
+          "line": 66,
+          "text": "const insp = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 6 * x * x - 8 * x ** 3 + 3 * x ** 4);"
+        },
+        {
+          "line": 69,
+          "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (insp(m) < frac) lo = m; else hi = m; }"
+        },
+        {
+          "line": 74,
+          "text": "const gam = (u) => 1 - (1 + u) * Math.exp(-u);"
+        },
+        {
+          "line": 75,
+          "text": "const expNorm = (u) => gam(Math.min(Math.max(u, 0), UMAX)) / gam(UMAX); // fraction of the exhaled volume at u = t / tau"
+        },
+        {
+          "line": 78,
+          "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (expNorm(m) < frac) lo = m; else hi = m; }"
+        },
+        {
+          "line": 83,
+          "text": "export const vaStpdMl = (vaBtpsL, pbMmHg = 760) => vaBtpsL * 1000 * ((pbMmHg - 47) / 760) * (273 / 310);"
+        },
+        {
+          "line": 84,
+          "text": "export const vaFromTracer = (fiTracer, faTracer, viL, vdL) => (fiTracer / faTracer) * (viL - vdL);"
+        },
+        {
+          "line": 85,
+          "text": "export const dlcoFromDecay = (vaStpd, tBhSeconds, pbMmHg, fCo0, fCoT) => (vaStpd / ((tBhSeconds / 60) * (pbMmHg - 47))) * Math.log(fCo0 / fCoT);"
+        },
+        {
+          "line": 95,
+          "text": "bv.volumeL.forEach((v, i) => { if (v >= lo && v <= hi) idx.push(i); });"
+        },
+        {
+          "line": 96,
+          "text": "const faTr = mean(idx.map((i) => bv.tracer[i])) / 100;"
+        },
+        {
+          "line": 97,
+          "text": "const faCo = mean(idx.map((i) => bv.co[i])) / 100;"
+        },
+        {
+          "line": 116,
+          "text": "if (q.viOverVc < DLCO_MODEL.viOverVcMin.alternative) invalid.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 85%`);"
+        },
+        {
+          "line": 117,
+          "text": "else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) failed.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 90% without a concordant VA`);"
+        },
+        {
+          "line": 118,
+          "text": "if (q.contamination > 0.03) invalid.push('alveolar sample begins inside the dead-space transition');"
+        },
+        {
+          "line": 120,
+          "text": "if (q.breathHoldS < bhLo || q.breathHoldS > bhHi) failed.push(`breath-hold ${q.breathHoldS.toFixed(1)} s, outside 8 to 12 s`);"
+        },
+        {
+          "line": 121,
+          "text": "if (q.sampleEndS > DLCO_MODEL.sampleCompleteWithinS.value) failed.push(`alveolar sample finished ${q.sampleEndS.toFixed(1)} s after the start of exhalation, over 4 s`);"
+        },
+        {
+          "line": 123,
+          "text": "const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];"
+        },
+        {
+          "line": 124,
+          "text": "if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);"
+        },
+        {
+          "line": 126,
+          "text": "if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);"
+        },
+        {
+          "line": 127,
+          "text": "if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) noted.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s (4.0 s limit); noted on the report`);"
+        },
+        {
+          "line": 155,
+          "text": "const choose = (u) => { let c = 0; for (const [name, w] of table) { c += w; if (u < c) return name; } return 'early-sample'; };"
+        },
+        {
+          "line": 156,
+          "text": "if (d[0] < gate) {"
+        },
+        {
+          "line": 158,
+          "text": "if (technique === 'poor' && d[2] < 0.3) out.add(choose(d[3]));"
+        },
+        {
+          "line": 178,
+          "text": "if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;"
+        },
+        {
+          "line": 186,
+          "text": "const d = Array.from({ length: 24 }, () => r.uniform());"
+        },
+        {
+          "line": 188,
+          "text": "const has = (f) => faults.includes(f);"
+        },
+        {
+          "line": 203,
+          "text": "const smallVc = vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL;"
+        },
+        {
+          "line": 204,
+          "text": "let vw = smallVc ? 0.5 : vcL < 3 ? 0.75 : 0.75 + 0.05 * Math.floor(d[8] * 6);"
+        },
+        {
+          "line": 205,
+          "text": "vw = Math.max(vw, gridDown(vd + 4 * sigma + 0.03, 0.05) + (vd + 4 * sigma + 0.03 > gridDown(vd + 4 * sigma + 0.03, 0.05) ? 0.05 : 0));"
+        },
+        {
+          "line": 208,
+          "text": "vs = Math.max(vcL < 1 ? 0.2 : 0.5, Math.min(vs, gridDown(0.8 * vi - vw, 0.05)));"
+        },
+        {
+          "line": 216,
+          "text": "if ((vi0 - vd) / vaCase > 0.97) {"
+        },
+        {
+          "line": 242,
+          "text": "const tEndFor = (tauX) => tauX * expInverse((vw + vs) / vHoldEnd);"
+        },
+        {
+          "line": 243,
+          "text": "if (tEndFor(tau) > 3.6) tau = 3.6 / expInverse((vw + vs) / vHoldEnd);"
+        },
+        {
+          "line": 246,
+          "text": "if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;"
+        },
+        {
+          "line": 262,
+          "text": "const vols = Array.from({ length: K + 1 }, (_, k) => round(k * STEP_L, 2));"
+        },
+        {
+          "line": 263,
+          "text": "const wDead = (v) => 1 - Phi((v - vd) / sigma);"
+        },
+        {
+          "line": 264,
+          "text": "const plateau = (v) => 1 - sPlateau * (v - vmid);"
+        },
+        {
+          "line": 265,
+          "text": "const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;"
+        },
+        {
+          "line": 266,
+          "text": "const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);"
+        },
+        {
+          "line": 267,
+          "text": "const meanW = mean(winIdx.map((k) => wDead(vols[k])));"
+        },
+        {
+          "line": 268,
+          "text": "const meanWG = mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k])));"
+        },
+        {
+          "line": 273,
+          "text": "const concAt = (vx, amp, fi) => wDead(vx) * fi + (1 - wDead(vx)) * amp * plateau(vx);"
+        },
+        {
+          "line": 277,
+          "text": "const noisy = (arrFn, fi) => {"
+        },
+        {
+          "line": 278,
+          "text": "const clean = vols.map((v) => arrFn(v));"
+        },
+        {
+          "line": 279,
+          "text": "const e = clean.map((c) => NOISE * c * nz.normal());"
+        },
+        {
+          "line": 280,
+          "text": "const m = mean(winIdx.map((k) => e[k]));"
+        },
+        {
+          "line": 281,
+          "text": "return clean.map((c, k) => (inWin(vols[k]) ? c + e[k] - m : c + e[k]));"
+        },
+        {
+          "line": 283,
+          "text": "const trVol = noisy((v) => concAt(v, ampTr, fiTr) * 100);"
+        },
+        {
+          "line": 284,
+          "text": "const coVol = noisy((v) => concAt(v, ampCo, fiCo) * 100);"
+        },
+        {
+          "line": 292,
+          "text": "const leakShape = (t) => (t <= tIe ? 0 : t >= tExh0 ? 1 : Math.min(1, (t - tIe) / Math.max(tExh0 - tIe, 0.1)));"
+        },
+        {
+          "line": 293,
+          "text": "for (let j = 0; j < nT; j++) {"
+        },
+        {
+          "line": 296,
+          "text": "if (t < tIn0) { vol = 0; co = 0; tr = 0; }"
+        },
+        {
+          "line": 297,
+          "text": "else if (t < tIe) { const x = (t - tIn0) / ti; vol = vi * insp(x); const rise = 1 - Math.exp(-(t - tIn0) / 0.15); co = fiCo * 100 * rise; tr = fiTr * 100 * rise; }"
+        },
+        {
+          "line": 298,
+          "text": "else if (t < tExh0) {"
+        },
+        {
+          "line": 309,
+          "text": "if (pAmp && t >= valStart && t <= valEnd) { const x = (t - valStart) / Math.max(valEnd - valStart, 0.5); p = pAmp * Math.min(1, 6 * x, 6 * (1 - x)); }"
+        },
+        {
+          "line": 334,
+          "text": "byVolume: { volumeL: vols, co: coVol.map((x) => round(x, 6)), tracer: trVol.map((x) => round(x, 6)) },"
+        },
+        {
+          "line": 335,
+          "text": "faults: faults.map((f) => ({ code: f, text: FAULTS[f].text, affectsNumbers: FAULTS[f].numbers, visualOnly: !FAULTS[f].numbers })),"
+        },
+        {
+          "line": 344,
+          "text": "unverified: Object.entries(DLCO_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),"
+        },
+        {
+          "line": 349,
+          "text": "const near = (a, b) => Math.abs(a / b - 1) <= 0.01;"
+        },
+        {
+          "line": 356,
+          "text": "adjustments.push(`Printed VA ${rec.vaL.toFixed(2)} L (${dv >= 0 ? '+' : ''}${dv.toFixed(1)}% from the case value) and DLCO ${rec.dlco.toFixed(1)} mL/min/mmHg (${dd >= 0 ? '+' : ''}${dd.toFixed(1)}%) because of the technique faults in this test.`);"
+        },
+        {
+          "line": 361,
+          "text": "const holdIdx = T.map((t, j) => (t > tIe + 0.2 && t < tExh0 - 0.2 ? j : -1)).filter((j) => j >= 0);"
+        },
+        {
+          "line": 362,
+          "text": "const pHold = holdIdx.map((j) => P[j]);"
+        },
+        {
+          "line": 363,
+          "text": "const volHold = holdIdx.map((j) => V[j]);"
+        },
+        {
+          "line": 372,
+          "text": "valsalva: pHold.length ? Math.max(...pHold) > flagCm : false,"
+        },
+        {
+          "line": 373,
+          "text": "mueller: pHold.length ? Math.min(...pHold) < -flagCm : false,"
+        },
+        {
+          "line": 374,
+          "text": "leak: volHold.length ? volHold[0] - volHold[volHold.length - 1] > 0.1 : false,"
+        }
+      ]
+    },
+    {
+      "path": "src/core/pleth.js",
+      "sha256": "6b874f7ede8008cf0e13ae9831bb269a416964375020281a958558521d6058be",
+      "reviewLines": [
+        {
+          "line": 19,
+          "text": "* `pleth-trial-<i>`, `pleth-raw` (one draw: the physiological Raw target), `pleth-resistance` and"
+        },
+        {
+          "line": 20,
+          "text": "* `pleth-timeline-<i>` (the last two draw only display traces)."
+        },
+        {
+          "line": 108,
+          "text": "* sRaw is the least-squares slope of `pbox` on `flow` within |flow| <= `estimator.fitRangeLs`, recomputed from these arrays;"
+        },
+        {
+          "line": 117,
+          "text": "* @property {Record<string, number>} parameters shape parameters used for this case (all unverified teaching values)"
+        },
+        {
+          "line": 144,
+          "text": "* @property {number} tangentSlopePaPerLs local slope through zero flow (|flow| <= 0.15 L/s), Pa per L/s"
+        },
+        {
+          "line": 154,
+          "text": "* @property {{ sRawUpperKpaS: number, verification: string }} reference"
+        },
+        {
+          "line": 159,
+          "text": "barometricMmHg: { value: 760, verification: 'convention' },"
+        },
+        {
+          "line": 160,
+          "text": "waterVaporMmHg: { value: 47, verification: 'secondary' },"
+        },
+        {
+          "line": 161,
+          "text": "boxFreeVolumeL: { value: 600, verification: 'unverified' },"
+        },
+        {
+          "line": 162,
+          "text": "pantAcceptableHz: { value: [0.5, 1.0], verification: 'secondary' },"
+        },
+        {
+          "line": 163,
+          "text": "pantToleratedMaxHzNoObstruction: { value: 1.5, verification: 'secondary' },"
+        },
+        {
+          "line": 164,
+          "text": "repeatability: { value: 0.05, gradeC: 0.1, verification: 'secondary' },"
+        },
+        {
+          "line": 165,
+          "text": "mouthPressureAmplitudeKpa: { value: [0.85, 1.15], verification: 'unverified' },"
+        },
+        {
+          "line": 166,
+          "text": "fastPantInflationCap: { value: 0.2, verification: 'unverified' },"
+        },
+        {
+          "line": 167,
+          "text": "rawMedianKpaSL: { value: 0.2, verification: 'secondary' },"
+        },
+        {
+          "line": 168,
+          "text": "sRawUpperLimitKpaS: { value: 1.2, verification: 'secondary' },"
+        },
+        {
+          "line": 178,
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+        },
+        {
+          "line": 179,
+          "text": "const round = (x, d) => { const p = 10 ** d; return Math.round(x * p) / p; };"
+        },
+        {
+          "line": 180,
+          "text": "const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;"
+        },
+        {
+          "line": 186,
+          "text": "for (let i = 0; i < x.length; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; }"
+        },
+        {
+          "line": 192,
+          "text": "for (let i = 0; i < x.length; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; syy += (y[i] - my) ** 2; }"
+        },
+        {
+          "line": 209,
+          "text": "export const boxPaPerKpa = (tgvL, box) => (tgvL * box.barometricPa) / (box.pbMinusPh2oKpa * box.freeVolumeL);"
+        },
+        {
+          "line": 211,
+          "text": "export const frcFromSlope = (slopePaPerKpa, box) => (slopePaPerKpa * box.pbMinusPh2oKpa * box.freeVolumeL) / box.barometricPa;"
+        },
+        {
+          "line": 213,
+          "text": "export const sRawFromSlope = (slopePaPerLs, box) => (slopePaPerLs * box.pbMinusPh2oKpa * box.freeVolumeL) / box.barometricPa;"
+        },
+        {
+          "line": 219,
+          "text": "export const obstructionMeasure = (z) => Math.log(1 + Math.exp(-1.4 * (z + 1))) / 1.4;"
+        },
+        {
+          "line": 255,
+          "text": "const d = Array.from({ length: 16 }, () => r.uniform());"
+        },
+        {
+          "line": 256,
+          "text": "const n = Array.from({ length: 6 }, () => r.normal());"
+        },
+        {
+          "line": 259,
+          "text": "const faultGate = d[0] < tech.pFault;"
+        },
+        {
+          "line": 261,
+          "text": "const pickedThermal = faultGate && pick < 0.28;"
+        },
+        {
+          "line": 262,
+          "text": "const pickedCheek = faultGate && pick >= 0.28 && pick < 0.46;"
+        },
+        {
+          "line": 263,
+          "text": "const pickedLeak = faultGate && pick >= 0.46 && pick < 0.6;"
+        },
+        {
+          "line": 264,
+          "text": "const pickedEel = faultGate && pick >= 0.6 && pick < 0.8;"
+        },
+        {
+          "line": 265,
+          "text": "const pickedFast = faultGate && pick >= 0.8 && pick < 0.93;"
+        },
+        {
+          "line": 266,
+          "text": "const pickedSlow = faultGate && pick >= 0.93;"
+        },
+        {
+          "line": 276,
+          "text": "const thermalOn = forced.thermal || pickedThermal || f < 0.5;"
+        },
+        {
+          "line": 277,
+          "text": "const thermalLarge = thermalOn && !forced.thermal ? d[2] < 0.25 : forced.thermal && d[2] < 0.15;"
+        },
+        {
+          "line": 285,
+          "text": "offset = driftSign * fade * (thermalLarge ? 1.0 + 1.5 * d[6] : 0.6 + 1.0 * d[6]) * (d[7] < 0.5 ? 1 : -1);"
+        },
+        {
+          "line": 299,
+          "text": "const eelShift = eel ? (d[11] < 0.7 ? 1 : -1) * (0.22 + 0.28 * d[12]) : 0;"
+        },
+        {
+          "line": 307,
+          "text": "for (let j = 0; j <= POINTS_PER_TRIAL; j++) {"
+        },
+        {
+          "line": 329,
+          "text": "if (f > 1.5) {"
+        },
+        {
+          "line": 332,
+          "text": "faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz, above 1.5 Hz. Mouth pressure underestimates the alveolar pressure swing, so FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);"
+        },
+        {
+          "line": 333,
+          "text": "} else if (f > fLimit) {"
+        },
+        {
+          "line": 336,
+          "text": "faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz. Above 1.0 Hz is tolerated only when spirometry shows little or no obstruction; here FRC is read about ${Math.abs(pct).toFixed(0)}% ${pct >= 0 ? 'high' : 'low'}.`);"
+        },
+        {
+          "line": 338,
+          "text": "if (f < 0.5) {"
+        },
+        {
+          "line": 343,
+          "text": "if (thermalOn && f >= 0.5) {"
+        },
+        {
+          "line": 351,
+          "text": "faultText.push(`Trial ${i}: cheeks not supported. Mouth pressure underestimates the swing in alveolar pressure and FRC is read about ${Math.abs(pct).toFixed(0)}% ${pct >= 0 ? 'high' : 'low'}.`);"
+        },
+        {
+          "line": 356,
+          "text": "faultText.push(`Trial ${i}: the loop is open and bent, as with a mouth leak or an incomplete occlusion; the slope is shallow and FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);"
+        },
+        {
+          "line": 361,
+          "text": "faultText.push(`Trial ${i}: shutter closed about ${Math.abs(eelShift * 1000).toFixed(0)} mL ${eelShift > 0 ? 'above' : 'below'} the stable end-expiratory level, so the volume labeled FRC is not FRC.`);"
+        },
+        {
+          "line": 366,
+          "text": "const eelDeviationL = Array.from({ length: 5 }, (_, b) => round((eel ? eelShift * (b / 4) ** 2 : 0) + 0.025 * r.normal(), 3));"
+        },
+        {
+          "line": 376,
+          "text": "const idx = values.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);"
+        },
+        {
+          "line": 378,
+          "text": "for (let a = 0; a < idx.length; a++) {"
+        },
+        {
+          "line": 379,
+          "text": "for (let b = a; b < idx.length; b++) {"
+        },
+        {
+          "line": 381,
+          "text": "const m = mean(grp.map((g) => g[0]));"
+        },
+        {
+          "line": 382,
+          "text": "if ((grp[grp.length - 1][0] - grp[0][0]) / m <= tol && grp.length > best.length) best = grp;"
+        },
+        {
+          "line": 385,
+          "text": "return best.map((g) => g[1]);"
+        },
+        {
+          "line": 389,
+          "text": "export const spreadFraction = (values) => (Math.max(...values) - Math.min(...values)) / mean(values);"
+        },
+        {
+          "line": 398,
+          "text": "if (acceptableValues.length === 0) return usableCount > 0 ? 'U' : 'F';"
+        },
+        {
+          "line": 401,
+          "text": "if (within5 >= 3) return 'A';"
+        },
+        {
+          "line": 403,
+          "text": "if (repeatableGroup(acceptableValues, tolC).length >= 2) return 'C';"
+        },
+        {
+          "line": 410,
+          "text": "// `pleth-resistance`, and `pleth-timeline-<trial>`. No other stream is read."
+        },
+        {
+          "line": 414,
+          "text": "const smoothstep = (x) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };"
+        },
+        {
+          "line": 415,
+          "text": "const smootherstep = (x) => { const c = clamp(x, 0, 1); return c * c * c * (c * (6 * c - 15) + 10); };"
+        },
+        {
+          "line": 418,
+          "text": "export const shiftMlPerPa = (box) => (box.freeVolumeL / box.barometricPa) * 1000;"
+        },
+        {
+          "line": 427,
+          "text": "breathingMode: { id: 'tidal', label: 'tidal breathing', tidalVolumeL: 0.85, inspiratoryTimeS: 1.3, expiratoryTimeS: 1.65, verification: 'secondary' },"
+        },
+        {
+          "line": 428,
+          "text": "fitRangeLs: { value: 0.5, verification: 'secondary' },"
+        },
+        {
+          "line": 431,
+          "text": "referenceFlowLs: { value: 0.55, note: 'scale of the quadrature opening term', verification: 'unverified' },"
+        },
+        {
+          "line": 432,
+          "text": "flowBlendEpsLs: { value: 0.08, note: 'width of the tanh blend between the inspiratory and expiratory limbs', verification: 'unverified' },"
+        },
+        {
+          "line": 433,
+          "text": "expiratoryOpeningAsymmetry: { value: 0.35, note: 'the opening term is larger on expiration and smaller on inspiration, by a smooth function of phase, equal at the two zero-flow points', verification: 'unverified' },"
+        },
+        {
+          "line": 434,
+          "text": "verification: 'unverified',"
+        },
+        {
+          "line": 443,
+          "text": "params: () => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.12, opening: 0.015 }),"
+        },
+        {
+          "line": 449,
+          "text": "params: (u) => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.6 + 2.2 * u, opening: 0.06 + 0.35 * u }),"
+        },
+        {
+          "line": 455,
+          "text": "params: () => ({ cubicInspiratory: 0.05, cubicExpiratory: 0.05, opening: 0.01 }),"
+        },
+        {
+          "line": 461,
+          "text": "params: () => ({ cubicInspiratory: 1.4, cubicExpiratory: 1.0, opening: 0.05 }),"
+        },
+        {
+          "line": 477,
+          "text": "const waves = (amp) => [0, 1].map(() => ({ a: amp * (0.5 + 0.5 * rng.uniform()), om: TAU / (7 + 12 * rng.uniform()), ph: TAU * rng.uniform() }));"
+        },
+        {
+          "line": 479,
+          "text": "const sumW = (ws, t) => ws.reduce((s, w) => s + w.a * Math.sin(w.om * t + w.ph), 0);"
+        },
+        {
+          "line": 480,
+          "text": "const dsumW = (ws, t) => ws.reduce((s, w) => s + w.a * w.om * Math.cos(w.om * t + w.ph), 0);"
+        },
+        {
+          "line": 481,
+          "text": "const rate = (th, t) => w0 * (1 + eps * Math.sin(th)) * (1 + sumW(rateW, t));"
+        },
+        {
+          "line": 482,
+          "text": "const rk4 = (th, t, h) => {"
+        },
+        {
+          "line": 489,
+          "text": "while (th < end - 1e-12) {"
+        },
+        {
+          "line": 493,
+          "text": "if (remaining <= 1.5 * step) {"
+        },
+        {
+          "line": 495,
+          "text": "const nSub = remaining <= step ? 1 : 2;"
+        },
+        {
+          "line": 497,
+          "text": "for (let q = 0; q < nSub; q++) {"
+        },
+        {
+          "line": 508,
+          "text": "for (let j = 0; j < t.length; j++) {"
+        },
+        {
+          "line": 514,
+          "text": "const breath = theta.map((x) => Math.min(nBreaths - 1, Math.floor(x / TAU + 1e-9)));"
+        },
+        {
+          "line": 516,
+          "text": "const crossing = (level) => {"
+        },
+        {
+          "line": 517,
+          "text": "const j = theta.findIndex((x) => x >= level);"
+        },
+        {
+          "line": 518,
+          "text": "if (j <= 0) return t[Math.max(j, 0)];"
+        },
+        {
+          "line": 521,
+          "text": "const breaths = Array.from({ length: nBreaths }, (_, b) => {"
+        },
+        {
+          "line": 523,
+          "text": "return { ti: m - a, te: e - m, vt: Math.max(...vol.filter((_, j) => breath[j] === b)) };"
+        },
+        {
+          "line": 539,
+          "text": "for (let j = 0; j < y.length; j++) if (inWindow[j]) { xs.push(x[j]); ys.push(y[j]); }"
+        },
+        {
+          "line": 541,
+          "text": "return y.map((q, j) => q - (my + slope * (x[j] - mx)));"
+        },
+        {
+          "line": 550,
+          "text": "* slope over |flow| <= 0.5 L/s equals the physiological Raw target of the case; the noise is smooth and made orthogonal to"
+        },
+        {
+          "line": 569,
+          "text": "const morphId = pickMorphology({ requested: morphology, obstructed: z < -1.645, restricted });"
+        },
+        {
+          "line": 573,
+          "text": "const w = (x) => 0.5 * (1 + Math.tanh(x / eps));"
+        },
+        {
+          "line": 574,
+          "text": "const g = (x) => x + (par.cubicInspiratory * (1 - w(x)) + par.cubicExpiratory * w(x)) * x ** 3;"
+        },
+        {
+          "line": 576,
+          "text": "// Its amplitude h (1 - asym sin theta) is larger in expiration (sin theta < 0) and equal at the two zero-flow points, so it never jumps."
+        },
+        {
+          "line": 577,
+          "text": "const p0 = v.map((x, j) => g(x) - par.opening * vref * (1 - asym * Math.sin(theta[j])) * Math.cos(theta[j]));"
+        },
+        {
+          "line": 580,
+          "text": "const inWin = v.map((x) => Math.abs(x) <= fitRange);"
+        },
+        {
+          "line": 581,
+          "text": "const vw = v.filter((_, j) => inWin[j]), pw = p0.filter((_, j) => inWin[j]);"
+        },
+        {
+          "line": 587,
+          "text": "for (let j = 0; j < n; j++) { s = a * s + Math.sqrt(1 - a * a) * rng.normal(); nz.push(s); }"
+        },
+        {
+          "line": 588,
+          "text": "const sd = Math.sqrt(mean(nz.map((q) => q * q)));"
+        },
+        {
+          "line": 589,
+          "text": "const noise = orthogonalize(nz.map((q) => (q / sd) * tech.rawNoise * rawModel), v, inWin);"
+        },
+        {
+          "line": 592,
+          "text": "const flow = v.map((x) => round(x, 4));"
+        },
+        {
+          "line": 593,
+          "text": "const pbox = p0.map((q, j) => round(kBox * (S * q + noise[j]), 4));"
+        },
+        {
+          "line": 594,
+          "text": "const shiftMl = pbox.map((q) => round(q * shiftMlPerPa(box), 3));"
+        },
+        {
+          "line": 595,
+          "text": "const volumeL = vol.map((x) => round(x, 4));"
+        },
+        {
+          "line": 597,
+          "text": "// sRaw from the tidal fit over |flow| <= 0.5 L/s of the stored arrays."
+        },
+        {
+          "line": 599,
+          "text": "for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= fitRange) { fx.push(flow[j]); fy.push(pbox[j]); }"
+        },
+        {
+          "line": 603,
+          "text": "for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= 0.15) { near.push(flow[j]); nearY.push(pbox[j]); }"
+        },
+        {
+          "line": 604,
+          "text": "const tangent = near.length >= 8 ? lsSlope(near, nearY) : slope;"
+        },
+        {
+          "line": 608,
+          "text": "for (let b = 0; b < M.nBreaths; b++) {"
+        },
+        {
+          "line": 610,
+          "text": "for (let j = 0; j < n; j++) if (breath[j] === b) { if (iMax < 0 || pbox[j] > pbox[iMax]) iMax = j; if (iMin < 0 || pbox[j] < pbox[iMin]) iMin = j; }"
+        },
+        {
+          "line": 611,
+          "text": "if (iMax >= 0 && Math.abs(flow[iMax] - flow[iMin]) > 0.2) rtot.push((pbox[iMax] - pbox[iMin]) / (flow[iMax] - flow[iMin]));"
+        },
+        {
+          "line": 618,
+          "text": "for (let j = 1; j < n; j++) if (flow[j - 1] * flow[j] < 0) open0.push(Math.abs(pbox[j - 1] + ((pbox[j] - pbox[j - 1]) * flow[j - 1]) / (flow[j - 1] - flow[j])));"
+        },
+        {
+          "line": 622,
+          "text": "for (let j = 0; j < n; j++) {"
+        },
+        {
+          "line": 623,
+          "text": "if (Math.abs(flow[j]) <= 0.3 * vRef) { lowX.push(flow[j]); lowY.push(pbox[j]); }"
+        },
+        {
+          "line": 624,
+          "text": "else if (flow[j] >= 0.7 * vRef) hiPos.push([flow[j], pbox[j]]);"
+        },
+        {
+          "line": 625,
+          "text": "else if (flow[j] <= -0.7 * vRef) hiNeg.push([flow[j], pbox[j]]);"
+        },
+        {
+          "line": 627,
+          "text": "const lowSlope = lowX.length > 4 ? lsSlope(lowX, lowY) : slope;"
+        },
+        {
+          "line": 628,
+          "text": "const highSlope = hiPos.length && hiNeg.length ? (mean(hiPos.map((q) => q[1])) - mean(hiNeg.map((q) => q[1]))) / (mean(hiPos.map((q) => q[0])) - mean(hiNeg.map((q) => q[0]))) : lowSlope;"
+        },
+        {
+          "line": 629,
+          "text": "const sIndex = lowSlope > 0 ? highSlope / lowSlope - 1 : 0;"
+        },
+        {
+          "line": 630,
+          "text": "const isOpen = opening > 0.06, isBent = sIndex > 0.15;"
+        },
+        {
+          "line": 634,
+          "text": "t: t.map((x) => round(x, 3)), flow, pbox, shiftMl, volumeL, breath, fitSlopePaPerLs: round(slope, 5), tangentSlopePaPerLs: round(tangent, 5),"
+        },
+        {
+          "line": 641,
+          "text": "parameters: Object.fromEntries(Object.entries(par).map(([k, q]) => [k, round(q, 4)])), parameterVerification: 'unverified',"
+        },
+        {
+          "line": 647,
+          "text": "id: 'tidal', label: M.breathingMode.label, tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),"
+        },
+        {
+          "line": 648,
+          "text": "inspiratoryTimeS: round(mean(sim.breaths.map((q) => q.ti)), 3), expiratoryTimeS: round(mean(sim.breaths.map((q) => q.te)), 3),"
+        },
+        {
+          "line": 649,
+          "text": "ratePerMin: round(60 / mean(sim.breaths.map((q) => q.ti + q.te)), 1),"
+        },
+        {
+          "line": 654,
+          "text": "reference: { sRawUpperKpaS: PLETH_MODEL.sRawUpperLimitKpaS.value, verification: 'secondary' },"
+        },
+        {
+          "line": 663,
+          "text": "verification: 'unverified',"
+        },
+        {
+          "line": 668,
+          "text": "const pool = ['acceptable', 'usable'].map((s) => pleth.trials.filter((t) => t.status === s)).find((a) => a.length) ?? pleth.trials;"
+        },
+        {
+          "line": 669,
+          "text": "return pool.reduce((a, b) => (Math.abs(b.deviationPct) < Math.abs(a.deviationPct) ? b : a)).index;"
+        },
+        {
+          "line": 674,
+          "text": "* quiet breaths (baseline moving through the end-expiratory levels recorded before closure) -> shutter closed (flat volume;"
+        },
+        {
+          "line": 675,
+          "text": "* the pants appear only on the mouth-pressure lane, which carries the trial's own arrays) -> shutter open, one quiet breath that returns to the"
+        },
+        {
+          "line": 676,
+          "text": "* stable level -> slow expiration to RV -> slow inspiration to TLC."
+        },
+        {
+          "line": 680,
+          "text": "const out = trials.map((tr) => {"
+        },
+        {
+          "line": 687,
+          "text": "const eelL = tr.eelDeviationL.map((d) => closureL + d - tr.eelDeviationL[M.quietBreaths - 1]);"
+        },
+        {
+          "line": 690,
+          "text": "const push = (id, label, ts, vs) => {"
+        },
+        {
+          "line": 692,
+          "text": "ts.forEach((x, j) => { if (j > 0 || !t.length) { t.push(x); v.push(vs[j]); } });"
+        },
+        {
+          "line": 696,
+          "text": "const tidalV = sim.theta.map((th, j) => {"
+        },
+        {
+          "line": 709,
+          "text": "push('open-shutter', 'Shutter open', open.t.map((x) => tOpen + x), open.theta.map((th, j) => closureL + (stableL - closureL) * smoothstep(th / TAU) + open.vol[j]));"
+        },
+        {
+          "line": 713,
+          "text": "const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);"
+        },
+        {
+          "line": 714,
+          "text": "push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - suggested.rv) * smootherstep(j / nEx)));"
+        },
+        {
+          "line": 717,
+          "text": "const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);"
+        },
+        {
+          "line": 718,
+          "text": "push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => suggested.rv + (suggested.tlc - suggested.rv) * smootherstep(j / nIn)));"
+        },
+        {
+          "line": 722,
+          "text": "t: t.map((x) => round(x, 3)), v: v.map((x) => round(x, 4)),"
+        },
+        {
+          "line": 723,
+          "text": "segments: segments.map((sg) => ({ ...sg, t0: round(sg.t0, 3), t1: round(sg.t1, 3) })),"
+        },
+        {
+          "line": 724,
+          "text": "eelL: eelL.map((x) => round(x, 4)),"
+        },
+        {
+          "line": 728,
+          "text": "tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),"
+        },
+        {
+          "line": 759,
+          "text": "const obstructed = z < -1.645;"
+        },
+        {
+          "line": 762,
+          "text": "const driftSign = createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1;"
+        },
+        {
+          "line": 767,
+          "text": "for (let i = 1; i <= TRIALS_MAX; i++) {"
+        },
+        {
+          "line": 769,
+          "text": "if (i >= TRIALS_MIN) {"
+        },
+        {
+          "line": 770,
+          "text": "const ok = trials.filter((tr) => tr.acceptable).map((tr) => tr.frcL);"
+        },
+        {
+          "line": 775,
+          "text": "const acceptable = trials.filter((tr) => tr.acceptable);"
+        },
+        {
+          "line": 776,
+          "text": "const usable = trials.filter((tr) => tr.status === 'usable');"
+        },
+        {
+          "line": 778,
+          "text": "const reportedFrc = mean(basis.map((tr) => tr.frcL));"
+        },
+        {
+          "line": 780,
+          "text": "const accValues = acceptable.map((tr) => tr.frcL);"
+        },
+        {
+          "line": 782,
+          "text": "const spreadAcc = accValues.length >= 2 ? spreadFraction(accValues) : null;"
+        },
+        {
+          "line": 785,
+          "text": "const add = (code, text, severity) => flags.push({ code, text, severity });"
+        },
+        {
+          "line": 786,
+          "text": "if (acceptable.length < 3) add('fewer-than-3-acceptable', `${acceptable.length} acceptable shutter closures; the standard asks for at least three.`, 'major');"
+        },
+        {
+          "line": 787,
+          "text": "if (spreadAcc !== null && spreadAcc > PLETH_MODEL.repeatability.value) add('frc-not-repeatable-5pct', `Acceptable FRC values differ by ${(spreadAcc * 100).toFixed(1)}% of their mean (limit 5%).`, spreadAcc > PLETH_MODEL.repeatability.gradeC ? 'major' : 'minor');"
+        },
+        {
+          "line": 790,
+          "text": "if (trials.some((tr) => tr.faults.includes('fast-panting'))) add('pant-frequency', 'At least one trial was panted faster than the allowed frequency.', 'minor');"
+        },
+        {
+          "line": 791,
+          "text": "if (trials.some((tr) => tr.faults.includes('thermal-drift'))) add('thermal-drift', 'Thermal drift is present on at least one trial.', 'minor');"
+        },
+        {
+          "line": 792,
+          "text": "if (trials.some((tr) => tr.faults.includes('cheek-compliance') || tr.faults.includes('shutter-leak'))) add('leak-or-damping', 'A leak, an incomplete occlusion or unsupported cheeks distorted at least one trial.', 'major');"
+        },
+        {
+          "line": 793,
+          "text": "if (trials.some((tr) => tr.faults.includes('unstable-eel'))) add('unstable-end-tidal-level', 'The shutter closed away from the stable end-tidal level on at least one trial.', 'minor');"
+        },
+        {
+          "line": 795,
+          "text": "const faults = trials.flatMap((tr) => tr.faultText);"
+        },
+        {
+          "line": 797,
+          "text": "const restricted = Number.isFinite(truth.latent?.zTLC) && truth.latent.zTLC < -1.645;"
+        },
+        {
+          "line": 799,
+          "text": "if (raw.sRawKpaS > PLETH_MODEL.sRawUpperLimitKpaS.value) add('sraw-above-upper-limit', `sRaw ${raw.sRawKpaS.toFixed(2)} kPa.s is above the 1.2 kPa.s upper limit quoted for adults (secondary source).`, 'minor');"
+        },
+        {
+          "line": 810,
+          "text": "replicateTable: trials.map((tr) => ({ trial: tr.index, panFreqHz: tr.panFreqHz, frcL: tr.frcL, deviationPct: tr.deviationPct, status: tr.status, acceptable: tr.acceptable, notes: tr.reasons.join('; ') })),"
+        },
+        {
+          "line": 827,
+          "text": "unverified: Object.entries(PLETH_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),"
+        }
+      ]
+    },
+    {
+      "path": "src/core/physiology.js",
+      "sha256": "545b1010f28c92669d6050db0655230d1375ef6239050c571d45d70e12a2ad63",
+      "reviewLines": [
+        {
+          "line": 40,
+          "text": "export const archetypeNote = (a) => ARCHETYPE_NOTES[a];"
+        },
+        {
+          "line": 44,
+          "text": "const c = sex === 'M' && age >= 15 ? 10.22 : 9.38;"
+        },
+        {
+          "line": 56,
+          "text": "const bdObstructive = (sev) => ({ fev1: [[5.0, 4.5], [3.5, 3.5], [2.0, 2.5]][sev - 1], fvc: [4.5, 5.5], limits: [-6, 25] });"
+        },
+        {
+          "line": 70,
+          "text": "* @param {Record<string, object>} datasets GLI datasets"
+        },
+        {
+          "line": 76,
+          "text": "const anchor = (measure) => resolveReference(measure, pat, ANCHOR.spirometry).lms;"
+        },
+        {
+          "line": 77,
+          "text": "const at = (measure, z) => valueAt(anchor(measure), z);"
+        },
+        {
+          "line": 78,
+          "text": "const tn = (mean, sd, lo, hi) => truncatedNormal(rng.uniform(), mean, sd, lo, hi);"
+        },
+        {
+          "line": 79,
+          "text": "const uni = (lo, hi) => rng.range(lo, hi);"
+        },
+        {
+          "line": 85,
+          "text": "const e = Array.from({ length: 6 }, () => rng.normal());"
+        },
+        {
+          "line": 108,
+          "text": "const fev1FloorZ = () => resolveReference('fev1', { ...pat, measured: FEV1_FLOOR * anchor('fev1').M }, ANCHOR.spirometry).z;"
+        },
+        {
+          "line": 109,
+          "text": "const fev1TargetZ = (s) => { const [lo, hi] = SEVERITY_Z[s]; const f = fev1FloorZ(); return uni(Math.max(lo, f), Math.max(hi, f)); };"
+        },
+        {
+          "line": 112,
+          "text": "const clipNormal = () => {"
+        },
+        {
+          "line": 125,
+          "text": "if (borderDraw < 0.15) {"
+        },
+        {
+          "line": 127,
+          "text": "if (borderPick < 0.34) lat.zRatio = v; else if (borderPick < 0.67) lat.zTLC = v; else lat.zDLCO = v;"
+        },
+        {
+          "line": 134,
+          "text": "const older = d.age >= 40;"
+        },
+        {
+          "line": 136,
+          "text": "phenotype = phenotypeDraw < pAirway ? 'airway-predominant' : phenotypeDraw < pAirway + pCopd ? 'nonemphysematous' : 'emphysema';"
+        },
+        {
+          "line": 147,
+          "text": "bd.responder = bdDraw < 0.45; // drawn to keep the stream; the response is continuous (see the bronchodilator block)"
+        },
+        {
+          "line": 176,
+          "text": "bd.responder = bdDraw < 0.3; // drawn to keep the stream"
+        },
+        {
+          "line": 210,
+          "text": "bd.variant = variantDraw < 0.6 ? 'volume' : 'artifact';"
+        },
+        {
+          "line": 231,
+          "text": "if (tlc - vc < 0.12 * tlc) tlc = vc / 0.88;"
+        },
+        {
+          "line": 249,
+          "text": "if (fvc * ratio < FEV1_FLOOR * fev1Pred0) ratio = Math.min(FEV1_FLOOR * fev1Pred0 / fvc, 0.97);"
+        },
+        {
+          "line": 275,
+          "text": "if (rng.uniform() < 0.25) ratio = 1 + 0.4 * (ratio - 1);"
+        },
+        {
+          "line": 298,
+          "text": "const clampPct = (x) => Math.min(Math.max(x, lo), hi) / 100;"
+        },
+        {
+          "line": 327,
+          "text": "*     it on the predicted value, eq. 37: DLCO[predicted for COHb] = DLCO[predicted] x (102% - COHb%), \"1% for each percentage point of COHb > 2%\";"
+        },
+        {
+          "line": 334,
+          "text": "referencePercent: { value: 1.5, verification: 'teaching baseline inside the standard\\'s endogenous range of 1-2%' },"
+        },
+        {
+          "line": 335,
+          "text": "dlcoFractionPerPercent: { value: 0.01, verification: 'teaching slope inside the standard\\'s 0.8-1% per 1% COHb (eq. 37 uses 1%)' },"
+        },
+        {
+          "line": 337,
+          "text": "adjustAbovePercent: { value: 2, verification: 'ATS/ERS 2017 (text and eq. 37)' },"
+        },
+        {
+          "line": 348,
+          "text": "return Number.isFinite(cohbPercent) && cohbPercent > COHB.adjustAbovePercent.value ? (102 - cohbPercent) / 100 : null;"
+        },
+        {
+          "line": 361,
+          "text": "* @param {ReturnType<typeof generatePhysiology>} truth"
+        }
+      ]
+    },
+    {
+      "path": "src/core/case.js",
+      "sha256": "f7da1b2a797d2e357d83032814daa0d46a967394774a5d3378ed0b39c1bed00b",
+      "reviewLines": [
+        {
+          "line": 17,
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+        },
+        {
+          "line": 19,
+          "text": "export const shapeFor = (ratio) => clamp(0.55 + 0.6 * ratio, 0.6, 1.05);"
+        },
+        {
+          "line": 20,
+          "text": "export const durationFor = (ratio) => (ratio < 0.6 ? 15 : 12);"
+        },
+        {
+          "line": 23,
+          "text": "* @param {Partial<import('./descriptor.js').Descriptor> & { seed: number, archetype: string }} input"
+        },
+        {
+          "line": 24,
+          "text": "* @param {Record<string, object>} datasets"
+        },
+        {
+          "line": 48,
+          "text": "if (['obstruction', 'mixed', 'bd-discordant'].includes(d.archetype) || ratioZ < LLN_Z || perform < 0.15 || plan?.forcePostBd) {"
+        },
+        {
+          "line": 72,
+          "text": "? { ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)), ...(plan.merged.dlco.viFraction !== undefined ? { viOverVc: plan.merged.dlco.viFraction } : {}) }"
+        },
+        {
+          "line": 129,
+          "text": "report.caveatIds = plan.caveatsFor(plan.caveatFlags({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }, report, resolveReference)).map((c) => c.id);"
+        }
+      ]
+    },
+    {
+      "path": "src/reference/gli.js",
+      "sha256": "0e0da42e334c4256adf2479fb9d397ae4a88076fd58365ceff5453470f50186d",
+      "reviewLines": [
+        {
+          "line": 38,
+          "text": "if (age < a[0] || age > a[a.length - 1]) return null;"
+        },
+        {
+          "line": 40,
+          "text": "while (hi - lo > 1) {"
+        },
+        {
+          "line": 41,
+          "text": "const mid = (lo + hi) >> 1;"
+        },
+        {
+          "line": 42,
+          "text": "if (a[mid] <= age) lo = mid; else hi = mid;"
+        },
+        {
+          "line": 48,
+          "text": "const linear = (t, lnAge, age, lnHt, ht) => t.const + t.ageLn * lnAge + t.age * age + t.htLn * lnHt + t.ht * ht;"
+        },
+        {
+          "line": 52,
+          "text": "* @param {string} equationId"
+        },
+        {
+          "line": 56,
+          "text": "export function lms(entry, equationId, { age, heightCm, ethnicityCode = 1 }) {"
+        },
+        {
+          "line": 62,
+          "text": "if (equationId === 'GLI2012') {"
+        },
+        {
+          "line": 64,
+          "text": "const aTerm = k >= 0 ? entry.a[3 + k] : 0;"
+        },
+        {
+          "line": 65,
+          "text": "const pTerm = k >= 0 ? entry.p[2 + k] : 0;"
+        },
+        {
+          "line": 79,
+          "text": "export const valueAtZ = ({ L, M, S }, z) => (L === 0 ? M * Math.exp(S * z) : M * Math.pow(1 + L * S * z, 1 / L));"
+        },
+        {
+          "line": 80,
+          "text": "export const zScore = ({ L, M, S }, x) => (L === 0 ? Math.log(x / M) / S : (Math.pow(x / M, L) - 1) / (L * S));"
+        },
+        {
+          "line": 83,
+          "text": "* @param {Record<string, { id: string, measures: object }>} datasets keyed by equation id:"
+        },
+        {
+          "line": 87,
+          "text": "const familyFor = (measure) => (SPIROMETRY_MEASURES.includes(measure) ? 'spirometry' : VOLUME_MEASURES.includes(measure) ? 'GLI2021vol' : TLCO_MEASURES.includes(measure) ? 'GLI2017tlco' : null);"
+        },
+        {
+          "line": 100,
+          "text": "let equationId = family === 'spirometry' ? spirometryFamily : family;"
+        },
+        {
+          "line": 102,
+          "text": "let fallbackReason = null;"
+        },
+        {
+          "line": 103,
+          "text": "if (family === 'spirometry' && !['GLI2012', 'GLIglobal'].includes(equationId)) throw new RangeError(`unknown spirometry equation: ${equationId}`);"
+        },
+        {
+          "line": 106,
+          "text": "fallbackReason = 'equation-derived-in-european-ancestry-only';"
+        },
+        {
+          "line": 109,
+          "text": "if (equationId === 'GLI2012' && ethnicityCode === undefined) throw new RangeError(`unknown group: ${patient.group}`);"
+        },
+        {
+          "line": 110,
+          "text": "const entry = datasets[equationId].measures[measure][sex];"
+        },
+        {
+          "line": 111,
+          "text": "const base = { measure, equationId, matched, fallbackReason };"
+        },
+        {
+          "line": 114,
+          "text": "const maxAge = Math.min(ages[ages.length - 1], OFFICIAL_MAX_AGE[equationId] ?? Infinity);"
+        },
+        {
+          "line": 115,
+          "text": "const ageClamped = patient.age > maxAge;"
+        },
+        {
+          "line": 117,
+          "text": "const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });"
+        },
+        {
+          "line": 118,
+          "text": "if (params === null) return { ...base, available: false, fallbackReason: 'age-outside-range', predicted: null, lln: null, uln: null, z: null, percentPredicted: null };"
+        }
+      ]
+    },
+    {
+      "path": "src/interpret/interpret.js",
+      "sha256": "b6b3f7976847e5fe433b57db60c38fe6971857ec7fd1ce605dbe2903bebdfb76",
+      "reviewLines": [
+        {
+          "line": 22,
+          "text": "export const labelOf = (z) => (z < LLN_Z ? 'low' : z > -LLN_Z ? 'high' : 'normal');"
+        },
+        {
+          "line": 23,
+          "text": "export const borderlineOf = (z) => Math.abs(z - LLN_Z) <= BORDERLINE_BAND || Math.abs(z + LLN_Z) <= BORDERLINE_BAND;"
+        },
+        {
+          "line": 27,
+          "text": "if (z >= -2.5) return 'mild';"
+        },
+        {
+          "line": 28,
+          "text": "if (z >= -4.0) return 'moderate';"
+        },
+        {
+          "line": 41,
+          "text": "const near = (lo, hi) => z2 >= lo - 1e-9 && z2 <= hi + 1e-9;"
+        },
+        {
+          "line": 77,
+          "text": "* @param {(measure: string, patient: object, family?: string) => object} resolve resolveReference from gli.js"
+        },
+        {
+          "line": 84,
+          "text": "const add = (name, measure, measured, extra = {}) => {"
+        },
+        {
+          "line": 87,
+          "text": "if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }"
+        },
+        {
+          "line": 90,
+          "text": "label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...(r.ageClamped ? { ageClamped: true, ageUsed: r.ageUsed } : {}), ...extra,"
+        },
+        {
+          "line": 106,
+          "text": "const low = (k) => m[k]?.available !== false && m[k]?.label === 'low';"
+        },
+        {
+          "line": 107,
+          "text": "const have = (k) => m[k] && m[k].available !== false;"
+        },
+        {
+          "line": 124,
+          "text": "if (tlcFlag(m, 'tlc')) flags.push({ id: 'hyperinflation', text: 'TLC above the upper limit of normal (hyperinflation).', verification: 'definition unverified' });"
+        },
+        {
+          "line": 125,
+          "text": "if ((have('rv') && m.rv.label === 'high') || (have('rv_tlc') && m.rv_tlc.label === 'high')) flags.push({ id: 'air-trapping', text: 'RV or RV/TLC above the upper limit of normal (air trapping).', verification: 'definition unverified' });"
+        },
+        {
+          "line": 126,
+          "text": "if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });"
+        },
+        {
+          "line": 134,
+          "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };"
+        },
+        {
+          "line": 138,
+          "text": "severity = { id: FEV1_NORMAL, basis: 'FEV1 z-score', z: m.fev1.z, scored: false, notGraded: FEV1_NORMAL, fev1WithinLimits, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])), verification: 'ERS/ATS 2022 Table 1 and p.12 (primary text); no grade is defined for a normal FEV1' };"
+        },
+        {
+          "line": 140,
+          "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'cut points -2.5 and -4.0 from the 2022 statement (Table 1, p.12, Figure 7 caption); the -2.51 and -4.1 of its text are read as reporting precision' };"
+        },
+        {
+          "line": 143,
+          "text": "severity = { id: null, basis: 'Not scored: the 2022 rule for this pattern has not been checked', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };"
+        },
+        {
+          "line": 152,
+          "text": "const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;"
+        },
+        {
+          "line": 153,
+          "text": "const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);"
+        },
+        {
+          "line": 156,
+          "text": "rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },"
+        },
+        {
+          "line": 157,
+          "text": "rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },"
+        },
+        {
+          "line": 160,
+          "text": "discordant: (dFev1 > 0) !== (dFvc > 0) || Math.abs(pctPred.fvc - pctPred.fev1) > 8,"
+        },
+        {
+          "line": 178,
+          "text": "const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));"
+        },
+        {
+          "line": 207,
+          "text": "const borderline = ['fev1', 'fvc', 'fev1_fvc'].filter((k) => ia.measures[k]?.borderline || ib.measures[k]?.borderline);"
+        }
+      ]
+    },
+    {
+      "path": "src/interpret/precision.js",
+      "sha256": "420acdd26b7b318daa1bdd462b550dd60a7f5d2c413bb9df25e7c036f32c927b",
+      "reviewLines": [
+        {
+          "line": 15,
+          "text": "return x > BD_PCT_PRED_THRESHOLD ? 'above' : 'below';"
+        },
+        {
+          "line": 37,
+          "text": "/** Thresholds of the earlier rule (at least 12% of baseline and at least 0.200 L, as coded in interpret.js; `>=` on the unrounded values). */"
+        },
+        {
+          "line": 41,
+          "text": "/** Whether a value printed with `dp` decimals would read as meeting `threshold` (printed >= threshold) while the value itself does not, or the reverse. */"
+        },
+        {
+          "line": 42,
+          "text": "const hides = (x, threshold, dp) => (Number(x.toFixed(dp)) >= threshold) !== (x >= threshold);"
+        },
+        {
+          "line": 52,
+          "text": "while (d < dp + 3 && hides(x, threshold, d)) d += 1;"
+        },
+        {
+          "line": 58,
+          "text": "return Number.isFinite(x) && hides(x, threshold, dp + 3) ? (x >= threshold ? 'at or above' : 'below') : null;"
+        }
+      ]
+    },
+    {
+      "path": "src/challenges/items.js",
+      "sha256": "4b1ca864ed48621e497d81d4cf7e9d736f9c92337f6d0bbfb87fe175e5d88fef",
+      "reviewLines": [
+        {
+          "line": 11,
+          "text": "const GRADE_OPTIONS = GRADE_ORDER.map((g) => [g, g]);"
+        },
+        {
+          "line": 16,
+          "text": "const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);"
+        },
+        {
+          "line": 25,
+          "text": "return (caveatIds ?? []).some((id) => UNRELIABLE_RESPONSE_CAVEATS.includes(id));"
+        },
+        {
+          "line": 28,
+          "text": "const sameGrades = (a, b) => Boolean(a) && Boolean(b) && a.fev1 === b.fev1 && a.fvc === b.fvc;"
+        },
+        {
+          "line": 30,
+          "text": "const gradesOnSummary = (rt) => sameGrades(rt.stated.pre, rt.truth.pre) && (!rt.truth.post || sameGrades(rt.stated.post, rt.truth.post));"
+        },
+        {
+          "line": 31,
+          "text": "const word = (t) => (t ? (t.acceptable ? 'acceptable' : 'not-acceptable') : null);"
+        },
+        {
+          "line": 54,
+          "text": "if (LIMITING_GRADES.some((g) => g === pre.fev1 || g === pre.fvc)) limits.push('the baseline spirometry');"
+        },
+        {
+          "line": 55,
+          "text": "if (rt.truth.post && ['fev1', 'fvc'].some((k) => LIMITING_GRADES.includes(rt.truth.post[k]))) limits.push('the post-bronchodilator spirometry');"
+        },
+        {
+          "line": 62,
+          "text": "const joinList = (xs) => (xs.length < 3 ? xs.join(' and ') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);"
+        },
+        {
+          "line": 67,
+          "text": "const whichF = ['fev1', 'fvc'].filter((k) => pre[k] === 'F').map((k) => VAR[k]);"
+        },
+        {
+          "line": 91,
+          "text": "const rows = evals.flatMap((_, i) => [{ id: `fev1:${i}`, label: `Maneuver ${i + 1}, FEV₁` }, { id: `fvc:${i}`, label: `Maneuver ${i + 1}, FVC` }]);"
+        },
+        {
+          "line": 92,
+          "text": "const key = Object.fromEntries(rows.map((r) => { const [k, i] = r.id.split(':'); return [r.id, evals[Number(i)][k].acceptable ? 'yes' : 'no']; }));"
+        },
+        {
+          "line": 93,
+          "text": "const inSet = (k) => (unacceptableCauses(sess.summary, k).length ? `unacceptable for the ${VAR[k]}: ${causesText(sess.summary, k)}` : `every maneuver is acceptable for the ${VAR[k]}`);"
+        },
+        {
+          "line": 112,
+          "text": "const f = (x) => x.toFixed(3);"
+        },
+        {
+          "line": 140,
+          "text": "why: `Agreement between independent maximal efforts is the check that a reported maximum is reproducible, so the grade follows from the number of acceptable maneuvers and from the difference between the two largest acceptable values (ATS/ERS 2019, Table 10). ${gradeRule(grade, V)} In this set, ${n === 0 ? `no maneuver is acceptable for the ${V}` : `${n} maneuver${n > 1 ? 's are' : ' is'} acceptable for the ${V}`}${spread !== null ? `, and the two largest acceptable values differ by ${spread.toFixed(3)} L` : ''}.`,"
+        },
+        {
+          "line": 147,
+          "text": "const LOOP_OPTIONS = [['acceptable', 'Acceptable'], ...FAULT_ORDER.map((id) => [id, cap(FAULT_TEXT[id])])];"
+        },
+        {
+          "line": 159,
+          "text": "notes.push(`The loop ${SET_ADVERB[set]} the bronchodilator is maneuver ${r.index + 1} of ${n}; ${r.faults.length ? `it is unacceptable (${r.faults.map((f) => FAULT_TEXT[f]).join('; ')})` : r.kind === 'best' ? 'it is acceptable and has the largest FEV₁ plus FVC among the acceptable maneuvers' : 'it is acceptable'}.`);"
+        },
+        {
+          "line": 184,
+          "text": "const poorGrades = grades.some((g) => !INTERPRETABLE_GRADES.includes(g));"
+        },
+        {
+          "line": 234,
+          "text": "const reasons = verdict === 'consistent' || verdict === 'not-stated' ? '' : rt.detailsReasons.filter((r) => !/^The (statement carries no grades|report carries no quality statement)/.test(r)).join(' ');"
+        }
+      ]
+    },
+    {
+      "path": "src/scenarios/catalog-reference.js",
+      "sha256": "7a27a1a142cbddb7111aa8a9b8ebb643d5761ef53df601e90645adab9ce988ef",
+      "reviewLines": [
+        {
+          "line": 21,
+          "text": "applies: (d) => d.archetype === 'restriction-extraparenchymal',"
+        },
+        {
+          "line": 24,
+          "text": "vars: (fx, c) => ({ standing: c.result.standingCm.toFixed(1), span: c.result.spanCm.toFixed(1), divisor: c.result.divisor.toFixed(2), stated: c.result.statedCm.toFixed(1) }),"
+        },
+        {
+          "line": 44,
+          "text": "vars: (fx, c) => ({ span: c.result.spanCm.toFixed(1), divisor: c.result.divisor.toFixed(2), stated: c.result.statedCm.toFixed(1) }),"
+        },
+        {
+          "line": 61,
+          "text": "vars: (fx, c) => ({ ulna: c.result.ulnaCm.toFixed(1), stated: c.result.statedCm.toFixed(1) }),"
+        },
+        {
+          "line": 78,
+          "text": "vars: (fx, c) => ({ half: (c.result.spanCm / 2).toFixed(1), stated: c.result.statedCm.toFixed(1) }),"
+        },
+        {
+          "line": 93,
+          "text": "applies: (d) => d.age >= 60,"
+        },
+        {
+          "line": 96,
+          "text": "vars: (fx, c) => ({ stated: c.result.statedCm.toFixed(1) }),"
+        },
+        {
+          "line": 114,
+          "text": "vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord }),"
+        },
+        {
+          "line": 135,
+          "text": "vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord, used: c.result.usedWord }),"
+        },
+        {
+          "line": 153,
+          "text": "vars: (fx, c) => ({ used: c.result.usedWord }),"
+        },
+        {
+          "line": 187,
+          "text": "applies: (d) => d.panel === 'full' && d.group !== 'White',"
+        },
+        {
+          "line": 218,
+          "text": "applies: (d) => d.age >= 55,"
+        },
+        {
+          "line": 221,
+          "text": "vars: (fx, c) => ({ blows: c.blows('leak') }),"
+        },
+        {
+          "line": 235,
+          "text": "applies: (d) => d.age >= 55,"
+        },
+        {
+          "line": 253,
+          "text": "vars: (fx, c) => ({ blows: c.blows('leak') }),"
+        },
+        {
+          "line": 318,
+          "text": "finalize: (fx) => {"
+        },
+        {
+          "line": 322,
+          "text": "vars: (fx) => ({ elev: String(fx.preTest.elevationM) }),"
+        },
+        {
+          "line": 336,
+          "text": "applies: (d) => BMI(d) >= 30 && d.archetype !== 'obesity-low-erv',"
+        },
+        {
+          "line": 340,
+          "text": "vars: (fx, c) => ({ bmi: c.bmi.toFixed(1), weight: String(c.d.weightKg) }),"
+        },
+        {
+          "line": 354,
+          "text": "applies: (d) => d.archetype === 'obesity-low-erv',"
+        },
+        {
+          "line": 357,
+          "text": "vars: (fx, c) => ({ bmi: c.bmi.toFixed(1), weight: String(c.d.weightKg) }),"
+        },
+        {
+          "line": 371,
+          "text": "applies: (d) => d.panel === 'full' && d.hbGdl < (d.sex === 'M' ? 13 : 12),"
+        },
+        {
+          "line": 373,
+          "text": "vars: (fx, c) => ({ hb: c.hb.toFixed(1) }),"
+        }
+      ]
+    },
+    {
+      "path": "src/scenarios/catalog-prep.js",
+      "sha256": "0769dc9f6241f4adc6d44cced461990a1b998efa7b21309eec49a8c9eec11319",
+      "reviewLines": [
+        {
+          "line": 9,
+          "text": "const NO_DISCORDANT = (d) => d.archetype !== 'bd-discordant';"
+        },
+        {
+          "line": 12,
+          "text": "const shiftFromDose = (kind, hoursKey) => (fx) => ({ ...fx, physiology: { ...fx.physiology, baselineShiftToPost: bronchodilatorBaselineShift(kind, fx.preTest[hoursKey], fx.physiology.baselineShiftToPost) } });"
+        },
+        {
+          "line": 22,
+          "text": "applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),"
+        },
+        {
+          "line": 27,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastSabaHours) }),"
+        },
+        {
+          "line": 43,
+          "text": "applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),"
+        },
+        {
+          "line": 48,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastLabaHours) }),"
+        },
+        {
+          "line": 63,
+          "text": "applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d),"
+        },
+        {
+          "line": 68,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastLamaHours) }),"
+        },
+        {
+          "line": 83,
+          "text": "applies: (d) => hasBdStudy(d) && NO_DISCORDANT(d) && ['obstruction', 'mixed', 'normal'].includes(d.archetype),"
+        },
+        {
+          "line": 88,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastLabaHours) }),"
+        },
+        {
+          "line": 102,
+          "text": "applies: () => true,"
+        },
+        {
+          "line": 142,
+          "text": "vars: (fx) => ({ min: String(Math.round((fx.preTest.lastSmokingHours * 60) / 5) * 5) }),"
+        },
+        {
+          "line": 166,
+          "text": "vars: (fx) => ({ min: String(Math.round((fx.preTest.lastVapingHours * 60) / 5) * 5) }),"
+        },
+        {
+          "line": 185,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastSmokingHours) }),"
+        },
+        {
+          "line": 202,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastSmokingHours), cohb: fx.dlco.coHbPercent.toFixed(1) }),"
+        },
+        {
+          "line": 219,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastAlcoholHours) }),"
+        },
+        {
+          "line": 234,
+          "text": "applies: (d) => ['obstruction', 'mixed', 'normal', 'nonspecific'].includes(d.archetype),"
+        },
+        {
+          "line": 237,
+          "text": "vars: (fx) => ({ h: fx.hours(fx.preTest.lastCaffeineHours) }),"
+        },
+        {
+          "line": 255,
+          "text": "vars: (fx) => ({ m: String(Math.round((fx.preTest.lastExerciseHours * 60) / 5) * 5) }),"
+        },
+        {
+          "line": 286,
+          "text": "weight: (d) => (BMI(d) >= 30 ? 2 : 0.8),"
+        },
+        {
+          "line": 288,
+          "text": "vars: (fx) => ({ m: String(Math.round(fx.preTest.lastMealMinutes / 5) * 5) }),"
+        },
+        {
+          "line": 320,
+          "text": "vars: (fx) => ({ m: String(Math.round(fx.preTest.oxygenOffMinutes)) }),"
+        },
+        {
+          "line": 335,
+          "text": "applies: (d) => d.age >= 40,"
+        },
+        {
+          "line": 391,
+          "text": "applies: (d) => ['obstruction', 'mixed', 'normal', 'nonspecific'].includes(d.archetype),"
+        },
+        {
+          "line": 394,
+          "text": "vars: (fx, c) => ({ trend: c.fev1Trend, n: String(c.nBlows) }),"
+        }
+      ]
+    },
+    {
+      "path": "src/scenarios/catalog-quality.js",
+      "sha256": "2dd1e1a0cdb93665cbeb2b1240b1258e6b95f49114612818c447e799aaa34adf",
+      "reviewLines": [
+        {
+          "line": 9,
+          "text": "const BLOWS = (fault) => (fx, c) => ({ blows: c.blows(fault) });"
+        },
+        {
+          "line": 23,
+          "text": "finalize: (fx, d) => {"
+        },
+        {
+          "line": 73,
+          "text": "applies: (d) => OBSTRUCTIVE.includes(d.archetype),"
+        },
+        {
+          "line": 157,
+          "text": "vars: (fx, c) => ({ blows: c.blows('pause-at-TLC'), pause: c.pauseSeconds.toFixed(0) }),"
+        },
+        {
+          "line": 174,
+          "text": "vars: (fx, c) => ({ pef: c.pefList, fev1: c.fev1List }),"
+        },
+        {
+          "line": 189,
+          "text": "applies: (d) => hasBdStudy(d),"
+        },
+        {
+          "line": 205,
+          "text": "applies: (d) => hasBdStudy(d),"
+        },
+        {
+          "line": 208,
+          "text": "vars: (fx) => ({ m: String(Math.round(fx.preTest.postBdWaitMinutes)) }),"
+        },
+        {
+          "line": 222,
+          "text": "applies: (d) => hasBdStudy(d),"
+        },
+        {
+          "line": 242,
+          "text": "vars: (fx) => ({ vi: String(Math.round(fx.dlco.viFraction * 100)) }),"
+        },
+        {
+          "line": 298,
+          "text": "id: 'pleth-pant-fast', category: 'Plethysmography', applies: (d) => d.panel === 'full' && OBSTRUCTIVE.includes(d.archetype),"
+        },
+        {
+          "line": 306,
+          "text": "vars: (fx) => ({ hz: fx.preTest.pantHz.toFixed(1) }),"
+        }
+      ]
+    },
+    {
+      "path": "src/quiz/scoring.js",
+      "sha256": "ff96e65693ea331351c174351c1459eaa3d2f741c2f2f63ac3b48471810f2c2a",
+      "reviewLines": [
+        {
+          "line": 18,
+          "text": "const adjacent = (order, x, y) => {"
+        },
+        {
+          "line": 20,
+          "text": "return i >= 0 && j >= 0 && Math.abs(i - j) === 1;"
+        },
+        {
+          "line": 34,
+          "text": "const hit = sel.filter((x) => truth.has(x));"
+        },
+        {
+          "line": 35,
+          "text": "const false_ = sel.filter((x) => !truth.has(x));"
+        },
+        {
+          "line": 36,
+          "text": "const total = k.correct.reduce((s, x) => s + (k.weights[x] ?? 1), 0);"
+        },
+        {
+          "line": 38,
+          "text": "const recall = total ? hit.reduce((s, x) => s + (k.weights[x] ?? 1), 0) / total : 0;"
+        },
+        {
+          "line": 39,
+          "text": "const wrong = k.wrong ?? item.options?.map((o) => o.id).filter((id) => !truth.has(id)) ?? [];"
+        },
+        {
+          "line": 45,
+          "text": "...base, score: rounded, status: rounded === 1 ? 'correct' : rounded > 0 ? 'partial' : 'incorrect', expected: k.correct,"
+        },
+        {
+          "line": 46,
+          "text": "detail: { recall, falseRate, missed: k.correct.filter((x) => !sel.includes(x)), extra: false_ },"
+        },
+        {
+          "line": 59,
+          "text": "/** @param {object[]} items @param {Record<string, string|string[]>} responses */"
+        },
+        {
+          "line": 60,
+          "text": "export const scoreCase = (items, responses) => items.map((it) => scoreItem(it, responses?.[it.id]));"
+        },
+        {
+          "line": 64,
+          "text": "* @param {{ items: object[], responses: Record<string, any> }[]} cases"
+        },
+        {
+          "line": 67,
+          "text": "const bySkill = Object.fromEntries(SKILLS.map((s) => [s, { score: 0, max: 0, n: 0 }]));"
+        },
+        {
+          "line": 68,
+          "text": "const perCase = cases.map(({ items, responses }) => {"
+        },
+        {
+          "line": 78,
+          "text": "const total = perCase.reduce((s, c) => s + c.score, 0), max = perCase.reduce((s, c) => s + c.max, 0);"
+        }
+      ]
+    },
+    {
+      "path": "src/app/answers.js",
+      "sha256": "7fb6928e1e439fd92b4b88f976af5d23be803c2ba10a5e5cc72a1ae722523754",
+      "reviewLines": [
+        {
+          "line": 23,
+          "text": "{ id: 'gradeFev1', label: 'FEV₁ quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },"
+        },
+        {
+          "line": 24,
+          "text": "{ id: 'gradeFvc', label: 'FVC quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },"
+        },
+        {
+          "line": 38,
+          "text": "export const PRACTICE_QUESTIONS = QUESTIONS.filter((q) => q.id !== 'gradeFev1' && q.id !== 'gradeFvc');"
+        },
+        {
+          "line": 44,
+          "text": "if (q.id === 'dlco' && caseData?.scenario?.coHbMeasured === true && caseData.scenario.coHbPercent > 2) return 'Diffusing capacity (scored on the hemoglobin-adjusted reference; the COHb-adjusted line is supplementary)';"
+        },
+        {
+          "line": 55,
+          "text": "const norm = (k, id) => {"
+        },
+        {
+          "line": 69,
+          "text": "* @param {Record<string, string>} answers"
+        },
+        {
+          "line": 78,
+          "text": "return questions.map((q) => {"
+        },
+        {
+          "line": 92,
+          "text": "export const label = (qid, value) => {"
+        },
+        {
+          "line": 93,
+          "text": "const q = QUESTIONS.find((x) => x.id === qid);"
+        },
+        {
+          "line": 94,
+          "text": "return q?.options.find(([v]) => v === value)?.[1] ?? value ?? '—';"
+        }
+      ]
+    },
+    {
+      "path": "src/reference/data/gli2012.json",
+      "sha256": "b28509ef320741e5e0fab86fe2cb6dc0d626c89c0edecbf38c1e01aca257679e",
+      "reviewLines": []
+    },
+    {
+      "path": "src/reference/data/gli_global.json",
+      "sha256": "09d9aa8b8bc536f4ad2b5716a7ec60f72c57f80a8641af16de0bd3a4bcb8f5ee",
+      "reviewLines": []
+    },
+    {
+      "path": "src/reference/data/gli_tlco.json",
+      "sha256": "483e307493b675f96a7f9d609d04848d9b1d000a7d277cdb4e7850459a76fa45",
+      "reviewLines": []
+    },
+    {
+      "path": "src/reference/data/gli_volumes.json",
+      "sha256": "c5ab7ee45f6d1ecb8bf1ca9380fa07f3f48b8b40716e1561b9b1d0d14f38742f",
+      "reviewLines": []
+    }
+  ]
+}
