@@ -60,6 +60,24 @@
         "verification": "verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC"
       }
     },
+    "LUNG_VOLUMES_2023": {
+      "source": "Bhakta et al. ERS/ATS 2023, doi:10.1183/13993003.01519-2022, corrected Tables 3–4 and reporting pp18–19",
+      "correction": "Table 3 replaced by doi:10.1183/13993003.51519-2022",
+      "verification": "primary corrected Table 3, Table 4 and reporting text read; source rules are not synthetic-signal validation",
+      "linkedSvc": {
+        "olderThanYears": 6,
+        "acceptableDeficitL": 0.15,
+        "usableDeficitL": 0.25,
+        "childAcceptableDeficitL": 0.1,
+        "childUsableDeficitL": 0.2,
+        "childFvcFraction": 0.1
+      },
+      "noFvcAcceptableVcCount": 3,
+      "frcRepeatability": {
+        "preferred": 0.05,
+        "qualified": 0.1
+      }
+    },
     "DLCO_MODEL": {
       "version": 1,
       "testGas": {
@@ -230,7 +248,7 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "def569ee56ce3314fc2ba00d43f479d78777dea5cf206f06bbe9b32ac309a2d3",
+      "sha256": "07a3103b9035f3f96e6733c6124952dda90ea57d92598aa75eefc2a4fe2d8d21",
       "reviewLines": [
         {
           "line": 12,
@@ -279,6 +297,196 @@
         {
           "line": 30,
           "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },"
+        },
+        {
+          "line": 37,
+          "text": "verification: 'primary corrected Table 3, Table 4 and reporting text read; source rules are not synthetic-signal validation',"
+        }
+      ]
+    },
+    {
+      "path": "src/core/pleth-session.js",
+      "sha256": "97854057babce5847af9380e2bf58af6bec00a0cd41b8ced805c9289c57fb5b7",
+      "reviewLines": [
+        {
+          "line": 11,
+          "text": "const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;"
+        },
+        {
+          "line": 12,
+          "text": "const valid = (value) => Number.isFinite(value) && value > 0;"
+        },
+        {
+          "line": 13,
+          "text": "const eligible = (status) => status === 'acceptable' || status === 'usable';"
+        },
+        {
+          "line": 15,
+          "text": "const worst = (...grades) => grades.reduce((a, b) => ORDER.indexOf(a) > ORDER.indexOf(b) ? a : b);"
+        },
+        {
+          "line": 16,
+          "text": "export const plethSpread = (values) => values.length < 2 ? null : (Math.max(...values) - Math.min(...values)) / mean(values);"
+        },
+        {
+          "line": 21,
+          "text": "const vcs = acceptableVc.filter((v) => v.status === 'acceptable' && valid(v.vcL));"
+        },
+        {
+          "line": 22,
+          "text": "return vcs.length >= S.noFvcAcceptableVcCount ? { value: Math.max(...vcs.map((v) => v.vcL)), basis: 'largest-of-three-acceptable-vc' } : { value: null, basis: 'unavailable' };"
+        },
+        {
+          "line": 27,
+          "text": "const reject = (reason) => ({ status: 'rejected', reason });"
+        },
+        {
+          "line": 30,
+          "text": "if (!Number.isFinite(age) || age < 0 || !valid(comparator)) return { status: 'unknown', reason: 'Age or same-session VC comparator is unavailable.' };"
+        },
+        {
+          "line": 33,
+          "text": "const acc = age > limits.olderThanYears ? comparator - limits.acceptableDeficitL : Math.min(comparator - limits.childAcceptableDeficitL, comparator * (1 - limits.childFvcFraction));"
+        },
+        {
+          "line": 34,
+          "text": "const use = age > limits.olderThanYears ? comparator - limits.usableDeficitL : Math.min(comparator - limits.childUsableDeficitL, comparator * (1 - limits.childFvcFraction));"
+        },
+        {
+          "line": 43,
+          "text": "const acceptable = rows.filter((r) => r.frcStatus === 'acceptable' && eligible(r.linkStatus));"
+        },
+        {
+          "line": 45,
+          "text": "for (let mask = 1; mask < 2 ** acceptable.length; mask++) {"
+        },
+        {
+          "line": 46,
+          "text": "const group = acceptable.filter((_, i) => mask & 2 ** i);"
+        },
+        {
+          "line": 47,
+          "text": "if (group.length < 2 || group.length < best.length) continue;"
+        },
+        {
+          "line": 48,
+          "text": "const spread = plethSpread(group.map((r) => r.frcL));"
+        },
+        {
+          "line": 50,
+          "text": "const earlier = (xs, ys) => { for (let i = 0; i < xs.length; i++) { if (xs[i].order !== ys[i].order) return xs[i].order < ys[i].order; } return false; };"
+        },
+        {
+          "line": 51,
+          "text": "const smallerSpread = best.length > 0 && !atMost(bestSpread, spread);"
+        },
+        {
+          "line": 53,
+          "text": "if (group.length > best.length || smallerSpread || tiedSpread && earlier(group, best)) { best = group; bestSpread = spread; }"
+        },
+        {
+          "line": 58,
+          "text": "/** Remove paired outliers only while >=3 remain; a discordant pair requires technical review. */"
+        },
+        {
+          "line": 61,
+          "text": "if (preferred.length >= 2) {"
+        },
+        {
+          "line": 66,
+          "text": "while (pool.length >= 3 && !atMost(plethSpread(pool.map((r) => r.frcL)), S.frcRepeatability.qualified)) {"
+        },
+        {
+          "line": 67,
+          "text": "const average = mean(pool.map((r) => r.frcL));"
+        },
+        {
+          "line": 71,
+          "text": "const farther = delta > previous && !atMost(delta, previous);"
+        },
+        {
+          "line": 73,
+          "text": "if (farther || tied && row.order > furthest.order) furthest = row;"
+        },
+        {
+          "line": 78,
+          "text": "if (pool.length === 2 && !atMost(plethSpread(pool.map((r) => r.frcL)), S.frcRepeatability.qualified)) {"
+        },
+        {
+          "line": 87,
+          "text": "const a = statuses.filter((s) => s === 'acceptable').length, u = statuses.filter((s) => s === 'usable').length;"
+        },
+        {
+          "line": 88,
+          "text": "return a >= 3 ? 'A' : a >= 2 ? 'B' : a === 1 ? u ? 'D' : 'E' : u ? 'U' : 'F';"
+        },
+        {
+          "line": 100,
+          "text": "if (input.trials.length > 8) throw new RangeError('This simulator adapter supports at most eight pleth trials (project limit, not a source criterion).');"
+        },
+        {
+          "line": 101,
+          "text": "const ids = input.trials.map((t) => t.id);"
+        },
+        {
+          "line": 102,
+          "text": "if (ids.some((id) => typeof id !== 'string' && !Number.isFinite(id) || id === '')) throw new TypeError('Pleth measurements require stable string or finite numeric IDs.');"
+        },
+        {
+          "line": 104,
+          "text": "const assessed = input.trials.map((t, order) => ({ ...t, order, ...{ linkAssessment: assessPlethLink(t.link, { age: input.age, comparator: comparator.value }) } }));"
+        },
+        {
+          "line": 106,
+          "text": "const frcCandidates = assessed.filter((t) => valid(t.frcL) && eligible(t.frcStatus));"
+        },
+        {
+          "line": 107,
+          "text": "const linked = frcCandidates.filter((t) => eligible(t.linkStatus));"
+        },
+        {
+          "line": 111,
+          "text": "const candidates = frcOnly ? frcCandidates.map((t) => ({ ...t, linkStatus: 'acceptable' })) : linked;"
+        },
+        {
+          "line": 113,
+          "text": "const spread = plethSpread(selected.map((t) => t.frcL));"
+        },
+        {
+          "line": 114,
+          "text": "const frcCountGrade = countGrade(selected.map((t) => t.frcStatus));"
+        },
+        {
+          "line": 115,
+          "text": "const svcUnknown = frcOnly && frcCandidates.some((t) => t.linkStatus === 'unknown');"
+        },
+        {
+          "line": 116,
+          "text": "const svcGrade = svcUnknown ? null : frcOnly ? 'F' : countGrade(selected.map((t) => t.linkStatus));"
+        },
+        {
+          "line": 120,
+          "text": "const frc = selected.length ? mean(selected.map((t) => t.frcL)) : null;"
+        },
+        {
+          "line": 121,
+          "text": "let tlc = !frcOnly && selected.length ? mean(selected.map((t) => t.frcL + t.link.icL)) : null;"
+        },
+        {
+          "line": 122,
+          "text": "const ic = tlc === null ? null : mean(selected.map((t) => t.link.icL));"
+        },
+        {
+          "line": 123,
+          "text": "const vc = tlc === null ? null : Math.max(...selected.map((t) => t.link.svcL));"
+        },
+        {
+          "line": 131,
+          "text": "comparator, assessed, selectedIds: selected.map((t) => t.id), pendingIds: (selection.pendingRows ?? []).map((t) => t.id), excluded, selectionPolicy: selection.policy,"
+        },
+        {
+          "line": 133,
+          "text": "rvVcPolicy: { id: rvVcPolicy, verification: 'engineering: retained eligible linked SVC; exact scope of largest VC measured awaits source adjudication before product integration' },"
         }
       ]
     },

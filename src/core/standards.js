@@ -29,3 +29,13 @@ export const INTERPRETATION_2022 = {
   bronchodilatorPercentOfPredicted: { value: 10, verification: 'verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator' },
   severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },
 };
+
+/** Read from the corrected journal copy, 2026-10-24. Quality assessments remain explicit inputs. */
+export const LUNG_VOLUMES_2023 = {
+  source: 'Bhakta et al. ERS/ATS 2023, doi:10.1183/13993003.01519-2022, corrected Tables 3–4 and reporting pp18–19',
+  correction: 'Table 3 replaced by doi:10.1183/13993003.51519-2022',
+  verification: 'primary corrected Table 3, Table 4 and reporting text read; source rules are not synthetic-signal validation',
+  linkedSvc: { olderThanYears: 6, acceptableDeficitL: 0.15, usableDeficitL: 0.25, childAcceptableDeficitL: 0.1, childUsableDeficitL: 0.2, childFvcFraction: 0.1 },
+  noFvcAcceptableVcCount: 3,
+  frcRepeatability: { preferred: 0.05, qualified: 0.1 },
+};

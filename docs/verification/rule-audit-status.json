@@ -232,7 +232,7 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": false,
       "source": "Bhakta 2023 grading/reporting table",
-      "coverageAndGap": "2023 Table 4 denominator/source selection verified by parent audit, but code still averages all acceptable FRC trials, not necessarily retained best subset; no linked SVC grading, matched FRC+IC reporting or full outlier selection. FRC-only rubric disclosed."
+      "coverageAndGap": "2023 Table 4 denominator/source selection verified by parent audit, but code still averages all acceptable FRC trials, not necessarily retained best subset; no linked SVC grading, matched FRC+IC reporting or full outlier selection. FRC-only rubric disclosed. New unintegrated pleth-session core has 12 focused tests and independent base-R arithmetic checks; product integration and named RV VC-pool source adjudication still pending."
     },
     {
       "id": 29,
@@ -338,5 +338,11 @@
       "source": "Project educational conventions",
       "coverageAndGap": "`quiz-scoring`, `challenges-items`, `quality-review`; not society diagnostic rules"
     }
-  ]
+  ],
+  "measurementCoreCheckpoint": {
+    "date": "2026-10-24",
+    "module": "src/core/pleth-session.js",
+    "integratedIntoProduct": false,
+    "status": "pure core with boundary tests; source/adaptation choices and integration pending; counts unchanged"
+  }
 }
