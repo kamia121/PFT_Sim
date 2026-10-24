@@ -23,6 +23,7 @@
  *
  * Random streams used: `dlco-trace-setup` and `dlco-trace-noise`.
  */
+import { atMost } from './comparison.js';
 import { createStream } from './prng.js';
 import { obstructionMeasure, trueRatioZ } from './pleth.js';
 
@@ -35,7 +36,7 @@ export const DLCO_MODEL = {
   breathHoldWindowS: { value: [8, 12], verification: 'secondary' },
   sampleCompleteWithinS: { value: 4.0, verification: 'secondary' },
   washoutVolumeL: { value: [0.75, 1.0], smallVcMin: 0.5, smallVcLimitL: 2.0, verification: 'secondary' },
-  sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.1, verification: 'secondary' }, // the standard allows under 0.5 L for VC under 1 L; the simulator extends this to 1.1 L so that very small lungs can be graded
+  sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.0, verification: 'primary text: VC <1 L with confirmed dead-space clearance' },
   apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },
   anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },
   phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },
@@ -44,7 +45,7 @@ export const DLCO_MODEL = {
   valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },
   muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },
   pressureFlagCmH2O: { value: 8, verification: 'unverified' },
-  gradeRules: { value: 'A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },
+  gradeRules: { value: 'A all criteria met; B reserved; C a modeled criterion failed or remains unconfirmed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },
 };
 
 const STEP_L = 0.01; // expired-volume grid
@@ -105,33 +106,44 @@ export function analyzeDlcoTrace(trace) {
 
 /**
  * Grade a single test against the acceptability list of docs/research/pleth-dlco.md section 2.1.
- * The A to D letters are the simulator's own grouping (unverified): the standard lists acceptability
- * criteria and does not define these letters.
+ * The A to D letters here are a simulator rubric, not the overlapping interim maneuver rows
+ * in 2017 Table 3 and not a session grade. Replicate selection/reporting is not modeled.
  */
 export function gradeDlcoTest(q) {
-  const failed = [], noted = [], invalid = [];
+  const failed = [], noted = [], invalid = [], unknown = [];
   if (q.leak) invalid.push('leak');
   if (q.valsalva) invalid.push('Valsalva maneuver during the breath-hold');
   if (q.mueller) invalid.push('Mueller maneuver during the breath-hold');
   if (q.viOverVc < DLCO_MODEL.viOverVcMin.alternative) invalid.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 85%`);
-  else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) failed.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 90% without a concordant VA`);
+  else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) {
+    if (!(Number.isFinite(q.vaL) && Number.isFinite(q.largestOtherAcceptableVaL))) unknown.push('low-VI alternative needs VA from another acceptable maneuver');
+    else if (!atMost(Math.abs(q.vaL - q.largestOtherAcceptableVaL), Math.max(0.2, 0.05 * q.largestOtherAcceptableVaL))) failed.push('low-VI alternative VA is outside the permitted agreement');
+  }
   if (q.contamination > 0.03) invalid.push('alveolar sample begins inside the dead-space transition');
   const [bhLo, bhHi] = DLCO_MODEL.breathHoldWindowS.value;
   if (q.breathHoldS < bhLo || q.breathHoldS > bhHi) failed.push(`breath-hold ${q.breathHoldS.toFixed(1)} s, outside 8 to 12 s`);
   if (q.sampleEndS > DLCO_MODEL.sampleCompleteWithinS.value) failed.push(`alveolar sample finished ${q.sampleEndS.toFixed(1)} s after the start of exhalation, over 4 s`);
-  const wr = DLCO_MODEL.washoutVolumeL.value;
-  const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];
-  if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);
-  const sr = DLCO_MODEL.sampleVolumeL.value;
-  if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);
-  if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) noted.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s (4.0 s limit); noted on the report`);
-  const grade = invalid.length ? 'D' : failed.length ? 'C' : noted.length ? 'B' : 'A';
-  return { grade, acceptable: grade === 'A' || grade === 'B', wouldBeRejected: grade === 'C' || grade === 'D', invalid, failed, noted };
+  // The trace is a classical discrete-sample teaching model. RGA requires its own
+  // demonstrated washout and virtual sample; do not reuse classical bag-volume cutoffs.
+  if (q.samplingMethod === 'rga') {
+    if (q.deadSpaceClearanceConfirmed !== true) unknown.push('RGA washout clearance is unconfirmed');
+    if (q.sampleL < 0.085 || q.sampleL > 0.5) failed.push('RGA virtual sample outside 0.085 to 0.500 L');
+  } else {
+    const wr = DLCO_MODEL.washoutVolumeL.value;
+    const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];
+    if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);
+    const sr = DLCO_MODEL.sampleVolumeL.value;
+    if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= DLCO_MODEL.sampleVolumeL.smallVcAllowanceL)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);
+    else if (q.sampleL < sr[0] - 1e-9 && q.deadSpaceClearanceConfirmed !== true) unknown.push('small-VC sample exception needs confirmed dead-space clearance');
+  }
+  if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) failed.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s; the criterion is strictly less than 4 s`);
+  const grade = invalid.length ? 'D' : failed.length || unknown.length ? 'C' : noted.length ? 'B' : 'A';
+  return { grade, rubric: 'simulator, not ATS/ERS Table 3 or a session grade', acceptable: grade === 'A', wouldBeRejected: grade !== 'A', invalid, failed, noted, unknown };
 }
 
 const FAULTS = {
   'low-vi': { text: 'Incomplete inspiration: inspired volume is low relative to the vital capacity. VA is smaller and DLCO falls less than VA, so KCO rises.', numbers: true },
-  'slow-inspiration': { text: 'Slow inspiration: 85% of the inspired volume takes longer than 4 s, so the start of the breath-hold is ambiguous. Numbers are unchanged in this model; the test is noted.', numbers: false },
+  'slow-inspiration': { text: 'Slow inspiration: 85% of the inspired volume takes longer than 4 s, so the start of the breath-hold is ambiguous. Numbers are unchanged in this model; the inspiration-time criterion fails.', numbers: false },
   'short-hold': { text: 'Breath-hold shorter than 8 s. The Krogh equation corrects for time, so the printed numbers are unchanged in this model; the test fails the hold criterion.', numbers: false },
   'long-hold': { text: 'Breath-hold longer than 12 s. The Krogh equation corrects for time, so the printed numbers are unchanged in this model; the test fails the hold criterion.', numbers: false },
   leak: { text: 'Leak around the mouthpiece: the measured volume falls during the breath-hold and does not return to the starting level. Visual and grading only; no numerical effect is modeled because the direction of the error is not predictable.', numbers: false },
@@ -363,6 +375,9 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   const volHold = holdIdx.map((j) => V[j]);
   const flagCm = DLCO_MODEL.pressureFlagCmH2O.value;
   trace.quality = {
+    samplingMethod: 'classical',
+    // Clearance is assumed only when this modeled contamination check passes.
+    deadSpaceClearanceConfirmed: contamination <= 0.03,
     viOverVc: trace.inspired.viOverVc,
     t85S: trace.inspired.timeTo85PctS,
     breathHoldS: trace.breathHold.seconds,

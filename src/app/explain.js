@@ -25,7 +25,7 @@ export const PATTERN_TEXT = {
   ],
   nonspecific: [
     'A low FVC or FEV₁ with a preserved ratio and a TLC that is not low is a nonspecific pattern. The vital capacity is reduced although the lungs hold a normal amount of gas at full inflation, so the residual volume is relatively high: expiration stops early, from air trapping without airflow obstruction by the ratio, from poor effort, or from a process that is not yet classifiable.',
-    'The same spirometric finding, reported when no lung volumes were measured, is called preserved ratio with impaired spirometry (PRISm). The label describes spirometry only; some people with this finding have restriction when TLC is measured.',
+    'The same spirometric finding, reported when no lung volumes were measured, is called preserved-ratio spirometric impairment. The label describes spirometry only; some people with this finding have restriction when TLC is measured.',
   ],
   prism: [
     'A preserved FEV₁/FVC ratio with a low FVC or FEV₁ and no lung volumes cannot be classified further. Restriction is possible but unproven, because a low FVC can also reflect incomplete expiration. Lung volumes by plethysmography or gas dilution are the next test.',

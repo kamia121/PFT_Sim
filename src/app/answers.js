@@ -14,7 +14,7 @@ export const QUESTIONS = [
     ['restriction', 'Restriction'],
     ['mixed', 'Mixed obstruction and restriction'],
     ['nonspecific', 'Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)'],
-    ['prism', 'Preserved ratio with low FVC or FEV₁, no volumes (PRISm)'],
+    ['prism', 'Preserved-ratio spirometric impairment (TLC needed)'],
   ] },
   { id: 'severity', label: 'Ventilatory impairment severity (FEV₁ for obstruction; TLC for restriction)', options: [
     ['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe'],

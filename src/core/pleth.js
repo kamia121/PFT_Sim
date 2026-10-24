@@ -389,7 +389,7 @@ export function repeatableGroup(values, tol) {
 export const spreadFraction = (values) => (Math.max(...values) - Math.min(...values)) / mean(values);
 
 /**
- * FRC grade from the acceptable trials (2023 table as summarized in docs/research/pleth-dlco.md):
+ * FRC-only simulator rubric; this is not the corrected 2023 overall grade, which also needs retained SVC quality:
  * A three or more acceptable within 5%, B two within 5%, C two within 10%. D, E, U and F are placeholders:
  * D one acceptable trial, E two or more acceptable but outside 10%, U no acceptable but some usable, F nothing usable.
  */

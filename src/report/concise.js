@@ -22,7 +22,7 @@ const HEAD = {
   restriction: 'Restriction',
   mixed: 'Mixed obstruction and restriction',
   nonspecific: 'Nonspecific pattern (preserved ratio, low FVC or FEV₁, TLC not low)',
-  prism: 'Preserved ratio with a low FVC or FEV₁ (PRISm; lung volumes needed)',
+  prism: 'Preserved-ratio spirometric impairment (TLC needed)',
   indeterminate: 'Not interpretable',
 };
 const SUB = { 'low-kco-preserved-va': 'low KCO with preserved VA', 'low-va-high-kco': 'low VA with raised KCO', 'low-va-normal-kco': 'low VA with normal KCO', 'both-low': 'VA and KCO both low', 'low-dlco-only': 'VA and KCO individually within limits' };
@@ -42,8 +42,8 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   if (sev?.scored) head += `, ${sev.id}`;
 
   const extra = [];
-  if (interp.flags.some((f) => f.id === 'hyperinflation')) extra.push('hyperinflation');
-  if (interp.flags.some((f) => f.id === 'air-trapping')) extra.push('air trapping');
+  if (interp.flags.some((f) => f.id === 'possible-hyperinflation')) extra.push('possible hyperinflation');
+  if (interp.flags.some((f) => f.id === 'air-trapping')) extra.push('possible air trapping');
   if (interp.dlco && interp.dlco.category !== 'normal') extra.push(`${interp.dlco.category} DLCO`);
   if (interp.bd?.rule2022.significant) extra.push('a significant bronchodilator response');
   const joined = extra.length > 1 ? `${extra.slice(0, -1).join(', ')} and ${extra[extra.length - 1]}` : extra[0];

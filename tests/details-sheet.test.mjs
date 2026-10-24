@@ -58,8 +58,8 @@ test('grades, acceptability by maneuver and trial status are present when showGr
       assert.equal(cells[0], ev[i].fev1.acceptable ? 'yes' : 'no', `${name} maneuver ${i + 1} FEV1`);
       assert.equal(cells[1], ev[i].fvc.acceptable ? 'yes' : 'no', `${name} maneuver ${i + 1} FVC`);
     });
-    if (x.c.pleth) assert.match(html, new RegExp(`grade ${x.c.pleth.grade}`));
-    if (x.c.dlcoTrace) assert.match(html, /Test grade|Grade [A-D]/);
+    if (x.c.pleth) assert.match(html, new RegExp(`FRC-only simulator rubric ${x.c.pleth.grade}`));
+    if (x.c.dlcoTrace) assert.match(html, /Simulator rubric [A-D]|Rubric [A-D]/);
   }
 });
 

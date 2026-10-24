@@ -83,11 +83,12 @@ test('scenario faults: a leak or an obstructed mouthpiece spoils acceptability o
   assert.equal(evaluateManeuver(m(4, 3.2, { faults: ['submaximal-effort'] })).fev1.acceptable, true, 'effort cannot be seen by a single-maneuver criterion');
 });
 
-test('a pause at total lung capacity longer than 2 s spoils the FEV1 only', () => {
+test('a pause at total lung capacity longer than 2 s prompts coaching without an independent veto', () => {
   assert.equal(PAUSE_AT_TLC_MAX_SECONDS.value, 2);
   const long = evaluateManeuver(m(4, 3.2, { faults: ['pause-at-TLC'], pauseSeconds: 4.5 }));
-  assert.equal(long.fev1.acceptable, false);
+  assert.equal(long.fev1.acceptable, true);
   assert.equal(long.fvc.acceptable, true);
+  assert.ok(long.fev1.warnings.length);
   assert.equal(evaluateManeuver(m(4, 3.2, { faults: ['pause-at-TLC'], pauseSeconds: 1.5 })).fev1.acceptable, true);
 });
 

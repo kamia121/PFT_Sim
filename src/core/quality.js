@@ -1,11 +1,7 @@
 import { SPIROMETRY_2019 as S } from './standards.js';
 import { atMost, atLeast } from './comparison.js';
 
-/**
- * Longest pause at total lung capacity before the blast that the 2019 statement allows (seconds). Verification: stated
- * in the full text of the statement as read for docs/research/scenarios.md (S1); it is not a Table 7 criterion, so the
- * simulator treats a longer pause as spoiling the FEV1 because the text says it lowers FEV1 and peak flow.
- */
+/** Procedural coaching limit (2019 Table 6), not an independent Table 7 acceptability veto. */
 export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };
 
 /**
@@ -64,7 +60,7 @@ export function faultWording(id, form = 'text') {
  * because the criteria differ: a cough in the first second spoils FEV1 but not FVC, glottic
  * closure after the first second spoils FVC but not FEV1, and only FVC needs an end-of-forced-
  * expiration (EOFE) indicator. Leaks and obstructed mouthpieces (scenario faults) make both variables unacceptable but
- * leave them usable; a pause at TLC longer than 2 s makes the FEV1 unacceptable. Zero-flow errors are not modeled.
+ * leave them usable; a pause at TLC longer than 2 s prompts a coaching warning. Zero-flow errors are not modeled.
  */
 
 /**
@@ -84,9 +80,11 @@ export function faultWording(id, form = 'text') {
  * @param {number} maxFvcInSet largest FVC among all maneuvers in the set
  * @returns {{ fev1: { usable: boolean, acceptable: boolean, reasons: string[] }, fvc: { usable: boolean, acceptable: boolean, reasons: string[] } }}
  */
-export function evaluateManeuver(m, maxFvcInSet = m.fvc) {
+export function evaluateManeuver(m, maxFvcInSet = null) {
+  // Select the inclusive Table 7 BEV/plateau convention: 2019 Table 7 uses ≤, its prose <.
+  // Values agree, equality does not; see S.boundaryConventions and the exact-boundary tests.
   const bevLimit = Math.max(S.bevFractionOfFvc.value * m.fvc, S.bevAbsoluteLiters.value);
-  const bevBad = atLeast(m.bev, bevLimit);
+  const bevBad = !atMost(m.bev, bevLimit);
   const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;
   const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;
 
@@ -107,13 +105,13 @@ export function evaluateManeuver(m, maxFvcInSet = m.fvc) {
 
   const fvcReasons = [...fvcUsableReasons, ...leakReasons];
   if (closureLater) fvcReasons.push('glottic closure after the first second');
-  const eofe = m.plateau < S.plateauLiters.value
+  const eofe = atMost(m.plateau, S.plateauLiters.value)
     || m.fet >= S.longFetSeconds.value
-    || atLeast(m.fvc, maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value);
+    || (maxFvcInSet !== null && atLeast(m.fvc, maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value));
   if (!eofe) fvcReasons.push('no end-of-forced-expiration indicator');
 
   return {
-    fev1: { usable: fev1Reasons.length === 0, acceptable: fev1Reasons.length === 0 && leakReasons.length === 0 && pauseReasons.length === 0, reasons: [...fev1Reasons, ...leakReasons, ...pauseReasons] },
+    fev1: { usable: fev1Reasons.length === 0, acceptable: fev1Reasons.length === 0 && leakReasons.length === 0, reasons: [...fev1Reasons, ...leakReasons], warnings: pauseReasons },
     fvc: { usable: fvcUsableReasons.length === 0, acceptable: fvcReasons.length === 0, reasons: fvcReasons },
   };
 }
@@ -146,7 +144,7 @@ const largestTwoSpread = (xs) => {
  */
 export function summarizeSession(maneuvers) {
   const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;
-  const evaluations = maneuvers.map((m) => evaluateManeuver(m, maxFvcInSet));
+  const evaluations = maneuvers.map((m) => evaluateManeuver(m, maneuvers.length > 1 ? maxFvcInSet : null));
   const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);
   const out = {};
   for (const key of ['fev1', 'fvc']) {

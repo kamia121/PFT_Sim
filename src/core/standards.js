@@ -9,9 +9,13 @@ export const GENERATOR_VERSION = 2;
 
 export const SPIROMETRY_2019 = {
   source: 'ATS/ERS 2019 spirometry standardization (Graham et al., AJRCCM 2019;200:e70)',
-  bevFractionOfFvc: { value: 0.05, verification: 'verified-primary' },
-  bevAbsoluteLiters: { value: 0.1, verification: 'verified-primary' },
-  plateauLiters: { value: 0.025, verification: 'verified-primary' },
+  bevFractionOfFvc: { value: 0.05, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },
+  bevAbsoluteLiters: { value: 0.1, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },
+  plateauLiters: { value: 0.025, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },
+  boundaryConventions: {
+    bev: 'Select inclusive ≤ max(0.100 L, 5% FVC); Table 7 prints ≤ while prose prints <. This is a project convention, not unambiguous source agreement.',
+    plateau: 'Select inclusive ≤ 0.025 L; Table 7 and prose differ on equality. Other EOFE alternatives can still establish acceptability.',
+  },
   plateauWindowSeconds: { value: 1, verification: 'verified-primary' },
   longFetSeconds: { value: 15, verification: 'verified-primary' },
   eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },

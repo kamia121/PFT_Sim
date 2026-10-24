@@ -31,7 +31,7 @@ const ARCHETYPE_NOTES = {
   'restriction-parenchymal': 'Restriction with low diffusing capacity and a preserved or raised FEV1/FVC.',
   'restriction-extraparenchymal': 'Restriction from the chest wall or respiratory muscles: raised RV/TLC, low ERV, mildly low DLCO, raised KCO.',
   mixed: 'Obstruction and restriction together.',
-  nonspecific: 'Low FVC with a preserved ratio and a TLC that is not low. Spirometry alone labels this preserved ratio with impaired spirometry (PRISm).',
+  nonspecific: 'Low FVC with a preserved ratio and a TLC that is not low. Spirometry alone labels this preserved-ratio spirometric impairment; TLC distinguishes restriction from a non-specific pattern.',
   'low-dlco': 'Isolated reduction in diffusing capacity with normal spirometry and volumes.',
   anemia: 'Low measured DLCO caused by anemia; normal after hemoglobin correction.',
   'obesity-low-erv': 'Obesity with low expiratory reserve volume and FRC, normal or mildly low TLC, and a DLCO that is not reduced.',

@@ -6,15 +6,19 @@
       "source": "ATS/ERS 2019 spirometry standardization (Graham et al., AJRCCM 2019;200:e70)",
       "bevFractionOfFvc": {
         "value": 0.05,
-        "verification": "verified-primary"
+        "verification": "primary threshold value; equality ambiguous between Table 7 and prose"
       },
       "bevAbsoluteLiters": {
         "value": 0.1,
-        "verification": "verified-primary"
+        "verification": "primary threshold value; equality ambiguous between Table 7 and prose"
       },
       "plateauLiters": {
         "value": 0.025,
-        "verification": "verified-primary"
+        "verification": "primary threshold value; equality ambiguous between Table 7 and prose"
+      },
+      "boundaryConventions": {
+        "bev": "Select inclusive ≤ max(0.100 L, 5% FVC); Table 7 prints ≤ while prose prints <. This is a project convention, not unambiguous source agreement.",
+        "plateau": "Select inclusive ≤ 0.025 L; Table 7 and prose differ on equality. Other EOFE alternatives can still establish acceptability."
       },
       "plateauWindowSeconds": {
         "value": 1,
@@ -106,8 +110,8 @@
           0.5,
           1
         ],
-        "smallVcAllowanceL": 1.1,
-        "verification": "secondary"
+        "smallVcAllowanceL": 1,
+        "verification": "primary text: VC <1 L with confirmed dead-space clearance"
       },
       "apparatusDeadSpaceL": {
         "value": 0.1,
@@ -154,7 +158,7 @@
         "verification": "unverified"
       },
       "gradeRules": {
-        "value": "A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)",
+        "value": "A all criteria met; B reserved; C a modeled criterion failed or remains unconfirmed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)",
         "verification": "unverified"
       }
     },
@@ -226,50 +230,54 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "ba93f0b81d7a3af92eef7e572d37024a89706698326d38c38709a53ce77d129d",
+      "sha256": "def569ee56ce3314fc2ba00d43f479d78777dea5cf206f06bbe9b32ac309a2d3",
       "reviewLines": [
         {
           "line": 12,
-          "text": "bevFractionOfFvc: { value: 0.05, verification: 'verified-primary' },"
+          "text": "bevFractionOfFvc: { value: 0.05, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },"
         },
         {
           "line": 13,
-          "text": "bevAbsoluteLiters: { value: 0.1, verification: 'verified-primary' },"
+          "text": "bevAbsoluteLiters: { value: 0.1, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },"
         },
         {
           "line": 14,
-          "text": "plateauLiters: { value: 0.025, verification: 'verified-primary' },"
-        },
-        {
-          "line": 15,
-          "text": "plateauWindowSeconds: { value: 1, verification: 'verified-primary' },"
+          "text": "plateauLiters: { value: 0.025, verification: 'primary threshold value; equality ambiguous between Table 7 and prose' },"
         },
         {
           "line": 16,
-          "text": "longFetSeconds: { value: 15, verification: 'verified-primary' },"
-        },
-        {
-          "line": 17,
-          "text": "eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },"
-        },
-        {
-          "line": 18,
-          "text": "repeatabilityLitersAdult: { value: 0.15, verification: 'verified-primary' },"
+          "text": "bev: 'Select inclusive ≤ max(0.100 L, 5% FVC); Table 7 prints ≤ while prose prints <. This is a project convention, not unambiguous source agreement.',"
         },
         {
           "line": 19,
+          "text": "plateauWindowSeconds: { value: 1, verification: 'verified-primary' },"
+        },
+        {
+          "line": 20,
+          "text": "longFetSeconds: { value: 15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 21,
+          "text": "eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 22,
+          "text": "repeatabilityLitersAdult: { value: 0.15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 23,
           "text": "gradeSpreadLiters: { A: 0.15, B: 0.15, C: 0.2, D: 0.25, verification: 'verified-primary' },"
         },
         {
-          "line": 24,
+          "line": 28,
           "text": "llnZ: { value: -1.645, verification: 'verified-primary: ERS/ATS 2022 Table 1; rounded fifth-percentile convention' },"
         },
         {
-          "line": 25,
+          "line": 29,
           "text": "bronchodilatorPercentOfPredicted: { value: 10, verification: 'verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator' },"
         },
         {
-          "line": 26,
+          "line": 30,
           "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },"
         }
       ]
@@ -294,463 +302,475 @@
     },
     {
       "path": "src/core/quality.js",
-      "sha256": "34f4d267d31f66a9db071509ea0ba0e92a70ea4882a37c040ca2a87a12ce0b79",
+      "sha256": "4853d3793725b473b098680333fc262dbeed1ad784024b8fdf00ad122190af7d",
       "reviewLines": [
         {
-          "line": 9,
+          "line": 5,
           "text": "export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };"
         },
         {
-          "line": 29,
+          "line": 25,
           "text": "/** Phrases for the technologist comment of a maneuver set (\"<phrase> (maneuver 2)\"). */"
         },
         {
-          "line": 90,
+          "line": 84,
+          "text": "// Select the inclusive Table 7 BEV/plateau convention: 2019 Table 7 uses ≤, its prose <."
+        },
+        {
+          "line": 88,
           "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
         },
         {
-          "line": 91,
+          "line": 89,
           "text": "const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;"
         },
         {
-          "line": 102,
+          "line": 100,
           "text": "const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];"
         },
         {
-          "line": 110,
-          "text": "const eofe = m.plateau < S.plateauLiters.value"
-        },
-        {
-          "line": 111,
+          "line": 109,
           "text": "|| m.fet >= S.longFetSeconds.value"
         },
         {
-          "line": 125,
+          "line": 123,
           "text": "const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 128,
+          "line": 126,
           "text": "if (acceptableValues.length >= 3 && atMost(spread, g.A)) return 'A';"
         },
         {
-          "line": 135,
+          "line": 133,
           "text": "const largestTwoSpread = (xs) => {"
         },
         {
-          "line": 136,
+          "line": 134,
           "text": "if (xs.length < 2) return null;"
         },
         {
-          "line": 137,
+          "line": 135,
           "text": "const [hi, next] = xs.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 143,
+          "line": 141,
           "text": "* @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },"
         },
         {
-          "line": 148,
+          "line": 146,
           "text": "const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;"
         },
         {
-          "line": 149,
-          "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maxFvcInSet));"
+          "line": 147,
+          "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maneuvers.length > 1 ? maxFvcInSet : null));"
         },
         {
-          "line": 150,
+          "line": 148,
           "text": "const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);"
         },
         {
-          "line": 157,
+          "line": 155,
           "text": "value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,"
         },
         {
-          "line": 158,
+          "line": 156,
           "text": "grade: gradeVariable(acc.map((m) => m[key]), use.length),"
         },
         {
-          "line": 160,
+          "line": 158,
           "text": "spread: largestTwoSpread(acc.map((m) => m[key])),"
         },
         {
-          "line": 165,
+          "line": 163,
           "text": "const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;"
         },
         {
-          "line": 167,
+          "line": 165,
           "text": "const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));"
         },
         {
-          "line": 168,
+          "line": 166,
           "text": "const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);"
         },
         {
-          "line": 180,
+          "line": 178,
           "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && atMost(x, S.repeatabilityLitersAdult.value)),"
         }
       ]
     },
     {
       "path": "src/core/dlco-trace.js",
-      "sha256": "77d3ceddaf6d95548efc83b82d990392e003833738e0f2be0dea175829e8cc17",
+      "sha256": "d519a9e731ede4a80807b6a0c607d3d2600883c4be61a783b7ab23b5b5dc8972",
       "reviewLines": [
         {
-          "line": 31,
+          "line": 32,
           "text": "testGas: { value: { tracer: 'CH4', fiTracerPct: 0.3, fiCoPct: 0.3, o2Pct: 21, balance: 'N2' }, verification: 'secondary' },"
         },
         {
-          "line": 32,
+          "line": 33,
           "text": "waterVaporMmHg: { value: 47, verification: 'secondary' },"
         },
         {
-          "line": 33,
+          "line": 34,
           "text": "viOverVcMin: { value: 0.9, alternative: 0.85, verification: 'secondary' },"
         },
         {
-          "line": 34,
+          "line": 35,
           "text": "inspiration85PctMaxS: { value: 4.0, verification: 'secondary' },"
         },
         {
-          "line": 35,
+          "line": 36,
           "text": "breathHoldWindowS: { value: [8, 12], verification: 'secondary' },"
         },
         {
-          "line": 36,
+          "line": 37,
           "text": "sampleCompleteWithinS: { value: 4.0, verification: 'secondary' },"
         },
         {
-          "line": 37,
+          "line": 38,
           "text": "washoutVolumeL: { value: [0.75, 1.0], smallVcMin: 0.5, smallVcLimitL: 2.0, verification: 'secondary' },"
         },
         {
-          "line": 38,
-          "text": "sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.1, verification: 'secondary' }, // the standard allows under 0.5 L for VC under 1 L; the simulator extends this to 1.1 L so that very small lungs can be graded"
-        },
-        {
           "line": 39,
-          "text": "apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },"
+          "text": "sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.0, verification: 'primary text: VC <1 L with confirmed dead-space clearance' },"
         },
         {
           "line": 40,
-          "text": "anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },"
+          "text": "apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },"
         },
         {
           "line": 41,
-          "text": "phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },"
+          "text": "anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },"
         },
         {
           "line": 42,
-          "text": "alveolarPlateauSlopePerL: { value: [0.01, 0.08], verification: 'unverified' },"
+          "text": "phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },"
         },
         {
           "line": 43,
-          "text": "lowViDlcoExponent: { value: 0.5, verification: 'unverified' },"
+          "text": "alveolarPlateauSlopePerL: { value: [0.01, 0.08], verification: 'unverified' },"
         },
         {
           "line": 44,
-          "text": "valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },"
+          "text": "lowViDlcoExponent: { value: 0.5, verification: 'unverified' },"
         },
         {
           "line": 45,
-          "text": "muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },"
+          "text": "valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },"
         },
         {
           "line": 46,
-          "text": "pressureFlagCmH2O: { value: 8, verification: 'unverified' },"
+          "text": "muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },"
         },
         {
           "line": 47,
-          "text": "gradeRules: { value: 'A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },"
+          "text": "pressureFlagCmH2O: { value: 8, verification: 'unverified' },"
         },
         {
-          "line": 52,
-          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+          "line": 48,
+          "text": "gradeRules: { value: 'A all criteria met; B reserved; C a modeled criterion failed or remains unconfirmed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },"
         },
         {
           "line": 53,
-          "text": "const round = (x, d) => { const p = 10 ** d; return Math.round(x * p) / p; };"
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
         },
         {
           "line": 54,
-          "text": "const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;"
+          "text": "const round = (x, d) => { const p = 10 ** d; return Math.round(x * p) / p; };"
         },
         {
           "line": 55,
+          "text": "const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;"
+        },
+        {
+          "line": 56,
           "text": "const gridDown = (x, g = 0.05) => Math.round(x / g) * g;"
         },
         {
-          "line": 59,
+          "line": 60,
           "text": "const s = x < 0 ? -1 : 1, a = Math.abs(x) / Math.SQRT2;"
         },
         {
-          "line": 66,
+          "line": 67,
           "text": "const insp = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 6 * x * x - 8 * x ** 3 + 3 * x ** 4);"
         },
         {
-          "line": 69,
+          "line": 70,
           "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (insp(m) < frac) lo = m; else hi = m; }"
         },
         {
-          "line": 74,
+          "line": 75,
           "text": "const gam = (u) => 1 - (1 + u) * Math.exp(-u);"
         },
         {
-          "line": 75,
+          "line": 76,
           "text": "const expNorm = (u) => gam(Math.min(Math.max(u, 0), UMAX)) / gam(UMAX); // fraction of the exhaled volume at u = t / tau"
         },
         {
-          "line": 78,
+          "line": 79,
           "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (expNorm(m) < frac) lo = m; else hi = m; }"
         },
         {
-          "line": 83,
+          "line": 84,
           "text": "export const vaStpdMl = (vaBtpsL, pbMmHg = 760) => vaBtpsL * 1000 * ((pbMmHg - 47) / 760) * (273 / 310);"
         },
         {
-          "line": 84,
+          "line": 85,
           "text": "export const vaFromTracer = (fiTracer, faTracer, viL, vdL) => (fiTracer / faTracer) * (viL - vdL);"
         },
         {
-          "line": 85,
+          "line": 86,
           "text": "export const dlcoFromDecay = (vaStpd, tBhSeconds, pbMmHg, fCo0, fCoT) => (vaStpd / ((tBhSeconds / 60) * (pbMmHg - 47))) * Math.log(fCo0 / fCoT);"
         },
         {
-          "line": 95,
+          "line": 96,
           "text": "bv.volumeL.forEach((v, i) => { if (v >= lo && v <= hi) idx.push(i); });"
         },
         {
-          "line": 96,
+          "line": 97,
           "text": "const faTr = mean(idx.map((i) => bv.tracer[i])) / 100;"
         },
         {
-          "line": 97,
+          "line": 98,
           "text": "const faCo = mean(idx.map((i) => bv.co[i])) / 100;"
         },
         {
-          "line": 116,
+          "line": 117,
           "text": "if (q.viOverVc < DLCO_MODEL.viOverVcMin.alternative) invalid.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 85%`);"
         },
         {
-          "line": 117,
-          "text": "else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) failed.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 90% without a concordant VA`);"
+          "line": 118,
+          "text": "else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) {"
         },
         {
-          "line": 118,
+          "line": 122,
           "text": "if (q.contamination > 0.03) invalid.push('alveolar sample begins inside the dead-space transition');"
         },
         {
-          "line": 120,
+          "line": 124,
           "text": "if (q.breathHoldS < bhLo || q.breathHoldS > bhHi) failed.push(`breath-hold ${q.breathHoldS.toFixed(1)} s, outside 8 to 12 s`);"
         },
         {
-          "line": 121,
+          "line": 125,
           "text": "if (q.sampleEndS > DLCO_MODEL.sampleCompleteWithinS.value) failed.push(`alveolar sample finished ${q.sampleEndS.toFixed(1)} s after the start of exhalation, over 4 s`);"
         },
         {
-          "line": 123,
+          "line": 130,
+          "text": "if (q.sampleL < 0.085 || q.sampleL > 0.5) failed.push('RGA virtual sample outside 0.085 to 0.500 L');"
+        },
+        {
+          "line": 133,
           "text": "const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];"
         },
         {
-          "line": 124,
+          "line": 134,
           "text": "if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);"
         },
         {
-          "line": 126,
-          "text": "if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);"
+          "line": 136,
+          "text": "if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= DLCO_MODEL.sampleVolumeL.smallVcAllowanceL)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);"
         },
         {
-          "line": 127,
-          "text": "if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) noted.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s (4.0 s limit); noted on the report`);"
+          "line": 137,
+          "text": "else if (q.sampleL < sr[0] - 1e-9 && q.deadSpaceClearanceConfirmed !== true) unknown.push('small-VC sample exception needs confirmed dead-space clearance');"
         },
         {
-          "line": 155,
+          "line": 139,
+          "text": "if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) failed.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s; the criterion is strictly less than 4 s`);"
+        },
+        {
+          "line": 167,
           "text": "const choose = (u) => { let c = 0; for (const [name, w] of table) { c += w; if (u < c) return name; } return 'early-sample'; };"
         },
         {
-          "line": 156,
+          "line": 168,
           "text": "if (d[0] < gate) {"
         },
         {
-          "line": 158,
+          "line": 170,
           "text": "if (technique === 'poor' && d[2] < 0.3) out.add(choose(d[3]));"
         },
         {
-          "line": 178,
+          "line": 190,
           "text": "if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;"
         },
         {
-          "line": 186,
+          "line": 198,
           "text": "const d = Array.from({ length: 24 }, () => r.uniform());"
         },
         {
-          "line": 188,
+          "line": 200,
           "text": "const has = (f) => faults.includes(f);"
         },
         {
-          "line": 203,
+          "line": 215,
           "text": "const smallVc = vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL;"
         },
         {
-          "line": 204,
+          "line": 216,
           "text": "let vw = smallVc ? 0.5 : vcL < 3 ? 0.75 : 0.75 + 0.05 * Math.floor(d[8] * 6);"
         },
         {
-          "line": 205,
+          "line": 217,
           "text": "vw = Math.max(vw, gridDown(vd + 4 * sigma + 0.03, 0.05) + (vd + 4 * sigma + 0.03 > gridDown(vd + 4 * sigma + 0.03, 0.05) ? 0.05 : 0));"
         },
         {
-          "line": 208,
+          "line": 220,
           "text": "vs = Math.max(vcL < 1 ? 0.2 : 0.5, Math.min(vs, gridDown(0.8 * vi - vw, 0.05)));"
         },
         {
-          "line": 216,
+          "line": 228,
           "text": "if ((vi0 - vd) / vaCase > 0.97) {"
         },
         {
-          "line": 242,
+          "line": 254,
           "text": "const tEndFor = (tauX) => tauX * expInverse((vw + vs) / vHoldEnd);"
         },
         {
-          "line": 243,
+          "line": 255,
           "text": "if (tEndFor(tau) > 3.6) tau = 3.6 / expInverse((vw + vs) / vHoldEnd);"
         },
         {
-          "line": 246,
+          "line": 258,
           "text": "if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;"
         },
         {
-          "line": 262,
+          "line": 274,
           "text": "const vols = Array.from({ length: K + 1 }, (_, k) => round(k * STEP_L, 2));"
         },
         {
-          "line": 263,
+          "line": 275,
           "text": "const wDead = (v) => 1 - Phi((v - vd) / sigma);"
         },
         {
-          "line": 264,
+          "line": 276,
           "text": "const plateau = (v) => 1 - sPlateau * (v - vmid);"
         },
         {
-          "line": 265,
+          "line": 277,
           "text": "const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;"
         },
         {
-          "line": 266,
+          "line": 278,
           "text": "const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);"
         },
         {
-          "line": 267,
+          "line": 279,
           "text": "const meanW = mean(winIdx.map((k) => wDead(vols[k])));"
         },
         {
-          "line": 268,
+          "line": 280,
           "text": "const meanWG = mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k])));"
         },
         {
-          "line": 273,
+          "line": 285,
           "text": "const concAt = (vx, amp, fi) => wDead(vx) * fi + (1 - wDead(vx)) * amp * plateau(vx);"
         },
         {
-          "line": 277,
+          "line": 289,
           "text": "const noisy = (arrFn, fi) => {"
         },
         {
-          "line": 278,
+          "line": 290,
           "text": "const clean = vols.map((v) => arrFn(v));"
         },
         {
-          "line": 279,
+          "line": 291,
           "text": "const e = clean.map((c) => NOISE * c * nz.normal());"
         },
         {
-          "line": 280,
+          "line": 292,
           "text": "const m = mean(winIdx.map((k) => e[k]));"
         },
         {
-          "line": 281,
+          "line": 293,
           "text": "return clean.map((c, k) => (inWin(vols[k]) ? c + e[k] - m : c + e[k]));"
         },
         {
-          "line": 283,
+          "line": 295,
           "text": "const trVol = noisy((v) => concAt(v, ampTr, fiTr) * 100);"
         },
         {
-          "line": 284,
+          "line": 296,
           "text": "const coVol = noisy((v) => concAt(v, ampCo, fiCo) * 100);"
         },
         {
-          "line": 292,
+          "line": 304,
           "text": "const leakShape = (t) => (t <= tIe ? 0 : t >= tExh0 ? 1 : Math.min(1, (t - tIe) / Math.max(tExh0 - tIe, 0.1)));"
         },
         {
-          "line": 293,
+          "line": 305,
           "text": "for (let j = 0; j < nT; j++) {"
         },
         {
-          "line": 296,
+          "line": 308,
           "text": "if (t < tIn0) { vol = 0; co = 0; tr = 0; }"
         },
         {
-          "line": 297,
+          "line": 309,
           "text": "else if (t < tIe) { const x = (t - tIn0) / ti; vol = vi * insp(x); const rise = 1 - Math.exp(-(t - tIn0) / 0.15); co = fiCo * 100 * rise; tr = fiTr * 100 * rise; }"
         },
         {
-          "line": 298,
+          "line": 310,
           "text": "else if (t < tExh0) {"
         },
         {
-          "line": 309,
+          "line": 321,
           "text": "if (pAmp && t >= valStart && t <= valEnd) { const x = (t - valStart) / Math.max(valEnd - valStart, 0.5); p = pAmp * Math.min(1, 6 * x, 6 * (1 - x)); }"
         },
         {
-          "line": 334,
+          "line": 346,
           "text": "byVolume: { volumeL: vols, co: coVol.map((x) => round(x, 6)), tracer: trVol.map((x) => round(x, 6)) },"
         },
         {
-          "line": 335,
+          "line": 347,
           "text": "faults: faults.map((f) => ({ code: f, text: FAULTS[f].text, affectsNumbers: FAULTS[f].numbers, visualOnly: !FAULTS[f].numbers })),"
         },
         {
-          "line": 344,
+          "line": 356,
           "text": "unverified: Object.entries(DLCO_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),"
         },
         {
-          "line": 349,
+          "line": 361,
           "text": "const near = (a, b) => Math.abs(a / b - 1) <= 0.01;"
         },
         {
-          "line": 356,
+          "line": 368,
           "text": "adjustments.push(`Printed VA ${rec.vaL.toFixed(2)} L (${dv >= 0 ? '+' : ''}${dv.toFixed(1)}% from the case value) and DLCO ${rec.dlco.toFixed(1)} mL/min/mmHg (${dd >= 0 ? '+' : ''}${dd.toFixed(1)}%) because of the technique faults in this test.`);"
         },
         {
-          "line": 361,
+          "line": 373,
           "text": "const holdIdx = T.map((t, j) => (t > tIe + 0.2 && t < tExh0 - 0.2 ? j : -1)).filter((j) => j >= 0);"
         },
         {
-          "line": 362,
+          "line": 374,
           "text": "const pHold = holdIdx.map((j) => P[j]);"
         },
         {
-          "line": 363,
+          "line": 375,
           "text": "const volHold = holdIdx.map((j) => V[j]);"
         },
         {
-          "line": 372,
+          "line": 380,
+          "text": "deadSpaceClearanceConfirmed: contamination <= 0.03,"
+        },
+        {
+          "line": 387,
           "text": "valsalva: pHold.length ? Math.max(...pHold) > flagCm : false,"
         },
         {
-          "line": 373,
+          "line": 388,
           "text": "mueller: pHold.length ? Math.min(...pHold) < -flagCm : false,"
         },
         {
-          "line": 374,
+          "line": 389,
           "text": "leak: volHold.length ? volHold[0] - volHold[volHold.length - 1] > 0.1 : false,"
         }
       ]
     },
     {
       "path": "src/core/pleth.js",
-      "sha256": "6b874f7ede8008cf0e13ae9831bb269a416964375020281a958558521d6058be",
+      "sha256": "b96d4598edf50b5641bac9dbf5dc4f0d55d4d89e809d4eaa007f8d2cf0f1a422",
       "reviewLines": [
         {
           "line": 19,
@@ -1436,7 +1456,7 @@
     },
     {
       "path": "src/core/physiology.js",
-      "sha256": "545b1010f28c92669d6050db0655230d1375ef6239050c571d45d70e12a2ad63",
+      "sha256": "a7b15f3ce3a0a49e0286b183aed1d24f4b92b401e4cf5fda69271246e105b827",
       "reviewLines": [
         {
           "line": 40,
@@ -1702,7 +1722,7 @@
     },
     {
       "path": "src/interpret/interpret.js",
-      "sha256": "fa8e71b21c9aff9dc0b25f8bd05c6b7580a6df9a8cfdbfd600ab99b8a73e4ee2",
+      "sha256": "54f2aee5eb7216cfbb950241600d560dd685f39060ad92849cb3aca75ccc1626",
       "reviewLines": [
         {
           "line": 23,
@@ -1758,7 +1778,7 @@
         },
         {
           "line": 133,
-          "text": "? { id: 'hyperinflation', text: 'TLC and RV/TLC above their upper limits, consistent with hyperinflation; interpret in context.', verification: source }"
+          "text": "? { id: 'possible-hyperinflation', text: 'TLC and RV/TLC are above their upper limits, with possible hyperinflation; the FRC/TLC reference is unavailable, so this does not establish the full Table 7 classification.', verification: source }"
         },
         {
           "line": 134,
@@ -2264,7 +2284,7 @@
     },
     {
       "path": "src/app/answers.js",
-      "sha256": "c815dc5a653d2558c3fade561b55675468c8bf461b3445eca3721e07bf7f4556",
+      "sha256": "ff798ce3770c540be678818781544d453c6b38786eccf162e197e8a2a740193d",
       "reviewLines": [
         {
           "line": 23,

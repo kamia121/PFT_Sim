@@ -174,7 +174,7 @@ const plethAcceptable = (grade) => grade === 'A' || grade === 'B';
 function dlcoTruth(c) {
   const g = c.dlcoTrace?.grade;
   if (!g) return null;
-  const reasons = g.acceptable ? [] : [...g.invalid, ...g.failed].map((r) => DLCO_REASON_TEXT[r] ?? r);
+  const reasons = g.acceptable ? [] : [...g.invalid, ...g.failed, ...(g.unknown ?? [])].map((r) => DLCO_REASON_TEXT[r] ?? r);
   return { acceptable: Boolean(g.acceptable), reasons };
 }
 function plethTruth(c) {

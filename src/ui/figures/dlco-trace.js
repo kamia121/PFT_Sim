@@ -147,8 +147,8 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
   out.push(text(14, cy + 14, `VA ${num(v.vaL, 2)} L  ·  DLCO ${num(v.dlcoMlMinMmHg, 1)} mL/min/mmHg  ·  KCO ${num(v.kco, 2)} mL/min/mmHg/L  ·  PB ${data.barometricMmHg} mmHg`, { size: 10, fill: palette.text }));
   if (showQuality && data.grade) {
     const g = data.grade;
-    const reasons = [...g.invalid, ...g.failed, ...g.noted];
-    const s = `Test grade ${g.grade}${g.wouldBeRejected ? ', would be rejected' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
+    const reasons = [...g.invalid, ...g.failed, ...g.noted, ...(g.unknown ?? [])];
+    const s = `Simulator rubric ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
     out.push(text(14, cy + 28, s.length > 118 ? `${s.slice(0, 115)}...` : s, { size: 10, fill: g.wouldBeRejected ? palette.second : palette.text }));
   }
   out.push(close());

@@ -248,7 +248,7 @@ test('new maneuver faults: leak, mouthpiece obstruction, pause at TLC and submax
       const ev = c.spirometry.pre.summary.evaluations;
       for (const i of idx) {
         if (fault === 'leak' || fault === 'mouthpiece-obstruction') { assert.equal(ev[i].fev1.acceptable, false); assert.equal(ev[i].fvc.acceptable, false); if (mans[i].faults.length === 1) assert.equal(ev[i].fvc.usable, true); }
-        if (fault === 'pause-at-TLC') { assert.ok(mans[i].pauseSeconds > 2); assert.equal(ev[i].fev1.acceptable, false); }
+        if (fault === 'pause-at-TLC') { assert.ok(mans[i].pauseSeconds > 2); assert.ok(ev[i].fev1.warnings.length); }
         if (fault === 'cough') assert.equal(ev[i].fev1.acceptable, false);
         if (fault === 'glottic-closure') assert.equal(ev[i].fvc.acceptable, false);
       }

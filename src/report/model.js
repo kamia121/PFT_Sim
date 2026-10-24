@@ -122,14 +122,14 @@ function qualitySummary(caseData) {
   const out = [{ test: 'Spirometry', lines: [spirometryGradeLine(caseData).replace(/^Test quality: /, '')] }];
   const p = caseData.pleth;
   if (p) {
-    const lines = [`FRCpleth grade ${p.grade}; ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
+    const lines = [`FRCpleth simulator rubric ${p.grade} (FRC only; not an overall ATS/ERS grade); ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
     for (const f of p.flags ?? []) lines.push(f.text);
     out.push({ test: 'Lung volumes (plethysmography)', lines });
   }
   const g = caseData.dlcoTrace?.grade;
   if (g) {
-    const lines = [`Single-breath test grade ${g.grade}${g.acceptable ? ' (acceptable)' : ' (would be rejected)'}.`];
-    for (const [label, list] of [['Invalid', g.invalid], ['Failed criterion', g.failed], ['Noted', g.noted]]) for (const x of list ?? []) lines.push(`${label}: ${x}.`);
+    const lines = [`Single-breath simulator rubric ${g.grade} (not an ATS/ERS session grade)${g.acceptable ? ' (acceptable)' : ' (requires review)'}.`];
+    for (const [label, list] of [['Invalid', g.invalid], ['Failed criterion', g.failed], ['Noted', g.noted], ['Unconfirmed criterion', g.unknown]]) for (const x of list ?? []) lines.push(`${label}: ${x}.`);
     out.push({ test: 'DLCO', lines });
   }
   return out;
@@ -506,7 +506,7 @@ export function buildReportModel(caseData, interp, options = {}) {
         ...(includeGrades ? { acceptable: t.acceptable === undefined ? '' : t.acceptable ? 'yes' : 'no' } : {}),
       }));
       const spread = pl.vals.length > 1 ? (100 * (Math.max(...pl.vals) - Math.min(...pl.vals))) / pl.mean : null;
-      const bits = [pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `grade ${caseData.pleth.grade}`].filter(Boolean);
+      const bits = [pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `FRC-only simulator rubric ${caseData.pleth.grade}`].filter(Boolean);
       tables.push({ id: 'pleth', caption: 'Plethysmography replicate determinations', columns: pcols, rows: prow, footnote: `${bits.join('; ')}.` });
     }
     sections.push({ id: 'volumes', title: 'Lung volumes', tables, figures: [], figureIds: [], notes: [] });

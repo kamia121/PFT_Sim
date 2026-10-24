@@ -461,7 +461,7 @@
    "expect": {
     "pattern": "obstruction",
     "flags": [
-     "hyperinflation",
+     "possible-hyperinflation",
      "air-trapping"
     ]
    }

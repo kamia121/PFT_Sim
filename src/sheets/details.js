@@ -110,7 +110,7 @@ function plethTable(model, caseData, { showGrades, truth }) {
   }));
   // The model's footnote ends with the grade when it was built with grades; the grade is added back only when it is to be shown.
   const base = src.footnote.replace(/;\s*grade [A-F]\b/, '').replace(/\.\s*$/, '');
-  const verdict = showGrades ? [`; grade ${caseData.pleth.grade}`, truth.pleth ? (truth.pleth.acceptable ? ', acceptable' : ', not acceptable') : ''].join('') : '';
+  const verdict = showGrades ? [`; FRC-only simulator rubric ${caseData.pleth.grade}`, truth.pleth ? (truth.pleth.acceptable ? ', acceptable' : ', not acceptable') : ''].join('') : '';
   return { id: 'd-pleth', caption: 'Plethysmography: panting trials', columns, rows, footnote: `${base}${verdict}.` };
 }
 

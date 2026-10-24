@@ -223,7 +223,7 @@ test('600 random cases: final statements agree with the key, name the caveats an
     if (c.scenario?.height) assert.ok(!text.includes(`${c.scenario.height.trueCm} cm`), `${label}: true height disclosed`);
     for (const d of c.scenario?.decoyCaveats ?? []) assert.ok(!text.includes(d.text) && !text.includes(caveatCore(d.text)), `${label}: decoy caveat stated`);
     if (!interp.bd) assert.ok(!/bronchodilator/i.test(text), `${label}: bronchodilator mentioned without a study: ${text.match(/.{0,80}bronchodilator.{0,80}/i)?.[0]}`);
-    if (interp.pattern === 'prism') assert.match(n.finalStatement, /PRISm/);
+    if (interp.pattern === 'prism') assert.match(n.finalStatement, /preserved-ratio spirometric impairment/);
 
     // limitations section: major first, then minor, no-effect items stated as such
     const lim = n.sections.find((s) => s.id === 'limitations').text;
@@ -439,7 +439,7 @@ const GOLDEN = [
   {
     name: 'obstruction with air trapping and hyperinflation',
     build: () => golden({ fev1: 1.9, fvc: 5.0, volumes: { tlc: 8.8, rv: 3.2, vc: 5.6, frc: 4.6, erv: 1.4, ic: 4.2 } }),
-    final: [/consistent with airflow obstruction/, /of severe severity/, /compatible with hyperinflation/, /consistent with air trapping/],
+    final: [/consistent with airflow obstruction/, /of severe severity/, /possible hyperinflation/, /Gas trapping is one explanation/],
     forbid: [/consistent with restriction/, /diagnos/],
     key: { pattern: 'obstruction', severity: 'severe' },
   },
@@ -493,7 +493,7 @@ const GOLDEN = [
   {
     name: 'spirometry only: preserved ratio impaired spirometry needs volumes',
     build: () => golden({ fev1: 2.6, fvc: 3.0, volumes: null, dlco: null }),
-    final: [/preserved ratio impaired spirometry \(PRISm\)/, /lung volumes are needed/, /not measured/],
+    final: [/preserved-ratio spirometric impairment/, /lung volumes are needed/, /not measured/],
     forbid: [/consistent with restriction/, /bronchodilator/],
     key: { pattern: 'prism', severity: null, dlco: null },
     flaws: ['restriction-without-tlc'],

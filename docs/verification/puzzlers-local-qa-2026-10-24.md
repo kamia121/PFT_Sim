@@ -29,3 +29,7 @@ Chrome manual QA, local `http://127.0.0.1:5173/puzzlers.html`:both cases complet
 The feature makes no numerical GLI classification claim. Official calculator output verification remains pending; Chrome's form visibly requires CAPTCHA and reports a quota warning. No CAPTCHA attempt or API-key purchase. The original printed coefficient-table PDFs are not in the local verification zip. Remaining broad-rule discrepancies are listed in the audit, not silently called fixed.
 
 Actual Claude consultation completed with Opus5.5/High under PFT Simulator in Chrome: https://claude.ai/code/session_01GZTU9WWmPzxJrqNfXkLgQ7 . No desktop PFT project was available per parent registry lookup, so the local checkout is in the delegated task workspace rather than another desktop project.
+
+## Follow-up review QA
+
+Used the user's **Chrome**, browser 3, against the same local server. The main practice page loads and shows the revised preserved-ratio option. The Method tab shows the inclusive Table 7 convention, procedural pause warning, explicit DLCO/FRC simulator-rubric limitations, and the accurate distinction between prior-transcription/archived-array agreement and independent printed-table verification. The Advanced case puzzlers link opens the authored cases. Choosing the reference-header check and checking the answer locks all choices, focuses the Supported explanation, and offers Reveal next context. No external publication or official calculator attempt was performed in this follow-up.

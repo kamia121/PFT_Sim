@@ -95,7 +95,7 @@ test('acceptability is hidden unless showQuality is set', () => {
   assert.ok(!/acceptable|rejected|usable|Grade/.test(plethShutter.render(shutter, { palette: PALETTES.dark }).replace('mean of the acceptable trials', '')));
   assert.ok(/rejected|usable/.test(plethShutter.render(shutter, { palette: PALETTES.dark, showQuality: true })));
   assert.ok(!/Test grade|rejected/.test(dlcoTrace.render(dlco, { palette: PALETTES.dark })));
-  assert.match(dlcoTrace.render(dlco, { palette: PALETTES.dark, showQuality: true }), /Test grade D, would be rejected: Valsalva/);
+  assert.match(dlcoTrace.render(dlco, { palette: PALETTES.dark, showQuality: true }), /Simulator rubric D, requires review: Valsalva/);
 });
 
 test('rendering is deterministic and honors size, title and description options', () => {

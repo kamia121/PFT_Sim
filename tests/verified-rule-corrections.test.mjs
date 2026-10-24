@@ -35,7 +35,8 @@ test('large TLC and large RV alone do not establish hyperinflation or gas trappi
   assert.ok(!a.flags.some((f) => ['hyperinflation', 'air-trapping'].includes(f.id)));
   assert.ok(a.flags.some((f) => f.id === 'high-tlc'));
   const b = interpret(r(), resolve({ tlc: 2, rv_tlc: 2 }));
-  assert.ok(b.flags.some((f) => f.id === 'hyperinflation'));
+  assert.ok(!b.flags.some((f) => f.id === 'hyperinflation'));
+  assert.match(b.flags.find((f) => f.id === 'possible-hyperinflation').text, /FRC\/TLC reference is unavailable/);
   const c = interpret(r(), resolve({ tlc: -2, rv_tlc: 2 }));
   assert.ok(!c.flags.some((f) => f.id === 'air-trapping'));
   assert.ok(c.flags.some((f) => f.id === 'high-rv-tlc'));

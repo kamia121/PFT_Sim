@@ -79,7 +79,7 @@ const NOUN = {
   restriction: 'restriction',
   mixed: 'mixed obstruction and restriction',
   nonspecific: 'a nonspecific pattern',
-  prism: 'preserved ratio impaired spirometry (PRISm)',
+  prism: 'preserved-ratio spirometric impairment',
 };
 const CAVEAT_NO_EFFECT = /(?:does|do) not change the interpretation/i;
 
@@ -298,9 +298,9 @@ T('p-nonspecific',
   (p) => `With a preserved FEV1/FVC ratio and a TLC within the reference range, ${p.low} ${p.relL}, consistent with a nonspecific pattern${sev(p)}.`,
   (p) => `Expiration ends early relative to the volume the lungs contain: ${p.low} ${p.relL} while the ratio and the TLC are preserved, consistent with a nonspecific pattern${sev(p)}.`);
 T('p-prism',
-  (p) => `${cap(p.low)} ${p.relL} with a preserved FEV1/FVC ratio, consistent with preserved ratio impaired spirometry (PRISm)${sev(p)}.`,
-  (p) => `The ratio is preserved while ${p.low} ${p.relL}, consistent with preserved ratio impaired spirometry (PRISm)${sev(p)}.`,
-  (p) => `A low vital capacity or first-second volume with a preserved ratio is consistent with preserved ratio impaired spirometry (PRISm)${sev(p)}, where ${p.low} ${p.relL}.`);
+  (p) => `${cap(p.low)} ${p.relL} with a preserved FEV1/FVC ratio, consistent with preserved-ratio spirometric impairment${sev(p)}.`,
+  (p) => `The ratio is preserved while ${p.low} ${p.relL}, consistent with preserved-ratio spirometric impairment${sev(p)}.`,
+  (p) => `A low vital capacity or first-second volume with a preserved ratio is consistent with preserved-ratio spirometric impairment${sev(p)}, where ${p.low} ${p.relL}.`);
 T('p-indeterminate',
   () => 'No FEV1 or FVC could be reported from this session, so no pattern can be assigned and the study cannot be interpreted.',
   () => 'The session yielded no reportable FEV1 or FVC, and the study cannot be interpreted.',
@@ -331,10 +331,10 @@ T('vf-tlc',
   (p) => `the ${p.mz} is ${p.rel}${p.hyper}`,
   (p) => `lung volumes show a ${p.mz} that is ${p.rel}${p.hyper}`,
   (p) => `${p.mz} is found ${p.rel}${p.hyper}`);
-T('v-air-trapping',
-  (p) => `the ${p.list} ${p.be} ${p.rel}, consistent with air trapping`,
-  (p) => `gas retained at the end of expiration is reflected in the ${p.list}, which ${p.be} ${p.rel}, consistent with air trapping`,
-  (p) => `${p.list} ${p.be} ${p.rel}, consistent with air trapping`);
+T('v-volume-qualified',
+  (p) => `${p.list}: ${p.note}`,
+  (p) => `for ${p.list}, ${p.note}`,
+  (p) => `${p.list}; ${p.note}`);
 T('v-low-erv',
   (p) => `the ${p.mz} is ${p.rel}, lowering the FRC, at a body mass index of ${p.bmi} kg/m²${p.note}`,
   (p) => `${p.mz} is ${p.rel}, which lowers the FRC; body mass index is ${p.bmi} kg/m²${p.note}`,
@@ -718,10 +718,9 @@ function patternSentence(ctx, P, claim, sevState, skipNear = false) {
 }
 
 function airTrappingFragment(ctx, P) {
-  const ks = ['rv_tlc'].filter((k) => ctx.has(k) && ctx.m[k].label === 'high');
-  if (!ks.length) return null;
-  const allBorder = ks.every((k) => ctx.m[k].borderline);
-  return P('v-air-trapping', { list: list(ks.map((k) => ctx.mz(k))), be: ks.length > 1 ? 'are' : 'is', rel: allBorder ? REL['high-borderline'] : REL.high });
+  const finding = ctx.interp.flags.find((f) => ['high-rv-tlc', 'air-trapping'].includes(f.id));
+  if (!finding || !ctx.has('rv_tlc')) return null;
+  return P('v-volume-qualified', { list: ctx.mz('rv_tlc'), note: finding.text.replace(/\.$/, '').replace(/\. /g, '; ') });
 }
 
 function lowErvFragment(ctx, P) {
@@ -731,7 +730,8 @@ function lowErvFragment(ctx, P) {
 }
 
 function tlcFragment(ctx, P) {
-  const hyper = ctx.m.tlc.label === 'high' ? (ctx.m.rv_tlc?.label === 'high' ? ', with an elevated RV/TLC compatible with hyperinflation' : ', requiring fractional volumes and context before calling hyperinflation') : '';
+  const finding = ctx.interp.flags.find((f) => ['possible-hyperinflation', 'high-tlc'].includes(f.id));
+  const hyper = finding ? `; ${finding.text.replace(/\.$/, '').replace(/\. /g, '; ')}` : '';
   return P('vf-tlc', { mz: ctx.mz('tlc'), rel: ctx.rel('tlc'), hyper });
 }
 
@@ -1102,8 +1102,7 @@ function buildFindings(ctx) {
   if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on ${ctx.pattern === 'restriction' ? 'TLC' : 'FEV1'} z-score).` : ctx.sevNotGraded ? 'Severity: mild obstruction despite FEV1 within its reference range.' : 'Severity: not graded for this pattern.');
   for (const k of ctx.borderMeasures) add(`borderline-${k}`, `Borderline: ${ctx.mz(k)}.`);
   if (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc') add('volumes-needed', 'Lung volumes are needed to classify this pattern.');
-  if (ctx.hasVol && ctx.m.tlc.label === 'high') add(ctx.m.rv_tlc?.label === 'high' ? 'hyperinflation' : 'high-tlc', ctx.m.rv_tlc?.label === 'high' ? 'TLC and RV/TLC above their upper limits: compatible with hyperinflation in context.' : 'TLC above its upper limit; increased TLC alone does not establish hyperinflation.');
-  if (ctx.hasVol && ctx.m.rv_tlc?.label === 'high') add('air-trapping', 'RV/TLC above its upper limit; gas trapping, restriction, muscle weakness and effort can affect the ratio.');
+  for (const finding of ctx.interp.flags.filter((f) => ['possible-hyperinflation', 'high-tlc', 'high-rv-tlc', 'high-rv', 'air-trapping'].includes(f.id))) add(finding.id, finding.text);
   if (ctx.hasVol && ctx.has('erv') && ctx.m.erv.label === 'low') add('low-erv', `ERV below the lower limit of normal${ctx.bmi !== null ? `; body mass index ${ctx.bmi.toFixed(1)} kg/m²` : ''}.`);
   if (ctx.bd) {
     add('bronchodilator', `Bronchodilator response: ${ctx.bd.rule2022.significant ? 'significant' : 'not significant'} by the 2022 criterion and ${ctx.bd.rule2005.significant ? 'significant' : 'not significant'} by the earlier criterion.`);
@@ -1315,7 +1314,7 @@ export function extractFacts(text) {
         else if (/airflow obstruction/.test(x)) f.add('pattern:obstruction');
         else if (/restriction/.test(x)) f.add('pattern:restriction');
         else if (/nonspecific pattern/.test(x)) f.add('pattern:nonspecific');
-        else if (/PRISm/.test(x)) f.add('pattern:prism');
+        else if (/preserved-ratio spirometric impairment/.test(x)) f.add('pattern:prism');
         else if (/normal spirometry/.test(x)) f.add('pattern:normal');
         if (/hyperinflation/.test(x)) f.add('hyperinflation');
         if (/air trapping/.test(x)) f.add('air-trapping');

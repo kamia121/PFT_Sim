@@ -180,7 +180,7 @@ test('a plethysmography replicate table appears only when caseData.pleth exists'
   assert.equal(t.rows.length, 3);
   assert.equal(t.rows[1].frc, 3.2);
   assert.match(t.footnote, /Mean FRCpleth 3\.10 L/);
-  assert.match(t.footnote, /grade A/);
+  assert.match(t.footnote, /FRC-only simulator rubric A/);
 });
 
 test('the model never carries the key or the ground truth', () => {

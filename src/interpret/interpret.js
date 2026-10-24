@@ -56,7 +56,7 @@ export const PATTERNS = {
   restriction: 'Restriction',
   mixed: 'Mixed obstruction and restriction',
   nonspecific: 'Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)',
-  prism: 'Preserved ratio with low FVC or FEV₁ (PRISm; volumes needed)',
+  prism: 'Preserved-ratio spirometric impairment (TLC needed)',
   indeterminate: 'Not interpretable',
 };
 
@@ -130,7 +130,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     const highRatio = have('rv_tlc') && m.rv_tlc.label === 'high';
     const source = 'ERS/ATS 2022 Figure 10, Table 7 and pp20–22; FRC/TLC reference unavailable in this port';
     if (tlcFlag(m, 'tlc')) flags.push(highRatio
-      ? { id: 'hyperinflation', text: 'TLC and RV/TLC above their upper limits, consistent with hyperinflation; interpret in context.', verification: source }
+      ? { id: 'possible-hyperinflation', text: 'TLC and RV/TLC are above their upper limits, with possible hyperinflation; the FRC/TLC reference is unavailable, so this does not establish the full Table 7 classification.', verification: source }
       : { id: 'high-tlc', text: 'TLC above its upper limit. Increased TLC alone does not establish hyperinflation; fractional volumes and context are needed.', verification: source });
     if (highRatio) flags.push({ id: low('tlc') ? 'high-rv-tlc' : 'air-trapping', text: 'RV/TLC above its upper limit. Gas trapping is one explanation; restriction, muscle weakness and effort also affect this ratio.', verification: source });
     else if (have('rv') && m.rv.label === 'high') flags.push({ id: 'high-rv', text: 'RV above its upper limit; review fractional volumes, technique and clinical context.', verification: source });
