@@ -1,0 +1,29 @@
+✔ every item is well formed for every archetype, technique, panel and equation (293.530833ms)
+✔ categorical keys equal the engine key under the displayed equation, with the other equation as the alternative (193.057584ms)
+✔ public items carry no key, no explanation payload and no correctness marker (67.399875ms)
+✔ items are a pure function of the descriptor (69.023875ms)
+✔ option order depends on the seed, keeps the same set, and keeps "none" and ordinal scales fixed (2.850167ms)
+✔ decoy caveats are true statements whose subject is absent from the case, and true caveats follow the case (170.445708ms)
+✔ the limitations key is "none" exactly when no statement applies (169.119417ms)
+✔ the equation sensitivity item appears only when a classification changes, and its distractors change nothing (216.756583ms)
+✔ the skills filter removes items (2.348834ms)
+✔ intake notes: a pool of twelve with variants, a seeded subset, level-dependent count (0.490416ms)
+✔ statements vary between cases with different seeds (28.417292ms)
+✔ the simulation uses the real narrative and scenario modules (0.337208ms)
+✔ final interpretation: the longest and the most hedged option are not right more often than chance (8.167042ms)
+✔ final interpretation: the phrases that used to mark a flawed statement are no more common in wrong options than in the right one (8.177625ms)
+✔ final interpretation: option lengths within a case stay close, and scenario limitations are not quoted (2.067416ms)
+✔ limitations: choose-all and longest-option strategies do not beat random selection by 10 points (4.095084ms)
+✔ limitations: true and irrelevant statements share length and hedging, and distractors are general truths tied to absent case facts (1.834542ms)
+✔ categorical unavailable key is an offered reportability answer with adapters disabled (13.272708ms)
+✔ categorical pending key is an offered reportability answer with adapters disabled (3.960083ms)
+✔ fallback preserves qualified diffusion and lung-volume reporting without conflating spirometry quality (4.880125ms)
+✔ categorical answer keys remain available across source-backed normal and failed cases (23.96425ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1436.695792

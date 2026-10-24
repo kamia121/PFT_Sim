@@ -171,6 +171,9 @@ export function claimsFrom(prep) {
     hyperinflation: a.flags.some((x) => x.id === 'hyperinflation'),
     dlco: a.dlco ? a.dlco.category : null,
     dlcoSubtype: a.dlco?.subtype ?? null,
+    dlcoSession: c.report.dlcoQuality?.status ?? null,
+    volumeSession: c.report.volumeQuality?.status ?? null,
+    volumeQualification: a.flags.some((f) => f.id === 'volume-measurement-limited'),
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
     bd: a.bd ? (a.bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     equation: cmp.labelChanges.length > 0 || cmp.patternChanged ? 'dependent' : 'silent',
@@ -189,7 +192,7 @@ export function renderClaims(k, v = 0) {
   const sev = k.severity ? `, graded ${k.severity} by the ${k.pattern === 'restriction' ? 'TLC' : 'FEV₁'} z-score` : '';
   const text = {
     normal: k.hasVolumes
-      ? V(['The FEV₁/FVC ratio, the FVC, the lung volumes and the gas-transfer measurements, where measured, lie within their reference ranges, so there is no obstructive or restrictive pattern.', 'Airflow, lung volumes and gas transfer fall within their reference ranges, without an obstructive or a restrictive pattern.'], v)
+      ? V(['Spirometry shows no airflow obstruction; the reported TLC is not below its lower limit, so restriction is not demonstrated.', 'The ratio and FVC are within their ranges, and the reported TLC does not establish restriction.'], v)
       : V(['The FEV₁/FVC ratio and the FVC are within their reference ranges, which excludes airflow obstruction but leaves restriction unassessed without lung volumes.', 'The ratio and the FVC are within their ranges; obstruction is excluded, and restriction cannot be assessed without lung volumes.'], v),
     obstruction: V([`The FEV₁/FVC ratio is below its lower limit of normal, which defines airflow obstruction${sev}.`, `Airflow obstruction is present because the FEV₁/FVC ratio falls below its lower limit of normal${sev}.`], v)
       + (k.airTrapping ? ' Elevated RV/TLC may reflect air trapping; technique and clinical context are needed.' : '') + (k.hyperinflation ? ' The hyperinflation finding requires review of the fractional volumes and clinical context.' : ''),
@@ -201,11 +204,14 @@ export function renderClaims(k, v = 0) {
     indeterminate: 'No usable maneuver was recorded, so the study cannot be interpreted.',
   }[k.pattern];
   s.push(text);
-  if (k.dlco) {
+  if (k.dlco && !['pending', 'unavailable'].includes(k.dlcoSession)) {
     const sub = k.dlco === 'reduced' && k.dlcoSubtype ? SUBTYPE_TEXT[k.dlcoSubtype] ?? '' : '';
     const name = k.hbMissing ? 'DLCO, classified without hemoglobin adjustment because no hemoglobin was available,' : 'hemoglobin-adjusted DLCO';
     s.push(k.dlco === 'reduced' ? `The ${name} is reduced${sub}.` : k.dlco === 'raised' ? `The ${name} is above its upper limit of normal.` : `The ${name} is within its reference range.`);
   }
+  if (['pending', 'unavailable'].includes(k.dlcoSession)) s.push(`DLCO is not reportable from this ${k.dlcoSession} session; no diffusion classification can be assigned.`);
+  else if (k.dlcoSession === 'qualified') s.push('The reported diffusion values require qualification because the session did not meet the best reporting criteria.');
+  if (k.volumeQualification) s.push(k.hasVolumes ? 'The reported lung volumes require qualification; interpret them with the recorded measurement limitations.' : `Complete TLC/RV are not reportable from this ${k.volumeSession ?? 'limited'} session; restriction remains unassessed.`);
   if (k.bd) s.push(k.bd === 'significant' ? 'The bronchodilator response is significant by the 2022 criterion.' : 'The bronchodilator response is not significant by the 2022 criterion.');
   if (k.equation === 'dependent') s.push('Because a spirometry classification changes between GLI-2012 and GLI Global, the result is borderline and the reference equation used should be stated.');
   if (k.equation === 'silent' || k.equation === 'independent') s.push('The spirometry classification is the same under GLI-2012 and GLI Global, so the result does not depend on the reference equation chosen.');
