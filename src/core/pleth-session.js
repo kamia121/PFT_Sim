@@ -96,7 +96,7 @@ function countGrade(statuses) {
 export function summarizePlethSession(input) {
   const comparator = plethVcComparator(input), warnings = [], excluded = [];
   const rvVcPolicy = input.rvVcPolicy ?? 'retained-linked';
-  if (rvVcPolicy !== 'retained-linked') throw new RangeError('Unsupported RV VC-pool policy. Current retained-linked scope is an explicit engineering choice pending source adjudication.');
+  if (rvVcPolicy !== 'retained-linked') throw new RangeError('Unsupported RV VC-pool policy. Reporting uses retained measurements and their associated spirometry under the 2023 reporting section.');
   if (input.trials.length > 8) throw new RangeError('This simulator adapter supports at most eight pleth trials (project limit, not a source criterion).');
   const ids = input.trials.map((t) => t.id);
   if (ids.some((id) => typeof id !== 'string' && !Number.isFinite(id) || id === '')) throw new TypeError('Pleth measurements require stable string or finite numeric IDs.');
@@ -130,7 +130,7 @@ export function summarizePlethSession(input) {
     status: selection.pending || inconsistent ? 'needs-review' : frc === null ? 'unavailable' : frcOnly ? 'frc-only' : 'reported',
     comparator, assessed, selectedIds: selected.map((t) => t.id), pendingIds: (selection.pendingRows ?? []).map((t) => t.id), excluded, selectionPolicy: selection.policy,
     engineeringPolicy: 'Largest qualifying acceptable subset; equal-size subsets prefer smaller spread, then earlier acquisition. Equidistant outliers discard the latest acquisition. Prefer full volumes from eligible pairs over a stronger FRC-only pool. No numerical choice resolves a discordant pair.',
-    rvVcPolicy: { id: rvVcPolicy, verification: 'engineering: retained eligible linked SVC; exact scope of largest VC measured awaits source adjudication before product integration' },
+    rvVcPolicy: { id: rvVcPolicy, verification: 'source-context interpretation: pp18–19 select measurements and associated spirometry for FRC and other volumes; Table 4 counts retained measurements; pp4–5 derive RV using largest VC. Only eligible retained linked VC is used.' },
     grades: { frc: frcGrade, svc: selection.pending ? null : svcGrade, repeatability: repeatabilityGrade, overall: inconsistent ? null : overallGrade },
     repeatability: { fraction: spread, assessable: spread !== null, n: selected.length },
     volumes: { method: 'plethysmography', frc, tlc, rv, vc, ic, erv: vc === null ? null : vc - ic },

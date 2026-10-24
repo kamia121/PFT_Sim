@@ -55,7 +55,7 @@ export function caseFacts(prep) {
     // A missing hemoglobin is null. It is neither low nor normal, and `null < 11` is true in JavaScript, so it is kept apart on purpose.
     hb: hbKnown(c.dlco) ? c.dlco.hbGdl : null,
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
-    hasVolumes: Boolean(c.volumes), hasDlco: Boolean(c.dlco),
+    hasVolumes: Number.isFinite(c.volumes?.tlc), hasDlco: Boolean(c.dlco),
     lowErv: a.flags.some((x) => x.id === 'low-erv'),
     europeanApplied: measures.some((m) => m.available !== false && m.matched === false),
     unavailable: measures.some((m) => m.available === false),
@@ -95,7 +95,7 @@ const RULES = [
     applies: (f) => !f.equationFlip && f.borderline, decoy: (f) => !f.borderline, why: 'No value lies within 0.25 z-score units of a limit.' },
   { id: 'fb-volumes-needed', topic: 'volumes', weight: 'major', text: 'Without a measured TLC a low FVC cannot be assigned to restriction or to air trapping, so lung volumes are needed.',
     applies: (f, a) => ['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: (f) => f.hasVolumes, why: 'Lung volumes were measured.' },
-  { id: 'fb-no-volumes', topic: 'volumes', weight: 'minor', text: 'When lung volumes and diffusing capacity are not measured, restriction and gas-transfer impairment are not assessed.',
+  { id: 'fb-no-volumes', topic: 'volumes', weight: 'minor', text: 'When TLC is unavailable, restriction cannot be assessed; available diffusing-capacity measurements are interpreted separately.',
     applies: (f, a) => !f.hasVolumes && !['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: () => false, why: '' },
   { id: 'fb-european', topic: 'european', weight: 'minor', text: 'Lung volume and diffusing capacity equations derived in people of European ancestry may represent a patient of another group less well, which limits how firmly those indices can be classified.',
     applies: (f) => f.europeanApplied, decoy: (f) => !f.europeanApplied && (f.hasVolumes || f.hasDlco), why: 'The reference equations for volumes and diffusing capacity match the group on the requisition.' },
@@ -174,7 +174,7 @@ export function claimsFrom(prep) {
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
     bd: a.bd ? (a.bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     equation: cmp.labelChanges.length > 0 || cmp.patternChanged ? 'dependent' : 'silent',
-    hasVolumes: Boolean(c.volumes),
+    hasVolumes: Number.isFinite(c.volumes?.tlc),
   };
 }
 

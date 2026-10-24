@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadDatasets } from '../src/reference/load.js';
 import { createReference } from '../src/reference/gli.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV2 } from '../src/core/case.js';
+// Preserve the legacy v2 scenario arithmetic contract; v3 measurement selection is tested separately.
+const buildCase = (input, ds) => buildCaseV2({ v: 2, ...input }, ds);
 import { interpret } from '../src/interpret/interpret.js';
 import { ARCHETYPES, resolveDescriptor } from '../src/core/descriptor.js';
 import { selectScenarios, applyScenarios, LEVEL_TARGETS } from '../src/scenarios/apply.js';

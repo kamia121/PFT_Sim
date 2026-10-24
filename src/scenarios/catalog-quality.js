@@ -336,7 +336,7 @@ export const QUALITY_SCENARIOS = [
     // The plethysmographic IC error lowers IC, VC and TLC; RV (FRC minus ERV) is unchanged, so RV/TLC rises. The single-breath VA comes from a separate maneuver and does not follow the artifactual TLC.
     effects: { volumes: { icMult: [0.82, 0.92] } },
     caveats: [
-      { id: 'pleth-ic-short-tlc-low', weight: 'major', text: 'TLC is the sum of FRC and inspiratory capacity, so a linked maneuver that does not reach total lung capacity lowers IC, VC and TLC. RV is unchanged, so RV/TLC rises artifactually. The single-breath VA comes from a separate maneuver and does not share the error, so an unusually high VA relative to the plethysmographic TLC points to the TLC as the low measurement. A TLC below the lower limit may be a technique artifact.' },
+      { id: 'pleth-ic-short-tlc-low', weight: 'major', text: 'An incomplete linked inspiration makes a derived TLC unreliable. Check maximal inspiration and linked IC/SVC quality before interpreting the volumes; affected maneuvers need qualification or rejection, and a complete TLC/RV report may be unavailable. Single-breath VA is measured separately and must not be forced to follow an unreliable plethysmographic TLC.' },
     ],
     decoyCaveats: [{ id: 'decoy-ic-short-frc', text: 'The short inspiratory capacity lowers the FRC.' }],
     confidence: 'medium', source: 'PLE-06; S3; effect mem',

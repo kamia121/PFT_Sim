@@ -15,8 +15,8 @@ export const TECHNIQUE_LEVELS = ['good', 'fair', 'poor'];
 /**
  * Scenario levels: none (a plain case, byte-identical to cases made before the scenario layer), then 1, 2, and 3 or 4
  * encounter scenarios (src/scenarios). The keys `sc` (level) and `si` (comma-separated explicit scenario ids) are
- * optional additions to the link: the generator version stays 1 because a link without them reproduces exactly the
- * case it always did. Explicit ids are always applied, and the level is the target for the total count.
+ * optional additions to a versioned link. Version 3 changes linked volume measurements; explicit version 2
+ * retains its legacy measurement builder. Explicit ids are always applied, and the level is the target for the total count.
  */
 export const SCENARIO_LEVELS = ['none', 'light', 'moderate', 'heavy'];
 /** Requisition-style labels. Wording is a placeholder pending physician review. */
@@ -74,6 +74,7 @@ export function deriveDemographics(seed, archetype = 'normal', severity = 2) {
 export function resolveDescriptor(input) {
   if (!Number.isInteger(input.seed) || input.seed < 0 || input.seed > 0xffffffff) throw new RangeError('seed must be an unsigned 32-bit integer');
   if (!ARCHETYPES.includes(input.archetype)) throw new RangeError(`unknown archetype: ${input.archetype}`);
+  if (input.v !== undefined && ![2, GENERATOR_VERSION].includes(input.v)) throw new RangeError('unsupported generator version');
   const technique = input.technique ?? 'good';
   if (!TECHNIQUE_LEVELS.includes(technique)) throw new RangeError(`unknown technique: ${technique}`);
   const base = deriveDemographics(input.seed, input.archetype, input.severity ?? 2);
@@ -117,7 +118,7 @@ export function parseDescriptor(query) {
   const p = new URLSearchParams(query);
   if (!p.has('s') || !p.has('a')) throw new RangeError('a case link needs a seed (s) and an archetype (a)');
   const v = Number(p.get('v'));
-  if (v !== GENERATOR_VERSION) throw new RangeError(`this link was made with generator version ${p.get('v')}, which this build cannot reproduce`);
+  if (![2, GENERATOR_VERSION].includes(v)) throw new RangeError(`this link was made with generator version ${p.get('v')}, which this build cannot reproduce`);
   const num = (k) => (p.has(k) ? Number(p.get(k)) : undefined);
   return resolveDescriptor({
     v,

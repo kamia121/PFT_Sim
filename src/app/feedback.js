@@ -104,7 +104,7 @@ export function scoreAll({ caseData, interp, interpOther, equation, responses, i
 const HONESTY_NOTE = {
   accurate: '',
   software: 'The printed grades follow what software can detect (back-extrapolated volume, plateau, expiratory time and spread between maneuvers). A cough, glottic closure, a leak or variable effort can pass those checks, so a printed grade can sit over a flawed curve.',
-  generic: 'The statement was general and named no grade, so it commits to nothing that the maneuvers could contradict.',
+  generic: 'The statement named no grade. Any claim of acceptable or reproducible testing still needs to agree with the recorded measurements.',
   optimistic: 'The statement described the test as better than the maneuvers earn.',
   pessimistic: 'The statement described the effort as poorer than the maneuvers earn.',
   stale: 'The statement carried text forward that does not describe this session.',
@@ -144,7 +144,8 @@ export function qualityFeedback(rt, caseData) {
   lines.push(...gradeLines(t.pre, caseData.spirometry.pre, 'Before bronchodilator'));
   if (t.post && caseData.spirometry.post) lines.push(...gradeLines(t.post, caseData.spirometry.post, 'After bronchodilator'));
   const word = (b) => (b ? 'acceptable' : 'not acceptable');
-  if (t.pleth) lines.push(`Plethysmography: FRC subset simulator rubric ${t.pleth.acceptable ? 'qualifies' : 'does not qualify'}; overall ATS/ERS quality is not established${t.pleth.reasons?.length ? ` (${t.pleth.reasons.join('; ')})` : ''}.`);
+  if (t.pleth && caseData.pleth?.session) lines.push(`Plethysmography: ${caseData.pleth.session.status}; retained FRC grade ${caseData.pleth.session.grades.frc ?? 'unassigned'}, linked SVC grade ${caseData.pleth.session.grades.svc ?? 'unassigned'}, overall ${caseData.pleth.grade ?? 'unassigned'}. ${caseData.pleth.session.warnings.join(' ')}`);
+  else if (t.pleth) lines.push(`Plethysmography: FRC subset simulator rubric ${t.pleth.acceptable ? 'qualifies' : 'does not qualify'}; overall ATS/ERS quality is not established${t.pleth.reasons?.length ? ` (${t.pleth.reasons.join('; ')})` : ''}.`);
   if (t.dlco) lines.push(`Diffusing capacity: simulator rubric ${word(t.dlco.acceptable)}${t.dlco.reasons?.length ? ` (${t.dlco.reasons.join('; ')})` : ''}.`);
 
   const stated = [];

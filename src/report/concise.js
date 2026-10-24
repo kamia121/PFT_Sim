@@ -52,6 +52,11 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   if (interp.bd && !interp.bd.rule2022.significant) impression += ' No significant bronchodilator response.';
   if (interp.qualityLimited) impression += ' Test quality limits confidence in these values.';
 
+  if (caseData.pleth?.session && !Number.isFinite(caseData.volumes?.tlc)) {
+    impression += ' TLC is unavailable; restriction cannot be assessed.';
+    lines.push({ label: 'Lung volumes', text: `Complete TLC/RV are not reportable. ${caseData.pleth.session.warnings.join(' ')}` });
+  }
+
   // Quality.
   const g = caseData.report?.grades;
   if (g?.fev1) {

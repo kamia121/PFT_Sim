@@ -5,7 +5,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadDatasets } from '../src/reference/load.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV2 } from '../src/core/case.js';
+// Preserve the legacy v2 scenario arithmetic contract; v3 measurement selection is tested separately.
+const buildCase = (input, ds) => buildCaseV2({ v: 2, ...input }, ds);
 import { ARCHETYPES, TECHNIQUE_LEVELS, resolveDescriptor } from '../src/core/descriptor.js';
 import { DLCO_MODEL } from '../src/core/dlco-trace.js';
 import { ALL_FAULT_IDS } from '../src/core/maneuver.js';
@@ -113,7 +115,7 @@ test('short plethysmographic IC lowers TLC and VC, leaves RV and the single-brea
   // Where VA exceeded the lowered TLC the exact constraint VA <= 0.99 TLC (checked above) is the only thing that moves it.
   assert.ok(lowerTlc >= 20, `VA unchanged in only ${lowerTlc} of 40 cases`);
   assert.equal(getScenario('pleth-incomplete-ic').effects.volumes.vaFollowsTlc, undefined);
-  assert.match(getScenario('pleth-incomplete-ic').caveats[0].text, /RV is unchanged, so RV\/TLC rises/);
+  assert.match(getScenario('pleth-incomplete-ic').caveats[0].text, /complete TLC\/RV report may be unavailable/);
   // A real restriction of inspiration (binder, surgery) does lower the inhaled volume of the single-breath test too.
   assert.equal(getScenario('prep-binder').effects.volumes.vaFollowsTlc, true);
 });

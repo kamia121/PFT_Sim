@@ -50,7 +50,7 @@ forEachCase(100, (c, input) => {
     if (bd.otherKey.response !== bd.key.response) seen.otherEq++;
   }
   if (by.dlcoAcceptable) log.check('dlco key', by.dlcoAcceptable.key === (c.dlcoTrace.grade.acceptable ? 'acceptable' : 'not-acceptable'), id);
-  if (by.plethAcceptable) log.check('pleth key', by.plethAcceptable.key === (['A', 'B'].includes(c.pleth.grade) ? 'acceptable' : 'not-acceptable'), id);
+  if (by.plethAcceptable) log.check('pleth key', by.plethAcceptable.key === (c.pleth.session ? c.pleth.session.status !== 'reported' ? 'unavailable' : ['A', 'B'].includes(c.pleth.grade) ? 'acceptable' : 'qualified' : ['A', 'B'].includes(c.pleth.grade) ? 'acceptable' : 'not-acceptable'), id);
   const verdict = statementVerdict(rt);
   seen.verdicts.add(verdict);
   log.check('rtConsistent key', by.rtConsistent.key === verdict && by.rtConsistent.stage === (qc ? 2 : 1), id);

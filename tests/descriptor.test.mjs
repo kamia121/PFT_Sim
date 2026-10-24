@@ -66,7 +66,7 @@ test('scenario level and ids are optional link keys (sc, si) that round-trip; a 
   // Explicit ids without a level imply the lightest level.
   assert.equal(resolveDescriptor({ seed: 5, archetype: 'mixed', scenarioIds: ['qs-leak'] }).scenarioLevel, 'light');
   // Links made before the scenario keys existed still parse to the same descriptor.
-  assert.deepEqual(parseDescriptor('v=2&s=2024&a=obstruction'), resolveDescriptor({ seed: 2024, archetype: 'obstruction' }));
+  assert.deepEqual(parseDescriptor('v=2&s=2024&a=obstruction'), resolveDescriptor({ v: 2, seed: 2024, archetype: 'obstruction' }));
 });
 
 test('scenario keys are validated', () => {

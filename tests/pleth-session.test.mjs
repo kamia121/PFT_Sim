@@ -128,5 +128,5 @@ test('pair reporting policy is explicit when good FRCs have poorer linked spirom
   const usableLarge = summarize([row(1, 3), row(2, 3.02, { link: link(4.2, { withinManeuverStatus: 'usable' }) })]);
   assert.equal(usableLarge.volumes.vc, 4.2);
   assert.equal(usableLarge.rvVcPolicy.id, 'retained-linked');
-  assert.match(usableLarge.rvVcPolicy.verification, /awaits source adjudication/);
+  assert.match(usableLarge.rvVcPolicy.verification, /source-context interpretation/);
 });

@@ -42,9 +42,11 @@ for (const level of ['none', 'light', 'moderate', 'heavy']) {
       assert.ok(c.spirometry.pre.maneuvers.length >= 1 && c.spirometry.pre.maneuvers.length <= 8);
       if (c.volumes) {
         const v = c.volumes, d = c.dlco;
+        if (Number.isFinite(v.tlc) && Number.isFinite(v.rv)) {
         assert.ok(Math.abs(v.tlc - (v.rv + v.vc)) < 1e-9 && Math.abs(v.frc - (v.rv + v.erv)) < 1e-9 && Math.abs(v.ic - (v.tlc - v.frc)) < 1e-9, tag);
         assert.ok(v.rv > 0 && v.erv > 0 && v.ic > 0 && v.vc > 0, `non-positive volume, ${tag}`);
-        assert.ok(d.va <= v.tlc + 1e-9, `VA > TLC, ${tag}`);
+        } else { assert.equal(v.tlc, null); assert.equal(v.rv, null); }
+        assert.ok(Number.isFinite(d.va) && d.va > 0, `VA remains an independent measurement, ${tag}`);
         assert.ok(Math.abs(d.adjusted - d.kco * d.va) < 1e-9, `DLCO != KCO x VA, ${tag}`);
         assert.ok(Math.abs(d.adjusted - d.raw * d.hbFactor) < 1e-9, `adjusted != raw x factor, ${tag}`);
       } else assert.equal(c.dlco, null);

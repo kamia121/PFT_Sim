@@ -97,7 +97,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
   if (sp.fev1 && sp.fvc) add('fev1_fvc', 'fev1_fvc', sp.fev1 / sp.fvc);
   const v = report.volumes;
   if (v) {
-    add('tlc', 'tlc', v.tlc); add('rv', 'rv', v.rv); add('rv_tlc', 'rv_tlc', (100 * v.rv) / v.tlc);
+    add('tlc', 'tlc', v.tlc); add('rv', 'rv', v.rv); add('rv_tlc', 'rv_tlc', Number.isFinite(v.rv) && v.tlc > 0 ? (100 * v.rv) / v.tlc : null);
     add('vc', 'vc', v.vc); add('frc', 'frc', v.frc); add('erv', 'erv', v.erv); add('ic', 'ic', v.ic);
   }
   const dl = report.dlco;
@@ -136,6 +136,8 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     else if (have('rv') && m.rv.label === 'high') flags.push({ id: 'high-rv', text: 'RV above its upper limit; review fractional volumes, technique and clinical context.', verification: source });
   }
   if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });
+
+  if (report.volumeQuality && (report.volumeQuality.status !== 'reported' || !['A', 'B'].includes(report.volumeQuality.grade))) flags.push({ id: 'volume-measurement-limited', text: `Lung volumes ${report.volumeQuality.status}, overall grade ${report.volumeQuality.grade ?? 'unassigned'}; interpret available values with qualification. ${report.volumeQuality.warnings.join(' ')}`, verification: 'ERS/ATS 2023 reporting and quality qualification' });
 
   // ------------- severity -------------
   let severity = null;

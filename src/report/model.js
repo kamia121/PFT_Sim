@@ -122,7 +122,7 @@ function qualitySummary(caseData) {
   const out = [{ test: 'Spirometry', lines: [spirometryGradeLine(caseData).replace(/^Test quality: /, '')] }];
   const p = caseData.pleth;
   if (p) {
-    const lines = [`FRCpleth simulator rubric ${p.grade} (FRC only; not an overall ATS/ERS grade); ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
+    const lines = [`${p.session ? `Overall lung-volume grade ${p.grade ?? 'unassigned'}; FRC ${p.session.grades.frc}, linked SVC ${p.session.grades.svc ?? 'unknown'}` : `FRCpleth simulator rubric ${p.grade} (FRC only; not an overall ATS/ERS grade)`}; ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
     for (const f of p.flags ?? []) lines.push(f.text);
     out.push({ test: 'Lung volumes (plethysmography)', lines });
   }
@@ -199,7 +199,7 @@ const DLCO_OBSERVATION = {
 };
 
 /** Observation of one plethysmography trial in the words of a note, or '' when nothing was observed. */
-export const trialObservation = (trial) => (trial?.faults ?? []).map((f) => PLETH_OBSERVATION[f]?.(trial)).filter(Boolean).join('; ');
+export const trialObservation = (trial) => [...(trial?.faults ?? []).map((f) => PLETH_OBSERVATION[f]?.(trial)).filter(Boolean), ...(trial?.link?.notes ?? [])].map((s) => s.replace(/[.\s]+$/, '')).join('; ');
 
 /** Fault observations for each trial and for the single-breath test, as note lines. */
 export function trialAndTestNotes(caseData) {
@@ -260,9 +260,9 @@ function plethRows(pleth) {
   if (!Array.isArray(list) || !list.length) return null;
   const val = (t) => t.frcL ?? t.frc ?? t.frcPleth ?? t.tgv ?? t.value ?? null;
   const hz = (t) => t.panFreqHz ?? t.pantHz ?? t.panHz ?? t.frequencyHz ?? t.hz ?? null;
-  const vals = list.map(val).filter((v) => Number.isFinite(v));
-  // The reported FRC is the mean of the acceptable trials, which the plethysmography model supplies.
-  const mean = Number.isFinite(pleth?.reportedFrcL) ? pleth.reportedFrcL : vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  const vals = list.filter((t) => !pleth?.session || t.selected).map(val).filter((v) => Number.isFinite(v));
+  // V3 uses the exact retained pool; the legacy v2 builder supplies its older mean.
+  const mean = pleth?.session ? pleth.reportedFrcL : Number.isFinite(pleth?.reportedFrcL) ? pleth.reportedFrcL : vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   return { list, val, hz, mean, vals };
 }
 
@@ -474,7 +474,7 @@ export function buildReportModel(caseData, interp, options = {}) {
   if (caseData.volumes) {
     const volRow = (id, label, unit, dp) => {
       const r = m[id];
-      const row = { id, index: label, unit, dp, result: round(r?.value, dp), lln: null, uln: null, z: null, pct: null };
+      const row = { id, index: label, unit, dp, result: !r && caseData.pleth?.session ? 'not reportable' : round(r?.value, dp), lln: null, uln: null, z: null, pct: null };
       if (r && r.available !== false) Object.assign(row, { lln: round(r.lln, dp), uln: round(r.uln, dp), z: round(r.z, 2), pct: id === 'rv_tlc' ? null : round(r.percentPredicted, 0) });
       return row;
     };
@@ -490,23 +490,25 @@ export function buildReportModel(caseData, interp, options = {}) {
     const pl = plethRows(caseData.pleth);
     const res = resistanceRows(caseData.pleth);
     rows.push(...res.rows);
-    const volFoot = `Reference values: ${eqName(volEq)}${fallbackText(volMatched)}. Method: plethysmography${pl ? ` (${pl.list.length} FRC determinations)` : ', single determination'}. ULN of the volumes: z = +1.645.${res.rows.length ? ` ${res.footnote}` : ''}`;
+    const volFoot = `Reference values: ${eqName(volEq)}${fallbackText(volMatched)}. Method: plethysmography${pl ? ` (${pl.list.length} FRC determinations)` : ', single determination'}. ULN of the volumes: z = +1.645.${caseData.pleth?.session ? ` Reporting: ${caseData.pleth.session.status}. ${caseData.pleth.session.warnings.join(' ')}` : ''}${res.rows.length ? ` ${res.footnote}` : ''}`;
     const tables = [{ id: 'volumes', caption: 'Lung volumes', columns: cols, rows, footnote: volFoot }];
     if (pl) {
       const pcols = [
         { key: 'index', label: 'Determination', align: 'left' },
         { key: 'frc', label: 'FRCpleth', unit: 'L', dp: 2 },
         { key: 'hz', label: 'Pant frequency', unit: 'Hz', dp: 2 },
-        { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true },
+        ...(caseData.pleth?.session ? [{ key: 'ic', label: 'Linked IC', unit: 'L', dp: 3 }, { key: 'svc', label: 'Linked SVC', unit: 'L', dp: 3 }, ...(includeGrades ? [{ key: 'retained', label: 'FRC retained', align: 'left' }, { key: 'linkedStatus', label: 'Linked quality', align: 'left' }, { key: 'linkedReason', label: 'Link qualification', align: 'left', detail: true }] : [])] : []),
+        { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true, detail: Boolean(caseData.pleth?.session) },
         ...(includeGrades ? [{ key: 'acceptable', label: 'Acceptable', align: 'left' }] : []),
       ];
       const prow = pl.list.map((t, i) => ({
         id: String(i + 1), index: String(i + 1), frc: round(pl.val(t), 2), hz: round(pl.hz(t), 2),
+        ...(caseData.pleth?.session ? { ic: round(t.icL, 3), svc: round(t.svcL, 3), ...(includeGrades ? { retained: t.selected ? 'yes' : 'no', linkedStatus: t.linkedStatus, linkedReason: caseData.pleth.trials[i]?.linkAssessment.reason ?? '' } : {}) } : {}),
         dev: pl.mean ? round((100 * (pl.val(t) - pl.mean)) / pl.mean, 1) : null,
         ...(includeGrades ? { acceptable: t.acceptable === undefined ? '' : t.acceptable ? 'yes' : 'no' } : {}),
       }));
-      const spread = pl.vals.length > 1 ? (100 * (Math.max(...pl.vals) - Math.min(...pl.vals))) / pl.mean : null;
-      const bits = [pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `FRC-only simulator rubric ${caseData.pleth.grade}`].filter(Boolean);
+      const spread = caseData.pleth?.session ? caseData.pleth.session.repeatability.fraction === null ? null : 100 * caseData.pleth.session.repeatability.fraction : pl.vals.length > 1 ? (100 * (Math.max(...pl.vals) - Math.min(...pl.vals))) / pl.mean : null;
+      const bits = [caseData.pleth?.session && `Reporting: ${caseData.pleth.session.status}; retained FRC trials ${caseData.pleth.session.selectedIds.join(', ') || 'none'}; ${caseData.pleth.session.warnings.join(' ')}`, pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `${caseData.pleth.session ? 'Overall lung-volume grade' : 'FRC-only simulator rubric'} ${caseData.pleth.grade}`].filter(Boolean);
       tables.push({ id: 'pleth', caption: 'Plethysmography replicate determinations', columns: pcols, rows: prow, footnote: `${bits.join('; ')}.` });
     }
     sections.push({ id: 'volumes', title: 'Lung volumes', tables, figures: [], figureIds: [], notes: [] });

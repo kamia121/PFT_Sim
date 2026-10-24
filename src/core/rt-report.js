@@ -179,8 +179,8 @@ function dlcoTruth(c) {
 }
 function plethTruth(c) {
   if (!c.pleth) return null;
-  const acceptable = plethAcceptable(c.pleth.grade);
-  const reasons = acceptable ? [] : (c.pleth.flags ?? []).map((f) => PLETH_REASON_TEXT[f.code]).filter(Boolean);
+  const acceptable = plethAcceptable(c.pleth.grade) && (!c.pleth.session || c.pleth.session.status === 'reported');
+  const reasons = acceptable ? [] : c.pleth.session ? [...c.pleth.session.warnings, `Overall lung-volume grade ${c.pleth.grade ?? 'unassigned'}`].map((r) => r.replace(/[.\s]+$/, '')) : (c.pleth.flags ?? []).map((f) => PLETH_REASON_TEXT[f.code]).filter(Boolean);
   return { acceptable, reasons };
 }
 

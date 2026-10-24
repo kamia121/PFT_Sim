@@ -14,7 +14,7 @@ import { buildChallenges, scoreChallenge } from '../src/challenges/index.js';
 import { buildRtReport } from '../src/core/rt-report.js';
 import { SPIROMETRY_2019 } from '../src/core/standards.js';
 
-const descriptor = { seed: 2, archetype: 'restriction-extraparenchymal', technique: 'good', panel: 'full', severity: 2 };
+const descriptor = { v: 2, seed: 2, archetype: 'restriction-extraparenchymal', technique: 'good', panel: 'full', severity: 2 };
 for (const [name, change] of [['weakness', {}], ['suboptimal effort', { scenarioIds: ['qs-submaximal-effort'] }], ['parenchymal restriction', { archetype: 'restriction-parenchymal' }]]) {
   test(`qualified volume language survives all narrative variants: ${name}`, () => {
     const c = buildCase({ ...descriptor, ...change }, ds);
@@ -139,7 +139,7 @@ test('pause-at-TLC explanation agrees with acceptable maneuvers and coaching war
 });
 
 test('pleth feedback distinguishes a qualifying subset from the displayed 9.35% reporting set', () => {
-  const c = buildCase({ seed: 3, archetype: 'normal', technique: 'fair' }, ds);
+  const c = buildCase({ v: 2, seed: 3, archetype: 'normal', technique: 'fair' }, ds);
   assert.equal(c.pleth.grade, 'A');
   assert.equal(c.pleth.repeatability.nAcceptable, 5);
   assert.equal(c.pleth.repeatability.nWithin5Pct, 3);

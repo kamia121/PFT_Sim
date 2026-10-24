@@ -5,7 +5,7 @@
  * means neither, and the value must not be treated as settled. The 2019 values below were checked
  * against Tables 7 and 10 and the end-of-forced-expiration text of the statement.
  */
-export const GENERATOR_VERSION = 2;
+export const GENERATOR_VERSION = 3;
 
 export const SPIROMETRY_2019 = {
   source: 'ATS/ERS 2019 spirometry standardization (Graham et al., AJRCCM 2019;200:e70)',

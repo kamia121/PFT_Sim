@@ -118,9 +118,17 @@ function limitationsItem(prep, seed) {
   const trueTexts = new Set(truths.map((t) => t.text));
   const pool = fb.decoyCaveats.filter((d) => !liveTopics.has(d.topic) && !trueTexts.has(d.text));
   const target = truths.length ? truths.reduce((t, x) => t + x.text.length, 0) / truths.length : 170;
-  const want = Math.max(3, 6 - truths.length);
-  const nearest = shuffled(pool, seed, 'quiz-decoy-pick').sort((p, q) => Math.abs(p.text.length - target) - Math.abs(q.text.length - target)).slice(0, want * 2);
-  const decoys = shuffled(nearest, seed, 'quiz-decoy-select').slice(0, want);
+  // Four substantive decoys keep the none-of-these option from rewarding a select-all-substantive strategy.
+  const want = Math.max(4, 6 - truths.length);
+  // Match the range of true-option lengths, rather than only their mean: an unusually long
+  // source qualification should not make the longest option an answer cue.
+  const targets = truths.length ? truths.map((t) => t.text.length).sort((a, b) => b - a) : [target];
+  const remaining = shuffled(pool, seed, 'quiz-decoy-pick'), decoys = [];
+  for (let i = 0; i < want && remaining.length; i++) {
+    const length = targets[i % targets.length];
+    remaining.sort((p, q) => Math.abs(p.text.length - length) - Math.abs(q.text.length - length));
+    decoys.push(remaining.shift());
+  }
   const entries = [
     ...truths.map((t) => ({ sem: t.id, text: t.text, truth: true, weight: weight(t) })),
     ...decoys.map((d) => ({ sem: d.id, text: d.text, truth: false, why: d.why ?? null })),

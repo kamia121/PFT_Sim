@@ -99,18 +99,19 @@ function plethTable(model, caseData, { showGrades, truth }) {
     { key: 'index', label: 'Trial', align: 'left' },
     { key: 'frc', label: 'FRCpleth', unit: 'L', dp: 2 },
     { key: 'hz', label: 'Pant frequency', unit: 'Hz', dp: 2 },
-    { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true },
-    ...(showGrades ? [{ key: 'status', label: 'Status', align: 'left' }, ...(trials.some((t) => t.reasons?.length) ? [{ key: 'notmet', label: 'Reason', align: 'left' }] : [])] : []),
-    { key: 'comment', label: 'Comment', align: 'left' },
+    ...(caseData.pleth?.session ? [{ key: 'ic', label: 'Linked IC', unit: 'L', dp: 3 }, { key: 'svc', label: 'Linked SVC', unit: 'L', dp: 3 }, ...(showGrades ? [{ key: 'retained', label: 'FRC retained', align: 'left' }, { key: 'linkedStatus', label: 'Linked quality', align: 'left' }, { key: 'linkedReason', label: 'Link qualification', align: 'left', detail: true }] : [])] : []),
+    { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true, detail: Boolean(caseData.pleth?.session) },
+    ...(showGrades ? [{ key: 'status', label: 'Status', align: 'left' }, ...(trials.some((t) => t.reasons?.length) ? [{ key: 'notmet', label: 'Reason', align: 'left', detail: Boolean(caseData.pleth?.session) }] : [])] : []),
+    { key: 'comment', label: 'Comment', align: 'left', detail: Boolean(caseData.pleth?.session) },
   ];
   const rows = src.rows.map((r, i) => ({
-    id: r.id, index: r.index, frc: r.frc, hz: r.hz, dev: r.dev,
+    id: r.id, index: r.index, frc: r.frc, hz: r.hz, dev: r.dev, ic: r.ic, svc: r.svc, retained: r.retained, linkedStatus: r.linkedStatus, linkedReason: r.linkedReason,
     ...(showGrades ? { status: trials[i]?.status ?? '', notmet: (trials[i]?.reasons ?? []).join('; ') } : {}),
     comment: trialObservation(trials[i]),
   }));
   // The model's footnote ends with the grade when it was built with grades; the grade is added back only when it is to be shown.
-  const base = src.footnote.replace(/;\s*grade [A-F]\b/, '').replace(/\.\s*$/, '');
-  const verdict = showGrades ? [`; FRC-only simulator rubric ${caseData.pleth.grade}`, truth.pleth ? (truth.pleth.acceptable ? ', acceptable' : ', not acceptable') : ''].join('') : '';
+  const base = src.footnote.replace(/;\s*(?:FRC-only simulator rubric|Overall lung-volume grade|grade) [A-FU]\b/, '').replace(/\.\s*$/, '');
+  const verdict = showGrades ? [`; ${caseData.pleth.session ? 'Overall lung-volume grade' : 'FRC-only simulator rubric'} ${caseData.pleth.grade ?? 'unassigned'}`, truth.pleth ? (truth.pleth.acceptable ? ', acceptable' : ', not acceptable') : ''].join('') : '';
   return { id: 'd-pleth', caption: 'Plethysmography: panting trials', columns, rows, footnote: `${base}${verdict}.` };
 }
 

@@ -266,6 +266,14 @@ function dlcoItem(rt) {
 function plethItem(c, rt) {
   const t = rt.truth.pleth;
   if (!t) return null;
+  if (c.pleth.session) {
+    const s = c.pleth.session;
+    return { id: 'plethAcceptable', stage: 1, title: 'Plethysmographic lung-volume reporting', alwaysExplain: true,
+      prompt: 'Judge the retained FRC and linked IC/SVC measurements together. Can complete TLC/RV be reported, and do the best quality criteria hold?',
+      options: [['acceptable', 'Best criteria met (A/B)'], ['qualified', 'Qualified report (C/D/E/U)'], ['unavailable', 'Complete TLC/RV unavailable']],
+      key: s.status !== 'reported' ? 'unavailable' : ['A', 'B'].includes(s.grades.overall) ? 'acceptable' : 'qualified',
+      why: `Reporting retains FRC trials ${s.selectedIds.join(', ') || 'none'}${s.status === 'reported' ? ' with eligible linked spirometry' : '; complete linked volumes are unavailable'}. FRC grade ${s.grades.frc ?? 'unassigned'}, SVC grade ${s.grades.svc ?? 'unknown'}, overall ${s.grades.overall ?? 'unassigned'}. ${s.repeatability.assessable ? `Retained FRC spread is ${(100 * s.repeatability.fraction).toFixed(2)}% of its mean.` : 'Repeatability cannot be assessed.'} When complete volumes are reportable, TLC is the mean of matched retained FRC+IC pairs; RV is TLC minus the largest eligible retained VC. ${s.warnings.join(' ')} These rules use the corrected 2023 Tables 3–4 and reporting section; synthetic waveform fault recognition remains a teaching model.`, needsDetails: true };
+  }
   return {
     id: 'plethAcceptable',
     alwaysExplain: true, // Model/reporting limitations matter even when the rubric answer is correct.

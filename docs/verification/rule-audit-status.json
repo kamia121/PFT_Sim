@@ -3,11 +3,11 @@
   "date": "2026-10-24",
   "counts": {
     "blocked-complete-coefficient-or-output-validation": 5,
-    "modeled-heuristic": 10,
+    "modeled-heuristic": 9,
     "partially-verified-open-implementation-or-source-detail": 12,
-    "verified-rule-text": 14
+    "verified-rule-text": 15
   },
-  "correctedGroups": 19,
+  "correctedGroups": 20,
   "rules": [
     {
       "id": 1,
@@ -230,17 +230,17 @@
       "id": 28,
       "rule": "Pleth repeatability",
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
-      "correctedInThisBranch": false,
+      "correctedInThisBranch": true,
       "source": "Bhakta 2023 grading/reporting table",
-      "coverageAndGap": "2023 Table 4 denominator/source selection verified by parent audit, but code still averages all acceptable FRC trials, not necessarily retained best subset; no linked SVC grading, matched FRC+IC reporting or full outlier selection. FRC-only rubric disclosed. New unintegrated pleth-session core has 12 focused tests and independent base-R arithmetic checks; product integration and named RV VC-pool source adjudication still pending."
+      "coverageAndGap": "V3 product now selects retained FRC with eligible linked IC/SVC, matches FRC+IC pairs, grades independent components, rejects unlinked pleth spirometry and reports null/pending states throughout practice/report/export. Pure boundary tests, independent base-R arithmetic and integrated missing/qualified workflow tests. Source-context interpretation uses largest eligible retained linked SVC for RV; exact subset/tie priorities are documented engineering choices, awaiting independent review. V2 explicitly preserves legacy reporting."
     },
     {
       "id": 29,
       "rule": "Pleth grades D/E/U/F",
-      "sourceStatus": "modeled-heuristic",
+      "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
-      "source": "Project placeholders",
-      "coverageAndGap": "D/E/U/F remain FRC-only placeholders and are explicitly labeled simulator rubrics in method, report and figures; they are not corrected 2023 overall grades. Full retained linked SVC quality model absent."
+      "source": "Bhakta 2023 corrected Table 4, Table 3 linkage and reporting pp18\u201319",
+      "coverageAndGap": "V3 implements retained FRC/SVC counts independently; A/B <=5%, C/D/U <=10%, E singleton, F none; weakest component limits overall grade. Singleton repeatability remains unassessable, pending pairs have no assigned overall grade. Synthetic quality recognition is not clinical waveform validation. V2 retains labeled FRC-only rubric."
     },
     {
       "id": 30,
@@ -342,7 +342,7 @@
   "measurementCoreCheckpoint": {
     "date": "2026-10-24",
     "module": "src/core/pleth-session.js",
-    "integratedIntoProduct": false,
-    "status": "pure core with boundary tests; source/adaptation choices and integration pending; counts unchanged"
+    "integratedIntoProduct": true,
+    "status": "V3 pleth integration complete for local independent review; legacy v2 adapter preserved; replicate DLCO still pending; source-context RV VC-pool decision documented."
   }
 }

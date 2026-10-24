@@ -493,7 +493,7 @@ const GOLDEN = [
   {
     name: 'spirometry only: preserved ratio impaired spirometry needs volumes',
     build: () => golden({ fev1: 2.6, fvc: 3.0, volumes: null, dlco: null }),
-    final: [/preserved-ratio spirometric impairment/, /lung volumes are needed/, /not measured/],
+    final: [/preserved-ratio spirometric impairment/, /lung volumes are needed/, /unavailable/],
     forbid: [/consistent with restriction/, /bronchodilator/],
     key: { pattern: 'prism', severity: null, dlco: null },
     flaws: ['restriction-without-tlc'],

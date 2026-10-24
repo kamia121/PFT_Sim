@@ -340,9 +340,9 @@ T('v-low-erv',
   (p) => `${p.mz} is ${p.rel}, which lowers the FRC; body mass index is ${p.bmi} kg/m²${p.note}`,
   (p) => `a reduced FRC follows from the ${p.mz} being ${p.rel}, with a body mass index of ${p.bmi} kg/m²${p.note}`);
 T('v-missing-needed',
-  (p) => `lung volumes were not measured, so restriction is not established, and lung volumes are needed ${p.purpose}`,
-  (p) => `TLC was not measured, which leaves restriction unestablished; lung volumes are needed ${p.purpose}`,
-  (p) => `restriction cannot be assessed because lung volumes were not measured, and lung volumes are needed ${p.purpose}`);
+  (p) => `TLC is unavailable, so restriction is not established, and lung volumes are needed ${p.purpose}`,
+  (p) => `TLC is unavailable, which leaves restriction unestablished; lung volumes are needed ${p.purpose}`,
+  (p) => `restriction cannot be assessed because TLC is unavailable, and lung volumes are needed ${p.purpose}`);
 T('v-missing',
   () => 'lung volumes and diffusing capacity were not measured, so this interpretation applies to spirometry only',
   () => 'the report contains spirometry only: lung volumes and diffusing capacity were not measured',
@@ -735,10 +735,15 @@ function tlcFragment(ctx, P) {
   return P('vf-tlc', { mz: ctx.mz('tlc'), rel: ctx.rel('tlc'), hyper });
 }
 
+T('v-missing-tlc-only',
+  () => 'TLC is unavailable, so restriction cannot be assessed',
+  () => 'restriction remains unassessed because TLC is unavailable',
+  () => 'without a reportable TLC, restriction cannot be assessed');
+
 function missingVolumesFragment(ctx, P) {
   if (ctx.pattern === 'prism') return P('v-missing-needed', { purpose: 'to establish whether the TLC is reduced' });
   if (ctx.pattern === 'obstruction-low-fvc') return P('v-missing-needed', { purpose: 'to separate air trapping from coexisting restriction' });
-  return P('v-missing', {});
+  return P(ctx.hasDlco ? 'v-missing-tlc-only' : 'v-missing', {});
 }
 
 function subtypeCore(ctx) {
@@ -1102,7 +1107,7 @@ function buildFindings(ctx) {
   if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on ${ctx.pattern === 'restriction' ? 'TLC' : 'FEV1'} z-score).` : ctx.sevNotGraded ? 'Severity: mild obstruction despite FEV1 within its reference range.' : 'Severity: not graded for this pattern.');
   for (const k of ctx.borderMeasures) add(`borderline-${k}`, `Borderline: ${ctx.mz(k)}.`);
   if (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc') add('volumes-needed', 'Lung volumes are needed to classify this pattern.');
-  for (const finding of ctx.interp.flags.filter((f) => ['possible-hyperinflation', 'high-tlc', 'high-rv-tlc', 'high-rv', 'air-trapping'].includes(f.id))) add(finding.id, finding.text);
+  for (const finding of ctx.interp.flags.filter((f) => ['possible-hyperinflation', 'high-tlc', 'high-rv-tlc', 'high-rv', 'air-trapping', 'volume-measurement-limited'].includes(f.id))) add(finding.id, finding.text);
   if (ctx.hasVol && ctx.has('erv') && ctx.m.erv.label === 'low') add('low-erv', `ERV below the lower limit of normal${ctx.bmi !== null ? `; body mass index ${ctx.bmi.toFixed(1)} kg/m²` : ''}.`);
   if (ctx.bd) {
     add('bronchodilator', `Bronchodilator response: ${ctx.bd.rule2022.significant ? 'significant' : 'not significant'} by the 2022 criterion and ${ctx.bd.rule2005.significant ? 'significant' : 'not significant'} by the earlier criterion.`);
@@ -1282,9 +1287,12 @@ export function composeNarrative({ caseData, interp, cmp = null, seed = 0, force
   if (ctx.cmp && ctx.has('fev1')) push('sensitivity', 'Sensitivity to the reference equation', sensitivitySection(ctx, P));
   push('limitations', 'Limitations', limitationsSection(ctx, P));
 
-  const finalStatement = buildFinal(ctx, correctClaims(ctx), P);
+  const volumeLimit = interp.flags.find((f) => f.id === 'volume-measurement-limited');
+  const qualifyVolumes = (text) => volumeLimit ? text.replace(/\.$/, '') + `; ${volumeLimit.text.replace(/\.$/, '').replace(/\. /g, '; ')}.` : text;
+  const finalStatement = qualifyVolumes(buildFinal(ctx, correctClaims(ctx), P));
+  if (volumeLimit) sections.find((s) => s.id === 'quality').text += ` ${volumeLimit.text}`;
   const findings = buildFindings(ctx);
-  const distractors = buildDistractors(ctx, P).filter((d) => d.text !== finalStatement);
+  const distractors = buildDistractors(ctx, P).map((d) => ({ ...d, text: qualifyVolumes(d.text) })).filter((d) => d.text !== finalStatement);
   return { sections, finalStatement, findings, distractors, notes: notesFor(ctx), caveats: { major: ctx.caveats.major, minor: ctx.caveats.minor } };
 }
 
@@ -1328,13 +1336,16 @@ export function extractFacts(text) {
 
   const gradeSentence = sentences.find((s) => /\bgrade[d]? [A-FU]\b/.test(s));
   if (gradeSentence) f.add(`grades:${[...gradeSentence.matchAll(/\bgrade[d]? ([A-FU])\b/g)].map((x) => x[1]).join('')}`);
-  if (/\badequate\b/i.test(text)) f.add('quality:adequate');
-  if (/reduced confidence/i.test(text)) f.add('quality:reduced');
-  if (/\bqualified\b/i.test(text)) f.add('quality:qualified');
+  // Quality sections can put grades and repeatability before their confidence sentence.
+  // Volume-session qualification is independent of the spirometry quality token.
+  const spirometryQuality = sentences.map((s) => s.split(/; Lung volumes |Lung volumes /)[0]).find((s) => /\badequate\b|reduced confidence|\bqualified\b/i.test(s)) ?? '';
+  if (/\badequate\b/i.test(spirometryQuality)) f.add('quality:adequate');
+  if (/reduced confidence/i.test(spirometryQuality)) f.add('quality:reduced');
+  if (/\bqualified\b/i.test(spirometryQuality)) f.add('quality:qualified');
 
   for (const m of text.matchAll(/(not significant|significant) by the 2022 criterion/g)) f.add(`bd:2022:${m[1].replace(' ', '-')}`);
   for (const m of text.matchAll(/(not significant|significant) by the earlier criterion/g)) f.add(`bd:earlier:${m[1].replace(' ', '-')}`);
-  if (/\bdiscordant\b/i.test(text)) f.add('bd:discordant');
+  if (clauses.some((c) => /discordant/i.test(c) && /FEV1|FVC/.test(c))) f.add('bd:discordant');
   for (const c of clauses) {
     if (/bronchodilator/.test(c) && /ratio/.test(c)) {
       if (/\b(remains below|is below)\b/.test(c)) f.add('bd:post-ratio:low');
@@ -1355,7 +1366,7 @@ export function extractFacts(text) {
     }
   }
 
-  if (/(?:lung volumes|TLC)(?: and diffusing capacity)? (?:was|were) not measured/i.test(text)) f.add('volumes:not-measured');
+  if (/(?:lung volumes|TLC)(?: and diffusing capacity)? (?:was|were) not measured|TLC is unavailable|without a reportable TLC/i.test(text)) f.add('volumes:not-measured');
   if (/lung volumes are needed/i.test(text)) f.add('volumes:needed');
   if (/\bERV\b[^;.]*below the lower limit/.test(text)) f.add('low-erv');
 
