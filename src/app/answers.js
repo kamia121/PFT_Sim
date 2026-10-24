@@ -26,7 +26,7 @@ export const QUESTIONS = [
     ['significant', 'Significant'], ['not-significant', 'Not significant'], ['not-done', 'Not performed'],
   ] },
   { id: 'dlco', label: 'Diffusing capacity (hemoglobin-adjusted)', options: [
-    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['not-done', 'Not performed'],
+    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['unavailable', 'Attempted; not reportable'], ['not-done', 'Not performed'],
   ] },
 ];
 
@@ -48,7 +48,7 @@ export function questionLabel(caseData, q) {
 /** Whether the case contains the data a question asks about. */
 export function hasData(caseData, questionId) {
   if (questionId === 'bronchodilator') return Boolean(caseData.report.spirometry.post);
-  if (questionId === 'dlco') return Boolean(caseData.report.dlco);
+  if (questionId === 'dlco') return Boolean(caseData.report.dlco || caseData.report.dlcoQuality);
   return true;
 }
 

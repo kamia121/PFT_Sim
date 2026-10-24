@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { loadDatasets } from '../src/reference/load.js';
 import { ARCHETYPES, TECHNIQUE_LEVELS } from '../src/core/descriptor.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV3 } from '../src/core/case.js';
+// Single-trace geometry contract; v4 replicate sessions have independent integration tests.
+const buildCase = (input, ds) => buildCaseV3({ v: 3, ...input }, ds);
 import { buildDlcoTrace, gradeDlcoTest, vaStpdMl } from '../src/core/dlco-trace.js';
 
 const ds = await loadDatasets();

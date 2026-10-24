@@ -3,11 +3,11 @@
   "date": "2026-10-24",
   "counts": {
     "blocked-complete-coefficient-or-output-validation": 5,
-    "modeled-heuristic": 9,
-    "partially-verified-open-implementation-or-source-detail": 12,
-    "verified-rule-text": 15
+    "modeled-heuristic": 8,
+    "partially-verified-open-implementation-or-source-detail": 10,
+    "verified-rule-text": 18
   },
-  "correctedGroups": 20,
+  "correctedGroups": 21,
   "rules": [
     {
       "id": 1,
@@ -173,10 +173,10 @@
     {
       "id": 21,
       "rule": "DLCO inspired volume",
-      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
       "source": "Graham 2017 acceptability table",
-      "coverageAndGap": "The 85\u201390% alternative accepts an explicit other-acceptable VA comparator within max(0.2 L,5%); missing comparator is unknown. Current one-trace generator cannot supply replicate evidence; same-session maximum VC/other-acceptable identity is caller responsibility."
+      "coverageAndGap": "V4 computes VI/VC using the largest eligible measured same-session forced or linked slow VC; no latent VC or VI substitution. Low-VI A requires largest VA from another acceptable maneuver, with no self comparison or circular low-VI-only acceptance. A completed B-only session may report qualified B fallback while explicitly retaining the unconfirmed A alternative. Root/set selection is a documented engineering resolution, not a quoted published algorithm."
     },
     {
       "id": 22,
@@ -184,23 +184,23 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Graham 2017 acceptability table",
-      "coverageAndGap": "Strict t85 <4 s enforced generally; BH 8\u201312 and sample completion \u22644 s. Letters remain a simulator rubric. Jones\u2013Meade timing/2018 corrected conversion model not independently source-validated."
+      "coverageAndGap": "V4 full-precision t85 <4 s, BH 8\u201312 s and sample completion <=4 s; exact boundary tests. Interim letters are separate from session reporting. Jones\u2013Meade waveform timing and 2018 corrected gas-conversion model still need independent source verification; waveform recognition remains synthetic."
     },
     {
       "id": 23,
       "rule": "DLCO washout/sample",
-      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
       "source": "Graham 2017",
-      "coverageAndGap": "Classical small sample requires VC <1.0 L and confirmed clearance; reduced washout VC <2 L is separate. Optional RGA branch uses 0.085\u20130.500 L and clearance, but no RGA acquisition model is implemented. Generated discrete-sample clearance uses modeled contamination \u22643%."
+      "coverageAndGap": "Classical sample exception VC <1.0 L plus confirmed clearance, reduced washout VC <2.0 L, RGA virtual sample 0.085\u20130.500 L and clearance are criterion-tested in the session core. Synthetic acquisition remains classical only; its clearance proxy is a teaching model, not a complete RGA instrument implementation."
     },
     {
       "id": 24,
       "rule": "DLCO grades A\u2013D",
-      "sourceStatus": "modeled-heuristic",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
-      "source": "Project convention, not published 2017 letter table",
-      "coverageAndGap": "Report and figure labels now identify simulator rubric, not 2017 Table 3 or session grade. Interim table overlaps/mixed combinations not recoded as a supposed complete standard. Replicate A-only selection/reporting absent."
+      "source": "Graham 2017 Table 3, pp21\u201322 and Reporting values p25; 2018 measurement correction distinguished",
+      "coverageAndGap": "V4 uses explicit interim matching rows, A-only repeatable subset preference, qualified nonrepeatable/single A, then B-D fallback after repeated testing; F-only reports nothing. Unknown criteria and unspecified mixed failures remain pending/unclassified, not an invented letter. No session letter grade. Rooted low-VI acceptance-set selection, subset ties and KCO quotient of reported DLCO/mean VA are disclosed engineering policies requiring focused independent review. Primary table does not uniquely specify all mixed-failure mappings."
     },
     {
       "id": 25,
@@ -222,17 +222,17 @@
       "id": 27,
       "rule": "Pleth panting",
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
-      "correctedInThisBranch": false,
+      "correctedInThisBranch": true,
       "source": "Bhakta 2023 lung-volume standard",
-      "coverageAndGap": "`pleth`; source text/table pending; amplitudes are teaching choices"
+      "coverageAndGap": "Corrected 2023 Table 2 0.5/1/1.5/2 Hz boundaries and actual seed10 normal/poor 1.681Hz usable trial tested. No-obstruction band implemented; significant-versus-minimal obstruction cannot be inferred from a universal source cutoff, so reduced-input obstruction context and synthetic amplitude/fault recognition remain qualified. Existing 1\u20131.5Hz obstruction handling is a simulator review policy, not a complete source-defined mapping."
     },
     {
       "id": 28,
       "rule": "Pleth repeatability",
-      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
       "source": "Bhakta 2023 grading/reporting table",
-      "coverageAndGap": "V3 product now selects retained FRC with eligible linked IC/SVC, matches FRC+IC pairs, grades independent components, rejects unlinked pleth spirometry and reports null/pending states throughout practice/report/export. Pure boundary tests, independent base-R arithmetic and integrated missing/qualified workflow tests. Source-context interpretation uses largest eligible retained linked SVC for RV; exact subset/tie priorities are documented engineering choices, awaiting independent review. V2 explicitly preserves legacy reporting."
+      "coverageAndGap": "Retained-pair means, outlier exclusions, linked IC/SVC, null/pending outputs and source counts integrated in v3+. Parent independent review adjudicated retained eligible linked SVC for RV as defensible from primary reporting selection/discard wording; no discarded SVC/unrelated FVC substitution. Engineering subset/tie preferences and synthetic within-maneuver assessment remain documented. V3 linked acquisition order corrected to FRC\u2192TLC (IC)\u2192RV (expiratory SVC)."
     },
     {
       "id": 29,
@@ -343,6 +343,6 @@
     "date": "2026-10-24",
     "module": "src/core/pleth-session.js",
     "integratedIntoProduct": true,
-    "status": "V3 pleth integration complete for local independent review; legacy v2 adapter preserved; replicate DLCO still pending; source-context RV VC-pool decision documented."
+    "status": "Linked pleth v3+ and replicate DLCO v4 integrated for local independent review. Mixed-failure table limits, subset/root policies and synthetic waveform assumptions are explicit; no official GLI validation claimed."
   }
 }

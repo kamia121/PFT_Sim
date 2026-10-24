@@ -13,7 +13,7 @@ import { buildChallenges, scoreChallenge } from '../src/challenges/index.js';
 import { FIGURES } from '../src/ui/figures/index.js';
 import { PALETTES } from '../src/ui/palettes.js';
 import { conciseSummary } from '../src/report/concise.js';
-const make = (seed, technique = 'poor', extra = {}) => buildCase({ seed, archetype: 'normal', technique, ...extra }, ds);
+const make = (seed, technique = 'poor', extra = {}) => buildCase({ v: 3, seed, archetype: 'normal', technique, ...extra }, ds);
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-10, `${a} vs ${b}`);
 
 test('v3 reports the selected measured linked pairs and v2 links retain their legacy generator', () => {
@@ -32,7 +32,7 @@ test('v3 reports the selected measured linked pairs and v2 links retain their le
   const old = buildCase(parseDescriptor('v=2&s=3&a=normal&t=fair'), ds);
   assert.equal(old.descriptor.v, 2); assert.equal(old.pleth.session, undefined);
   assert.equal(old.pleth.repeatability.spreadFraction, 0.0935);
-  assert.equal(parseDescriptor(serializeDescriptor(resolveDescriptor({ seed: 3, archetype: 'normal' }))).v, 3);
+  assert.equal(parseDescriptor(serializeDescriptor(resolveDescriptor({ seed: 3, archetype: 'normal' }))).v, 4);
 });
 
 for (const [name, c] of [['FRC only', make(2)], ['pending pair', make(26)], ['all FRC rejected', make(5, 'good', { archetype: 'obstruction', scenarioIds: ['pleth-pant-fast'] })]]) {
@@ -49,7 +49,7 @@ for (const [name, c] of [['FRC only', make(2)], ['pending pair', make(26)], ['al
     assert.match(html, /not reportable/); assert.match(csv, /not reportable/);
     assert.doesNotMatch(html + csv, /NaN|undefined|Infinity/);
     const summary = conciseSummary({ caseData: c, interp: a });
-    assert.match(summary.impression, /TLC is unavailable/);
+    assert.match(summary.impression, /TLC (?:is )?unavailable/);
     const n = composeNarrative({ caseData: c, interp: a, cmp });
     assert.match(n.finalStatement, /Lung volumes/); assert.doesNotMatch(n.finalStatement, /TLC (?:is |remains )?(?:normal|within the reference range)/);
     const rt = buildRtReport(c), item = buildChallenges(c, { rt }).find((i) => i.id === 'plethAcceptable');

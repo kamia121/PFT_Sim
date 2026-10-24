@@ -248,7 +248,15 @@ function statementItem(rt, qualityChallenge) {
 
 // ---- single-breath DLCO and plethysmography --------------------------------------------------------------------------
 
-function dlcoItem(rt) {
+function dlcoItem(rt, c) {
+  if (c.dlcoTrace?.session) {
+    const s = c.dlcoTrace.session;
+    return { id: 'dlcoAcceptable', stage: 1, title: 'Diffusing-capacity session reporting', alwaysExplain: true,
+      prompt: 'Judge the retained replicates. Is DLCO repeatable from A maneuvers, reportable with qualification, or unavailable?',
+      options: [['acceptable', 'Repeatable A measurements'], ['qualified', 'Qualified report'], ['unavailable', 'No reportable DLCO']],
+      key: s.status === 'repeatable' ? 'acceptable' : s.status === 'qualified' ? 'qualified' : 'unavailable',
+      why: `Retained maneuvers: ${s.selectedIds.join(', ') || 'none'}. The 2017 standard prefers repeatable A-only results; after repeat testing, nonrepeatable/single A results take precedence over qualified B–D fallback. F-only testing yields no DLCO. The low-VI A alternative needs VA from another acceptable maneuver and cannot validate itself. ${s.warnings.join(' ')} Mixed failures without a specified interim row remain unclassified.`, needsDetails: true };
+  }
   const t = rt.truth.dlco;
   if (!t) return null;
   return {
@@ -306,7 +314,7 @@ export function buildChallengeList(caseData, { rt, interp, interpOther, qualityC
     gradeItem(c, rt, 'post', 'fvc'),
     loopItem(c, rt),
     bdItem(c, rt, interp, interpOther),
-    dlcoItem(rt),
+    dlcoItem(rt, c),
     plethItem(c, rt),
     statementItem(rt, qualityChallenge),
   ].filter(Boolean);

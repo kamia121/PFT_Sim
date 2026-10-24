@@ -59,7 +59,7 @@ test('grades, acceptability by maneuver and trial status are present when showGr
       assert.equal(cells[1], ev[i].fvc.acceptable ? 'yes' : 'no', `${name} maneuver ${i + 1} FVC`);
     });
     if (x.c.pleth) assert.match(html, new RegExp(`${x.c.pleth.session ? 'Overall lung-volume grade' : 'FRC-only simulator rubric'} ${x.c.pleth.grade ?? 'unassigned'}`));
-    if (x.c.dlcoTrace) assert.match(html, /Simulator rubric [A-D]|Rubric [A-D]/);
+    if (x.c.dlcoTrace) assert.match(html, /Simulator rubric [A-D]|Rubric [A-D]|Interim maneuver row (?:[A-F]|unassigned)/);
   }
 });
 

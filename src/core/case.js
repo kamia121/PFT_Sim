@@ -11,6 +11,7 @@ import { generateManeuvers } from './maneuver.js';
 import { createStream } from './prng.js';
 import { createReference } from '../reference/gli.js';
 import { buildPleth, buildMeasuredPleth } from './pleth.js';
+import { buildDlcoReplicates } from './dlco-replicates.js';
 import { buildDlcoTrace } from './dlco-trace.js';
 import { interpret, LLN_Z } from '../interpret/interpret.js';
 
@@ -105,7 +106,14 @@ export function buildCase(input, datasets) {
   // The single-breath tracing is built from the case values. When a technical fault changes the physics (low inspired volume,
   // Valsalva, Mueller, a poor sample) the laboratory reports what the test measured, so the tracing's recomputed values replace them.
   let dlcoTrace = null;
-  if (dlco) {
+  if (dlco && d.v >= 4) {
+    const forcedVc = [pre, post].filter(Boolean).flatMap((set) => set.maneuvers.filter((_, i) => set.summary.evaluations[i].fvc.usable).map((m) => m.fvc));
+    const vcCandidates = [...forcedVc, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)].filter((v) => Number.isFinite(v) && v > 0);
+    const vcL = vcCandidates.length ? Math.max(...vcCandidates) : null;
+    dlcoTrace = buildDlcoReplicates({ seed: d.seed, truth, dlco, vcL, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    const v = dlcoTrace.session.values;
+    dlco = { ...dlco, raw: v.dlco, adjusted: v.dlco === null ? null : v.dlco * dlco.hbFactor, va: v.vaL, kco: v.kco === null ? null : v.kco * dlco.hbFactor };
+  } else if (dlco) {
     dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
     if (dlcoTrace && dlcoTrace.reproducesCase === false && dlcoTrace.values) {
       const scale = dlcoTrace.values.dlcoMlMinMmHg / dlco.raw;
@@ -123,7 +131,8 @@ export function buildCase(input, datasets) {
     },
     volumes,
     ...(pleth?.session ? { volumeQuality: { status: pleth.session.status, grade: pleth.grade, warnings: pleth.session.warnings } } : {}),
-    dlco: dlco ? { dlcoAdjusted: dlco.adjusted, va: dlco.va } : null,
+    dlco: dlco && Number.isFinite(dlco.adjusted) ? { dlcoAdjusted: dlco.adjusted, va: dlco.va } : null,
+    ...(dlcoTrace?.session ? { dlcoQuality: { status: dlcoTrace.session.status, warnings: dlcoTrace.session.warnings, selectedIds: dlcoTrace.session.selectedIds } } : {}),
     grades: { fev1: pre.summary.grades.fev1, fvc: pre.summary.grades.fvc, postFev1: post?.summary.grades.fev1, postFvc: post?.summary.grades.fvc },
   };
 

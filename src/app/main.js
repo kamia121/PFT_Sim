@@ -282,6 +282,7 @@ function renderDetailsOnly() {
 
 function loadCase(descriptorLike, { mode = 'code', qualityChallenge = false, review = 'basic' } = {}) {
   state.case = buildCase(descriptorLike, state.datasets);
+  $('#version').textContent = String(state.case.descriptor.v);
   state.mode = mode;
   state.rt = null;
   if (state.mods.buildRtReport) { try { state.rt = state.mods.buildRtReport(state.case); } catch { state.rt = null; } }

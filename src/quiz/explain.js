@@ -76,6 +76,7 @@ function explainBd(item, prep) {
 
 function explainDlco(item, prep) {
   const d = prep.a.dlco, c = prep.caseData;
+  if (!d) return '<p>DLCO is not reportable from this session. Review the maneuver criteria and repeat testing; no normal or abnormal diffusion label can be assigned.</p>';
   const known = hbKnown(c.dlco);
   const out = [`<p>${esc(known ? DLCO_TEXT[d.category] : DLCO_TEXT.unadjusted)}</p>`];
   if (d.subtype) out.push(`<p>${esc(DLCO_TEXT.subtype[d.subtype])}</p>`);

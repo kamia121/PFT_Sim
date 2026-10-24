@@ -46,9 +46,11 @@ for (const level of ['none', 'light', 'moderate', 'heavy']) {
         assert.ok(Math.abs(v.tlc - (v.rv + v.vc)) < 1e-9 && Math.abs(v.frc - (v.rv + v.erv)) < 1e-9 && Math.abs(v.ic - (v.tlc - v.frc)) < 1e-9, tag);
         assert.ok(v.rv > 0 && v.erv > 0 && v.ic > 0 && v.vc > 0, `non-positive volume, ${tag}`);
         } else { assert.equal(v.tlc, null); assert.equal(v.rv, null); }
+        if (Number.isFinite(d.raw)) {
         assert.ok(Number.isFinite(d.va) && d.va > 0, `VA remains an independent measurement, ${tag}`);
         assert.ok(Math.abs(d.adjusted - d.kco * d.va) < 1e-9, `DLCO != KCO x VA, ${tag}`);
         assert.ok(Math.abs(d.adjusted - d.raw * d.hbFactor) < 1e-9, `adjusted != raw x factor, ${tag}`);
+        } else { assert.equal(d.raw, null); assert.equal(d.adjusted, null); assert.equal(d.va, null); assert.equal(d.kco, null); assert.equal(c.report.dlco, null); }
       } else assert.equal(c.dlco, null);
 
       // Scenario record.

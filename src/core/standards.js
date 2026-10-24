@@ -5,7 +5,7 @@
  * means neither, and the value must not be treated as settled. The 2019 values below were checked
  * against Tables 7 and 10 and the end-of-forced-expiration text of the statement.
  */
-export const GENERATOR_VERSION = 3;
+export const GENERATOR_VERSION = 4;
 
 export const SPIROMETRY_2019 = {
   source: 'ATS/ERS 2019 spirometry standardization (Graham et al., AJRCCM 2019;200:e70)',
@@ -38,4 +38,15 @@ export const LUNG_VOLUMES_2023 = {
   linkedSvc: { olderThanYears: 6, acceptableDeficitL: 0.15, usableDeficitL: 0.25, childAcceptableDeficitL: 0.1, childUsableDeficitL: 0.2, childFvcFraction: 0.1 },
   noFvcAcceptableVcCount: 3,
   frcRepeatability: { preferred: 0.05, qualified: 0.1 },
+};
+
+/** Graham et al. 2017 measurement standard, Table 3 / reporting pp21–22, not GLI reference equations. */
+export const DLCO_2017 = {
+  source: 'ERS/ATS 2017 doi:10.1183/13993003.00016-2016, Table 3 and reporting pp21–22,25; 2018 correction doi:10.1183/13993003.50016-2016',
+  viFraction: { preferred: .90, alternative: .85 }, vaAgreement: { absoluteL: .2, fraction: .05 },
+  t85MaxS: 4, breathHoldS: [8, 12], sampleCompleteS: 4,
+  repeatability: { traditional: 2, si: .67 },
+  classical: { washoutL: [.75, 1], reducedWashoutVcL: 2, reducedWashoutL: .5, sampleL: [.5, 1], smallSampleVcL: 1 },
+  rgaSampleL: [.085, .5],
+  verification: 'Primary Table 3 and reporting text read; interim rows overlap and do not allocate all mixed failures. No session-letter grade or clinical waveform validation is inferred.',
 };

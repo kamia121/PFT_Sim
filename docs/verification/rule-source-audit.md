@@ -2,6 +2,8 @@
 
 Audit started 2026-10-24 against `9822a77`. This is an inventory and verification queue, not a declaration that all rules are verified. Existing comments sometimes disagree about verification status; preserve that uncertainty until the cited primary text has been inspected. No disclaimer is removed by this inventory.
 
+**Latest checkpoint:** generator v4 replicate DLCO and reviewed v3+ pleth integration; 18 verified-rule-text, 10 partial, 8 modeled, 5 blocked groups (41 total); 21 corrected groups overlap those statuses. `rule-audit-status.json` and the final continuation sections are current. Earlier tables below preserve baseline/handoff findings for the audit trail.
+
 ## Evidence gates
 
 1. Primary text/table and version inspected, with locator and provenance recorded.
@@ -68,7 +70,7 @@ The pure mathematical fixtures in `tests/fixtures/rule-boundaries.json` test imp
 
 The parent research worker subsequently delivered a primary-source appendix, reporting direct reading of the original journal PDF and indexed errata. This closes some *rule-text* questions above; it does not make the implementation or numerical references validated. Local Codex also opened the 2022 journal PDF at https://vvlr-afp.be/wp-content/uploads/2025/03/ERS-ATS-technical-standard-on-interpretive-strategies-for-routine-lung-function-tests_ERJ_2021.pdf . Source-status reader attribution must remain explicit.
 
-| Finding | Exact primary location supplied | Current implementation / required work |
+| Finding at research handoff | Exact primary location supplied | State at handoff (later corrections below) |
 |---|---|---|
 | Obstruction, restriction, mixed and nonspecific definitions | 2022 Figure8 p17, Table5 p18, pp18–19, Figure10 p21, p22 | Broad branches agree. New regression confirms normal FVC cannot override available low TLC; passes. PRISm terminology still needs careful scope. |
 | Volume interpretation uses RV/TLC and FRC/TLC upper limits | 2022 Table7 p22 | Existing TLC-only hyperinflation and RV-or-RV/TLC trapping flags are not a full implementation of the source algorithm. Review with context, not a one-line flag rename; FRC/TLC is not currently resolved. |
@@ -130,3 +132,13 @@ Current machine-readable counts supersede earlier checkpoint counts: **41 groups
 RV pool decision: corrected primary reporting pp18–19 says selected measurements and their associated spirometry are used to report FRC and other volumes; Table 4 counts retained FRC and SVC; derivation pp4–5 uses the largest VC. Together these support the retained eligible linked SVC pool used here. **That pool scope is an interpretation of source context, not a directly quoted exhaustive exclusion list**. A separate excluded SVC or forced FVC is not silently substituted. Independent review should specifically check this resolution. Exact subset-size/spread/acquisition ties, eight-trial cap, fallback preference for eligible linked pairs and synthetic fault probabilities remain explicit engineering policies.
 
 See `pleth-integration-checkpoint-2026-10-24.md` for files, workflows, tests and remaining scope. Replicate DLCO selection, source coefficient PDFs and official-output fixtures remain open. No previously established calculator quota or publisher 403 was retried during this integration.
+
+## Replicate DLCO and pleth review checkpoint (generator v4)
+
+Current counts supersede earlier checkpoints: **41 semantic groups: 18 verified-rule-text, 10 partial, 8 modeled, 5 blocked complete coefficient/output validation; 21 corrected groups** on the overlapping implementation axis. Rule-text status is not an implementation-validation or clinical-calibration label.
+
+The 2017 measurement standard was reopened directly: Table 3 and reporting pp21–22, and Reporting values p25 in the original journal PDF at https://www.sogapar.info/wp-content/uploads/2016/12/5.-Normativa-difusi%C3%B3n-ATS-2017.pdf (DOI https://doi.org/10.1183/13993003.00016-2016). The corrected 2023 volume standard was reread at Table 2 p17, reporting pp18–19 and linked-acquisition Figure 2 pp4–5. No blocked coefficient PDF or calculator quota was retried.
+
+V4 adds actual replicate acquisition and A-only selection before qualified fallback. Other-maneuver VA comparison is rooted in an independent A and never self/circular; missing VC is pending, F-only/unclassified-only sessions have no reported DLCO. Timing, sampling and exact thresholds have criterion-level feedback; ambiguous mixed failures do not receive invented letters. Means use the same retained pool; KCO is the disclosed quotient of reported DLCO and mean VA, with aggregation convention open to focused review. See `dlco-replicate-checkpoint-2026-10-24.md` and `SPEC.md` for explicit engineering choices and remaining limitations.
+
+All four independent review findings on 604ee60 were addressed: no-obstruction FRC >1.5 through 2 Hz is usable; concise output carries qualification for reportable C/D/E/U volumes; v3+ linked volume traces now acquire IC from FRC to TLC before expiratory SVC to RV; metadata/HTML/CSV/footers use the actual case version. The parent adjudicated retained eligible linked SVC for RV as defensible from primary retained/discarded associated-spirometry wording. Group 28's source-context question is closed on that evidence, with reduced-input scope and engineering selection preferences retained. No arbitrary definition of minimal/significant obstruction was added; source group 27 remains partial for that context and the synthetic waveform model.

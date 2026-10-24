@@ -90,7 +90,7 @@ test('axes carry units, legends are present, markers are annotated', () => {
 });
 
 test('acceptability is hidden unless showQuality is set', () => {
-  const c = buildCase({ seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] }, ds);
+  const c = buildCase({ v: 3, seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] }, ds);
   const shutter = plethShutter.dataFor(c), dlco = dlcoTrace.dataFor(c);
   assert.ok(!/acceptable|rejected|usable|Grade/.test(plethShutter.render(shutter, { palette: PALETTES.dark }).replace('mean of the acceptable trials', '')));
   assert.ok(/rejected|usable/.test(plethShutter.render(shutter, { palette: PALETTES.dark, showQuality: true })));

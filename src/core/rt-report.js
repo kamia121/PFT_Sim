@@ -35,7 +35,7 @@ import { SPIROMETRY_2019 as S } from './standards.js';
  * - `representative.*.faults` are fault ids of src/core/quality.js (`faultWording(id)` gives the text) that make the
  *   displayed maneuver unacceptable, empty for an acceptable maneuver. For a set with no acceptable maneuver the best
  *   usable maneuver is shown, kind 'best', and its faults are listed.
- * - Indices are 0-based. `representative.dlco.test` is 0 because one single-breath test is simulated.
+ * - Indices are 0-based. `representative.dlco.test` chooses the first retained v4 replicate, or the first available trace if none is retained; legacy single-test cases use 0.
  */
 
 export const RT_CLOSING = 'Official interpretation to follow.';
@@ -172,6 +172,7 @@ const PLETH_REASON_TEXT = {
 const plethAcceptable = (grade) => grade === 'A' || grade === 'B';
 
 function dlcoTruth(c) {
+  if (c.dlcoTrace?.session) { const s = c.dlcoTrace.session; return { acceptable: s.status === 'repeatable', reasons: s.status === 'repeatable' ? [] : s.warnings.map((x) => x.replace(/[.\s]+$/, '')) }; }
   const g = c.dlcoTrace?.grade;
   if (!g) return null;
   const reasons = g.acceptable ? [] : [...g.invalid, ...g.failed, ...(g.unknown ?? [])].map((r) => DLCO_REASON_TEXT[r] ?? r);
@@ -275,7 +276,7 @@ function representativeSet(set, technique, uFlawed, uPick) {
  * practice; if none is, the best usable). On a seeded fraction of fair and poor sessions an unacceptable maneuver is shown instead
  * (kind 'flawed') and its own fault list is the key: a loop that falls short of the tabulated FVC is not a cue, because the
  * tabulated values are maxima over acceptable maneuvers, usually from different ones. The plethysmography trial is the acceptable
- * one nearest the reported FRC (never flawed). The DLCO test is the one test simulated.
+ * one nearest the reported FRC (never flawed). The v4 representative DLCO trace is the first retained replicate; legacy cases have one test.
  * @param {object} caseData a case from buildCase
  * @returns {RtReport['representative']}
  */
@@ -287,7 +288,7 @@ export function representativeFor(caseData) {
     pre: representativeSet(c.spirometry.pre, technique, u[U.flawedPre], u[U.pickPre]),
     post: c.spirometry.post ? representativeSet(c.spirometry.post, technique, u[U.flawedPost], u[U.pickPost]) : null,
     pleth: c.pleth ? { trial: bestTrialIndex(c.pleth) - 1 } : null,
-    dlco: c.dlcoTrace ? { test: 0 } : null,
+    dlco: c.dlcoTrace ? { test: c.dlcoTrace.tests ? Math.max(0, c.dlcoTrace.tests.findIndex((t) => t.selected)) : 0 } : null,
   };
 }
 

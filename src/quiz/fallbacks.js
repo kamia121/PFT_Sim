@@ -55,7 +55,7 @@ export function caseFacts(prep) {
     // A missing hemoglobin is null. It is neither low nor normal, and `null < 11` is true in JavaScript, so it is kept apart on purpose.
     hb: hbKnown(c.dlco) ? c.dlco.hbGdl : null,
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
-    hasVolumes: Number.isFinite(c.volumes?.tlc), hasDlco: Boolean(c.dlco),
+    hasVolumes: Number.isFinite(c.volumes?.tlc), hasDlco: Number.isFinite(c.dlco?.adjusted),
     lowErv: a.flags.some((x) => x.id === 'low-erv'),
     europeanApplied: measures.some((m) => m.available !== false && m.matched === false),
     unavailable: measures.some((m) => m.available === false),

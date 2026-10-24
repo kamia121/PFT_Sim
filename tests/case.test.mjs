@@ -43,10 +43,12 @@ test('exact constraints hold on every reported quantity', () => {
     assert.ok(v.rv > 0 && v.erv > 0 && v.ic > 0 && v.vc > 0);
     } else { assert.equal(v.tlc, null); assert.equal(v.rv, null); }
     const d = c.dlco;
+    if (Number.isFinite(d.raw)) {
     assert.ok(Number.isFinite(d.va) && d.va > 0, 'Measured VA is independent of potentially unavailable/unreliable pleth TLC.');
     assert.ok(Math.abs(d.adjusted - d.kco * d.va) < 1e-9, 'DLCO = KCO x VA');
     assert.ok(Math.abs(d.adjusted - d.raw * d.hbFactor) < 1e-9, 'adjusted DLCO = measured x hemoglobin factor');
-    n++;
+        } else { assert.equal(d.raw, null); assert.equal(d.adjusted, null); assert.equal(d.va, null); assert.equal(d.kco, null); assert.equal(c.report.dlco, null); }
+n++;
   }
   assert.equal(n, ARCHETYPES.length * 3 * 60);
 });

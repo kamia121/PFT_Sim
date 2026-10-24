@@ -173,8 +173,13 @@ export function detailsSheet(model, { rt = null, caseData, interp, equation, pal
   const pleth = caseData.pleth ? section('d-pleth', 'Plethysmography',
     `${plControls}${draw('panel-pleth', { view: pl.view, selected: pl.selected })}${tbl(plethTable(model, caseData, { showGrades, truth }))}`) : '';
 
+  const sourceDlcoTable = tableOf(model, 'dlco-replicates');
+  const dlcoTable = sourceDlcoTable && !showGrades ? { ...sourceDlcoTable,
+    columns: sourceDlcoTable.columns.filter((c) => !['grade', 'retained', 'reason'].includes(c.key)),
+    footnote: `Session ${caseData.dlcoTrace.session.status}; interpret any qualified result with caution.`,
+  } : sourceDlcoTable;
   const dlco = caseData.dlco && caseData.dlcoTrace ? section('d-dlco', 'Diffusing capacity',
-    draw('panel-dlco', { view: 'best' })) : '';
+    `${tbl(dlcoTable)}${draw('panel-dlco', { view: 'best' })}`) : '';
 
   const z = section('d-zscores', 'Z-scores', draw('z-strip', {}));
 

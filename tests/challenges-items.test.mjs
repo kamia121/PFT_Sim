@@ -49,7 +49,7 @@ forEachCase(100, (c, input) => {
     seen[bd.key.interpretable === 'yes' ? 'bdInterpretable' : 'bdNotInterpretable']++;
     if (bd.otherKey.response !== bd.key.response) seen.otherEq++;
   }
-  if (by.dlcoAcceptable) log.check('dlco key', by.dlcoAcceptable.key === (c.dlcoTrace.grade.acceptable ? 'acceptable' : 'not-acceptable'), id);
+  if (by.dlcoAcceptable) log.check('dlco key', by.dlcoAcceptable.key === (c.dlcoTrace.session ? c.dlcoTrace.session.status === 'repeatable' ? 'acceptable' : c.dlcoTrace.session.status === 'qualified' ? 'qualified' : 'unavailable' : c.dlcoTrace.grade.acceptable ? 'acceptable' : 'not-acceptable'), id);
   if (by.plethAcceptable) log.check('pleth key', by.plethAcceptable.key === (c.pleth.session ? c.pleth.session.status !== 'reported' ? 'unavailable' : ['A', 'B'].includes(c.pleth.grade) ? 'acceptable' : 'qualified' : ['A', 'B'].includes(c.pleth.grade) ? 'acceptable' : 'not-acceptable'), id);
   const verdict = statementVerdict(rt);
   seen.verdicts.add(verdict);

@@ -78,6 +78,45 @@
         "qualified": 0.1
       }
     },
+    "DLCO_2017": {
+      "source": "ERS/ATS 2017 doi:10.1183/13993003.00016-2016, Table 3 and reporting pp21–22,25; 2018 correction doi:10.1183/13993003.50016-2016",
+      "viFraction": {
+        "preferred": 0.9,
+        "alternative": 0.85
+      },
+      "vaAgreement": {
+        "absoluteL": 0.2,
+        "fraction": 0.05
+      },
+      "t85MaxS": 4,
+      "breathHoldS": [
+        8,
+        12
+      ],
+      "sampleCompleteS": 4,
+      "repeatability": {
+        "traditional": 2,
+        "si": 0.67
+      },
+      "classical": {
+        "washoutL": [
+          0.75,
+          1
+        ],
+        "reducedWashoutVcL": 2,
+        "reducedWashoutL": 0.5,
+        "sampleL": [
+          0.5,
+          1
+        ],
+        "smallSampleVcL": 1
+      },
+      "rgaSampleL": [
+        0.085,
+        0.5
+      ],
+      "verification": "Primary Table 3 and reporting text read; interim rows overlap and do not allocate all mixed failures. No session-letter grade or clinical waveform validation is inferred."
+    },
     "DLCO_MODEL": {
       "version": 1,
       "testGas": {
@@ -248,7 +287,7 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "28b17c202fc54b1c55ed0f13dd0b0d0f5ab5b17617d3af37e570e417c13b1fe7",
+      "sha256": "3eff553f0e4bc8fd8160a2b610e856e33466eb30f2471eba60816379b5efd0ce",
       "reviewLines": [
         {
           "line": 12,
@@ -301,6 +340,10 @@
         {
           "line": 37,
           "text": "verification: 'primary corrected Table 3, Table 4 and reporting text read; source rules are not synthetic-signal validation',"
+        },
+        {
+          "line": 51,
+          "text": "verification: 'Primary Table 3 and reporting text read; interim rows overlap and do not allocate all mixed failures. No session-letter grade or clinical waveform validation is inferred.',"
         }
       ]
     },
@@ -491,6 +534,222 @@
       ]
     },
     {
+      "path": "src/core/dlco-session.js",
+      "sha256": "82bdfaf4816595591c2ff4ea6c79f903b8d3677846db2ade2e5cfc2f495718d2",
+      "reviewLines": [
+        {
+          "line": 4,
+          "text": "const valid = (v) => Number.isFinite(v) && v > 0;"
+        },
+        {
+          "line": 5,
+          "text": "const epsilon = (a, b) => 8 * Number.EPSILON * Math.max(1, Math.abs(a), Math.abs(b));"
+        },
+        {
+          "line": 6,
+          "text": "const le = (a, b) => a <= b + epsilon(a, b);"
+        },
+        {
+          "line": 7,
+          "text": "const ge = (a, b) => b <= a + epsilon(a, b);"
+        },
+        {
+          "line": 8,
+          "text": "const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;"
+        },
+        {
+          "line": 9,
+          "text": "const range = (xs) => xs.length > 1 ? Math.max(...xs) - Math.min(...xs) : null;"
+        },
+        {
+          "line": 14,
+          "text": "const add = (id, known, pass) => criteria.push({ id, status: !known ? 'unknown' : pass ? 'pass' : 'fail' });"
+        },
+        {
+          "line": 20,
+          "text": "add('t85 <4 s', Number.isFinite(q.t85S), q.t85S >= 0 && q.t85S < S.t85MaxS);"
+        },
+        {
+          "line": 24,
+          "text": "const bhKnown = valid(q.breathHoldS), sampleKnown = Number.isFinite(q.sampleEndS) && q.sampleEndS >= 0;"
+        },
+        {
+          "line": 27,
+          "text": "add('sample complete <=4 s from exhalation start', sampleKnown, le(q.sampleEndS, S.sampleCompleteS));"
+        },
+        {
+          "line": 30,
+          "text": "const low = valid(vcL) && vcL < S.classical.reducedWashoutVcL ? S.classical.reducedWashoutL : S.classical.washoutL[0];"
+        },
+        {
+          "line": 32,
+          "text": "add('classical sample volume', valid(vcL) && valid(q.sampleL), le(q.sampleL, S.classical.sampleL[1]) && (ge(q.sampleL, S.classical.sampleL[0]) || vcL < S.classical.smallSampleVcL && q.deadSpaceClearanceConfirmed === true));"
+        },
+        {
+          "line": 36,
+          "text": "const acceptable = criteria.every((c) => c.status === 'pass');"
+        },
+        {
+          "line": 37,
+          "text": "const numericColumns = new Set(['VI/VC', 'breath-hold 8–12 s', 'sample complete <=4 s from exhalation start']);"
+        },
+        {
+          "line": 38,
+          "text": "const otherCriteria = criteria.filter((c) => !numericColumns.has(c.id));"
+        },
+        {
+          "line": 39,
+          "text": "const otherPass = otherCriteria.every((c) => c.status === 'pass');"
+        },
+        {
+          "line": 51,
+          "text": "criteria, failed: criteria.filter((c) => c.status === 'fail').map((c) => c.id), unknown: criteria.filter((c) => c.status === 'unknown').map((c) => c.id),"
+        },
+        {
+          "line": 52,
+          "text": "classification: grade ? 'interim-table-row' : criteria.some((c) => c.status === 'unknown') ? 'pending' : 'unclassified-mixed-failure',"
+        },
+        {
+          "line": 58,
+          "text": "for (let mask = 1; mask < 2 ** rows.length; mask++) {"
+        },
+        {
+          "line": 59,
+          "text": "const group = rows.filter((_, i) => mask & 2 ** i);"
+        },
+        {
+          "line": 60,
+          "text": "if (group.length < best.length || !acceptable(group)) continue;"
+        },
+        {
+          "line": 61,
+          "text": "const d = range(group.map((r) => r.dlco)) ?? 0;"
+        },
+        {
+          "line": 62,
+          "text": "if (group.length > best.length || d < spread && !le(spread, d)) { best = group; spread = d; }"
+        },
+        {
+          "line": 70,
+          "text": "if (maneuvers.length > 8) throw new RangeError('This simulator reporting adapter supports at most eight DLCO maneuvers (project limit).');"
+        },
+        {
+          "line": 71,
+          "text": "const ids = maneuvers.map((t) => t.id);"
+        },
+        {
+          "line": 72,
+          "text": "if (new Set(ids).size !== ids.length || ids.some((id) => !(typeof id === 'string' && id.length || typeof id === 'number' && Number.isFinite(id)))) throw new TypeError('DLCO maneuver IDs must be stable and unique.');"
+        },
+        {
+          "line": 73,
+          "text": "const initial = maneuvers.map((t) => assessDlcoManeuver(t, { vcL }));"
+        },
+        {
+          "line": 74,
+          "text": "const roots = maneuvers.filter((_, i) => initial[i].acceptable);"
+        },
+        {
+          "line": 75,
+          "text": "const candidates = maneuvers.filter((_, i) => initial[i].alternative === 'unconfirmed' && initial[i].grade === 'B');"
+        },
+        {
+          "line": 77,
+          "text": "const promoted = roots.length ? bestSubset(candidates, (group) => {"
+        },
+        {
+          "line": 82,
+          "text": "const index = pending.findIndex((t) => assessDlcoManeuver(t, { vcL, largestOtherAcceptableVaL: Math.max(...reached.map((r) => r.vaL)) }).acceptable);"
+        },
+        {
+          "line": 83,
+          "text": "if (index < 0) return false;"
+        },
+        {
+          "line": 86,
+          "text": "return group.every((t) => assessDlcoManeuver(t, { vcL, largestOtherAcceptableVaL: Math.max(...pool.filter((r) => r.id !== t.id).map((r) => r.vaL)) }).acceptable);"
+        },
+        {
+          "line": 89,
+          "text": "const assessments = maneuvers.map((t) => {"
+        },
+        {
+          "line": 90,
+          "text": "const others = acceptedPool.filter((r) => r.id !== t.id);"
+        },
+        {
+          "line": 91,
+          "text": "const assessment = assessDlcoManeuver(t, { vcL, largestOtherAcceptableVaL: others.length ? Math.max(...others.map((r) => r.vaL)) : null });"
+        },
+        {
+          "line": 92,
+          "text": "if (assessment.acceptable && !acceptedPool.some((r) => r.id === t.id)) {"
+        },
+        {
+          "line": 97,
+          "text": "const a = maneuvers.filter((_, i) => assessments[i].acceptable);"
+        },
+        {
+          "line": 99,
+          "text": "const repeatable = bestSubset(a, (xs) => xs.length >= 2 && le(range(xs.map((r) => r.dlco)), threshold));"
+        },
+        {
+          "line": 104,
+          "text": "else if (a.length) { selected = a; status = 'qualified'; policy = a.length > 1 ? 'nonrepeatable-A-only' : 'single-A-only'; warnings.push(a.length > 1 ? 'Acceptable A maneuvers are not repeatable; report their mean with caution.' : 'Only one acceptable A maneuver; repeatability cannot be demonstrated.'); }"
+        },
+        {
+          "line": 106,
+          "text": "selected = maneuvers.filter((_, i) => ['B', 'C', 'D'].includes(assessments[i].grade));"
+        },
+        {
+          "line": 107,
+          "text": "status = selected.length ? 'qualified' : assessments.some((r) => r.unknown.length) ? 'pending' : 'unavailable';"
+        },
+        {
+          "line": 112,
+          "text": "if (assessments.some((r) => r.alternative === 'unconfirmed')) warnings.push('The low-VI A alternative lacks another independently acceptable VA comparator; it is not established.');"
+        },
+        {
+          "line": 113,
+          "text": "if (assessments.some((r) => r.grade === null)) warnings.push('Some criteria are missing or mixed failures have no specified interim letter; they require review and are excluded.');"
+        },
+        {
+          "line": 114,
+          "text": "const reported = selected.length ? { dlco: mean(selected.map((r) => r.dlco)), vaL: mean(selected.map((r) => r.vaL)), viL: mean(selected.map((r) => r.viL)) } : { dlco: null, vaL: null, viL: null };"
+        },
+        {
+          "line": 116,
+          "text": "selectedIds: selected.map((r) => r.id), excludedIds: ids.filter((id) => !selected.some((r) => r.id === id)),"
+        },
+        {
+          "line": 117,
+          "text": "repeatability: { threshold, spread: range(selected.map((r) => r.dlco)), demonstrated: repeatable.length >= 2 },"
+        }
+      ]
+    },
+    {
+      "path": "src/core/dlco-replicates.js",
+      "sha256": "0e43eb573c3327297299a51587ab51baa212a171c341d02098e9ab237f4e62c1",
+      "reviewLines": [
+        {
+          "line": 10,
+          "text": "if (Number.isFinite(vcL) && vcL > 0) {"
+        },
+        {
+          "line": 11,
+          "text": "for (let i = 1; i <= 5; i++) {"
+        },
+        {
+          "line": 27,
+          "text": "const assessment = session.assessments.find((a) => a.id === trace.maneuverId);"
+        },
+        {
+          "line": 32,
+          "text": "const representative = tests.find((t) => t.selected) ?? tests[0] ?? null;"
+        }
+      ]
+    },
+    {
       "path": "src/core/comparison.js",
       "sha256": "7b4e0e412a683468b3320fa9884919c7c3a37f967c643d0ac2a8cd1d80c3b2bb",
       "reviewLines": [
@@ -608,7 +867,7 @@
     },
     {
       "path": "src/core/dlco-trace.js",
-      "sha256": "d519a9e731ede4a80807b6a0c607d3d2600883c4be61a783b7ab23b5b5dc8972",
+      "sha256": "b978a26ff87e41d784158ae6e57cecedbf3c50834e495bbbf1b297df451c4a2a",
       "reviewLines": [
         {
           "line": 32,
@@ -978,7 +1237,7 @@
     },
     {
       "path": "src/core/pleth.js",
-      "sha256": "9c1eac962766eceedcc66bc1a34c254a598f3e7d25a9f67da94489703876767c",
+      "sha256": "4a3666ef34ace5aba6444f010ae6638f2cb258bc5645e0eccea80fb899c05ce8",
       "reviewLines": [
         {
           "line": 19,
@@ -1082,634 +1341,662 @@
         },
         {
           "line": 256,
-          "text": "const d = Array.from({ length: 16 }, () => r.uniform());"
+          "text": "if (hz < .5 || hz > 2 || hz > 1.5 && !noOrMinimalObstruction) return 'rejected';"
         },
         {
           "line": 257,
-          "text": "const n = Array.from({ length: 6 }, () => r.normal());"
-        },
-        {
-          "line": 260,
-          "text": "const faultGate = d[0] < tech.pFault;"
-        },
-        {
-          "line": 262,
-          "text": "const pickedThermal = faultGate && pick < 0.28;"
-        },
-        {
-          "line": 263,
-          "text": "const pickedCheek = faultGate && pick >= 0.28 && pick < 0.46;"
-        },
-        {
-          "line": 264,
-          "text": "const pickedLeak = faultGate && pick >= 0.46 && pick < 0.6;"
+          "text": "if (hz <= 1 || noOrMinimalObstruction && hz <= 1.5) return 'acceptable';"
         },
         {
           "line": 265,
-          "text": "const pickedEel = faultGate && pick >= 0.6 && pick < 0.8;"
+          "text": "const d = Array.from({ length: 16 }, () => r.uniform());"
         },
         {
           "line": 266,
+          "text": "const n = Array.from({ length: 6 }, () => r.normal());"
+        },
+        {
+          "line": 269,
+          "text": "const faultGate = d[0] < tech.pFault;"
+        },
+        {
+          "line": 271,
+          "text": "const pickedThermal = faultGate && pick < 0.28;"
+        },
+        {
+          "line": 272,
+          "text": "const pickedCheek = faultGate && pick >= 0.28 && pick < 0.46;"
+        },
+        {
+          "line": 273,
+          "text": "const pickedLeak = faultGate && pick >= 0.46 && pick < 0.6;"
+        },
+        {
+          "line": 274,
+          "text": "const pickedEel = faultGate && pick >= 0.6 && pick < 0.8;"
+        },
+        {
+          "line": 275,
           "text": "const pickedFast = faultGate && pick >= 0.8 && pick < 0.93;"
         },
         {
-          "line": 267,
+          "line": 276,
           "text": "const pickedSlow = faultGate && pick >= 0.93;"
         },
         {
-          "line": 277,
+          "line": 286,
           "text": "const thermalOn = forced.thermal || pickedThermal || f < 0.5;"
         },
         {
-          "line": 278,
+          "line": 287,
           "text": "const thermalLarge = thermalOn && !forced.thermal ? d[2] < 0.25 : forced.thermal && d[2] < 0.15;"
         },
         {
-          "line": 286,
+          "line": 295,
           "text": "offset = driftSign * fade * (thermalLarge ? 1.0 + 1.5 * d[6] : 0.6 + 1.0 * d[6]) * (d[7] < 0.5 ? 1 : -1);"
         },
         {
-          "line": 300,
+          "line": 309,
           "text": "const eelShift = eel ? (d[11] < 0.7 ? 1 : -1) * (0.22 + 0.28 * d[12]) : 0;"
         },
         {
-          "line": 308,
+          "line": 317,
           "text": "for (let j = 0; j <= POINTS_PER_TRIAL; j++) {"
         },
         {
-          "line": 330,
-          "text": "if (f > 1.5) {"
+          "line": 339,
+          "text": "if (ctx.currentCriteria && !obstructed && f > 1.5 && f <= 2) {"
         },
         {
-          "line": 333,
+          "line": 343,
+          "text": "} else if (f > 1.5) {"
+        },
+        {
+          "line": 346,
           "text": "faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz, above 1.5 Hz. Mouth pressure underestimates the alveolar pressure swing, so FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);"
         },
         {
-          "line": 334,
+          "line": 347,
           "text": "} else if (f > fLimit) {"
         },
         {
-          "line": 337,
+          "line": 350,
           "text": "faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz. Above 1.0 Hz is tolerated only when spirometry shows little or no obstruction; here FRC is read about ${Math.abs(pct).toFixed(0)}% ${pct >= 0 ? 'high' : 'low'}.`);"
         },
         {
-          "line": 339,
+          "line": 352,
           "text": "if (f < 0.5) {"
         },
         {
-          "line": 344,
+          "line": 357,
           "text": "if (thermalOn && f >= 0.5) {"
         },
         {
-          "line": 352,
+          "line": 365,
           "text": "faultText.push(`Trial ${i}: cheeks not supported. Mouth pressure underestimates the swing in alveolar pressure and FRC is read about ${Math.abs(pct).toFixed(0)}% ${pct >= 0 ? 'high' : 'low'}.`);"
         },
         {
-          "line": 357,
+          "line": 370,
           "text": "faultText.push(`Trial ${i}: the loop is open and bent, as with a mouth leak or an incomplete occlusion; the slope is shallow and FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);"
         },
         {
-          "line": 362,
+          "line": 375,
           "text": "faultText.push(`Trial ${i}: shutter closed about ${Math.abs(eelShift * 1000).toFixed(0)} mL ${eelShift > 0 ? 'above' : 'below'} the stable end-expiratory level, so the volume labeled FRC is not FRC.`);"
         },
         {
-          "line": 367,
+          "line": 380,
           "text": "const eelDeviationL = Array.from({ length: 5 }, (_, b) => round((eel ? eelShift * (b / 4) ** 2 : 0) + 0.025 * r.normal(), 3));"
         },
         {
-          "line": 377,
+          "line": 390,
           "text": "const idx = values.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);"
         },
         {
-          "line": 379,
+          "line": 392,
           "text": "for (let a = 0; a < idx.length; a++) {"
         },
         {
-          "line": 380,
+          "line": 393,
           "text": "for (let b = a; b < idx.length; b++) {"
         },
         {
-          "line": 382,
+          "line": 395,
           "text": "const m = mean(grp.map((g) => g[0]));"
         },
         {
-          "line": 383,
+          "line": 396,
           "text": "if ((grp[grp.length - 1][0] - grp[0][0]) / m <= tol && grp.length > best.length) best = grp;"
         },
         {
-          "line": 386,
+          "line": 399,
           "text": "return best.map((g) => g[1]);"
         },
         {
-          "line": 390,
+          "line": 403,
           "text": "export const spreadFraction = (values) => (Math.max(...values) - Math.min(...values)) / mean(values);"
         },
         {
-          "line": 399,
+          "line": 412,
           "text": "if (acceptableValues.length === 0) return usableCount > 0 ? 'U' : 'F';"
         },
         {
-          "line": 402,
+          "line": 415,
           "text": "if (within5 >= 3) return 'A';"
         },
         {
-          "line": 404,
+          "line": 417,
           "text": "if (repeatableGroup(acceptableValues, tolC).length >= 2) return 'C';"
         },
         {
-          "line": 411,
+          "line": 424,
           "text": "// `pleth-resistance`, and `pleth-timeline-<trial>`. No other stream is read."
         },
         {
-          "line": 415,
+          "line": 428,
           "text": "const smoothstep = (x) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };"
         },
         {
-          "line": 416,
+          "line": 429,
           "text": "const smootherstep = (x) => { const c = clamp(x, 0, 1); return c * c * c * (c * (6 * c - 15) + 10); };"
         },
         {
-          "line": 419,
+          "line": 432,
           "text": "export const shiftMlPerPa = (box) => (box.freeVolumeL / box.barometricPa) * 1000;"
         },
         {
-          "line": 428,
+          "line": 441,
           "text": "breathingMode: { id: 'tidal', label: 'tidal breathing', tidalVolumeL: 0.85, inspiratoryTimeS: 1.3, expiratoryTimeS: 1.65, verification: 'secondary' },"
         },
         {
-          "line": 429,
+          "line": 442,
           "text": "fitRangeLs: { value: 0.5, verification: 'secondary' },"
         },
         {
-          "line": 432,
+          "line": 445,
           "text": "referenceFlowLs: { value: 0.55, note: 'scale of the quadrature opening term', verification: 'unverified' },"
         },
         {
-          "line": 433,
+          "line": 446,
           "text": "flowBlendEpsLs: { value: 0.08, note: 'width of the tanh blend between the inspiratory and expiratory limbs', verification: 'unverified' },"
         },
         {
-          "line": 434,
+          "line": 447,
           "text": "expiratoryOpeningAsymmetry: { value: 0.35, note: 'the opening term is larger on expiration and smaller on inspiration, by a smooth function of phase, equal at the two zero-flow points', verification: 'unverified' },"
         },
         {
-          "line": 435,
+          "line": 448,
           "text": "verification: 'unverified',"
         },
         {
-          "line": 444,
+          "line": 457,
           "text": "params: () => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.12, opening: 0.015 }),"
         },
         {
-          "line": 450,
+          "line": 463,
           "text": "params: (u) => ({ cubicInspiratory: 0.12, cubicExpiratory: 0.6 + 2.2 * u, opening: 0.06 + 0.35 * u }),"
         },
         {
-          "line": 456,
+          "line": 469,
           "text": "params: () => ({ cubicInspiratory: 0.05, cubicExpiratory: 0.05, opening: 0.01 }),"
         },
         {
-          "line": 462,
+          "line": 475,
           "text": "params: () => ({ cubicInspiratory: 1.4, cubicExpiratory: 1.0, opening: 0.05 }),"
         },
         {
-          "line": 478,
+          "line": 491,
           "text": "const waves = (amp) => [0, 1].map(() => ({ a: amp * (0.5 + 0.5 * rng.uniform()), om: TAU / (7 + 12 * rng.uniform()), ph: TAU * rng.uniform() }));"
         },
         {
-          "line": 480,
+          "line": 493,
           "text": "const sumW = (ws, t) => ws.reduce((s, w) => s + w.a * Math.sin(w.om * t + w.ph), 0);"
         },
         {
-          "line": 481,
+          "line": 494,
           "text": "const dsumW = (ws, t) => ws.reduce((s, w) => s + w.a * w.om * Math.cos(w.om * t + w.ph), 0);"
         },
         {
-          "line": 482,
+          "line": 495,
           "text": "const rate = (th, t) => w0 * (1 + eps * Math.sin(th)) * (1 + sumW(rateW, t));"
         },
         {
-          "line": 483,
+          "line": 496,
           "text": "const rk4 = (th, t, h) => {"
         },
         {
-          "line": 490,
+          "line": 503,
           "text": "while (th < end - 1e-12) {"
         },
         {
-          "line": 494,
+          "line": 507,
           "text": "if (remaining <= 1.5 * step) {"
         },
         {
-          "line": 496,
+          "line": 509,
           "text": "const nSub = remaining <= step ? 1 : 2;"
         },
         {
-          "line": 498,
+          "line": 511,
           "text": "for (let q = 0; q < nSub; q++) {"
         },
         {
-          "line": 509,
+          "line": 522,
           "text": "for (let j = 0; j < t.length; j++) {"
         },
         {
-          "line": 515,
+          "line": 528,
           "text": "const breath = theta.map((x) => Math.min(nBreaths - 1, Math.floor(x / TAU + 1e-9)));"
         },
         {
-          "line": 517,
+          "line": 530,
           "text": "const crossing = (level) => {"
         },
         {
-          "line": 518,
+          "line": 531,
           "text": "const j = theta.findIndex((x) => x >= level);"
         },
         {
-          "line": 519,
+          "line": 532,
           "text": "if (j <= 0) return t[Math.max(j, 0)];"
         },
         {
-          "line": 522,
+          "line": 535,
           "text": "const breaths = Array.from({ length: nBreaths }, (_, b) => {"
         },
         {
-          "line": 524,
+          "line": 537,
           "text": "return { ti: m - a, te: e - m, vt: Math.max(...vol.filter((_, j) => breath[j] === b)) };"
         },
         {
-          "line": 540,
+          "line": 553,
           "text": "for (let j = 0; j < y.length; j++) if (inWindow[j]) { xs.push(x[j]); ys.push(y[j]); }"
         },
         {
-          "line": 542,
+          "line": 555,
           "text": "return y.map((q, j) => q - (my + slope * (x[j] - mx)));"
         },
         {
-          "line": 551,
+          "line": 564,
           "text": "* slope over |flow| <= 0.5 L/s equals the physiological Raw target of the case; the noise is smooth and made orthogonal to"
         },
         {
-          "line": 570,
+          "line": 583,
           "text": "const morphId = pickMorphology({ requested: morphology, obstructed: z < -1.645, restricted });"
         },
         {
-          "line": 574,
+          "line": 587,
           "text": "const w = (x) => 0.5 * (1 + Math.tanh(x / eps));"
         },
         {
-          "line": 575,
+          "line": 588,
           "text": "const g = (x) => x + (par.cubicInspiratory * (1 - w(x)) + par.cubicExpiratory * w(x)) * x ** 3;"
         },
         {
-          "line": 577,
+          "line": 590,
           "text": "// Its amplitude h (1 - asym sin theta) is larger in expiration (sin theta < 0) and equal at the two zero-flow points, so it never jumps."
         },
         {
-          "line": 578,
+          "line": 591,
           "text": "const p0 = v.map((x, j) => g(x) - par.opening * vref * (1 - asym * Math.sin(theta[j])) * Math.cos(theta[j]));"
         },
         {
-          "line": 581,
+          "line": 594,
           "text": "const inWin = v.map((x) => Math.abs(x) <= fitRange);"
         },
         {
-          "line": 582,
+          "line": 595,
           "text": "const vw = v.filter((_, j) => inWin[j]), pw = p0.filter((_, j) => inWin[j]);"
         },
         {
-          "line": 588,
+          "line": 601,
           "text": "for (let j = 0; j < n; j++) { s = a * s + Math.sqrt(1 - a * a) * rng.normal(); nz.push(s); }"
         },
         {
-          "line": 589,
+          "line": 602,
           "text": "const sd = Math.sqrt(mean(nz.map((q) => q * q)));"
         },
         {
-          "line": 590,
+          "line": 603,
           "text": "const noise = orthogonalize(nz.map((q) => (q / sd) * tech.rawNoise * rawModel), v, inWin);"
         },
         {
-          "line": 593,
+          "line": 606,
           "text": "const flow = v.map((x) => round(x, 4));"
         },
         {
-          "line": 594,
+          "line": 607,
           "text": "const pbox = p0.map((q, j) => round(kBox * (S * q + noise[j]), 4));"
         },
         {
-          "line": 595,
+          "line": 608,
           "text": "const shiftMl = pbox.map((q) => round(q * shiftMlPerPa(box), 3));"
         },
         {
-          "line": 596,
+          "line": 609,
           "text": "const volumeL = vol.map((x) => round(x, 4));"
         },
         {
-          "line": 598,
+          "line": 611,
           "text": "// sRaw from the tidal fit over |flow| <= 0.5 L/s of the stored arrays."
         },
         {
-          "line": 600,
+          "line": 613,
           "text": "for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= fitRange) { fx.push(flow[j]); fy.push(pbox[j]); }"
         },
         {
-          "line": 604,
+          "line": 617,
           "text": "for (let j = 0; j < n; j++) if (Math.abs(flow[j]) <= 0.15) { near.push(flow[j]); nearY.push(pbox[j]); }"
         },
         {
-          "line": 605,
+          "line": 618,
           "text": "const tangent = near.length >= 8 ? lsSlope(near, nearY) : slope;"
         },
         {
-          "line": 609,
+          "line": 622,
           "text": "for (let b = 0; b < M.nBreaths; b++) {"
         },
         {
-          "line": 611,
+          "line": 624,
           "text": "for (let j = 0; j < n; j++) if (breath[j] === b) { if (iMax < 0 || pbox[j] > pbox[iMax]) iMax = j; if (iMin < 0 || pbox[j] < pbox[iMin]) iMin = j; }"
         },
         {
-          "line": 612,
+          "line": 625,
           "text": "if (iMax >= 0 && Math.abs(flow[iMax] - flow[iMin]) > 0.2) rtot.push((pbox[iMax] - pbox[iMin]) / (flow[iMax] - flow[iMin]));"
         },
         {
-          "line": 619,
+          "line": 632,
           "text": "for (let j = 1; j < n; j++) if (flow[j - 1] * flow[j] < 0) open0.push(Math.abs(pbox[j - 1] + ((pbox[j] - pbox[j - 1]) * flow[j - 1]) / (flow[j - 1] - flow[j])));"
         },
         {
-          "line": 623,
+          "line": 636,
           "text": "for (let j = 0; j < n; j++) {"
         },
         {
-          "line": 624,
+          "line": 637,
           "text": "if (Math.abs(flow[j]) <= 0.3 * vRef) { lowX.push(flow[j]); lowY.push(pbox[j]); }"
         },
         {
-          "line": 625,
+          "line": 638,
           "text": "else if (flow[j] >= 0.7 * vRef) hiPos.push([flow[j], pbox[j]]);"
         },
         {
-          "line": 626,
+          "line": 639,
           "text": "else if (flow[j] <= -0.7 * vRef) hiNeg.push([flow[j], pbox[j]]);"
         },
         {
-          "line": 628,
+          "line": 641,
           "text": "const lowSlope = lowX.length > 4 ? lsSlope(lowX, lowY) : slope;"
         },
         {
-          "line": 629,
+          "line": 642,
           "text": "const highSlope = hiPos.length && hiNeg.length ? (mean(hiPos.map((q) => q[1])) - mean(hiNeg.map((q) => q[1]))) / (mean(hiPos.map((q) => q[0])) - mean(hiNeg.map((q) => q[0]))) : lowSlope;"
         },
         {
-          "line": 630,
+          "line": 643,
           "text": "const sIndex = lowSlope > 0 ? highSlope / lowSlope - 1 : 0;"
         },
         {
-          "line": 631,
+          "line": 644,
           "text": "const isOpen = opening > 0.06, isBent = sIndex > 0.15;"
         },
         {
-          "line": 635,
+          "line": 648,
           "text": "t: t.map((x) => round(x, 3)), flow, pbox, shiftMl, volumeL, breath, fitSlopePaPerLs: round(slope, 5), tangentSlopePaPerLs: round(tangent, 5),"
         },
         {
-          "line": 642,
+          "line": 655,
           "text": "parameters: Object.fromEntries(Object.entries(par).map(([k, q]) => [k, round(q, 4)])), parameterVerification: 'unverified',"
         },
         {
-          "line": 648,
+          "line": 661,
           "text": "id: 'tidal', label: M.breathingMode.label, tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),"
         },
         {
-          "line": 649,
+          "line": 662,
           "text": "inspiratoryTimeS: round(mean(sim.breaths.map((q) => q.ti)), 3), expiratoryTimeS: round(mean(sim.breaths.map((q) => q.te)), 3),"
         },
         {
-          "line": 650,
+          "line": 663,
           "text": "ratePerMin: round(60 / mean(sim.breaths.map((q) => q.ti + q.te)), 1),"
         },
         {
-          "line": 655,
+          "line": 668,
           "text": "reference: { sRawUpperKpaS: PLETH_MODEL.sRawUpperLimitKpaS.value, verification: 'secondary' },"
         },
         {
-          "line": 664,
+          "line": 677,
           "text": "verification: 'unverified',"
         },
         {
-          "line": 669,
+          "line": 682,
           "text": "const pool = ['acceptable', 'usable'].map((s) => pleth.trials.filter((t) => t.status === s)).find((a) => a.length) ?? pleth.trials;"
         },
         {
-          "line": 670,
+          "line": 683,
           "text": "return pool.reduce((a, b) => (Math.abs(b.deviationPct) < Math.abs(a.deviationPct) ? b : a)).index;"
         },
         {
-          "line": 675,
+          "line": 688,
           "text": "* quiet breaths (baseline moving through the end-expiratory levels recorded before closure) -> shutter closed (flat volume;"
         },
         {
-          "line": 676,
+          "line": 689,
           "text": "* the pants appear only on the mouth-pressure lane, which carries the trial's own arrays) -> shutter open, one quiet breath that returns to the"
         },
         {
-          "line": 677,
+          "line": 690,
           "text": "* stable level -> slow expiration to RV -> slow inspiration to TLC."
         },
         {
-          "line": 681,
+          "line": 694,
           "text": "const out = trials.map((tr) => {"
         },
         {
-          "line": 689,
+          "line": 702,
           "text": "const eelL = tr.eelDeviationL.map((d) => closureL + d - tr.eelDeviationL[M.quietBreaths - 1]);"
         },
         {
-          "line": 692,
+          "line": 705,
           "text": "const push = (id, label, ts, vs) => {"
         },
         {
-          "line": 694,
+          "line": 707,
           "text": "ts.forEach((x, j) => { if (j > 0 || !t.length) { t.push(x); v.push(vs[j]); } });"
         },
         {
-          "line": 698,
+          "line": 711,
           "text": "const tidalV = sim.theta.map((th, j) => {"
         },
         {
-          "line": 711,
+          "line": 724,
           "text": "push('open-shutter', 'Shutter open', open.t.map((x) => tOpen + x), open.theta.map((th, j) => closureL + (stableL - closureL) * smoothstep(th / TAU) + open.vol[j]));"
         },
         {
-          "line": 715,
-          "text": "const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);"
-        },
-        {
-          "line": 716,
-          "text": "push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - trialVolumes.rv) * smootherstep(j / nEx)));"
-        },
-        {
-          "line": 719,
+          "line": 729,
           "text": "const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);"
         },
         {
-          "line": 720,
+          "line": 730,
+          "text": "push('inspiration', 'Linked IC to TLC', inT, inT.map((_, j) => closureL + trialVolumes.ic * smootherstep(j / nIn)));"
+        },
+        {
+          "line": 733,
+          "text": "const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);"
+        },
+        {
+          "line": 734,
+          "text": "push('expiration', 'Linked expiratory SVC to RV', exT, exT.map((_, j) => trialVolumes.tlc - trialVolumes.vc * smootherstep(j / nEx)));"
+        },
+        {
+          "line": 739,
+          "text": "const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);"
+        },
+        {
+          "line": 740,
+          "text": "push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - trialVolumes.rv) * smootherstep(j / nEx)));"
+        },
+        {
+          "line": 743,
+          "text": "const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);"
+        },
+        {
+          "line": 744,
           "text": "push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => trialVolumes.rv + (trialVolumes.tlc - trialVolumes.rv) * smootherstep(j / nIn)));"
         },
         {
-          "line": 724,
+          "line": 749,
           "text": "t: t.map((x) => round(x, 3)), v: v.map((x) => round(x, 4)),"
         },
         {
-          "line": 725,
+          "line": 750,
           "text": "segments: segments.map((sg) => ({ ...sg, t0: round(sg.t0, 3), t1: round(sg.t1, 3) })),"
         },
         {
-          "line": 726,
+          "line": 751,
           "text": "eelL: eelL.map((x) => round(x, 4)),"
         },
         {
-          "line": 730,
+          "line": 755,
           "text": "tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),"
         },
         {
-          "line": 761,
+          "line": 786,
           "text": "const obstructed = z < -1.645;"
         },
         {
-          "line": 764,
+          "line": 789,
           "text": "const driftSign = createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1;"
         },
         {
-          "line": 769,
+          "line": 794,
           "text": "for (let i = 1; i <= TRIALS_MAX; i++) {"
         },
         {
-          "line": 771,
+          "line": 796,
           "text": "if (i >= TRIALS_MIN) {"
         },
         {
-          "line": 772,
+          "line": 797,
           "text": "const ok = trials.filter((tr) => tr.acceptable).map((tr) => tr.frcL);"
         },
         {
-          "line": 777,
+          "line": 802,
           "text": "const acceptable = trials.filter((tr) => tr.acceptable);"
         },
         {
-          "line": 778,
+          "line": 803,
           "text": "const usable = trials.filter((tr) => tr.status === 'usable');"
         },
         {
-          "line": 780,
+          "line": 805,
           "text": "const reportedFrc = mean(basis.map((tr) => tr.frcL));"
         },
         {
-          "line": 782,
+          "line": 807,
           "text": "const accValues = acceptable.map((tr) => tr.frcL);"
         },
         {
-          "line": 784,
+          "line": 809,
           "text": "const spreadAcc = accValues.length >= 2 ? spreadFraction(accValues) : null;"
         },
         {
-          "line": 787,
+          "line": 812,
           "text": "const add = (code, text, severity) => flags.push({ code, text, severity });"
         },
         {
-          "line": 788,
+          "line": 813,
           "text": "if (acceptable.length < 3) add('fewer-than-3-acceptable', `${acceptable.length} acceptable shutter closures; the standard asks for at least three.`, 'major');"
         },
         {
-          "line": 789,
+          "line": 814,
           "text": "if (spreadAcc !== null && spreadAcc > PLETH_MODEL.repeatability.value) add('frc-not-repeatable-5pct', `Acceptable FRC values differ by ${(spreadAcc * 100).toFixed(1)}% of their mean (limit 5%).`, spreadAcc > PLETH_MODEL.repeatability.gradeC ? 'major' : 'minor');"
         },
         {
-          "line": 792,
+          "line": 817,
           "text": "if (trials.some((tr) => tr.faults.includes('fast-panting'))) add('pant-frequency', 'At least one trial was panted faster than the allowed frequency.', 'minor');"
         },
         {
-          "line": 793,
+          "line": 818,
           "text": "if (trials.some((tr) => tr.faults.includes('thermal-drift'))) add('thermal-drift', 'Thermal drift is present on at least one trial.', 'minor');"
         },
         {
-          "line": 794,
+          "line": 819,
           "text": "if (trials.some((tr) => tr.faults.includes('cheek-compliance') || tr.faults.includes('shutter-leak'))) add('leak-or-damping', 'A leak, an incomplete occlusion or unsupported cheeks distorted at least one trial.', 'major');"
         },
         {
-          "line": 795,
+          "line": 820,
           "text": "if (trials.some((tr) => tr.faults.includes('unstable-eel'))) add('unstable-end-tidal-level', 'The shutter closed away from the stable end-tidal level on at least one trial.', 'minor');"
         },
         {
-          "line": 797,
+          "line": 822,
           "text": "const faults = trials.flatMap((tr) => tr.faultText);"
         },
         {
-          "line": 799,
+          "line": 824,
           "text": "const restricted = Number.isFinite(truth.latent?.zTLC) && truth.latent.zTLC < -1.645;"
         },
         {
-          "line": 801,
+          "line": 826,
           "text": "if (raw.sRawKpaS > PLETH_MODEL.sRawUpperLimitKpaS.value) add('sraw-above-upper-limit', `sRaw ${raw.sRawKpaS.toFixed(2)} kPa.s is above the 1.2 kPa.s upper limit quoted for adults (secondary source).`, 'minor');"
         },
         {
-          "line": 812,
+          "line": 837,
           "text": "replicateTable: trials.map((tr) => ({ trial: tr.index, panFreqHz: tr.panFreqHz, frcL: tr.frcL, deviationPct: tr.deviationPct, status: tr.status, acceptable: tr.acceptable, notes: tr.reasons.join('; ') })),"
         },
         {
-          "line": 829,
+          "line": 854,
           "text": "unverified: Object.entries(PLETH_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),"
         },
         {
-          "line": 844,
-          "text": "const ctx = { seed, tgvTrue: volumes.frc, box, u, obstructed: z < -1.645, tech, forced: forcedFaults(scenario), driftSign: createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1 };"
+          "line": 869,
+          "text": "const ctx = { currentCriteria: true, seed, tgvTrue: volumes.frc, box, u, obstructed: z < -1.645, tech, forced: forcedFaults(scenario), driftSign: createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1 };"
         },
         {
-          "line": 846,
+          "line": 871,
           "text": "const unlinkedSession = technique === 'poor' && sessionRng.uniform() < 0.14;"
         },
         {
-          "line": 849,
+          "line": 874,
           "text": "for (let i = 1; i <= TRIALS_MAX; i++) {"
         },
         {
-          "line": 852,
+          "line": 877,
           "text": "const incomplete = Boolean(scenario?.incompleteIc) || technique !== 'good' && rng.uniform() < (technique === 'poor' ? 0.4 : 0.1);"
         },
         {
-          "line": 853,
+          "line": 878,
           "text": "const leak = technique === 'poor' && rng.uniform() < 0.12;"
         },
         {
-          "line": 859,
+          "line": 884,
           "text": "session = summarizePlethSession({ age, fvcL, trials: trials.map((t) => ({ id: t.index, frcL: t.frcL, frcStatus: t.status, link: t.link })) });"
         },
         {
-          "line": 860,
+          "line": 885,
           "text": "if (i >= TRIALS_MIN && session.grades.overall === 'A' && session.status === 'reported') break;"
         },
         {
-          "line": 865,
+          "line": 890,
           "text": "tr.linkAssessment = session.assessed.find((t) => t.id === tr.index).linkAssessment;"
         },
         {
-          "line": 868,
+          "line": 893,
           "text": "const raw = Number.isFinite(reportedFrc) ? buildRawLoop({ seed, box, tgvTrue: volumes.frc, frcReported: reportedFrc, u, z, phenotype: truth.phenotype ?? null, tech, restricted: Number.isFinite(truth.latent?.zTLC) && truth.latent.zTLC < -1.645 }) : null;"
         },
         {
-          "line": 875,
+          "line": 900,
           "text": "const flags = session.warnings.map((text) => ({ code: 'measurement-session-limited', text, severity: 'major' }));"
         },
         {
-          "line": 880,
+          "line": 905,
           "text": "repeatability: { spreadFraction: session.repeatability.fraction, nAcceptable: trials.filter((t) => t.status === 'acceptable').length, nUsable: trials.filter((t) => t.status === 'usable').length, nTrials: trials.length, nRetained: session.selectedIds.length, nWithin5Pct: session.selectionPolicy === 'acceptable-within-5pct' ? session.selectedIds.length : 0 },"
         },
         {
-          "line": 881,
+          "line": 906,
           "text": "replicateTable: trials.map((t) => ({ trial: t.index, panFreqHz: t.panFreqHz, frcL: t.frcL, deviationPct: t.deviationPct, status: t.status, acceptable: t.acceptable, selected: t.selected, icL: t.link.icL, svcL: t.link.svcL, linkedStatus: t.linkAssessment.status, notes: [...t.reasons, ...t.link.notes].map((s) => s.replace(/[.\\s]+$/, '')).join('; ') })),"
         },
         {
-          "line": 882,
+          "line": 907,
           "text": "raw, timeline, flags, faults: trials.flatMap((t) => [...t.faultText, ...t.link.notes]), suggestedVolumes: { ...session.volumes, status: session.status, reason: session.warnings.join(' ') },"
         }
       ]
@@ -1838,66 +2125,78 @@
     },
     {
       "path": "src/core/case.js",
-      "sha256": "762efb81c434f79835894c6399e5a623192e52def8613c1fa2eb05e9dd00b4db",
+      "sha256": "e4f338580de75aa0406edf5a842e10db1d9dd455f7ddbc056aaa0eecdcdc0246",
       "reviewLines": [
         {
-          "line": 17,
+          "line": 18,
           "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
         },
         {
-          "line": 19,
+          "line": 20,
           "text": "export const shapeFor = (ratio) => clamp(0.55 + 0.6 * ratio, 0.6, 1.05);"
         },
         {
-          "line": 20,
+          "line": 21,
           "text": "export const durationFor = (ratio) => (ratio < 0.6 ? 15 : 12);"
         },
         {
-          "line": 23,
+          "line": 24,
           "text": "* @param {Partial<import('./descriptor.js').Descriptor> & { seed: number, archetype: string }} input"
         },
         {
-          "line": 24,
+          "line": 25,
           "text": "* @param {Record<string, object>} datasets"
         },
         {
-          "line": 48,
+          "line": 49,
           "text": "if (['obstruction', 'mixed', 'bd-discordant'].includes(d.archetype) || ratioZ < LLN_Z || perform < 0.15 || plan?.forcePostBd) {"
         },
         {
-          "line": 72,
+          "line": 73,
           "text": "? { incompleteIc: plan.selection.ids.includes('pleth-incomplete-ic'), ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)), ...(plan.merged.dlco.viFraction !== undefined ? { viOverVc: plan.merged.dlco.viFraction } : {}) }"
         },
         {
-          "line": 76,
+          "line": 77,
           "text": "const dlcoModelTlc = d.v >= 3 ? (plan?.merged.volumes.vaFollowsTlc ? volumes?.tlc : truth.tlc) : null;"
         },
         {
-          "line": 77,
+          "line": 78,
           "text": "const dlcoModelTlcRatio = d.v >= 3 && volumes && plan?.merged.volumes.vaFollowsTlc ? volumes.tlc / tlcBeforeScenario : 1;"
         },
         {
-          "line": 80,
+          "line": 81,
           "text": "pleth = (d.v >= 3 ? buildMeasuredPleth : buildPleth)({ age: d.age, fvcL: pre.summary.fvc, seed: d.seed, truth: { ...truth, frc: volumes.frc }, volumes, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });"
         },
         {
-          "line": 89,
+          "line": 90,
           "text": "let va = Math.min(truth.va * Math.exp(0.03 * rng.normal()), 0.99 * (d.v >= 3 ? dlcoModelTlc : volumes.tlc));"
         },
         {
-          "line": 95,
+          "line": 96,
           "text": "({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: d.v >= 3 ? dlcoModelTlc : volumes.tlc, tlcRatio: d.v >= 3 ? dlcoModelTlcRatio : volumes.tlc / tlcBeforeScenario }));"
         },
         {
           "line": 109,
+          "text": "if (dlco && d.v >= 4) {"
+        },
+        {
+          "line": 110,
+          "text": "const forcedVc = [pre, post].filter(Boolean).flatMap((set) => set.maneuvers.filter((_, i) => set.summary.evaluations[i].fvc.usable).map((m) => m.fvc));"
+        },
+        {
+          "line": 111,
+          "text": "const vcCandidates = [...forcedVc, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)].filter((v) => Number.isFinite(v) && v > 0);"
+        },
+        {
+          "line": 117,
           "text": "dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });"
         },
         {
-          "line": 112,
+          "line": 120,
           "text": "const va = Math.min(dlcoTrace.values.vaL, 0.99 * (d.v >= 3 ? dlcoModelTlc : volumes.tlc));"
         },
         {
-          "line": 133,
+          "line": 142,
           "text": "report.caveatIds = plan.caveatsFor(plan.caveatFlags({ dlco: Boolean(dlco), volumes: Boolean(volumes), post: Boolean(post) }, report, resolveReference)).map((c) => c.id);"
         }
       ]
@@ -2010,7 +2309,7 @@
     },
     {
       "path": "src/interpret/interpret.js",
-      "sha256": "651ed5a026884432abf730b40eb94289117008ba8a8d95619d92d82d900d2af7",
+      "sha256": "dde7cdd6aad988ec326593ef700b1aedef9b0e02d30bb669c56884cd6f779b7d",
       "reviewLines": [
         {
           "line": 23,
@@ -2053,6 +2352,10 @@
           "text": "add('tlc', 'tlc', v.tlc); add('rv', 'rv', v.rv); add('rv_tlc', 'rv_tlc', Number.isFinite(v.rv) && v.tlc > 0 ? (100 * v.rv) / v.tlc : null);"
         },
         {
+          "line": 104,
+          "text": "if (dl) { add('dlco', 'dlco', dl.dlcoAdjusted); add('va', 'va', dl.va); add('kco', 'kco', Number.isFinite(dl.dlcoAdjusted) && dl.va > 0 ? dl.dlcoAdjusted / dl.va : null); }"
+        },
+        {
           "line": 107,
           "text": "const low = (k) => m[k]?.available !== false && m[k]?.label === 'low';"
         },
@@ -2090,54 +2393,58 @@
         },
         {
           "line": 140,
+          "text": "if (report.dlcoQuality && report.dlcoQuality.status !== 'repeatable') flags.push({ id: 'dlco-measurement-limited', text: `DLCO session ${report.dlcoQuality.status}; ${report.dlcoQuality.status === 'qualified' ? 'interpret the reported values with caution' : 'no diffusion classification is possible'}.`, details: report.dlcoQuality.warnings, verification: 'ERS/ATS 2017 measurement Table 3 and reporting' });"
+        },
+        {
+          "line": 141,
           "text": "if (report.volumeQuality && (report.volumeQuality.status !== 'reported' || !['A', 'B'].includes(report.volumeQuality.grade))) flags.push({ id: 'volume-measurement-limited', text: `Lung volumes ${report.volumeQuality.status}, overall grade ${report.volumeQuality.grade ?? 'unassigned'}; interpret available values with qualification. ${report.volumeQuality.warnings.join(' ')}`, verification: 'ERS/ATS 2023 reporting and quality qualification' });"
         },
         {
-          "line": 148,
+          "line": 149,
           "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };"
         },
         {
-          "line": 151,
+          "line": 152,
           "text": "verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024 (doi:10.1183/13993003.00055-2024): low ratio with normal FEV1 is mild obstruction; continuous bins resolve rounded prose' };"
         },
         {
-          "line": 155,
+          "line": 156,
           "text": "verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024: TLC grades restrictive impairment; continuous bins resolve rounded prose' };"
         },
         {
-          "line": 157,
+          "line": 158,
           "text": "severity = { id: null, basis: 'No single composite severity grade for this pattern', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };"
         },
         {
-          "line": 164,
+          "line": 165,
           "text": "const boundaryPercent = (x) => !opts.generatorKey && atLeast(x, 10) && atMost(x, 10) ? 10 : x;"
         },
         {
-          "line": 167,
+          "line": 168,
           "text": "const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;"
         },
         {
-          "line": 168,
+          "line": 169,
           "text": "const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);"
         },
         {
-          "line": 171,
+          "line": 172,
           "text": "rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },"
         },
         {
-          "line": 172,
+          "line": 173,
           "text": "rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },"
         },
         {
-          "line": 175,
+          "line": 176,
           "text": "discordant: (dFev1 > 0) !== (dFvc > 0) || Math.abs(pctPred.fvc - pctPred.fev1) > 8,"
         },
         {
-          "line": 193,
+          "line": 194,
           "text": "const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));"
         },
         {
-          "line": 222,
+          "line": 223,
           "text": "const borderline = ['fev1', 'fvc', 'fev1_fvc'].filter((k) => ia.measures[k]?.borderline || ib.measures[k]?.borderline);"
         }
       ]
@@ -2174,7 +2481,7 @@
     },
     {
       "path": "src/challenges/items.js",
-      "sha256": "7df315af4f5a8abe4ff8e74e983d3537a9bfa1feebab833163ba642bf7e9f3e7",
+      "sha256": "32c120c87d66488c2255b6d44184cec5b37f09c30393b0cdaa91cfe3969a21fa",
       "reviewLines": [
         {
           "line": 11,
@@ -2580,7 +2887,7 @@
     },
     {
       "path": "src/app/answers.js",
-      "sha256": "ff798ce3770c540be678818781544d453c6b38786eccf162e197e8a2a740193d",
+      "sha256": "1d36f130f25b6e683925db9c51b330c5415de4e7eb8a7026900bc240a84dae53",
       "reviewLines": [
         {
           "line": 23,

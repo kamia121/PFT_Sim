@@ -117,7 +117,7 @@ function assertFinalMatchesKey({ c, cmp, interp }, final, label, { caveats = tru
   }
 
   // diffusing capacity
-  if (key.dlco === null) assert.ok(lacks(f, /^dlco:/), tag('no dlco'));
+  if (key.dlco === null || key.dlco === 'unavailable') { assert.ok(lacks(f, /^dlco:/), tag('no reported dlco')); if (key.dlco === 'unavailable') assert.match(final, /DLCO session (?:unavailable|pending)/); }
   else assert.ok(has(f, `dlco:${key.dlco}`, 'dlco:hb-adjusted'), tag('dlco category'));
 
   // quality and confidence

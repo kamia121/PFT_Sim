@@ -31,7 +31,7 @@ forEachCase(300, (c, input) => {
   const g = c.report.grades, s = c.spirometry;
   log.check('truth.pre', r.truth.pre.fev1 === g.fev1 && r.truth.pre.fvc === g.fvc && g.fev1 === s.pre.summary.grades.fev1 && g.fvc === s.pre.summary.grades.fvc, id);
   log.check('truth.post', s.post ? r.truth.post.fev1 === g.postFev1 && r.truth.post.fvc === g.postFvc && g.postFev1 === s.post.summary.grades.fev1 && g.postFvc === s.post.summary.grades.fvc : r.truth.post === null, id);
-  log.check('truth.dlco', c.dlcoTrace ? r.truth.dlco.acceptable === c.dlcoTrace.grade.acceptable && (r.truth.dlco.reasons.length > 0) === !r.truth.dlco.acceptable : r.truth.dlco === null, id);
+  log.check('truth.dlco', c.dlcoTrace ? r.truth.dlco.acceptable === (c.dlcoTrace.session ? c.dlcoTrace.session.status === 'repeatable' : c.dlcoTrace.grade.acceptable) && (r.truth.dlco.reasons.length > 0) === !r.truth.dlco.acceptable : r.truth.dlco === null, id);
   log.check('truth.pleth', c.pleth ? r.truth.pleth.acceptable === ['A', 'B'].includes(c.pleth.grade) && (r.truth.pleth.reasons.length > 0) === !r.truth.pleth.acceptable : r.truth.pleth === null, id);
 
   // the statement
@@ -88,7 +88,7 @@ forEachCase(300, (c, input) => {
     const pool = ['acceptable', 'usable'].map((st) => c.pleth.trials.filter((x) => x.status === st)).find((a) => a.length) ?? c.pleth.trials;
     log.check('pleth representative', t && pool.includes(t) && pool.every((x) => Math.abs(x.deviationPct) >= Math.abs(t.deviationPct) - 1e-12) && !('kind' in r.representative.pleth), id);
   } else log.check('no pleth representative without pleth', r.representative.pleth === null, id);
-  log.check('dlco representative', c.dlcoTrace ? r.representative.dlco?.test === 0 : r.representative.dlco === null, id);
+  log.check('dlco representative', c.dlcoTrace ? r.representative.dlco?.test === (c.dlcoTrace.tests ? Math.max(0, c.dlcoTrace.tests.findIndex((t) => t.selected)) : 0) : r.representative.dlco === null, id);
   log.check('representativeFor agrees', same(representativeFor(c), r.representative), id);
 
   // details

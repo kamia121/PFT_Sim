@@ -146,7 +146,8 @@ export function qualityFeedback(rt, caseData) {
   const word = (b) => (b ? 'acceptable' : 'not acceptable');
   if (t.pleth && caseData.pleth?.session) lines.push(`Plethysmography: ${caseData.pleth.session.status}; retained FRC grade ${caseData.pleth.session.grades.frc ?? 'unassigned'}, linked SVC grade ${caseData.pleth.session.grades.svc ?? 'unassigned'}, overall ${caseData.pleth.grade ?? 'unassigned'}. ${caseData.pleth.session.warnings.join(' ')}`);
   else if (t.pleth) lines.push(`Plethysmography: FRC subset simulator rubric ${t.pleth.acceptable ? 'qualifies' : 'does not qualify'}; overall ATS/ERS quality is not established${t.pleth.reasons?.length ? ` (${t.pleth.reasons.join('; ')})` : ''}.`);
-  if (t.dlco) lines.push(`Diffusing capacity: simulator rubric ${word(t.dlco.acceptable)}${t.dlco.reasons?.length ? ` (${t.dlco.reasons.join('; ')})` : ''}.`);
+  if (t.dlco && caseData.dlcoTrace?.session) lines.push(`Diffusing capacity: ${caseData.dlcoTrace.session.status}; retained maneuvers ${caseData.dlcoTrace.session.selectedIds.join(', ') || 'none'}. ${caseData.dlcoTrace.session.warnings.join(' ')}`);
+  else if (t.dlco) lines.push(`Diffusing capacity: simulator rubric ${word(t.dlco.acceptable)}${t.dlco.reasons?.length ? ` (${t.dlco.reasons.join('; ')})` : ''}.`);
 
   const stated = [];
   for (const [k, label, truthSet] of [['pre', 'Before bronchodilator', t.pre], ['post', 'After bronchodilator', t.post]]) {

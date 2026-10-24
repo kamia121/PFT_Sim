@@ -101,7 +101,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     add('vc', 'vc', v.vc); add('frc', 'frc', v.frc); add('erv', 'erv', v.erv); add('ic', 'ic', v.ic);
   }
   const dl = report.dlco;
-  if (dl) { add('dlco', 'dlco', dl.dlcoAdjusted); add('va', 'va', dl.va); add('kco', 'kco', dl.dlcoAdjusted / dl.va); }
+  if (dl) { add('dlco', 'dlco', dl.dlcoAdjusted); add('va', 'va', dl.va); add('kco', 'kco', Number.isFinite(dl.dlcoAdjusted) && dl.va > 0 ? dl.dlcoAdjusted / dl.va : null); }
 
   const m = measures;
   const low = (k) => m[k]?.available !== false && m[k]?.label === 'low';
@@ -137,6 +137,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
   }
   if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });
 
+  if (report.dlcoQuality && report.dlcoQuality.status !== 'repeatable') flags.push({ id: 'dlco-measurement-limited', text: `DLCO session ${report.dlcoQuality.status}; ${report.dlcoQuality.status === 'qualified' ? 'interpret the reported values with caution' : 'no diffusion classification is possible'}.`, details: report.dlcoQuality.warnings, verification: 'ERS/ATS 2017 measurement Table 3 and reporting' });
   if (report.volumeQuality && (report.volumeQuality.status !== 'reported' || !['A', 'B'].includes(report.volumeQuality.grade))) flags.push({ id: 'volume-measurement-limited', text: `Lung volumes ${report.volumeQuality.status}, overall grade ${report.volumeQuality.grade ?? 'unassigned'}; interpret available values with qualification. ${report.volumeQuality.warnings.join(' ')}`, verification: 'ERS/ATS 2023 reporting and quality qualification' });
 
   // ------------- severity -------------
@@ -197,7 +198,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     gradeFev1: quality.fev1 ?? null,
     gradeFvc: quality.fvc ?? null,
     bronchodilator: bd ? (bd.rule2022.significant ? 'significant' : 'not-significant') : null,
-    dlco: dlco ? dlco.category : null,
+    dlco: dlco ? dlco.category : report.dlcoQuality ? 'unavailable' : null,
   };
   // Scenario caveats the laboratory record supports (src/scenarios); absent for a plain case.
   const also = opts.generatorKey ? [] : severityAlso(severity);

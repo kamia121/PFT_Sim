@@ -66,7 +66,7 @@ function categorical(prep, qid, seed) {
   const scored = scoreAnswers({}, prep.a.key, prep.b.key).find((s) => s.id === qid);
   let options = q.options.map(([id, label]) => ({ id, label: lbl(qid, id, label, seed) }));
   if (qid === 'pattern') options = options.concat([{ id: 'indeterminate', label: 'Not interpretable (no usable maneuver)' }]);
-  if (qid === 'bronchodilator' || qid === 'dlco') options = options.filter((o) => o.id !== 'not-done');
+  if (qid === 'bronchodilator' || qid === 'dlco') options = options.filter((o) => o.id !== 'not-done' && o.id !== 'unavailable');
   return {
     id: qid, skill: SKILL_OF[qid], type: 'single', ordered: qid === 'severity' || qid === 'gradeFev1' || qid === 'gradeFvc',
     stem: qid === 'severity' && prep.a.severity?.measure === 'tlc' ? 'Grade restrictive impairment using the TLC z-score.' : pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,

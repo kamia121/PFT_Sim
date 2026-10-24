@@ -186,7 +186,7 @@ function pickFaults(d, technique, scenario) {
  * @param {object} [args.scenario] { ids: DLC-01 to DLC-06 force faults; viOverVc: the VI/VC fraction a forced DLC-01 uses }
  * @param {number} [args.ratioZ] true FEV1/FVC z-score if known; otherwise approximated from the truth
  */
-export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ } = {}) {
+export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ, fullPrecisionQuality = false } = {}) {
   if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;
   const pb = patient.barometricMmHg ?? scenario?.barometricMmHg ?? 760;
   const gas = { ...DLCO_MODEL.testGas.value };
@@ -388,6 +388,13 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
     mueller: pHold.length ? Math.min(...pHold) < -flagCm : false,
     leak: volHold.length ? volHold[0] - volHold[volHold.length - 1] > 0.1 : false,
   };
+  if (fullPrecisionQuality) {
+    trace.values = { ...trace.values, vaL: rec.vaL, dlcoMlMinMmHg: rec.dlco, kco: rec.kco };
+    trace.quality = { ...trace.quality, viOverVc: vi / vcL, t85S: t85, breathHoldS: rec.breathHoldS,
+      sampleEndS, vcL, stableBreathHold: !trace.quality.leak,
+      visualQualityConfirmed: true }; // Explicit synthetic quality assessment, not clinical recognition.
+    trace.inspired.volumeL = vi; trace.inspired.vcL = vcL;
+  }
   trace.grade = gradeDlcoTest(trace.quality);
   return trace;
 }

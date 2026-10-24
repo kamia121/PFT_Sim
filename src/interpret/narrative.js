@@ -743,7 +743,7 @@ T('v-missing-tlc-only',
 function missingVolumesFragment(ctx, P) {
   if (ctx.pattern === 'prism') return P('v-missing-needed', { purpose: 'to establish whether the TLC is reduced' });
   if (ctx.pattern === 'obstruction-low-fvc') return P('v-missing-needed', { purpose: 'to separate air trapping from coexisting restriction' });
-  return P(ctx.hasDlco ? 'v-missing-tlc-only' : 'v-missing', {});
+  return P(ctx.hasDlco || ctx.report.dlcoQuality ? 'v-missing-tlc-only' : 'v-missing', {});
 }
 
 function subtypeCore(ctx) {
@@ -1107,7 +1107,7 @@ function buildFindings(ctx) {
   if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on ${ctx.pattern === 'restriction' ? 'TLC' : 'FEV1'} z-score).` : ctx.sevNotGraded ? 'Severity: mild obstruction despite FEV1 within its reference range.' : 'Severity: not graded for this pattern.');
   for (const k of ctx.borderMeasures) add(`borderline-${k}`, `Borderline: ${ctx.mz(k)}.`);
   if (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc') add('volumes-needed', 'Lung volumes are needed to classify this pattern.');
-  for (const finding of ctx.interp.flags.filter((f) => ['possible-hyperinflation', 'high-tlc', 'high-rv-tlc', 'high-rv', 'air-trapping', 'volume-measurement-limited'].includes(f.id))) add(finding.id, finding.text);
+  for (const finding of ctx.interp.flags.filter((f) => ['possible-hyperinflation', 'high-tlc', 'high-rv-tlc', 'high-rv', 'air-trapping', 'volume-measurement-limited', 'dlco-measurement-limited'].includes(f.id))) add(finding.id, finding.text);
   if (ctx.hasVol && ctx.has('erv') && ctx.m.erv.label === 'low') add('low-erv', `ERV below the lower limit of normal${ctx.bmi !== null ? `; body mass index ${ctx.bmi.toFixed(1)} kg/m²` : ''}.`);
   if (ctx.bd) {
     add('bronchodilator', `Bronchodilator response: ${ctx.bd.rule2022.significant ? 'significant' : 'not significant'} by the 2022 criterion and ${ctx.bd.rule2005.significant ? 'significant' : 'not significant'} by the earlier criterion.`);
@@ -1287,7 +1287,8 @@ export function composeNarrative({ caseData, interp, cmp = null, seed = 0, force
   if (ctx.cmp && ctx.has('fev1')) push('sensitivity', 'Sensitivity to the reference equation', sensitivitySection(ctx, P));
   push('limitations', 'Limitations', limitationsSection(ctx, P));
 
-  const volumeLimit = interp.flags.find((f) => f.id === 'volume-measurement-limited');
+  const limits = interp.flags.filter((f) => ['volume-measurement-limited', 'dlco-measurement-limited'].includes(f.id));
+  const volumeLimit = limits.length ? { text: limits.map((f) => f.text).join(' ') } : null;
   const qualifyVolumes = (text) => volumeLimit ? text.replace(/\.$/, '') + `; ${volumeLimit.text.replace(/\.$/, '').replace(/\. /g, '; ')}.` : text;
   const finalStatement = qualifyVolumes(buildFinal(ctx, correctClaims(ctx), P));
   if (volumeLimit) sections.find((s) => s.id === 'quality').text += ` ${volumeLimit.text}`;

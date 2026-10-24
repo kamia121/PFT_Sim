@@ -53,8 +53,14 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   if (interp.qualityLimited) impression += ' Test quality limits confidence in these values.';
 
   if (caseData.pleth?.session && !Number.isFinite(caseData.volumes?.tlc)) {
-    impression += ' TLC is unavailable; restriction cannot be assessed.';
+    impression = impression.replace(/\.$/, '') + '; TLC unavailable, restriction unassessed.';
     lines.push({ label: 'Lung volumes', text: `Complete TLC/RV are not reportable. ${caseData.pleth.session.warnings.join(' ')}` });
+  }
+
+  const volumeLimit = interp.flags.find((f) => f.id === 'volume-measurement-limited');
+  if (volumeLimit && Number.isFinite(caseData.volumes?.tlc)) {
+    impression = impression.replace(/\.$/, '') + `; Lung volumes require qualification (grade ${caseData.pleth.grade ?? 'unassigned'}).`;
+    lines.push({ label: 'Lung-volume quality', text: volumeLimit.text });
   }
 
   // Quality.
@@ -91,6 +97,12 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
     if (coHbMeasured(sc) && cohbReferenceMultiplier(sc.coHbPercent) !== null) text += ` COHb ${sc.coHbPercent.toFixed(1)}% is above 2%: the supplementary COHb-adjusted line on the report is not the basis of this classification.`;
     else if (sc && Number.isFinite(sc.coHbPercent) && sc.coHbPercent > 0 && !coHbMeasured(sc)) text += ' COHb was not measured; recent smoking could lower the DLCO.';
     lines.push({ label: 'DLCO', text });
+  }
+
+  const diffusionLimit = interp.flags.find((f) => f.id === 'dlco-measurement-limited');
+  if (diffusionLimit) {
+    impression = impression.replace(/\.$/, '') + `; DLCO session ${caseData.dlcoTrace.session.status}.`;
+    lines.push({ label: 'DLCO quality', text: `Session ${caseData.dlcoTrace.session.status}; retained maneuvers ${caseData.dlcoTrace.session.selectedIds.join(', ') || 'none'}. ${caseData.dlcoTrace.session.warnings[0] ?? ''}` });
   }
 
   // Bronchodilator response.

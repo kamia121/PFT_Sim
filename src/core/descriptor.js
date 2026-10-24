@@ -74,7 +74,7 @@ export function deriveDemographics(seed, archetype = 'normal', severity = 2) {
 export function resolveDescriptor(input) {
   if (!Number.isInteger(input.seed) || input.seed < 0 || input.seed > 0xffffffff) throw new RangeError('seed must be an unsigned 32-bit integer');
   if (!ARCHETYPES.includes(input.archetype)) throw new RangeError(`unknown archetype: ${input.archetype}`);
-  if (input.v !== undefined && ![2, GENERATOR_VERSION].includes(input.v)) throw new RangeError('unsupported generator version');
+  if (input.v !== undefined && ![2, 3, GENERATOR_VERSION].includes(input.v)) throw new RangeError('unsupported generator version');
   const technique = input.technique ?? 'good';
   if (!TECHNIQUE_LEVELS.includes(technique)) throw new RangeError(`unknown technique: ${technique}`);
   const base = deriveDemographics(input.seed, input.archetype, input.severity ?? 2);
@@ -118,7 +118,7 @@ export function parseDescriptor(query) {
   const p = new URLSearchParams(query);
   if (!p.has('s') || !p.has('a')) throw new RangeError('a case link needs a seed (s) and an archetype (a)');
   const v = Number(p.get('v'));
-  if (![2, GENERATOR_VERSION].includes(v)) throw new RangeError(`this link was made with generator version ${p.get('v')}, which this build cannot reproduce`);
+  if (![2, 3, GENERATOR_VERSION].includes(v)) throw new RangeError(`this link was made with generator version ${p.get('v')}, which this build cannot reproduce`);
   const num = (k) => (p.has(k) ? Number(p.get(k)) : undefined);
   return resolveDescriptor({
     v,

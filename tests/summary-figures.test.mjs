@@ -213,7 +213,7 @@ test('panel-dlco: null without DLCO; markup for every archetype in four palettes
 });
 
 test('panel-dlco: grade, failed criteria and value marks only with showQuality; flag color is text only', () => {
-  const c = make({ seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] });
+  const c = make({ v: 3, seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] });
   const data = panelDlco.dataFor(c);
   const plain = panelDlco.render(data, { palette: PALETTES.white });
   assert.ok(!/rubric|grade|requires review|Valsalva/i.test(plain));

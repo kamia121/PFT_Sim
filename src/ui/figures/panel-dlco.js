@@ -41,11 +41,11 @@ function flagsOf(t) {
     t85: q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value,
     hold: q.breathHoldS < bhLo || q.breathHoldS > bhHi,
     wash: q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9,
-    sample: q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1),
+    sample: q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.0),
   };
 }
 
-const GRADE_TEXT = (g, many) => `${many ? 'Rubric' : 'Simulator rubric'} ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}`;
+const GRADE_TEXT = (g, many) => g.origin === 'interim2017' ? `Interim maneuver row ${g.grade}${g.acceptable ? ', acceptable' : ', requires qualification/review'}` : `${many ? 'Rubric' : 'Simulator rubric'} ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}`;
 
 /**
  * Gas-against-volume plot for a list of tests.
@@ -171,7 +171,7 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
       parts.push(volumePlot({ x0: cx + 38, y0: cy, w: cw - 52, h: sh, items: [{ ...it, emph: true }], xMax, yMax, palette, small: true }));
       parts.push(text(cx + 38, cy + sh + 44, `Test ${it.k}${it.k === bestK && many ? ' (best)' : ''}`, { size: 10.5, weight: 700, fill: palette.text }));
       const v = it.t.values;
-      parts.push(text(cx + 38, cy + sh + 58, `VA ${num(v.vaL, 2)} L · DLCO ${num(v.dlcoMlMinMmHg, 1)}${showQuality && it.t.grade ? ` · rubric ${it.t.grade.grade}` : ''}`, { size: 9.5, fill: palette.text }));
+      parts.push(text(cx + 38, cy + sh + 58, `VA ${num(v.vaL, 2)} L · DLCO ${num(v.dlcoMlMinMmHg, 1)}${showQuality && it.t.grade ? ` · ${it.t.grade.origin === 'interim2017' ? 'interim row' : 'rubric'} ${it.t.grade.grade}` : ''}`, { size: 9.5, fill: palette.text }));
     });
     y += 6 + Math.ceil(items.length / cols) * (sh + 70) - 6;
   }
@@ -189,7 +189,7 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
     { k: 'va', h: ['VA', '(L, BTPS)'], w: 1 },
     { k: 'dlco', h: ['DLCO', '(mL/min/mmHg)'], w: 1.3 },
     { k: 'kco', h: ['KCO', '(mL/min/mmHg/L)'], w: 1.45 },
-    ...(showQuality ? [{ k: 'grade', h: ['Model', 'rubric'], w: 0.8 }] : []),
+    ...(showQuality ? [{ k: 'grade', h: [t0.grade?.origin === 'interim2017' ? 'Interim' : 'Model', t0.grade?.origin === 'interim2017' ? 'row' : 'rubric'], w: 0.8 }] : []),
   ];
   const tw = cols.reduce((s, c) => s + c.w, 0), usable = width - 2 * M;
   let acc = M;

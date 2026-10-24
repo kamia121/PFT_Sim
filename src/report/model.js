@@ -127,7 +127,10 @@ function qualitySummary(caseData) {
     out.push({ test: 'Lung volumes (plethysmography)', lines });
   }
   const g = caseData.dlcoTrace?.grade;
-  if (g) {
+  if (caseData.dlcoTrace?.session) {
+    const s = caseData.dlcoTrace.session;
+    out.push({ test: 'DLCO', lines: [`Session ${s.status}; retained maneuvers ${s.selectedIds.join(', ') || 'none'}.`, ...s.warnings] });
+  } else if (g) {
     const lines = [`Single-breath simulator rubric ${g.grade} (not an ATS/ERS session grade)${g.acceptable ? ' (acceptable)' : ' (requires review)'}.`];
     for (const [label, list] of [['Invalid', g.invalid], ['Failed criterion', g.failed], ['Noted', g.noted], ['Unconfirmed criterion', g.unknown]]) for (const x of list ?? []) lines.push(`${label}: ${x}.`);
     out.push({ test: 'DLCO', lines });
@@ -519,7 +522,7 @@ export function buildReportModel(caseData, interp, options = {}) {
     const dl = caseData.dlco;
     const refRow = (id, label, unit, dp) => {
       const r = m[id];
-      const row = { id, index: label, unit, dp, result: round(r?.value, dp), lln: null, z: null, pct: null };
+      const row = { id, index: label, unit, dp, result: !r && caseData.dlcoTrace?.session ? 'not reportable' : round(r?.value, dp), lln: null, z: null, pct: null };
       if (r && r.available !== false) Object.assign(row, { lln: round(r.lln, dp), z: round(r.z, 2), pct: round(r.percentPredicted, 0) });
       return row;
     };
@@ -544,11 +547,16 @@ export function buildReportModel(caseData, interp, options = {}) {
     const rows = [
       hbOk ? plain('hb', 'Hemoglobin', 'g/dL', 1, dl.hbGdl) : { id: 'hb', index: 'Hemoglobin', unit: 'g/dL', dp: 1, result: 'not available', lln: null, z: null, pct: null },
       ...(hbOk ? [plain('hb-factor', 'Reference multiplier for Hb', '', 3, 1 / f)] : []),
-      hbOk ? { ...onRef(dlRow, 1 / f), result: round(dl.raw, 1) } : dlRow,
+      hbOk ? { ...onRef(dlRow, 1 / f), result: Number.isFinite(dl.raw) ? round(dl.raw, 1) : 'not reportable' } : dlRow,
       refRow('va', 'VA', 'L', 2),
-      hbOk && kcoRow.result !== null ? { ...onRef(kcoRow, 1 / f), result: round(dl.kco / f, 2) } : kcoRow,
-      ...(Number.isFinite(trace?.inspired?.viOverVc) ? [plain('vi-vc', 'VI/VC', '%', 0, 100 * trace.inspired.viOverVc)] : []),
-      ...(Number.isFinite(trace?.breathHold?.seconds) ? [plain('breath-hold', 'Breath-hold time', 's', 1, trace.breathHold.seconds)] : []),
+      hbOk && Number.isFinite(dl.kco) ? { ...onRef(kcoRow, 1 / f), result: round(dl.kco / f, 2) } : kcoRow,
+      ...(trace?.session ? [
+        plain('vc-comparator', 'Largest same-session VC (VI comparator)', 'L', 2, trace.session.vcL),
+        ...(Number.isFinite(trace.session.values.viL) ? [plain('mean-vi', 'Mean retained VI', 'L', 2, trace.session.values.viL), plain('vi-vc', 'Mean VI/VC', '%', 0, 100 * trace.session.values.viL / trace.session.vcL)] : []),
+      ] : [
+        ...(Number.isFinite(trace?.inspired?.viOverVc) ? [plain('vi-vc', 'VI/VC', '%', 0, 100 * trace.inspired.viOverVc)] : []),
+        ...(Number.isFinite(trace?.breathHold?.seconds) ? [plain('breath-hold', 'Breath-hold time', 's', 1, trace.breathHold.seconds)] : []),
+      ]),
     ];
     // Carboxyhemoglobin: the 2017 standard recommends an adjustment for interpretation only when COHb is known to be elevated or is suspected to exceed 2%
     // (endogenous COHb is 1 to 2% in the subjects of the reference equations), and gives it on the predicted value (eq. 37: x (102% - COHb%)). It is shown as a
@@ -573,9 +581,15 @@ export function buildReportModel(caseData, interp, options = {}) {
       `Reference values: ${eqName(tlcoEq)}${fallbackText(tlcoMatched)}. LLN, z-score and %Pred refer to the measured DLCO and KCO against ${hbOk ? `reference values adjusted for the hemoglobin (ATS/ERS 2017, eqs 31 and 32: predicted x 1.7Hb/(c+Hb), with c = 10.22 for males of 15 years and older and 9.38 for females and children; the multiplier is shown)` : 'reference values without hemoglobin adjustment, because no hemoglobin was available'}.`,
       ambient?.pressureMmHg !== undefined ? `Pb: ${ambient.pressureMmHg} mmHg.` : null,
       coHbLine,
-      trace ? 'Inspired volume (VI/VC) and breath-hold time are simulated from the tracing; replicate tests are not simulated.' : 'Replicate tests are not simulated.',
+      trace?.session ? `Inspired volume (VI/VC) and breath-hold time are simulated. Session ${trace.session.status}; ${includeGrades ? `retained maneuvers ${trace.session.selectedIds.join(', ') || 'none'}. ${trace.session.warnings.join(' ')}` : 'interpret any qualified result with caution.'} Reported DLCO and VA are means from the same selected pool; KCO is derived as their quotient. Individual maneuver values are listed separately.` : trace ? 'Inspired volume (VI/VC) and breath-hold time are simulated from the tracing; replicate tests are not simulated.' : 'Replicate tests are not simulated.',
     ].filter(Boolean).join(' ');
-    sections.push({ id: 'dlco', title: 'Diffusing capacity', tables: [{ id: 'dlco', caption: 'Single-breath DLCO', columns: cols, rows, footnote: foot }], figures: [], figureIds: [], notes: [] });
+    const tables = [{ id: 'dlco', caption: 'Single-breath DLCO', columns: cols, rows, footnote: foot }];
+    if (trace?.session) tables.push({ id: 'dlco-replicates', caption: 'Diffusing-capacity maneuvers',
+      columns: [{ key: 'index', label: 'Maneuver', align: 'left' }, { key: 'dlco', label: 'DLCO', unit: 'mL/min/mmHg', dp: 2 }, { key: 'va', label: 'VA', unit: 'L', dp: 3 }, { key: 'vi', label: 'VI/VC', unit: '%', dp: 1 }, { key: 't85', label: 't85', unit: 's', dp: 2 }, { key: 'hold', label: 'Hold', unit: 's', dp: 2 }, { key: 'sample', label: 'Sample end', unit: 's', dp: 2 }, { key: 'observation', label: 'Observation', align: 'left', detail: true }, ...(includeGrades ? [{ key: 'grade', label: 'Interim row', align: 'left' }, { key: 'retained', label: 'Retained', align: 'left' }, { key: 'reason', label: 'Qualification', align: 'left', detail: true }] : [])],
+      rows: trace.tests.map((t) => ({ id: String(t.maneuverId), index: String(t.maneuverId), dlco: round(t.values.dlcoMlMinMmHg, 2), va: round(t.values.vaL, 3), vi: round(100 * t.assessment.viOverVc, 1), t85: round(t.quality.t85S, 2), hold: round(t.quality.breathHoldS, 2), sample: round(t.quality.sampleEndS, 2), observation: t.faults.map((f) => DLCO_OBSERVATION[f.code]).filter(Boolean).join('; '), ...(includeGrades ? { grade: t.assessment.grade ?? 'unclassified', retained: t.selected ? 'yes' : 'no', reason: [...t.assessment.failed, ...t.assessment.unknown].join('; ') } : {}) })),
+      footnote: includeGrades ? `Session ${trace.session.status}; ${trace.session.warnings.join(' ')} Interim maneuver letters are not a session grade. Synthetic waveform assessment remains a teaching model.` : `Session ${trace.session.status}; interpret any qualified result with caution.`,
+    });
+    sections.push({ id: 'dlco', title: 'Diffusing capacity', tables, figures: [], figureIds: [], notes: [] });
   }
 
   // ---------------- figures ----------------
@@ -616,7 +630,7 @@ export function buildReportModel(caseData, interp, options = {}) {
   const qualityNotes = kindOf('quality');
 
   const model = {
-    meta: { caseCode: code, patientId: patientId(d.seed), marker: SIMULATION_MARKER, generatorVersion: GENERATOR_VERSION, equation, hasPost, includeGrades, figureErrors, caseToken: encodeCase(serializeDescriptor(d)) },
+    meta: { caseCode: code, patientId: patientId(d.seed), marker: SIMULATION_MARKER, generatorVersion: d.v ?? GENERATOR_VERSION, equation, hasPost, includeGrades, figureErrors, caseToken: encodeCase(serializeDescriptor(d)) },
     quality: includeGrades ? qualitySummary(caseData) : null,
     header: { fields },
     sections,

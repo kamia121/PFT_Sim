@@ -158,7 +158,7 @@ test('lung volume and DLCO tables carry the specified rows and respect the panel
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc', 'sraw', 'sgaw', 'raw']);
   assert.equal(row(table(model, 'volumes'), 'rv_tlc').unit, '%');
-  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
+  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['hb', 'hb-factor', 'dlco', 'va', 'kco', 'vc-comparator', 'mean-vi', 'vi-vc']);
   assert.match(table(model, 'dlco').footnote, /ATS\/ERS 2017, eqs 31 and 32/);
   const s = makeModel({ seed: 44, archetype: 'mixed', panel: 'spirometry' }).model;
   assert.equal(table(s, 'volumes'), undefined);

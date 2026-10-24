@@ -250,6 +250,15 @@ function forcedFaults(scenario) {
  * One shutter-closure trial.
  * @returns {PlethTrial & { _truth: object }}
  */
+/** Corrected 2023 Table 2 frequency bands; significant obstruction at 1–1.5 Hz needs review. */
+export function assessPlethPantFrequency(hz, noOrMinimalObstruction) {
+  if (!Number.isFinite(hz) || typeof noOrMinimalObstruction !== 'boolean') return 'unknown';
+  if (hz < .5 || hz > 2 || hz > 1.5 && !noOrMinimalObstruction) return 'rejected';
+  if (hz <= 1 || noOrMinimalObstruction && hz <= 1.5) return 'acceptable';
+  if (noOrMinimalObstruction) return 'usable';
+  return 'review';
+}
+
 function generateTrial(i, ctx) {
   const { seed, tgvTrue, box, u, obstructed, tech, forced, driftSign } = ctx;
   const r = createStream(seed, `pleth-trial-${i}`);
@@ -327,7 +336,11 @@ function generateTrial(i, ctx) {
   const pct = (frcL / tgvTrial - 1) * 100;
   const fLimit = obstructed ? PLETH_MODEL.pantAcceptableHz.value[1] : PLETH_MODEL.pantToleratedMaxHzNoObstruction.value;
   let rejected = false, usable = false;
-  if (f > 1.5) {
+  if (ctx.currentCriteria && !obstructed && f > 1.5 && f <= 2) {
+    faults.push('fast-panting'); usable = true;
+    reasons.push('panting frequency above 1.5 and at or below 2 Hz without obstruction; usable with caution (2023 Table 2)');
+    faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz; usable with caution rather than acceptable.`);
+  } else if (f > 1.5) {
     faults.push('fast-panting'); rejected = true;
     reasons.push('panting frequency above 1.5 Hz');
     faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz, above 1.5 Hz. Mouth pressure underestimates the alveolar pressure swing, so FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);
@@ -687,7 +700,7 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
     const closureL = tr.frcL;
     // end-expiratory level after each quiet breath, ending at the closure level
     const eelL = tr.eelDeviationL.map((d) => closureL + d - tr.eelDeviationL[M.quietBreaths - 1]);
-    const stableL = eelL[0]; // the end-expiratory level before any drift toward the closure level
+    const stableL = tr.link ? closureL : eelL[0]; // the end-expiratory level before any drift toward the closure level
     const t = [], v = [], segments = [];
     const push = (id, label, ts, vs) => {
       const i0 = t.length ? t.length - 1 : 0;
@@ -709,6 +722,17 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
     const open = simulateTidal({ rng, nBreaths: 1, vt: 0.9 * vt, ti, te, dt: M.sampleIntervalS, varFrac: 0.3 * tech.rawBreathVar });
     const tOpen = tClose + tPant;
     push('open-shutter', 'Shutter open', open.t.map((x) => tOpen + x), open.theta.map((th, j) => closureL + (stableL - closureL) * smoothstep(th / TAU) + open.vol[j]));
+    if (tr.link) {
+      // Linked IC is inspired first, from this measured FRC to TLC; expiratory SVC follows to RV.
+      const tIn = tOpen + open.t[open.t.length - 1];
+      const dIn = clamp(2.5 + .6 * trialVolumes.ic, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
+      const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);
+      push('inspiration', 'Linked IC to TLC', inT, inT.map((_, j) => closureL + trialVolumes.ic * smootherstep(j / nIn)));
+      const tEx = inT[inT.length - 1];
+      const dEx = clamp(2.2 + 1.5 * trialVolumes.vc, 3, 8), nEx = Math.ceil(dEx / M.sampleIntervalS);
+      const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);
+      push('expiration', 'Linked expiratory SVC to RV', exT, exT.map((_, j) => trialVolumes.tlc - trialVolumes.vc * smootherstep(j / nEx)));
+    } else {
     // slow expiration to RV, slow inspiration to TLC (smooth, zero flow at both ends)
     const tEx = tOpen + open.t[open.t.length - 1];
     const dEx = clamp(2.2 + 1.5 * trialVolumes.erv, 3, 6), nEx = Math.ceil(dEx / M.sampleIntervalS);
@@ -718,6 +742,7 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
     const dIn = clamp(2.5 + 0.6 * trialVolumes.vc, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
     const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);
     push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => trialVolumes.rv + (trialVolumes.tlc - trialVolumes.rv) * smootherstep(j / nIn)));
+    }
     const closureOffsetL = closureL - stableL;
     return {
       trial: tr.index,
@@ -841,7 +866,7 @@ export function buildMeasuredPleth({ seed, truth, volumes, age, fvcL, technique 
   const tech = TECHNIQUE[technique] ?? TECHNIQUE.good;
   const box = makeBox(barometricMmHg ?? scenario?.barometricMmHg ?? PLETH_MODEL.barometricMmHg.value);
   const z = trueRatioZ(truth, ratioZ), u = clamp(obstructionMeasure(z) / 3.5, 0, 1);
-  const ctx = { seed, tgvTrue: volumes.frc, box, u, obstructed: z < -1.645, tech, forced: forcedFaults(scenario), driftSign: createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1 };
+  const ctx = { currentCriteria: true, seed, tgvTrue: volumes.frc, box, u, obstructed: z < -1.645, tech, forced: forcedFaults(scenario), driftSign: createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1 };
   const sessionRng = createStream(seed, 'pleth-linked-session-v3');
   const unlinkedSession = technique === 'poor' && sessionRng.uniform() < 0.14;
   const trials = [];

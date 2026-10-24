@@ -33,6 +33,8 @@ export function dlcoTests(data) {
 
 /** Index of the best test: the lowest grade letter (A to D), the first among equals. */
 export function bestDlcoIndex(tests) {
+  const retained = tests.findIndex((t) => t.selected);
+  if (retained >= 0) return retained;
   let best = 0;
   tests.forEach((t, i) => { if ((t.grade?.grade ?? 'A') < (tests[best].grade?.grade ?? 'A')) best = i; });
   return best;
@@ -148,7 +150,7 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
   if (showQuality && data.grade) {
     const g = data.grade;
     const reasons = [...g.invalid, ...g.failed, ...g.noted, ...(g.unknown ?? [])];
-    const s = `Simulator rubric ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
+    const s = `${g.origin === 'interim2017' ? 'Interim maneuver row' : 'Simulator rubric'} ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
     out.push(text(14, cy + 28, s.length > 118 ? `${s.slice(0, 115)}...` : s, { size: 10, fill: g.wouldBeRejected ? palette.second : palette.text }));
   }
   out.push(close());
