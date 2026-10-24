@@ -77,7 +77,7 @@ function studyItem(c, rt) {
     prompt: 'Judge the study as a whole: can it be interpreted as recorded, can it be interpreted with limitations, or is it insufficient to interpret? A flawed maneuver limits the values that depend on it and leaves the others usable.',
     options: [['interpretable', 'Interpretable'], ['limited', 'Interpretable with limitations'], ['insufficient', 'Insufficient to interpret']],
     key,
-    why: `Each reported FEV₁ and FVC is the largest value of its own variable among the acceptable maneuvers or, when none is acceptable (grade U), among the usable ones, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The grouping is the simulator's, built on the grades and acceptability of ATS/ERS 2019 (grades A to F and U) and ATS/ERS 2017 (DLCO); neither statement sets a cut point for interpretability.`,
+    why: `Each reported FEV₁ and FVC is the largest value of its own variable among the acceptable maneuvers or, when none is acceptable (grade U), among the usable ones, so a fault that spoils one variable, one maneuver or one optional test limits only what depends on it: a cough in the first second spoils the FEV₁ of that maneuver and not its FVC, and the FEV₁ and the FVC are graded separately. The study is insufficient only when the baseline FEV₁ or FVC cannot be reported (no usable maneuver, grade F), because the ratio and the pattern then cannot be assigned; a grade D, E or U on a reported value, or a performed test that does not meet its acceptability criteria, limits the interpretation without preventing it. ${outcome} The study grouping is the simulator's: adult spirometry uses ATS/ERS 2019 grades, while DLCO and FRC use the reduced simulator rubrics described in their feedback. These are not complete standards-based session quality assessments, and the statements do not set a cut point for study interpretability.`,
     needsDetails: true,
   };
 }
@@ -100,7 +100,7 @@ function acceptabilityItem(c, set) {
     options: YES_NO,
     rows,
     key,
-    why: `The FEV₁ is the volume exhaled in the first second, so interrupted flow in that interval (a cough, glottic closure, an air leak) spoils the FEV₁; the FVC is the volume of a complete expiration, so it needs an end-of-forced-expiration indicator (a plateau, an expiratory time of 15 s, or an FVC within ${S.eofeRepeatabilityOfLargestFvc.value.toFixed(3)} L of the largest FVC in the set), and a cough in the first second does not spoil it. Both variables need a back-extrapolated volume below the larger of 5% of the FVC and ${S.bevAbsoluteLiters.value.toFixed(3)} L (ATS/ERS 2019, Table 7). In this set, ${inSet('fev1')}; ${inSet('fvc')}.`,
+    why: `The FEV₁ is the volume exhaled in the first second, so interrupted flow in that interval (a cough, glottic closure, an air leak) spoils the FEV₁; the FVC is the volume of a complete expiration, so it needs an end-of-forced-expiration indicator (a plateau, an expiratory time of 15 s, or an FVC within ${S.eofeRepeatabilityOfLargestFvc.value.toFixed(3)} L of the largest FVC in the set), and a cough in the first second does not spoil it. Both variables need a back-extrapolated volume at or below the larger of 5% of the FVC and ${S.bevAbsoluteLiters.value.toFixed(3)} L (ATS/ERS 2019, Table 7). Table 7 includes equality for BEV and the 0.025 L plateau limit, while adjacent prose uses strict comparisons; this simulator follows the inclusive table convention. In this set, ${inSet('fev1')}; ${inSet('fvc')}.`,
     needsDetails: true,
   };
 }
@@ -263,17 +263,18 @@ function dlcoItem(rt) {
   };
 }
 
-function plethItem(rt) {
+function plethItem(c, rt) {
   const t = rt.truth.pleth;
   if (!t) return null;
   return {
     id: 'plethAcceptable',
+    alwaysExplain: true, // Model/reporting limitations matter even when the rubric answer is correct.
     stage: 1,
     title: 'Plethysmographic functional residual capacity',
-    prompt: 'Decide whether the shutter-closure trials are acceptable and repeatable.',
-    options: [['acceptable', 'Acceptable and repeatable'], ['not-acceptable', 'Not acceptable']],
+    prompt: 'Does an acceptable FRC subset qualify within 5% under the simulator rubric? Overall ATS/ERS quality cannot be established from these inputs.',
+    options: [['acceptable', 'Subset qualifies (simulator rubric)'], ['not-acceptable', 'No qualifying acceptable subset']],
     key: word(t),
-    why: `Thoracic gas volume at the end of tidal expiration follows from the pressure change at the mouth against the pressure change in the box during panting against the closed shutter, so a trial is valid when the shutter closes at the stable end-tidal level, panting stays within the allowed frequency, and drift or a leak does not tilt or open the pressure loop; the reported FRC is the mean of the acceptable trials, which must agree within 5% (tolerance from a secondary source). ${t.acceptable ? 'The trials of this study meet these requirements.' : `The trials of this study do not: ${t.reasons.join('; ')}.`}`,
+    why: `The FRC-only simulator rubric checks whether a subset of at least two acceptable shutter closures agrees within 5% of its mean. ${t.acceptable ? `A qualifying subset gives rubric ${c.pleth.grade}.` : `No qualifying acceptable subset is identified: ${t.reasons.join('; ')}.`} The reported FRC currently averages ${c.pleth.frcBasis === 'acceptable' ? 'all acceptable trials, rather than selecting the qualifying subset' : c.pleth.frcBasis === 'usable' ? 'usable trials because no acceptable trial is available' : 'rejected trials because none is usable; this is a simulation placeholder'}${c.pleth.repeatability.spreadFraction !== null ? `; the displayed acceptable set spans ${(100 * c.pleth.repeatability.spreadFraction).toFixed(2)}% of its mean` : '; acceptable-set repeatability is not assessable'}. A qualifying subset does not establish that the displayed reporting set meets 5%. Retained linked SVC quality and full reporting selection are not implemented, so this answer does not certify overall ATS/ERS acceptability or repeatability.`,
     needsDetails: rt.stated.pleth !== word(t),
   };
 }
@@ -298,7 +299,7 @@ export function buildChallengeList(caseData, { rt, interp, interpOther, qualityC
     loopItem(c, rt),
     bdItem(c, rt, interp, interpOther),
     dlcoItem(rt),
-    plethItem(rt),
+    plethItem(c, rt),
     statementItem(rt, qualityChallenge),
   ].filter(Boolean);
 }

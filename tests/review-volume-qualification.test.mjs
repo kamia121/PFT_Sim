@@ -7,6 +7,11 @@ import { composeNarrative } from '../src/interpret/narrative.js';
 import { conciseSummary, conciseText } from '../src/report/concise.js';
 import { renderMethod } from '../src/app/render.js';
 import { evaluateManeuver } from '../src/core/quality.js';
+import { feedbackHtml } from '../src/quiz/explain.js';
+import { buildFeedback } from '../src/app/feedback.js';
+import { renderReveal } from '../src/app/render.js';
+import { buildChallenges, scoreChallenge } from '../src/challenges/index.js';
+import { buildRtReport } from '../src/core/rt-report.js';
 import { SPIROMETRY_2019 } from '../src/core/standards.js';
 
 const descriptor = { seed: 2, archetype: 'restriction-extraparenchymal', technique: 'good', panel: 'full', severity: 2 };
@@ -62,6 +67,15 @@ test('method distinguishes prior transcription and archived spline agreement fro
 const maneuver = (fvc, extra = {}) => ({ fvc, fev1: fvc - 0.4, pef: 5, fef2575: 2, fet: 7, bev: 0.01, plateau: 0.01, coughFirstSecond: false, glottisClosedAt: null, ...extra });
 test('BEV equality uses the documented inclusive Table 7 convention at both branches of the limit', () => {
   assert.match(SPIROMETRY_2019.boundaryConventions.bev, /Table 7 prints ≤ while prose prints </);
+  const c = buildCase({ seed: 2, archetype: 'normal', technique: 'good' }, ds);
+  const feedback = buildChallenges(c, { rt: buildRtReport(c) }).find((i) => i.id === 'acceptableManeuversPre').why;
+  assert.match(feedback, /back-extrapolated volume at or below the larger/);
+  assert.match(feedback, /Table 7 includes equality for BEV and the 0.025 L plateau limit, while adjacent prose uses strict comparisons/);
+  assert.doesNotMatch(feedback, /volume below the larger/);
+  const grade = c.report.grades.fev1;
+  const quizFeedback = feedbackHtml({ id: 'gradeFev1', options: [{ id: grade, label: grade }], key: { correct: grade } }, { caseData: c }, { status: 'correct', score: 1, response: grade });
+  assert.match(quizFeedback, /back-extrapolated volume is at or below 5%/);
+  assert.match(quizFeedback, /inclusive 2019 Table 7 convention; adjacent prose uses strict comparisons/);
   for (const [fvc, limit] of [[1.5, 0.1], [4, 0.2]]) {
     for (const [offset, acceptable] of [[-1e-10, true], [0, true], [1e-10, false]]) {
       const q = evaluateManeuver(maneuver(fvc, { bev: limit + offset }));
@@ -102,4 +116,49 @@ test('DLCO strict inspiration boundary, classical sample exception and separate 
   assert.equal(missing.acceptable, false); assert.ok(missing.unknown.length);
   assert.equal(gradeDlcoTest({ ...q, viOverVc: 0.87, vaL: 3, largestOtherAcceptableVaL: 3.2 }).acceptable, true, 'decimal equality survives arithmetic representation');
   assert.equal(gradeDlcoTest({ ...q, viOverVc: 0.87, vaL: 4, largestOtherAcceptableVaL: 4.1 }).acceptable, true);
+});
+
+
+test('pause-at-TLC explanation agrees with acceptable maneuvers and coaching warnings', () => {
+  const c = buildCase({ seed: 2, archetype: 'normal', technique: 'good', scenarioIds: ['qs-pause-at-tlc'] }, ds);
+  let affected = 0;
+  for (const set of ['pre', 'post']) {
+    const s = c.spirometry[set]; if (!s) continue;
+    s.maneuvers.forEach((m, i) => {
+      if (!m.faults.includes('pause-at-TLC')) return;
+      affected++;
+      assert.equal(s.summary.evaluations[i].fev1.acceptable, true);
+      assert.ok(s.summary.evaluations[i].fev1.warnings.length);
+    });
+  }
+  assert.ok(affected);
+  const text = c.scenario.caveats.find((x) => x.id === 'pause-at-tlc').text;
+  assert.match(text, /prompts coaching and review/);
+  assert.match(text, /pause alone does not make the affected FEV1 unacceptable under Table 7/);
+  assert.doesNotMatch(text, /affected FEV1 is not acceptable/);
+});
+
+test('pleth feedback distinguishes a qualifying subset from the displayed 9.35% reporting set', () => {
+  const c = buildCase({ seed: 3, archetype: 'normal', technique: 'fair' }, ds);
+  assert.equal(c.pleth.grade, 'A');
+  assert.equal(c.pleth.repeatability.nAcceptable, 5);
+  assert.equal(c.pleth.repeatability.nWithin5Pct, 3);
+  assert.equal(c.pleth.repeatability.spreadFraction, 0.0935);
+  const item = buildChallenges(c, { rt: buildRtReport(c) }).find((x) => x.id === 'plethAcceptable');
+  assert.equal(item.key, 'acceptable'); // Internal key retained; scored question is the simulator rubric only.
+  assert.deepEqual(item.options, [['acceptable', 'Subset qualifies (simulator rubric)'], ['not-acceptable', 'No qualifying acceptable subset']]);
+  assert.match(item.prompt, /Overall ATS\/ERS quality cannot be established/);
+  assert.match(item.why, /reported FRC currently averages all acceptable trials, rather than selecting the qualifying subset/);
+  assert.match(item.why, /displayed acceptable set spans 9.35%/);
+  assert.match(item.why, /does not establish that the displayed reporting set meets 5%/);
+  assert.match(item.why, /Retained linked SVC quality and full reporting selection are not implemented/);
+  assert.doesNotMatch(item.why, /trials of this study meet these requirements|acceptable trials, which must agree within 5%/);
+  const interp = interpret(c.report, resolveReference), cmp = compareEquations(c.report, resolveReference);
+  const feedback = buildFeedback({ caseData: c, interp, interpOther: interp, equation: 'GLIglobal', responses: { structured: {}, challenge: { plethAcceptable: item.key }, impression: '' }, items: [item], scoreChallenge, rt: buildRtReport(c) });
+  const row = feedback.rows.find((r) => r.id === item.id);
+  assert.equal(row.status, 'correct');
+  assert.match(row.why, /displayed acceptable set spans 9.35%/);
+  assert.ok(feedback.quality.lines.some((l) => /FRC subset simulator rubric qualifies; overall ATS\/ERS quality is not established/.test(l)));
+  for (const scored of [false, true]) assert.match(renderReveal(c, interp, cmp, [], scored, feedback), /displayed acceptable set spans 9.35%/);
+
 });

@@ -33,3 +33,7 @@ Actual Claude consultation completed with Opus5.5/High under PFT Simulator in Ch
 ## Follow-up review QA
 
 Used the user's **Chrome**, browser 3, against the same local server. The main practice page loads and shows the revised preserved-ratio option. The Method tab shows the inclusive Table 7 convention, procedural pause warning, explicit DLCO/FRC simulator-rubric limitations, and the accurate distinction between prior-transcription/archived-array agreement and independent printed-table verification. The Advanced case puzzlers link opens the authored cases. Choosing the reference-header check and checking the answer locks all choices, focuses the Supported explanation, and offers Reveal next context. No external publication or official calculator attempt was performed in this follow-up.
+
+### Learner-feedback follow-up
+
+Chrome, local seed 3/normal/fair/advanced review: opened the unscored key and confirmed “Subset qualifies (simulator rubric)” plus the displayed 9.35% reporting-set spread, missing linked-SVC/full-selection limitation and withheld overall ATS/ERS verdict. Fixed a desktop stacking issue that previously let the sticky answer pane cover this explanation; rendered-DOM center occlusion changed from true to false and the screenshot showed the complete qualification. Unit regressions also verify the qualification remains in correct-answer and unscored rendering paths. No temporary viewport override was used.

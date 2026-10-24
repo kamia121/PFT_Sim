@@ -162,7 +162,7 @@ function resultRow(r, scored) {
   const text = r.status === 'other-equation' ? r.note : base;
   const note = r.kind === 'challenge' && r.note && r.status !== 'other-equation' ? ` <span class="muted">${esc(r.note)}</span>` : '';
   const why = r.why ? `<div class="muted why">${esc(r.why)}</div>` : '';
-  return `<div class="result-row"><div class="head">${esc(r.label)}</div><div>${scored ? `You: ${esc(r.answer ?? 'no answer')}` : ''}</div><div>Key: <strong>${esc(r.expected)}</strong>${r.other ? ` <span class="muted">(other equation: ${esc(r.other)})</span>` : ''}${scored ? ` <span class="${cls}">${esc(text)}</span>${note}` : ''}${scored ? why : ''}</div></div>`;
+  return `<div class="result-row"><div class="head">${esc(r.label)}</div><div>${scored ? `You: ${esc(r.answer ?? 'no answer')}` : ''}</div><div>Key: <strong>${esc(r.expected)}</strong>${r.other ? ` <span class="muted">(other equation: ${esc(r.other)})</span>` : ''}${scored ? ` <span class="${cls}">${esc(text)}</span>${note}` : ''}${scored || r.alwaysExplain ? why : ''}</div></div>`;
 }
 
 /**

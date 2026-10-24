@@ -20,7 +20,8 @@ import { answerFor, isMultiItem } from './collect.js';
  * @property {string|null} other the key under the other equation, when it differs
  * @property {RowStatus} status
  * @property {string} note short note (challenge items)
- * @property {string} why explanation of the key (challenge items that were not answered correctly)
+ * @property {string} why explanation of the key or required model limitation
+ * @property {boolean} [alwaysExplain] show required explanation even in an unscored reveal
  */
 
 const STATUS_FROM_CHALLENGE = { correct: 'correct', wrong: 'incorrect', 'other-equation': 'other-equation', unanswered: 'unanswered' };
@@ -92,7 +93,8 @@ export function scoreAll({ caseData, interp, interpOther, equation, responses, i
         other: null,
         status,
         note: status === 'other-equation' ? (result.note || OTHER_EQUATION_LABEL[equation === 'GLI2012' ? 'GLIglobal' : 'GLI2012']) : String(result?.note ?? ''),
-        why: status === 'correct' ? '' : String(item.why ?? ''),
+        why: status === 'correct' && !item.alwaysExplain ? '' : String(item.why ?? ''),
+        alwaysExplain: Boolean(item.alwaysExplain),
       });
     }
   }
@@ -142,8 +144,8 @@ export function qualityFeedback(rt, caseData) {
   lines.push(...gradeLines(t.pre, caseData.spirometry.pre, 'Before bronchodilator'));
   if (t.post && caseData.spirometry.post) lines.push(...gradeLines(t.post, caseData.spirometry.post, 'After bronchodilator'));
   const word = (b) => (b ? 'acceptable' : 'not acceptable');
-  if (t.pleth) lines.push(`Plethysmography: ${word(t.pleth.acceptable)}${t.pleth.reasons?.length ? ` (${t.pleth.reasons.join('; ')})` : ''}.`);
-  if (t.dlco) lines.push(`Diffusing capacity: ${word(t.dlco.acceptable)}${t.dlco.reasons?.length ? ` (${t.dlco.reasons.join('; ')})` : ''}.`);
+  if (t.pleth) lines.push(`Plethysmography: FRC subset simulator rubric ${t.pleth.acceptable ? 'qualifies' : 'does not qualify'}; overall ATS/ERS quality is not established${t.pleth.reasons?.length ? ` (${t.pleth.reasons.join('; ')})` : ''}.`);
+  if (t.dlco) lines.push(`Diffusing capacity: simulator rubric ${word(t.dlco.acceptable)}${t.dlco.reasons?.length ? ` (${t.dlco.reasons.join('; ')})` : ''}.`);
 
   const stated = [];
   for (const [k, label, truthSet] of [['pre', 'Before bronchodilator', t.pre], ['post', 'After bronchodilator', t.post]]) {

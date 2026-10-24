@@ -157,7 +157,7 @@ export const QUALITY_SCENARIOS = [
     vars: (fx, c) => ({ blows: c.blows('pause-at-TLC'), pause: c.pauseSeconds.toFixed(0) }),
     verifiedNumbers: ['2', '4', '6'],
     caveats: [
-      { id: 'pause-at-tlc', weight: 'major', text: 'A pause at total lung capacity lowers peak flow and FEV1; the ATS/ERS 2019 statement documents the effect for pauses of 4 to 6 s and asks that any pause be 2 s or less. The affected FEV1 is not acceptable here.' },
+      { id: 'pause-at-tlc', weight: 'major', text: 'A pause at total lung capacity lowers peak flow and FEV1; the ATS/ERS 2019 statement documents the effect for pauses of 4 to 6 s and asks that any pause be 2 s or less. This prompts coaching and review; a pause alone does not make the affected FEV1 unacceptable under Table 7. Other maneuver faults still determine acceptability.' },
     ],
     decoyCaveats: [{ id: 'decoy-pause-raises-fvc', text: 'The pause at full inspiration raises the FVC and makes the maneuver more reliable.' }],
     confidence: 'high', source: 'QS-14; S1',

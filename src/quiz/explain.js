@@ -59,9 +59,9 @@ function explainGrade(item, prep, result, opts) {
   const which = item.id === 'gradeFev1' ? 'fev1' : 'fvc';
   const g = prep.caseData.report.grades[which];
   const rule = which === 'fev1'
-    ? 'The FEV₁ is judged on its own: a maneuver counts toward the FEV₁ grade when its back-extrapolated volume is below 5% of the FVC or 0.100 L, whichever is greater, and there is no cough or glottic closure in the first second.'
+    ? 'The FEV₁ is judged on its own: a maneuver counts toward the FEV₁ grade when its back-extrapolated volume is at or below 5% of the FVC or 0.100 L, whichever is greater, and there is no cough or glottic closure in the first second.'
     : 'The FVC is judged on its own: a maneuver counts toward the FVC grade when its back-extrapolated volume is within the same limit, there is no glottic closure at any time, and expiration ended with a plateau, a forced expiratory time of at least 15 s, or an FVC within 0.150 L of the largest FVC in the set.';
-  return `<p>${esc(rule)} The grade then depends on how many acceptable maneuvers exist and how far apart the two largest values lie, because repeatability is the check that the patient could reproduce the result.</p><p>Grade <strong>${g}</strong>: ${esc(GRADE_TEXT[g])}</p>
+  return `<p>${esc(rule)} BEV and plateau equality follow the inclusive 2019 Table 7 convention; adjacent prose uses strict comparisons. The grade then depends on how many acceptable maneuvers exist and how far apart the two largest values lie, because repeatability is the check that the patient could reproduce the result.</p><p>Grade <strong>${g}</strong>: ${esc(GRADE_TEXT[g])}</p>
     <details><summary>Acceptability of each maneuver</summary>${R.renderManeuvers(prep.caseData.spirometry.pre, 'Pre-bronchodilator maneuvers with acceptability', { revealed: true, id: `${opts.idPrefix}key-maneuvers-${which}` })}</details>`;
 }
 

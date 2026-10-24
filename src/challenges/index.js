@@ -28,6 +28,7 @@ export { studyJudgement } from './items.js';
  * @property {[string, string][]} options [value, label]; for a row item the same options apply to every row, except where a row carries its own `rowOptions`
  * @property {string|Record<string, string>} key the option value; for a row item a map from row id to option value
  * @property {string} why explanation shown after the answers are checked (formal register, no treatment advice)
+ * @property {boolean} [alwaysExplain] keep model limitations visible for correct answers and unscored key reveals
  * @property {boolean} needsDetails true when the summary page alone does not settle the answer
  * @property {1|2} stage the stage of `visibility` at which the item is asked: 1 from the start, 2 after the statement has
  *   been requested (only rtConsistent, and only with the quality challenge on)

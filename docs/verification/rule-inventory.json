@@ -1878,7 +1878,7 @@
     },
     {
       "path": "src/challenges/items.js",
-      "sha256": "4b1ca864ed48621e497d81d4cf7e9d736f9c92337f6d0bbfb87fe175e5d88fef",
+      "sha256": "6fbebd3ad44a195db05eb8fc9464086fe148f70cc46dd3d3177bc177bfb2b49d",
       "reviewLines": [
         {
           "line": 11,
@@ -2164,7 +2164,7 @@
     },
     {
       "path": "src/scenarios/catalog-quality.js",
-      "sha256": "2dd1e1a0cdb93665cbeb2b1240b1258e6b95f49114612818c447e799aaa34adf",
+      "sha256": "bce2d678353b52be30039a5267cf1e7a8dea6198262724d71bf5c88b35e86043",
       "reviewLines": [
         {
           "line": 9,
