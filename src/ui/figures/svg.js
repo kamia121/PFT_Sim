@@ -53,9 +53,10 @@ export const DASH = { measured: undefined, predicted: '7 5', lln: '2 4', mark: '
  * Complete standalone <svg>. `palette.background === null` writes no background rectangle.
  * @param {{ palette: object, width: number, height: number, title: string, description: string, body: string }} p
  */
-export function wrapSvg({ palette, width, height, title, description, body }) {
+export function wrapSvg({ palette, width, height, title, description, body, attrs = {} }) {
   const bg = palette.background ? `<rect x="0" y="0" width="${width}" height="${height}" rx="6" fill="${palette.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="fig" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img">`
+  const extra = Object.entries(attrs).map(([k, v]) => ` ${k}="${esc(v)}"`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="fig" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img"${extra}>`
     + `<title>${esc(title)}</title><desc>${esc(description)}</desc>${bg}${body}</svg>`;
 }
 

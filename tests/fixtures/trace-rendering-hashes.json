@@ -1,0 +1,133 @@
+{
+ "traceRendering": "spirometry-texture-v2",
+ "generatorVersion": 2,
+ "note": "sha256 of the plotted traces (maneuverTrace, rounded to 1e-9); see tools/trace-rendering-hashes.mjs",
+ "cases": [
+  {
+   "descriptor": {
+    "seed": 11,
+    "archetype": "normal"
+   },
+   "traces": {
+    "pre:0": "3d2c8cd6b0c51dca6e030195e38fc90d842d51b0aed853a590a372aeb76b44b9",
+    "pre:1": "98ceb83bd60f4f187d24d5a0c2833d0a87b32a2090fac0e4daf75d65decb8e2e",
+    "pre:2": "590e9457937a15fe8e3d1b9666c1b0992bda1b4c335a8f21ffee61ff5c544776"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 11,
+    "archetype": "obstruction"
+   },
+   "traces": {
+    "pre:0": "b68be96b5f396e8ff790fb2da4a5c81349515360a8a5d6cdf2ae3701fb43c065",
+    "pre:1": "6d8bbc7b1585a64b2304ba68b426e96a44c45d5ff541da8221d113655271542c",
+    "pre:2": "0beeed238de26de1a01cef2c5bc7c44e7b796e62d280256103e1210f42d11052",
+    "post:0": "21419348ca49ed22d2d204cb05e6c9f32a4009268833b3790e618fb68aafc3dd",
+    "post:1": "c5bd960e339c25e5b934cd7ad6c956c261978f31b9f6f2cd65297171299d0da7",
+    "post:2": "afdde7a38d675dc2706d1a5f96384bbaac3ddd46ed675be6aef8df9cd3df2199"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 11,
+    "archetype": "restriction-parenchymal"
+   },
+   "traces": {
+    "pre:0": "73057bd993ad689a0fc742a3322e43491918a872428783856aa3ea80619c7ebe",
+    "pre:1": "2ff0680488006f72c0d9a6c98e456dc4ab9522acd18e4929891175ea3eaffac6",
+    "pre:2": "91b35b94b1f5347f3809089cf76c1c0540a6c3e2d64a32bf7bca8d8b78434dab"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 11,
+    "archetype": "mixed"
+   },
+   "traces": {
+    "pre:0": "256e405b47f7883f3268e72757cff964dd2207884af1a16d8bcd1bf0bc034fa5",
+    "pre:1": "6a17f5286c096d96a0d9f7374f3dd98f599bfe4a8e5b10cd54b5c5fcec8bb730",
+    "pre:2": "74d8d9628bda334e016c71a7be8b420a31a8209915dfe24c005f8e7a57ac50bc",
+    "post:0": "5bdbed6b5d8adc0e88a5a76262cc2b18e984277940c410a12f478fb3d1ad6bf6",
+    "post:1": "a9c8e2af94bd0f1843509557a4e2168909c5e3414a4000476e116a0a4ba56c61",
+    "post:2": "8bbe0cb9dacd37899c84b537ffe8324a6f9a09a8bccee4f6c07d75fe1d8d24b1"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 5,
+    "archetype": "normal",
+    "technique": "poor"
+   },
+   "traces": {
+    "pre:0": "b8de4bce98360792776b0dd81d2346326118653195d9142b83076a96aac3fc76",
+    "pre:1": "f453fdd85acd791a007fdb9789f1801592d99daf18c99c9f05f605f53280b7ce",
+    "pre:2": "285204a69058f44acee2581f8e32e703c10bc9e0138aef3ad29712f655eefd8b",
+    "pre:3": "63a2786408d756f5cdf10493a01690398bf79ab26462d608b2bfc13d89ac32b9",
+    "pre:4": "2d148f2c89622211506c8ead656dce73c4bc8fc6f4b05ee7e7dcc287ff3583bd"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 8,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 3
+   },
+   "traces": {
+    "pre:0": "4eb35ac2db43cb468595bfae7f350a65332ff95b147ac32b5a4c5709519a8ff8",
+    "pre:1": "485e7b3bc7e8563a66efd2a783b5257c1e3766fc4916eeb53a8583eae54677d9",
+    "pre:2": "ed648e87a31bfa1c7d86d79668009c600229fd677e8def8e831c08ed0f04954a",
+    "pre:3": "8609e624d03dc3145ef409c8704f31c1196f332d54da68afde2b07d7d5274546",
+    "post:0": "ec10053b70f7f0c4ac923bffe2286964f2e01ddb8ed72e42939039bffd7ecc7d",
+    "post:1": "2f17e78b7858fc1b9b98e37858548ab082542615acc49db55fb27cc7ba273420",
+    "post:2": "4c0b76aa44616564aca88ed0e9b349e0a8c4d691381c2536f35937d5292010b6",
+    "post:3": "1699ecd66155aee222d7bb7023a162e5fa192ff1b408be8241c3483500eb0b5b",
+    "post:4": "08cbb1e10f5549d3f0551d79ddc2685f246b5d683a3f7e66d68fe79db673b3f1",
+    "post:5": "5c24eb3107e4ca0519ce2c29ad32ba9a225f58a9b2eaa67a2a097831ad03f0a8"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 3,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "scenarioIds": [
+     "qs-cough-first-second",
+     "qs-leak"
+    ]
+   },
+   "traces": {
+    "pre:0": "9f7aa9ac8021a89486ccbbe686ee1fa00b34b012cfbd402cc30b22a8a1a1b321",
+    "pre:1": "9149abd199d366d4f787a57c60e6e2b6b700d686588999432b803f4d3368213a",
+    "pre:2": "283841f44bb7c06a952125dd7c47d2d6341a87f2f3020d61b4b73c69549d41ca",
+    "pre:3": "349a1a3e025577f45fb87e1b09f04fb2c11fd5eec2c3485602323bb93e8b6f74",
+    "pre:4": "ec3d617de28000664d4c6cb0ea52f2c8b742ceaca0eb78ed65614bd490bb00d7",
+    "pre:5": "e5303d53270cc9d6039644d78c9135786c4096315e0c7004674b4fde48358c02",
+    "pre:6": "f8e8a0c27f28bca3cf1517f98f7ad77ca04fbf569f5cef472b6d52ee55b69573",
+    "pre:7": "1a40fa045f4d4ede580046f04b8dd3e91c555fef6102c75123ad9800c0454ee6",
+    "post:0": "4c968d2d4b98c0d2e0cc04d013b97e34b2b650f1ad29d089778bc5495ae22688",
+    "post:1": "131aaa41abff93e8ccc87f502e9e9b239291d460686982d6e9e1cc7cc9c4802d",
+    "post:2": "098c63001217b7f8f53167582435c930de3a886b831c24ffe1ceb0aeb487ef54",
+    "post:3": "facba49168a3d84a837721a9793baf36494723fd6f76b51de7cbc70ef3ed1947",
+    "post:4": "8bc986f33a8210fb3a23ea4c577a50ec74cf0aa61c04b4a353f3f4388b308b71",
+    "post:5": "a3cdc89286edbdcaf64c0b017f5125035bafaa2bda4fb6f6e1eb26ad18af90f2",
+    "post:6": "2f86463fd2726f3a9b30e1af7dfed11d56abca52f9e7c8500d6c40f63b8946c0",
+    "post:7": "fdc3e188b75ea36f73501d276c66e7edbaf459739cda5576437bf07e1ec31672"
+   }
+  },
+  {
+   "descriptor": {
+    "seed": 18,
+    "archetype": "normal",
+    "technique": "good"
+   },
+   "traces": {
+    "pre:0": "cda2294819bbeb2db5d4ff1eb448c1d0afe5baab6bb220dfbd852ef89cf5c874",
+    "pre:1": "8776eee65ea3fac0aa8943651342970d29cb0fbd9068e8ca9e96d208af337068",
+    "pre:2": "9f48ebb885120a30c7e72a099194ae54465f22717506951c86f42cd21dcde38e",
+    "pre:3": "9c5cdc0a647b0127dd1ce6a9686c86bc18ef9c869161eaef6c3e53f1826d1370"
+   }
+  }
+ ]
+}
