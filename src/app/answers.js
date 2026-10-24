@@ -16,9 +16,9 @@ export const QUESTIONS = [
     ['nonspecific', 'Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)'],
     ['prism', 'Preserved ratio with low FVC or FEV₁, no volumes (PRISm)'],
   ] },
-  { id: 'severity', label: 'Severity of obstruction (FEV₁ z-score)', options: [
+  { id: 'severity', label: 'Ventilatory impairment severity (FEV₁ for obstruction; TLC for restriction)', options: [
     ['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe'],
-    ['fev1-normal', 'Not graded: FEV₁ within normal limits'], ['not-graded', 'Not graded for this pattern'], ['na', 'Not applicable (no obstruction)'],
+    ['not-graded', 'Not graded for this pattern'], ['na', 'Not applicable (no graded ventilatory impairment)'],
   ] },
   { id: 'gradeFev1', label: 'FEV₁ quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },
   { id: 'gradeFvc', label: 'FVC quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },

@@ -314,17 +314,17 @@ T('p-values',
   (p) => `The reported FEV1 is ${p.fev1}, the FVC ${p.fvc} and the FEV1/FVC ratio ${p.ratio}, each classified by z-score and not by percent predicted.`,
   (p) => `FEV1 of ${p.fev1}, FVC of ${p.fvc} and an FEV1/FVC ratio of ${p.ratio} are classified against the lower limit of normal, and percent predicted is shown for reference only.`);
 T('p-severity-scored',
-  (p) => `On the ${p.mz}, against cut-points at ${MINUS}2.5 and ${MINUS}4.0, the obstruction is of ${p.w} severity${p.within}.`,
-  (p) => `Severity of obstruction is graded from the FEV1 z-score; at ${zf(p.z)} the obstruction is of ${p.w} severity${p.within}.`,
-  (p) => `Grading by FEV1 z-score, with cut-points at ${MINUS}2.5 and ${MINUS}4.0, gives an obstruction of ${p.w} severity${p.within}.`);
+  (p) => `Grading impairment on ${p.mz}, with cut-points at ${MINUS}2.5 and ${MINUS}4.0, gives ${p.w} severity${p.within}.`,
+  (p) => `The impairment is of ${p.w} severity on ${p.mz}, using continuous z-score bands${p.within}.`,
+  (p) => `The ${p.mz} gives ${p.w} impairment, with cut-points at ${MINUS}2.5 and ${MINUS}4.0${p.within}.`);
 T('p-severity-fev1-normal',
-  (p) => `The ${p.mz} lies within the reference range of the 2022 scale, so the obstruction, which the ratio establishes, is not graded for severity.`,
-  (p) => `Severity bands of the 2022 scale apply below the lower limit of normal, and the ${p.mz} is above it, so the obstruction is not graded for severity.`,
-  (p) => `With the ${p.mz} within the reference range, no severity grade is defined for this obstruction, which rests on the ratio alone.`);
+  (p) => `Low-ratio obstruction is mild despite the ${p.mz} lying within its reference range (2024 authors clarification).`,
+  (p) => `The ${p.mz} is within its reference range; the low ratio still supports mild obstructive impairment.`,
+  (p) => `A preserved ${p.mz} does not erase obstruction defined by the ratio; the impairment grade is mild.`);
 T('p-severity-unscored',
   () => 'Severity is not graded for this pattern.',
   () => 'No severity grade is assigned to this pattern, so severity is not graded.',
-  () => 'Severity is not graded here, because severity grading applies to airflow obstruction only.');
+  () => 'No single composite severity grade is assigned to this pattern; assess its components separately.');
 
 // --- lung volumes ---
 T('vf-tlc',
@@ -402,9 +402,9 @@ T('ds-vatlc',
   (p) => `The alveolar volume measured by the single breath is ${p.pct}% of TLC, and the KCO is interpreted with that volume because uneven ventilation lowers the share in airflow obstruction.`,
   (p) => `VA is ${p.pct}% of TLC; where ventilation is uneven the single-breath volume understates TLC, and the KCO is read with the VA.`);
 T('ds-severity',
-  () => 'The degree of reduction is not scored.',
-  () => 'No degree of reduction is scored for the DLCO.',
-  () => 'The reduction in DLCO is not scored for severity.');
+  (p) => `Diffusion impairment is ${p.grade} by the DLCO z-score.`,
+  (p) => `The DLCO z-score grades the diffusion impairment as ${p.grade}.`,
+  (p) => `Diffusion impairment is graded ${p.grade}; this is not overall disease severity.`);
 T('ds-value',
   (p) => `The ${p.which} is ${p.dlco} (predicted ${p.pred}), with alveolar volume ${p.va} and KCO ${p.kco}.`,
   (p) => `${cap(p.which)} is ${p.dlco} against a predicted ${p.pred}; alveolar volume is ${p.va} and KCO is ${p.kco}.`,
@@ -660,10 +660,11 @@ const gradesClause = (ctx) => {
 function severityClause(ctx, s) {
   if (!s || s.kind === 'none') return '';
   if (s.kind === 'unscored') return ', with severity not graded for this pattern';
-  if (s.kind === 'fev1-normal') return ', with severity not graded because the FEV1 lies within the reference range';
+  if (s.kind === 'fev1-normal') return ', of mild obstructive impairment with FEV1 within its reference range';
   if (s.bare || !ctx.has('fev1')) return `, of ${s.word} severity`;
-  const within = ctx.m.fev1.label !== 'low';
-  return `, of ${s.word} severity, graded on ${ctx.mz('fev1')}${within ? ', which itself lies within the reference range' : ''}`;
+  const measure = ctx.a?.severity?.measure ?? ctx.interp?.severity?.measure ?? (ctx.pattern === 'restriction' ? 'tlc' : 'fev1');
+  const within = ctx.m[measure]?.label !== 'low';
+  return `, of ${s.word} severity, graded on ${ctx.mz(measure)}${within ? ', which itself lies within the reference range' : ''}`;
 }
 
 function lowSpirometry(ctx) {
@@ -717,7 +718,7 @@ function patternSentence(ctx, P, claim, sevState, skipNear = false) {
 }
 
 function airTrappingFragment(ctx, P) {
-  const ks = ['rv', 'rv_tlc'].filter((k) => ctx.has(k) && ctx.m[k].label === 'high');
+  const ks = ['rv_tlc'].filter((k) => ctx.has(k) && ctx.m[k].label === 'high');
   if (!ks.length) return null;
   const allBorder = ks.every((k) => ctx.m[k].borderline);
   return P('v-air-trapping', { list: list(ks.map((k) => ctx.mz(k))), be: ks.length > 1 ? 'are' : 'is', rel: allBorder ? REL['high-borderline'] : REL.high });
@@ -730,7 +731,7 @@ function lowErvFragment(ctx, P) {
 }
 
 function tlcFragment(ctx, P) {
-  const hyper = ctx.m.tlc.label === 'high' ? ', consistent with hyperinflation' : '';
+  const hyper = ctx.m.tlc.label === 'high' ? (ctx.m.rv_tlc?.label === 'high' ? ', with an elevated RV/TLC compatible with hyperinflation' : ', requiring fractional volumes and context before calling hyperinflation') : '';
   return P('vf-tlc', { mz: ctx.mz('tlc'), rel: ctx.rel('tlc'), hyper });
 }
 
@@ -743,10 +744,10 @@ function missingVolumesFragment(ctx, P) {
 function subtypeCore(ctx) {
   const st = ctx.dl?.subtype;
   const CORES = {
-    'low-kco-preserved-va': 'the KCO is reduced and the alveolar volume is preserved, which indicates a defect of the gas-exchanging tissue itself and not volume loss',
-    'low-va-high-kco': 'the alveolar volume is reduced and the KCO is raised, which indicates incomplete expansion with structurally intact gas-exchanging tissue, as occurs when the chest wall or the respiratory muscles limit expansion',
+    'low-kco-preserved-va': 'the KCO is reduced and the alveolar volume is preserved, which can reflect impaired gas transfer without an isolated reduction in measured alveolar volume',
+    'low-va-high-kco': 'the alveolar volume is reduced and the KCO is raised, which can accompany incomplete expansion or localized volume loss; a raised KCO does not prove structurally intact gas-exchanging tissue',
     'low-va-normal-kco': 'the alveolar volume is reduced and the KCO is within the reference range, and because the KCO normally rises as expansion falls this suggests an intrinsic defect in addition to the volume loss',
-    'both-low': 'both the alveolar volume and the KCO are reduced, which indicates volume loss together with an intrinsic gas-transfer defect',
+    'both-low': 'both the alveolar volume and the KCO are reduced, which can reflect volume loss together with impaired gas transfer',
     'low-dlco-only': 'the alveolar volume and the KCO are each within their ranges, so the lowering of transfer is shared between the two components',
     'normal-kco-at-low-va': 'the alveolar volume is reduced and the KCO is not raised as expected for that volume, which can accompany a small intrinsic defect',
   };
@@ -989,7 +990,7 @@ function patternSection(ctx, P) {
   const m = ctx.m;
   if (ctx.has('fev1') && ctx.has('fvc') && ctx.has('fev1_fvc')) out.push(P('p-values', { fev1: ctx.val('fev1'), fvc: ctx.val('fvc'), ratio: ctx.val('fev1_fvc') }));
   if (sevState.kind === 'scored') {
-    out.push(P('p-severity-scored', { mz: ctx.mz('fev1'), z: m.fev1.z, w: sevState.word, within: m.fev1.label !== 'low' ? ', although the FEV1 itself lies within the reference range' : '' }));
+    out.push(P('p-severity-scored', { mz: ctx.mz(ctx.pattern === 'restriction' ? 'tlc' : 'fev1'), z: m[ctx.pattern === 'restriction' ? 'tlc' : 'fev1'].z, w: sevState.word, within: m[ctx.pattern === 'restriction' ? 'tlc' : 'fev1'].label !== 'low' ? ', although the FEV1 itself lies within the reference range' : '' }));
   } else if (sevState.kind === 'fev1-normal') out.push(P('p-severity-fev1-normal', { mz: ctx.mz('fev1') }));
   else if (sevState.kind === 'unscored') out.push(P('p-severity-unscored', {}));
   return out.join(' ');
@@ -1025,7 +1026,7 @@ function dlcoSection(ctx, P) {
   // A carboxyhemoglobin value is stated only when co-oximetry was done; otherwise the section says it was not measured.
   if (coHbMeasured(ctx.scen) && ctx.scen.coHbPercent > 0) out.push(P('ds-cohb', { pct: ctx.scen.coHbPercent.toFixed(1) }));
   else if (coHbUnmeasured(ctx.scen)) out.push(P('ds-cohb-unmeasured', {}));
-  if (ctx.dl.category === 'reduced') out.push(P('ds-severity', {}));
+  if (ctx.dl.category === 'reduced') out.push(P('ds-severity', { grade: ctx.dl.severity }));
   return out.join(' ');
 }
 
@@ -1098,11 +1099,11 @@ function buildFindings(ctx) {
   }
   add('confidence', `Confidence in the technique: ${ctx.tier === 'good' ? 'adequate' : ctx.tier === 'moderate' ? 'reduced' : ctx.tier === 'limited' ? 'qualified' : 'unknown'}.`);
   add('pattern', ctx.pattern === 'indeterminate' ? 'Pattern: cannot be interpreted.' : `Pattern: consistent with ${NOUN[ctx.pattern]}.`);
-  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on FEV1 z-score).` : ctx.sevNotGraded ? 'Severity: not graded, because the FEV1 is within the reference range.' : 'Severity: not graded for this pattern.');
+  if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') add('severity', ctx.sevScored ? `Severity: ${ctx.sevWord} (graded on ${ctx.pattern === 'restriction' ? 'TLC' : 'FEV1'} z-score).` : ctx.sevNotGraded ? 'Severity: mild obstruction despite FEV1 within its reference range.' : 'Severity: not graded for this pattern.');
   for (const k of ctx.borderMeasures) add(`borderline-${k}`, `Borderline: ${ctx.mz(k)}.`);
   if (ctx.pattern === 'prism' || ctx.pattern === 'obstruction-low-fvc') add('volumes-needed', 'Lung volumes are needed to classify this pattern.');
-  if (ctx.hasVol && ctx.m.tlc.label === 'high') add('hyperinflation', 'TLC above the upper limit of normal: consistent with hyperinflation.');
-  if (ctx.hasVol && ['rv', 'rv_tlc'].some((k) => ctx.has(k) && ctx.m[k].label === 'high')) add('air-trapping', 'RV or RV/TLC above the upper limit of normal: consistent with air trapping.');
+  if (ctx.hasVol && ctx.m.tlc.label === 'high') add(ctx.m.rv_tlc?.label === 'high' ? 'hyperinflation' : 'high-tlc', ctx.m.rv_tlc?.label === 'high' ? 'TLC and RV/TLC above their upper limits: compatible with hyperinflation in context.' : 'TLC above its upper limit; increased TLC alone does not establish hyperinflation.');
+  if (ctx.hasVol && ctx.m.rv_tlc?.label === 'high') add('air-trapping', 'RV/TLC above its upper limit; gas trapping, restriction, muscle weakness and effort can affect the ratio.');
   if (ctx.hasVol && ctx.has('erv') && ctx.m.erv.label === 'low') add('low-erv', `ERV below the lower limit of normal${ctx.bmi !== null ? `; body mass index ${ctx.bmi.toFixed(1)} kg/m²` : ''}.`);
   if (ctx.bd) {
     add('bronchodilator', `Bronchodilator response: ${ctx.bd.rule2022.significant ? 'significant' : 'not significant'} by the 2022 criterion and ${ctx.bd.rule2005.significant ? 'significant' : 'not significant'} by the earlier criterion.`);
@@ -1186,7 +1187,7 @@ function buildDistractors(ctx, P) {
   };
   const base = () => correctClaims(ctx);
 
-  // wrong-severity: the two other bands. Severity is graded for obstruction only; stating a grade for another pattern is a convention of this tool, not an error.
+  // wrong-severity: the two other bands. FEV1 grades obstruction, TLC grades restriction; a mixed pattern has no single composite grade here.
   if (ctx.sevScored) {
     for (const w of SEV_WORDS.filter((x) => x !== ctx.sevWord)) {
       const c = base();
@@ -1234,15 +1235,15 @@ function buildDistractors(ctx, P) {
  */
 function notesFor(ctx) {
   const n = [];
-  if (ctx.sevScored) n.push('Severity of obstruction is graded from the FEV1 z-score with cut-points at −2.5 and −4.0 (2022 ERS/ATS Table 1 and the Figure 7 caption; the text prints the edges as −2.51 and −4.1, read here as reporting precision).');
+  if (ctx.sevScored) n.push('Impairment grades use FEV1 for obstruction and TLC for restriction, with continuous cut-points at −2.5 and −4.0 (ERS/ATS 2022 Figure 7 and 2024 authors clarification). Normal-FEV1 obstruction is mild; impairment grade is not disease severity.');
   else if (ctx.sevNotGraded) n.push('The 2022 ERS/ATS statement calls a z-score above −1.645 normal and defines no severity grade for an obstruction whose FEV1 is within normal limits, so none is assigned; severity of impairment is not disease severity.');
-  else if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') n.push('Severity is graded for obstruction only in this simulation; the 2022 grading rule for the other patterns has not been checked against the statement.');
-  if (ctx.hasDlco && ctx.dl?.category === 'reduced') n.push('The degree of DLCO reduction is not scored in this simulation because the grading rule has not been checked against the 2022 statement.');
+  else if (ctx.pattern !== 'normal' && ctx.pattern !== 'indeterminate') n.push('No single composite impairment grade is assigned to mixed or nonspecific patterns; report the relevant components separately.');
+  if (ctx.hasDlco && ctx.dl?.category === 'reduced') n.push('Diffusion impairment uses the DLCO z-score bands, per ERS/ATS 2022 Figure 7 and the 2024 authors clarification.');
   if (ctx.bd) n.push('The bronchodilator criterion is a change above 10% of the predicted value in FEV1 or FVC (2022 ERS/ATS Table 1; the comparison is strict, as the statement prints it).');
-  if (ctx.hasVol && (ctx.m.tlc?.label === 'high' || ['rv', 'rv_tlc'].some((k) => ctx.has(k) && ctx.m[k].label === 'high'))) n.push('The definitions of hyperinflation (TLC above the upper limit) and air trapping (RV or RV/TLC above the upper limit) used here have not been checked against the statement.');
+  if (ctx.hasVol && (ctx.m.tlc?.label === 'high' || ['rv', 'rv_tlc'].some((k) => ctx.has(k) && ctx.m[k].label === 'high'))) n.push('Volume interpretation follows ERS/ATS 2022 Figure 10 and Table 7. This port has no FRC/TLC reference, so a full fractional-volume algorithm is not available; elevated ratios require clinical and quality context.');
   if (ctx.hasDlco && ctx.hbOk) n.push('The hemoglobin adjustment follows the 2017 ERS/ATS standard (eqs 31 and 32), which the 2022 statement recommends applying to the reference value; the key is read against the hemoglobin-adjusted reference.');
   if (coHbMeasured(ctx.scen) || coHbUnmeasured(ctx.scen)) n.push('The key is read against the hemoglobin-adjusted reference without a carboxyhemoglobin correction; the 2017 ERS/ATS standard recommends one for interpretation only when carboxyhemoglobin is known or suspected to exceed 2% (eq. 37, predicted x (102% − COHb%)), and the report shows that adjustment as a separate, supplementary line when COHb was measured above 2%.');
-  if (['tlc', 'dlco'].some((k) => ctx.m[k] && ctx.m[k].available !== false && ctx.m[k].matched === false)) n.push('The statement that the 2023 ATS statement advises against race adjustment of volumes and DLCO is taken from a search summary and has not been checked against the primary text.');
+  if (['tlc', 'dlco'].some((k) => ctx.m[k] && ctx.m[k].available !== false && ctx.m[k].matched === false)) n.push('The ATS 2023 statement advises against race adjustment factors for volumes and DLCO. European-ancestry derivation remains a limitation regardless of requisition race.');
   n.push('The wording of this interpretation is rule-based and has not been reviewed by a clinician.');
   return n;
 }

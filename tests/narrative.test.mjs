@@ -439,7 +439,7 @@ const GOLDEN = [
   {
     name: 'obstruction with air trapping and hyperinflation',
     build: () => golden({ fev1: 1.9, fvc: 5.0, volumes: { tlc: 8.8, rv: 3.2, vc: 5.6, frc: 4.6, erv: 1.4, ic: 4.2 } }),
-    final: [/consistent with airflow obstruction/, /of severe severity/, /consistent with hyperinflation/, /consistent with air trapping/],
+    final: [/consistent with airflow obstruction/, /of severe severity/, /compatible with hyperinflation/, /consistent with air trapping/],
     forbid: [/consistent with restriction/, /diagnos/],
     key: { pattern: 'obstruction', severity: 'severe' },
   },
@@ -462,7 +462,7 @@ const GOLDEN = [
     build: () => golden({ fev1: 3.0, fvc: 3.7, volumes: { tlc: 5.2, rv: 1.5, vc: 3.7, frc: 2.9, erv: 1.4, ic: 2.3 }, dlco: { dlcoAdjusted: 26, va: 4.0 } }),
     final: [/consistent with restriction/, /the KCO is raised/, /incomplete expansion/],
     forbid: [/consistent with mixed/],
-    key: { pattern: 'restriction', severity: null, dlco: 'normal' },
+    key: { pattern: 'restriction', severity: 'mild', dlco: 'normal' },
     sections: { dlco: [/KCO/, /alveolar volume is reduced/] },
   },
   {
@@ -573,8 +573,8 @@ test('golden: a borderline value is never called clearly abnormal and a flip nam
   assert.ok(n.distractors.some((d) => d.flaw === 'ignores-equation-change' && /the same(?: way)? under both reference equations/.test(d.text)));
 });
 
-test('golden: severity is stated only for obstruction patterns and the statement says when it is not graded', () => {
-  for (const idx of [2, 3, 4]) {
+test('golden: mixed and nonspecific patterns have no unsupported composite severity grade', () => {
+  for (const idx of [2, 3]) {
     const { caseData, cmp, interp } = GOLDEN[idx].build();
     const n = composeNarrative({ caseData, interp, cmp, seed: 4 });
     assert.equal(interp.key.severity, null);

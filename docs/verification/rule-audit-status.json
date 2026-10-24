@@ -1,0 +1,342 @@
+{
+  "scope": "41 semantic rule groups. Not a count of every numeric generator constant; the separate line inventory captures those. Source-text verification does not mean numerical GLI validation. Corrected is an overlapping implementation axis.",
+  "date": "2026-10-24",
+  "counts": {
+    "blocked-complete-coefficient-or-output-validation": 5,
+    "modeled-heuristic": 10,
+    "partially-verified-open-implementation-or-source-detail": 10,
+    "verified-rule-text": 16
+  },
+  "correctedGroups": 10,
+  "rules": [
+    {
+      "id": 1,
+      "rule": "Limits, `interpret/interpret.js`, `reference/gli.js`",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 Table 1; GLI LMS definitions",
+      "coverageAndGap": "`interpret`, `gli`, `two-sided`; rounded cutoff convention vs exact 5th percentile must be explicit"
+    },
+    {
+      "id": 2,
+      "rule": "Borderline, `interpret/interpret.js`",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project teaching convention",
+      "coverageAndGap": "`interpret`; not a society diagnostic band"
+    },
+    {
+      "id": 3,
+      "rule": "Obstruction",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 Fig 8 / interpretation algorithm",
+      "coverageAndGap": "`interpret`, `quiz-adapters`, interpretation fixture; exact branch/source audit pending"
+    },
+    {
+      "id": 4,
+      "rule": "Restriction / mixed",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 Fig 8 / volume algorithm",
+      "coverageAndGap": "`interpret`; no FVC-only diagnosis of restriction"
+    },
+    {
+      "id": 5,
+      "rule": "Preserved ratio / low spirometry",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 text / Fig 8",
+      "coverageAndGap": "`interpret`; terminology/FEV1-only branch needs primary confirmation"
+    },
+    {
+      "id": 6,
+      "rule": "Hyperinflation",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 volume interpretation",
+      "coverageAndGap": "`interpret`; definition explicitly unverified in engine"
+    },
+    {
+      "id": 7,
+      "rule": "Air trapping",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 volume interpretation",
+      "coverageAndGap": "`interpret`; definition explicitly unverified; do not infer disease from flag alone"
+    },
+    {
+      "id": 8,
+      "rule": "Severity",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Table 1 / Fig 7, text rounding",
+      "coverageAndGap": "`severity-2022`, `severity-boundary-scoring`; obstruction-only score; normal FEV1 not graded"
+    },
+    {
+      "id": 9,
+      "rule": "Severity accepted alternatives",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": true,
+      "source": "Project rounding/scoring choice",
+      "coverageAndGap": "`severity-boundary-scoring`; wide final interval must not be represented as a physiological boundary"
+    },
+    {
+      "id": 10,
+      "rule": "BDR 2022",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Table 1",
+      "coverageAndGap": "`interpret`, `bd-2005-display`; dedicated hand fixtures added separately; floating boundary review"
+    },
+    {
+      "id": 11,
+      "rule": "BDR 2005",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Pellegrino 2005 BDR text",
+      "coverageAndGap": "`interpret`, `bd-2005-display`; verify published equality wording before changing"
+    },
+    {
+      "id": 12,
+      "rule": "BDR discordance marker",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project convention",
+      "coverageAndGap": "`interpret`; not diagnostic criterion"
+    },
+    {
+      "id": 13,
+      "rule": "DLCO low/normal/high",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Fig 11",
+      "coverageAndGap": "`interpret`; subtype/severity rules not fully verified; unscored",
+      "implementationNote": "KCO/VA explanatory claims qualified; raised KCO does not establish structurally intact tissue, and normal KCO does not erase a reduced DLCO."
+    },
+    {
+      "id": 14,
+      "rule": "Quality limits",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project policy grounded in quality standard",
+      "coverageAndGap": "`quality-review`, `challenges-items`; grade does not itself prove uninterpretable"
+    },
+    {
+      "id": 15,
+      "rule": "BEV acceptability",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 Table 7",
+      "coverageAndGap": "`quality`; primary recheck of exact comparison needed"
+    },
+    {
+      "id": 16,
+      "rule": "Maneuver faults",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 Table 7",
+      "coverageAndGap": "`quality`, `scenarios.apply`; full acceptability vs usability matrix audit pending"
+    },
+    {
+      "id": 17,
+      "rule": "Pause at TLC",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 text; project's scoring extrapolation",
+      "coverageAndGap": "`quality`, `scenarios.fixes`; distinguish observation from categorical criterion"
+    },
+    {
+      "id": 18,
+      "rule": "EOFE",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 EOFE text / Table 7",
+      "coverageAndGap": "`quality`; verify preceding/subsequent-maneuver conditions; 1 s plateau window generated, not passed to evaluator"
+    },
+    {
+      "id": 19,
+      "rule": "Spirometry grades",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 Table 10, adult",
+      "coverageAndGap": "`quality`; pediatric criteria not implemented"
+    },
+    {
+      "id": 20,
+      "rule": "Reported maxima",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 reporting; last clamp is model policy",
+      "coverageAndGap": "`quality`, `rt-invariant`; clamp needs explicit provenance, not primary assertion"
+    },
+    {
+      "id": 21,
+      "rule": "DLCO inspired volume",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 acceptability table",
+      "coverageAndGap": "`dlco-trace`; alternative VA concordance not implemented; one test, no replicate repeatability"
+    },
+    {
+      "id": 22,
+      "rule": "DLCO timings",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 acceptability table",
+      "coverageAndGap": "`dlco-trace`; compare categorical consequences to original table"
+    },
+    {
+      "id": 23,
+      "rule": "DLCO washout/sample",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017",
+      "coverageAndGap": "`dlco-trace`; 1.1 L intentionally differs from cited <1 L; simulated contamination >3% is a convention"
+    },
+    {
+      "id": 24,
+      "rule": "DLCO grades A\u2013D",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project convention, not published 2017 letter table",
+      "coverageAndGap": "`dlco-trace`, `challenges-items`; retain limitation"
+    },
+    {
+      "id": 25,
+      "rule": "Hb adjustment",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 eqs 31\u201333",
+      "coverageAndGap": "`dlco-reference`, `scenarios.fixes`; verify unit g/dL and sex/age input; coefficient sex is not gender identity"
+    },
+    {
+      "id": 26,
+      "rule": "COHb reference adjustment",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 eq 37",
+      "coverageAndGap": "`dlco-reference`; simulator measured effect uses 1.5% baseline and 1% slope, separate teaching model; eq38 not simulated"
+    },
+    {
+      "id": 27,
+      "rule": "Pleth panting",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Bhakta 2023 lung-volume standard",
+      "coverageAndGap": "`pleth`; source text/table pending; amplitudes are teaching choices"
+    },
+    {
+      "id": 28,
+      "rule": "Pleth repeatability",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Bhakta 2023 grading/reporting table",
+      "coverageAndGap": "`pleth`; verify denominator, subset/reporting policy and all grade letters"
+    },
+    {
+      "id": 29,
+      "rule": "Pleth grades D/E/U/F",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project placeholders",
+      "coverageAndGap": "`pleth`; not verified society grades"
+    },
+    {
+      "id": 30,
+      "rule": "Resistance",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Original resistance references + pleth standard",
+      "coverageAndGap": "`pleth-loop`, `panel-pleth`; universal ULN and synthetic morphology unverified"
+    },
+    {
+      "id": 31,
+      "rule": "GLI LMS",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Quanjer 2012 / Bowerman Global / Hall2021 / corrected Stanojevic2017",
+      "coverageAndGap": "`gli`, `vectors`, `dlco-reference`; authoritative off-grid and inversion outputs still needed"
+    },
+    {
+      "id": 32,
+      "rule": "GLI2012 group terms",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Quanjer 2012 supplement",
+      "coverageAndGap": "`gli`, 2664 rspiro vectors; independent agreement is not coefficient provenance"
+    },
+    {
+      "id": 33,
+      "rule": "GLI Global",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Bowerman Global original paper and workbook; ATS2023",
+      "coverageAndGap": "`gli`, `vectors`; coefficient version/hash audit pending"
+    },
+    {
+      "id": 34,
+      "rule": "GLI2021 volumes",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Hall2021 Table 3 + workbook",
+      "coverageAndGap": "`gli`, `dlco-reference`; original printed table and complete spline recheck needed"
+    },
+    {
+      "id": 35,
+      "rule": "GLI2017 TLCO",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Stanojevic 2020 correction Table 2 + corrected SI/traditional workbooks",
+      "coverageAndGap": "`dlco-reference`; original 2017 supplement alone insufficient; provenance JSON records corrected workbook hashes"
+    },
+    {
+      "id": 36,
+      "rule": "Reference range",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": false,
+      "source": "Each source's applicability text",
+      "coverageAndGap": "`gli`, `dlco-reference`; clamping is project fallback, not validation outside age range"
+    },
+    {
+      "id": 37,
+      "rule": "Sex input",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Reference tables / ERS/ATS 2022 transgender text",
+      "coverageAndGap": "`gli`, `scenarios.fixes`; missing/invalid input guard gap; never infer identity from binary coefficient field"
+    },
+    {
+      "id": 38,
+      "rule": "Equation comparison",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ATS2023 + method contract",
+      "coverageAndGap": "`interpret`, `scenarios.fixes`; no fictional GLI2012 lung-volume comparison"
+    },
+    {
+      "id": 39,
+      "rule": "Race-neutral use / discordance",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ATS2023 https://pmc.ncbi.nlm.nih.gov/articles/PMC10112445/",
+      "coverageAndGap": "Primary supplied by research and opened in this audit; numerical population validation remains distinct"
+    },
+    {
+      "id": 40,
+      "rule": "Transgender context",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS2022 reference-equation section",
+      "coverageAndGap": "Primary finding supplied by parent research; full locator pending; no hormone-duration switch rule"
+    },
+    {
+      "id": 41,
+      "rule": "Scenario caveat grades, study judgment, quiz partial credit",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project educational conventions",
+      "coverageAndGap": "`quiz-scoring`, `challenges-items`, `quality-review`; not society diagnostic rules"
+    }
+  ]
+}

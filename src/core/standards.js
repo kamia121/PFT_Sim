@@ -21,7 +21,7 @@ export const SPIROMETRY_2019 = {
 
 export const INTERPRETATION_2022 = {
   source: 'ERS/ATS interpretive strategies technical standard (Stanojevic et al., Eur Respir J 2022;60:2101499)',
-  llnZ: { value: -1.645, verification: 'secondary-source-agreement' },
-  bronchodilatorPercentOfPredicted: { value: 10, verification: 'secondary-source-agreement' },
-  severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'secondary-source-agreement' },
+  llnZ: { value: -1.645, verification: 'verified-primary: ERS/ATS 2022 Table 1; rounded fifth-percentile convention' },
+  bronchodilatorPercentOfPredicted: { value: 10, verification: 'verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator' },
+  severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },
 };

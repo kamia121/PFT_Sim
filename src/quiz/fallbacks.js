@@ -186,7 +186,7 @@ export function renderClaims(k, v = 0) {
   s.push(k.quality === 'limited'
     ? V(['Test quality is reduced, with a grade of D or poorer in the FEV₁ or the FVC, so the findings are provisional and the study should be repeated before firm conclusions are drawn.', 'The session grade for the FEV₁ or FVC is D or poorer; the findings are therefore provisional and the study should be repeated.'], v)
     : V(['The session grades support interpretation of the forced expiratory indices.', 'Test quality is acceptable for interpreting the forced expiratory indices.'], v));
-  const sev = k.severity ? `, graded ${k.severity} by the FEV₁ z-score` : '';
+  const sev = k.severity ? `, graded ${k.severity} by the ${k.pattern === 'restriction' ? 'TLC' : 'FEV₁'} z-score` : '';
   const text = {
     normal: k.hasVolumes
       ? V(['The FEV₁/FVC ratio, the FVC, the lung volumes and the gas-transfer measurements, where measured, lie within their reference ranges, so there is no obstructive or restrictive pattern.', 'Airflow, lung volumes and gas transfer fall within their reference ranges, without an obstructive or a restrictive pattern.'], v)
@@ -239,7 +239,6 @@ export function fallbackDistractors(prep, variant = 0) {
     const other = SEVERITIES.filter((x) => x !== k.severity);
     push('fb-n-severity', { ...k, severity: other[(variant + (k.severity === 'mild' ? 1 : 0)) % other.length] }, 'States the wrong severity band: severity of obstruction follows the FEV₁ z-score.');
   }
-  if (!k.severity && prep.a.severity?.notGraded && k.pattern === 'obstruction') push('fb-n-severity-normal-fev1', { ...k, severity: 'mild' }, 'Grades an obstruction as mild although the FEV₁ z-score is within the normal range of the 2022 scale, which defines no grade there.');
   for (const [i, [pattern, flaw]] of (WRONG_PATTERN[k.pattern] ?? []).entries()) {
     const sev = ['obstruction', 'obstruction-low-fvc'].includes(pattern) ? 'moderate' : null;
     const noTlc = !k.hasVolumes && ['mixed', 'restriction'].includes(pattern);

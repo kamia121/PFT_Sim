@@ -143,12 +143,13 @@ test('equation names appear per index, and fallbacks are stated', () => {
   assert.match(field(g, 'Reference equations'), /DLCO: GLI-2017 TLCO/);
   assert.match(g.referenceNote[0], /group-neutral/);
   assert.match(table(g, 'volumes').footnote, /reference population of European ancestry/);
-  assert.match(g.referenceNote.join(' '), /derived in people of European ancestry/);
+  assert.match(g.referenceNote.join(' '), /European-ancestry-derived reference populations/);
   const o = makeModel({ seed: 90, archetype: 'normal', group: 'Black or African American' }, { equation: 'GLI2012' }).model;
   assert.match(field(o, 'Reference equations'), /Spirometry: GLI-2012/);
   assert.match(o.referenceNote[0], /GLI-2012 equation for the requisition group "Black or African American"/);
   assert.match(table(o, 'spirometry').footnote, /GLI-2012 \(equation for "Black or African American"\)/);
   const w = makeModel({ seed: 5, archetype: 'normal', group: 'White' }).model;
+  assert.match(w.referenceNote.join(' '), /European-ancestry-derived reference populations/);
   assert.ok(!/European/.test(table(w, 'volumes').footnote));
   assert.throws(() => { const { c, interp } = makeModel(SAMPLE_INPUTS[0]); buildReportModel(c, interp, { equation: 'GLI2012' }); }, RangeError);
 });

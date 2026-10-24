@@ -7,7 +7,7 @@ import { PLETH_MODEL } from '../src/core/pleth.js';
 import { COHB } from '../src/core/physiology.js';
 
 const files = [
-  'src/core/standards.js', 'src/core/quality.js', 'src/core/dlco-trace.js', 'src/core/pleth.js', 'src/core/physiology.js',
+  'src/core/standards.js', 'src/core/comparison.js', 'src/core/quality.js', 'src/core/dlco-trace.js', 'src/core/pleth.js', 'src/core/physiology.js',
   'src/core/case.js', 'src/reference/gli.js', 'src/interpret/interpret.js', 'src/interpret/precision.js',
   'src/challenges/items.js', 'src/scenarios/catalog-reference.js', 'src/scenarios/catalog-prep.js',
   'src/scenarios/catalog-quality.js', 'src/quiz/scoring.js', 'src/app/answers.js',

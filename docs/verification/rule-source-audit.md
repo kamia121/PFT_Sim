@@ -10,7 +10,7 @@ Audit started 2026-10-24 against `9822a77`. This is an inventory and verificatio
 4. For reference tables, coefficients AND splines checked, then LMS/units/interpolation/range checked against authoritative numerical outputs.
 5. Population transportability and generator calibration remain separate questions even if 1–4 pass.
 
-## Rule-to-source matrix
+## Rule-to-source matrix (baseline behavior; continuation corrections below)
 
 | Rule / implementation | Current behavior and equality | Primary target | Existing tests / remaining gap |
 |---|---|---|---|
@@ -99,3 +99,15 @@ Exit0. All 14 volume sex/measure spline sheets (301 ages each) and all 6 correct
 Original URLs are under `https://publications.ersnet.org/content/erj/57/3/2000289/DC1/embed/inline-supplementary-material-2.xlsx` and `/content/erj/50/3/1700010/DC1/embed/inline-supplementary-material-2.xlsx` (SI), `-3.xlsx` (traditional). Local workbooks close the previous inability to rerun spline comparison. They do not close print transcription, GLI2012/Global original coefficient provenance, or official-output validation. Current official calculator documentation was opened at https://gli-calculator.ersnet.org/docs.html; the Chrome form at https://gli-calculator.ersnet.org/ visibly requires CAPTCHA, with a quota warning. No challenge was attempted, no API key acquired, no output fixtures invented.
 
 Minimal assistance if public retrieval remains blocked: supply Hall2021 Table3 PDF page5 and worked example; corrected Stanojevic2020 Table2 PDF page2; Bowerman Global TableE3 plus original lookup workbook; official exported calculator fixtures including inputs/units/equation/date/predicted/limits/z. The volume and corrected TLCO spline workbooks themselves are already available locally and need not be requested again.
+
+## Implemented continuation after the source handoff
+
+Ten semantic rule groups now have corrections: volume/hyperinflation flags; trapping context; severity grading; rounded-score alternatives; exact-decimal BDR equality; quality-grade floating boundaries; explicit reference-sex validation; population provenance on every report; transgender reference-input wording; and qualified KCO/VA explanations. Source-rule tests and connected practice, quiz and narrative explanations were updated together. Hb's obsolete “not checked” quiz sentence was replaced only after its specific primary-equation gap was closed; numerical reference and calibration limitations remain. Sources and tests for the corrected rules are in `tests/verified-rule-corrections.test.mjs` and the updated interpretation/severity tests.
+
+The machine-readable status file `rule-audit-status.json` counts **41 semantic groups**: **16 verified-rule-text**, **10 partially verified**, **10 modeled heuristics**, **5 blocked on complete coefficient or official-output validation**. The **10 corrected groups overlap** those source categories. This is not a count of every individual generator constant; `rule-inventory.json` separately records comparison lines, exported criteria and source hashes. Neither artifact permits a claim that all rules or numerical models are fully validated.
+
+Current corrected behavior supersedes the baseline table for these groups: obstruction with normal FEV1 is mild; TLC grades restriction; DLCO grades diffusion impairment; mixed/nonspecific has no single composite grade; only printed −2.50/−4.00 gets a neighbor-scoring allowance; high TLC alone is not hyperinflation; elevated RV/TLC in restriction is qualified; the source's missing FRC/TLC reference is acknowledged. The machine-precision numerical allowance resolves binary subtraction only and does not round reported values or expand clinical limits. A missing/unknown reference-sex field now throws, while a documented M/F coefficient input remains distinct from gender identity.
+
+The old FVC-maxima clamp, individual DLCO letters, single-test DLCO model, pleth placeholder grades, panting/amplitude constants, age fallback policy and some scenario effect sizes remain explicitly modeled or partially verified. No new replicate DLCO, pediatric lung-volume or dilution algorithm was added just because a source discusses it. The normal reference-input guidance cannot validate a transgender individual's physiology; the new authored puzzlers bypass the generator entirely.
+
+Exact source citations/download locations, packet dates, what transcription matching does and does not prove, and the **post-approval CAPTCHA technical error** are in `coefficient-source-request.md`. Permission to solve CAPTCHA is no longer a blocker. No official numerical result was obtained; the widget returned unchecked with its site-quota warning after authorized normal interaction. No new original publisher files were acquired during this continuation.

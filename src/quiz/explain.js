@@ -40,19 +40,19 @@ function explainPattern(item, prep) {
   const out = [`<h4>${esc(PATTERNS[a.pattern])}</h4>`, paras(PATTERN_TEXT[a.pattern] ?? [])];
   if (a.pattern !== b.pattern) out.push(`<p><span class="flag">The pattern depends on the equation.</span> ${esc(EQUATION_NAMES[otherEquation(prep.equation)])} gives ${esc(PATTERNS[b.pattern])}, so either answer is accepted.</p>`);
   out.push(zTable(prep, ['fev1', 'fvc', 'fev1_fvc', 'tlc'], 'Values behind the pattern under both spirometry equations'));
-  for (const f of a.flags) out.push(f.id === 'low-erv' ? `<p>${esc(LOW_ERV_TEXT)}</p>` : `<p><strong>${esc(f.text)}</strong> The definition used here has not been checked against the statement.</p>`);
+  for (const f of a.flags) out.push(f.id === 'low-erv' ? `<p>${esc(LOW_ERV_TEXT)}</p>` : `<p><strong>${esc(f.text)}</strong> ${esc(f.verification ?? 'Source status unavailable')}</p>`);
   return out.join('');
 }
 
 function explainSeverity(item, prep) {
   const s = prep.a.severity;
-  if (s?.notGraded) {
-    return `<p>The FEV₁/FVC ratio shows that obstruction exists, but the FEV₁ z-score of ${num(s.z, 2)} is within the normal range of the 2022 scale (z above −1.645), and the statement defines severity bands only below the lower limit of normal. The obstruction is therefore not graded by FEV₁. The statement lists a low ratio with a normal FEV₁ and FVC as a possible dysanaptic pattern that may be a normal variant, and notes that severity of impairment is not disease severity.</p>`;
-  }
   if (s?.scored) {
-    return `<p>The FEV₁/FVC ratio shows that obstruction exists; the FEV₁ z-score shows how far expiratory flow is reduced, and the 2022 statement grades severity from it: mild to a z-score of −2.5, moderate to −4.0, severe below (Table 1 and the Figure 7 caption; its text prints the edges as −2.51 and −4.1, read here as reporting precision).</p><p>The key band is <strong>${esc(s.id)}</strong> at an FEV₁ z-score of ${num(s.z, 2)}.</p>`;
+    const measure = s.measure === 'tlc' ? 'TLC' : 'FEV₁';
+    const context = s.measure === 'tlc' ? 'TLC below its lower limit establishes restrictive impairment.' : 'FEV₁/FVC below its lower limit establishes obstruction, even when FEV₁ is within its reference range.';
+    return `<p>${context} ${measure} grades the impairment: mild to z −2.5, moderate to −4.0, severe below. Continuous full-precision bins resolve the rounded prose of the 2022 standard (Figure 7), with the 2024 authors clarification (doi:10.1183/13993003.00055-2024).</p><p>The key band is <strong>${esc(s.id)}</strong> at a ${measure} z-score of ${num(s.z, 2)}. Physiological impairment is not overall disease severity.</p>`;
   }
-  return '<p>Severity of obstruction is graded only when the FEV₁/FVC ratio is below its lower limit of normal. With a ratio at or above the limit there is no airflow obstruction to grade, and a low FVC or TLC defines a different pattern. Severity grading of other patterns has not been checked against the statement and is not scored.</p>';
+  return '<p>No single composite grade is assigned here. FEV₁ grades obstruction, TLC grades restriction, and DLCO grades diffusion impairment. Interpret these components separately.</p>';
+
 }
 
 function explainGrade(item, prep, result, opts) {
@@ -80,7 +80,8 @@ function explainDlco(item, prep) {
   const out = [`<p>${esc(known ? DLCO_TEXT[d.category] : DLCO_TEXT.unadjusted)}</p>`];
   if (d.subtype) out.push(`<p>${esc(DLCO_TEXT.subtype[d.subtype])}</p>`);
   if (hbLow(c.dlco.hbGdl)) out.push(`<p>${esc(DLCO_TEXT.hb)}</p>`);
-  if (known) out.push('<p class="note">The hemoglobin adjustment uses the Cotes formula, which this tool has not yet checked against the 2017 ERS/ATS standard.</p>');
+  if (known) out.push('<p class="note">The hemoglobin adjustment follows the 2017 ERS/ATS standard, equations 31 and 32, with Hb in g/dL. The reciprocal measured-value adjustment is equivalent to adjusting the predicted reference; do not apply both.</p>');
+  if (d.severity) out.push(`<p>Diffusion impairment is ${esc(d.severity)} by the DLCO z-score (2022 Figure 7 and the 2024 authors clarification). This grades physiological impairment, not overall disease severity.</p>`);
   return out.join('');
 }
 

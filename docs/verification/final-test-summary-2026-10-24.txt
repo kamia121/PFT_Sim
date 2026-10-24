@@ -1,0 +1,9 @@
+Branch feature/advanced-case-puzzlers, base9822a77; Node24.4.0
+Final npm test:749 total,746 pass,3 fail.
+Detached baseline npm test:732 total,729 pass,3 fail.
+Failure names match exactly:
+50 cases built with scenario level none are byte-identical to the baseline commit (2ac98e3)
+asking for level none explicitly changes nothing
+numerical identity: every non-resistance value of 2230 cases (220 seeds x 10 archetypes, plus scenarios) is unchanged
+Build:pass. git diff --check:pass.
+100 measured report objects match detached baseline; interpretation/prose deliberately corrected.

@@ -40,7 +40,7 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   // Impression: the pattern, its severity where the scale grades it, the findings that change what a reader does with it, and the standing of the study.
   let head = HEAD[interp.pattern] ?? PATTERNS[interp.pattern] ?? 'Not classified';
   if (sev?.scored) head += `, ${sev.id}`;
-  else if (sev?.notGraded) head += ', not graded (FEV₁ within normal limits)';
+
   const extra = [];
   if (interp.flags.some((f) => f.id === 'hyperinflation')) extra.push('hyperinflation');
   if (interp.flags.some((f) => f.id === 'air-trapping')) extra.push('air trapping');
@@ -62,16 +62,16 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   // Spirometry and severity.
   const sp = ['fev1_fvc', 'fev1', 'fvc'].filter(has).map((k) => `${{ fev1_fvc: 'FEV₁/FVC', fev1: 'FEV₁', fvc: 'FVC' }[k]} ${zt(m[k].z)}${m[k].z < LLN_Z ? ' (low)' : ''}`);
   let spText = sp.length ? `z-scores ${sp.join(', ')}.` : '';
-  if (sev?.scored) spText += ` Severity ${sev.id} by the FEV₁ z-score (2022 scale: mild to ${MINUS}2.5, moderate to ${MINUS}4.0, severe below).`;
-  else if (sev?.notGraded) spText += ` Severity not graded: the FEV₁ is within the normal range of the 2022 scale, which defines bands only below the LLN; a low ratio with normal FEV₁ and FVC may be a normal variant.`;
+  if (sev?.scored) spText += ` Severity ${sev.id} by the ${sev.measure === 'tlc' ? 'TLC' : 'FEV₁'} z-score (2022 scale: mild to ${MINUS}2.5, moderate to ${MINUS}4.0, severe below).`;
+
   else if (interp.pattern !== 'normal' && interp.pattern !== 'indeterminate') spText += ' Severity not graded for this pattern.';
   if (spText) lines.push({ label: 'Spirometry', text: spText.trim() });
 
   // Lung volumes.
   if (has('tlc')) {
-    const parts = [`TLC ${zt(m.tlc.z)} (${m.tlc.z < LLN_Z ? 'reduced: restriction' : m.tlc.z > -LLN_Z ? 'above ULN: hyperinflation' : 'not reduced: no restriction'})`];
+    const parts = [`TLC ${zt(m.tlc.z)} (${m.tlc.z < LLN_Z ? 'reduced: restriction' : m.tlc.z > -LLN_Z ? 'above ULN; review fractional volumes' : 'not reduced: no restriction'})`];
     const abn = ['rv', 'rv_tlc'].filter((k) => has(k) && word(k, m[k].z) !== 'within limits');
-    if (abn.length) parts.push(`${abn.map((k) => `${{ rv: 'RV', rv_tlc: 'RV/TLC' }[k]} ${zt(m[k].z)}`).join(', ')} ${abn.every((k) => m[k].z > 0) ? 'above ULN: air trapping' : 'outside limits'}`);
+    if (abn.length) parts.push(`${abn.map((k) => `${{ rv: 'RV', rv_tlc: 'RV/TLC' }[k]} ${zt(m[k].z)}`).join(', ')} ${abn.every((k) => m[k].z > 0) ? 'above ULN; interpret with TLC, technique and context' : 'outside limits'}`);
     lines.push({ label: 'Lung volumes', text: `z-scores ${parts.join('; ')}.` });
   }
 
@@ -81,7 +81,7 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
     const hb = hbKnown(dl);
     const basis = hb ? 'measured value against the reference adjusted for hemoglobin' : 'no hemoglobin available: reference not adjusted';
     const sub = interp.dlco.subtype && SUB[interp.dlco.subtype] ? `; ${SUB[interp.dlco.subtype]}` : '';
-    let text = `${interp.dlco.category[0].toUpperCase()}${interp.dlco.category.slice(1)}, z ${zt(m.dlco.z)}${sub}; ${basis}.`;
+    let text = `${interp.dlco.severity ? `${interp.dlco.severity} diffusion impairment; ` : ''}${interp.dlco.category[0].toUpperCase()}${interp.dlco.category.slice(1)}, z ${zt(m.dlco.z)}${sub}; ${basis}.`;
     const sc = caseData.scenario;
     if (coHbMeasured(sc) && cohbReferenceMultiplier(sc.coHbPercent) !== null) text += ` COHb ${sc.coHbPercent.toFixed(1)}% is above 2%: the supplementary COHb-adjusted line on the report is not the basis of this classification.`;
     else if (sc && Number.isFinite(sc.coHbPercent) && sc.coHbPercent > 0 && !coHbMeasured(sc)) text += ' COHb was not measured; recent smoking could lower the DLCO.';
@@ -109,7 +109,7 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
 
   // Caveats of the session, one line each, and the reference population.
   for (const c of [...(caveats.major ?? []), ...(caveats.minor ?? [])]) lines.push({ label: 'Caveat', text: `${c.charAt(0).toUpperCase()}${c.slice(1)}.` });
-  if (['tlc', 'dlco'].some((k) => m[k] && m[k].available !== false && m[k].matched === false)) lines.push({ label: 'Reference', text: 'The volume and DLCO references come from a European-ancestry population and may represent this patient less well; no ancestry adjustment is applied.' });
+  if (['tlc', 'dlco'].some((k) => m[k] && m[k].available !== false)) lines.push({ label: 'Reference', text: 'The volume and DLCO references come from a European-ancestry population and have population-fit limitations for every patient; no ancestry adjustment is applied.' });
 
   return { impression, lines };
 }

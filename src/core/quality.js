@@ -1,4 +1,5 @@
 import { SPIROMETRY_2019 as S } from './standards.js';
+import { atMost, atLeast } from './comparison.js';
 
 /**
  * Longest pause at total lung capacity before the blast that the 2019 statement allows (seconds). Verification: stated
@@ -85,7 +86,7 @@ export function faultWording(id, form = 'text') {
  */
 export function evaluateManeuver(m, maxFvcInSet = m.fvc) {
   const bevLimit = Math.max(S.bevFractionOfFvc.value * m.fvc, S.bevAbsoluteLiters.value);
-  const bevBad = m.bev >= bevLimit;
+  const bevBad = atLeast(m.bev, bevLimit);
   const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;
   const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;
 
@@ -108,7 +109,7 @@ export function evaluateManeuver(m, maxFvcInSet = m.fvc) {
   if (closureLater) fvcReasons.push('glottic closure after the first second');
   const eofe = m.plateau < S.plateauLiters.value
     || m.fet >= S.longFetSeconds.value
-    || m.fvc >= maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value;
+    || atLeast(m.fvc, maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value);
   if (!eofe) fvcReasons.push('no end-of-forced-expiration indicator');
 
   return {
@@ -124,10 +125,10 @@ function gradeVariable(acceptableValues, usableCount) {
   const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);
   const spread = hi - next;
   const g = S.gradeSpreadLiters;
-  if (acceptableValues.length >= 3 && spread <= g.A) return 'A';
-  if (spread <= g.B) return 'B';
-  if (spread <= g.C) return 'C';
-  if (spread <= g.D) return 'D';
+  if (acceptableValues.length >= 3 && atMost(spread, g.A)) return 'A';
+  if (atMost(spread, g.B)) return 'B';
+  if (atMost(spread, g.C)) return 'C';
+  if (atMost(spread, g.D)) return 'D';
   return 'E';
 }
 
@@ -176,6 +177,6 @@ export function summarizeSession(maneuvers) {
     fvcAdjusted,
     ratio: out.fvc.value && out.fev1.value !== null ? out.fev1.value / out.fvc.value : null,
     spread: { fev1: out.fev1.spread, fvc: out.fvc.spread },
-    repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && x <= S.repeatabilityLitersAdult.value),
+    repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && atMost(x, S.repeatabilityLitersAdult.value)),
   };
 }

@@ -35,6 +35,34 @@ export const PUZZLERS = Object.freeze([
         question: { id: 'development', domain: 'uncertainty', claims: ['reference.transgender-uncertainty'], prompt: 'Which response acknowledges the evidence gap?', options: [['uncertain', 'Review developmental history and corroborating data; acknowledge uncertainty in reference selection'], ['switch', 'Automatically switch equations after a fixed hormone duration'], ['diagnosis', 'Assign a pulmonary diagnosis from gender identity']], accepted: ['uncertain'], why: 'The best reference equation for transgender patients is unresolved. A universal hormone-duration switch is not established; small adult studies do not validate adolescent prediction.' } },
     ],
   }),
+  definePuzzler({
+    id: 'normal-fev1-low-ratio', version: 1, title: 'A reassuring first-second volume',
+    intro: 'An adult with exertional symptoms has a preserved FEV₁. The referral calls the study normal. Read the ratio before accepting the label.',
+    measurements: [{ label: 'FEV₁', value: 4, unit: 'L' }, { label: 'FVC', value: 6, unit: 'L' }],
+    sources: [ers2022, ['2024 authors clarification', 'https://doi.org/10.1183/13993003.00055-2024']],
+    stages: [
+      { reveal: 'The first page reports an FEV₁ within its reference range. Ratio limits and quality details are on the next page.',
+        question: { id: 'ratio-check', domain: 'metadata', claims: ['reference.measurements'], prompt: 'What needs review before calling the study normal?', options: [['ratio', 'FEV₁/FVC against its reference limit, with test quality and metadata'], ['fev1', 'FEV₁ alone is enough to exclude obstruction'], ['copd', 'A large FVC establishes COPD']], accepted: ['ratio'], why: 'Obstruction is identified from a low ratio. FEV₁ and the ratio answer different questions.' } },
+      { reveal: 'In this qualitative teaching scenario, the accepted report confirms FEV₁/FVC below LLN with FEV₁ above LLN. No numerical GLI prediction is implied by that condition.',
+        question: { id: 'grade', domain: 'interpretation', claims: ['severity.obstruction-normal-fev1'], prompt: 'Which physiological interpretation follows under the 2024 authors clarification?', options: [['mild', 'Mild obstructive impairment'], ['normal', 'Normal spirometry because FEV₁ is normal'], ['ungraded', 'Obstruction cannot be graded when FEV₁ is normal']], accepted: ['mild'], why: 'The authors clarification grades low-ratio obstruction with a normal FEV₁ as mild. This is impairment grading, not a measure of overall disease severity.' } },
+      { reveal: 'The FVC is large. There is no established pulmonary diagnosis and no longitudinal comparison yet.',
+        question: { id: 'context', domain: 'uncertainty', claims: ['severity.obstruction-normal-fev1'], prompt: 'Which qualification is appropriate?', options: [['assess', 'Consider dysanapsis and assess symptoms, exposures, quality and prior results'], ['diagnose', 'The ratio alone proves COPD'], ['dismiss', 'A large FVC excludes clinically important disease']], accepted: ['assess'], why: 'A low ratio with preserved FEV₁ can occur with dysanapsis. The clinical setting and longitudinal results matter; the pattern alone is not a COPD diagnosis.' } },
+    ],
+  }),
+  definePuzzler({
+    id: 'normal-fvc-low-tlc', version: 1, title: 'The apparently reassuring spirometry',
+    intro: 'An adult has spirometry described as within range, but the volume section has been flagged. Determine which result should settle the physiological question.',
+    measurements: [{ label: 'FEV₁', value: 3, unit: 'L' }, { label: 'FVC', value: 3.7, unit: 'L' }, { label: 'TLC', value: 4.2, unit: 'L' }],
+    sources: [ers2022, ['Restriction despite normal spirometry: original study', 'https://pubmed.ncbi.nlm.nih.gov/40927550/']],
+    stages: [
+      { reveal: 'The referral summary says that normal FVC rules out restriction. Plethysmography quality and its reference header have not yet been reviewed.',
+        question: { id: 'volume-check', domain: 'metadata', claims: ['volume.restriction'], prompt: 'What is the most useful next check?', options: [['check', 'Review measured TLC, volume quality and reference metadata'], ['ignore', 'Ignore the volume section because FVC is normal'], ['adjust', 'Apply a race factor to TLC until it agrees']], accepted: ['check'], why: 'Review the available TLC and its reliability. A usual spirometric screening relationship should not override a directly available volume result.' } },
+      { reveal: 'Assume the volume measurement and reference inputs are appropriate: TLC is below LLN, while FVC and FEV₁/FVC are not low. These are qualitative scenario conditions, not newly computed GLI outputs.',
+        question: { id: 'restriction', domain: 'interpretation', claims: ['volume.restriction'], prompt: 'Which physiological pattern follows from those conditions?', options: [['restriction', 'Restrictive ventilatory impairment'], ['normal', 'Normal physiology because FVC is normal'], ['mixed', 'Mixed obstruction and restriction']], accepted: ['restriction'], why: 'TLC below LLN defines restrictive impairment. A normal ratio does not establish obstruction; normal FVC does not erase the measured TLC finding.' } },
+      { reveal: 'The clinical team asks whether every patient with normal spirometry now needs lung-volume testing.',
+        question: { id: 'scope', domain: 'uncertainty', claims: ['volume.restriction'], prompt: 'Which conclusion preserves the scope of the finding?', options: [['context', 'Use clinical probability and available test quality; this example is not a universal testing mandate'], ['all', 'Order volumes for every normal spirometry result'], ['ild', 'The discrepancy proves interstitial lung disease']], accepted: ['context'], why: 'This case addresses interpretation when volumes are already available. It does not specify a testing indication or establish the cause of restriction.' } },
+    ],
+  }),
 ]);
 
 export function findPuzzler(id) {

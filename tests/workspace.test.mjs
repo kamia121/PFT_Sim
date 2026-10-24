@@ -16,6 +16,7 @@ import { markupCtx, markupStates, MARKUP_CASES, mods } from './helpers/practice-
 import { referenceMarkup } from './helpers/reference-markup.mjs';
 
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/practice-markup-baseline.json', import.meta.url), 'utf8'));
+const corrected = JSON.parse(fs.readFileSync(new URL('./fixtures/source-corrected-markup.json', import.meta.url), 'utf8'));
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const EXCERPT_RE = /<div class="ws-ctx scroll" data-ws-ui>[\s\S]*?<\/table><\/div>/g;
 
@@ -38,19 +39,19 @@ test('the fixture was recorded at ec5f6cd and covers every state', () => {
   assert.deepEqual(Object.keys(baseline.practice).sort(), STATES.map((s) => s.key).sort());
 });
 
-test('without the workspace additions, the practice markup of every state is the ec5f6cd markup', () => {
+test('practice markup retains the source-corrected severity and reference notes in every workspace state', () => {
   for (const { key, input, opts } of STATES) {
     const html = renderPractice(markupCtx(input, opts));
     assert.ok(html.includes('data-ws-ui'), `${key}: the workspace additions are present`);
-    assert.equal(sha(strip(html)), baseline.practice[key], `${key}: markup differs from ec5f6cd once the additions are removed`);
+    assert.equal(sha(strip(html)), corrected.practice[key], `${key}: markup differs from the source-corrected snapshot once workspace additions are removed`);
   }
 });
 
-test('the fixed and report sheets, the details sheet, the Lab report fallback and the report page are byte-identical to ec5f6cd', () => {
+test('fixed/report/detail sheets retain the source-corrected reference notes and contain no workspace markup', () => {
   const now = referenceMarkup();
-  assert.deepEqual(Object.keys(now).sort(), Object.keys(baseline.reference).sort());
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(corrected.reference).sort());
   for (const [k, v] of Object.entries(now)) {
-    assert.equal(sha(v), baseline.reference[k], `${k} changed`);
+    assert.equal(sha(v), corrected.reference[k], `${k} changed`);
     assert.doesNotMatch(v, /data-ws|sheet-data/, `${k}: no workspace markup outside the practice page`);
   }
 });

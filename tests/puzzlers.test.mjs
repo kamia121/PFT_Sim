@@ -26,7 +26,7 @@ test('every authored case completes deterministically with immutable raw values 
     const end = puzzlerView(c, state);
     assert.ok(end.complete);
     assert.ok(end.scores.metadata.total > 0 && end.scores.uncertainty.total > 0);
-    assert.equal(end.scores.interpretation.total, 0, 'no uncomputed pattern-label key');
+    assert.equal(end.scores.interpretation.total, c.stages.filter((s) => s.question.domain === 'interpretation').length);
     assert.throws(() => advancePuzzler(c, state));
     assert.throws(() => { c.measurements[0].value = 0; });
   }
@@ -48,7 +48,7 @@ test('invalid transitions, unknown choices and cross-case state fail explicitly'
 
 test('source-review gates prevent scoring disputed claims and reject invented source IDs/reference outputs', () => {
   const draft = structuredClone(PUZZLERS[0]);
-  draft.stages[0].question.claims = ['severity.obstruction-normal-fev1'];
+  draft.stages[0].question.claims = ['model.unvalidated-claim'];
   const c = definePuzzler(draft);
   let state = answerPuzzler(c, startPuzzler(c), c.stages[0].question.accepted[0]);
   assert.equal(puzzlerView(c, state).feedback.scored, false);

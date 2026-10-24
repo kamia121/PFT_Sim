@@ -591,8 +591,8 @@ export function buildReportModel(caseData, interp, options = {}) {
   note.push(equation === 'GLIglobal'
     ? 'Spirometry reference: GLI Global 2022, a group-neutral equation; the reference group on the requisition is not an input.'
     : `Spirometry reference: GLI-2012 equation for the requisition group "${patient.group}".`);
-  const fallbacks = [caseData.volumes && !volMatched && 'GLI-2021 volume', caseData.dlco && !tlcoMatched && 'GLI-2017 TLCO'].filter(Boolean);
-  if (fallbacks.length) note.push(`The ${fallbacks.join(' and ')} equation${fallbacks.length > 1 ? 's were' : ' was'} derived in people of European ancestry, so the reference population may represent the group "${patient.group}" less well; this limits the result, and no ancestry adjustment is applied to volumes or DLCO.`);
+  const referenceDomains = [caseData.volumes && 'GLI-2021 volumes', caseData.dlco && 'GLI-2017 TLCO (corrected 2020)'].filter(Boolean);
+  if (referenceDomains.length) note.push(`${referenceDomains.join(' and ')} use European-ancestry-derived reference populations. This provenance applies to every patient; no race adjustment factor is applied to volumes or DLCO. Population fit remains uncertain.`);
   if (hs && hs.source !== 'measured') note.push(`Height was ${heightSource}; the stated height of ${patient.heightCm} cm is the value used for the predicted values, so they carry added uncertainty.`);
   if (undisclosedSex && scenario?.referenceSex) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations, the laboratory default; the patient did not disclose sex.`);
   else if (scenario?.referenceSex && scenario.referenceSex.used !== scenario.referenceSex.birth) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations; sex assigned at birth is recorded as ${SEX[scenario.referenceSex.birth].toLowerCase()}.${scenario.referenceSex.note ? ` ${scenario.referenceSex.note}` : ''}`);

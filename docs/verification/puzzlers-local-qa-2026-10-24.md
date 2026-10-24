@@ -1,5 +1,19 @@
 # Local case-puzzler verification
 
+## Final continuation verification
+
+Four authored cases now pass the progressive-session tests. The last two are explicitly qualitative conditional exercises, not fabricated numerical GLI fixtures. Seven focused engine regressions test the source-corrected severity/volume/input rules and decimal boundary behavior. The full suite after core corrections is749 tests,746 pass,3 fail; the final run after the mobile-nearby-values change is also749 total,746 pass,3 fail. The exact three failures were independently reproduced in a **fresh detached checkout at9822a77**, with732 tests,729 pass,3 fail. `baseline-reproduction-2026-10-24.json` records that comparison. No failing generator baseline fixture was regenerated.
+
+Current-source markup snapshots are separate in `tests/fixtures/source-corrected-markup.json`. Their deliberate changes are the corrected severity question/options, source-specific explanations and population notes. The original historical markup fixture remains untouched; so do the failing generator fixtures. These snapshots are not evidence of clinical validity.
+
+`node tools/check-measured-isolation.mjs ../PFT_Sim-baseline9822` compared100 complete measured report objects across ten seeds and ten archetypes, all identical to the detached baseline. `measured-isolation-2026-10-24.txt` records the result; corrected interpretation keys/prose are intentionally outside that comparison. It is a representative isolation check, not an exhaustive numerical calibration claim.
+
+Chrome continuation QA: the existing practice page loads, its new puzzler link is present, the revised severity options appear, and unconditional volume/DLCO derivation notes render. The new low-TLC case was completed through all stages using Space/Tab/Enter, with correct locked feedback, heading/feedback focus and final metadata/uncertainty/interpretation scores. The 390×844 mobile view was inspected after reload; data were repeated immediately above the question so learners do not have to scroll back past disclosures. Screenshot inspection showed the table, complete answer labels and both buttons within the narrow layout without visible horizontal clipping. Temporary viewport override reset. Desktop light and earlier dark layouts were inspected. Native case selection, versioned URL updates, restart and reload were verified. This is manual browser QA, not a claim of full assistive-technology or print certification.
+
+CAPTCHA approval was received and ordinary authorized interaction attempted in Chrome. The official form returned `general_error: no recaptcha supplied. please complete the recaptcha check`; after normal reload its widget showed a site free-quota warning and returned unchecked after both AX and visible-coordinate clicks. No usable token/challenge or numerical output was obtained. This is a technical service blocker; permission is no longer pending. Exact synthetic attempted inputs and source requirements are in `coefficient-source-request.md`. No new publisher PDF/supplement was obtained during continuation.
+
+## Initial prototype record (historical)
+
 Branch `feature/advanced-case-puzzlers`, base `9822a77`; Node24.4.0. No push, PR, merge or deployment. Current remote main was inspected at `01fe8bc`, already containing PR17; no work from PR16/17 was imported.
 
 * Unmodified base: `npm test`, 732 total,729 pass,3 fail.

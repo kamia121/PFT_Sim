@@ -80,14 +80,14 @@ test('Quality limits, uncertainty near a limit, equation differences, caveats an
   if (cav.length) assert.equal(caveated.stmt.parts.lines.filter((l) => l.label === 'Caveat').length >= 1, true);
 });
 
-test('the preserved-FEV1 obstruction is summarized as not graded, with the reason, and never as mild', () => {
+test('preserved-FEV1 obstruction is summarized as mild after the authors clarification', () => {
   const s = { patient: { age: 50, sex: 'M', heightCm: 178, group: 'White', weightKg: 80, hbGdl: 14.6 }, spirometry: { fev1: 3.5, fvc: 5.9, post: null }, volumes: null, dlco: null, grades: { fev1: 'A', fvc: 'A' } };
   const interp = interpret(s, resolveReference, 'GLIglobal');
-  assert.equal(interp.key.severity, 'fev1-normal');
+  assert.equal(interp.key.severity, 'mild');
   const parts = conciseSummary({ caseData: { report: s, spirometry: {} }, interp });
-  assert.match(parts.impression, /not graded \(FEV₁ within normal limits\)/);
-  assert.doesNotMatch(conciseText(parts), /\bmild\b/i);
-  assert.match(parts.lines.find((l) => l.label === 'Spirometry').text, /Severity not graded.*normal variant/);
+  assert.match(parts.impression, /mild/);
+  assert.doesNotMatch(conciseText(parts), /not graded/i);
+  assert.match(parts.lines.find((l) => l.label === 'Spirometry').text, /Severity mild by the FEV₁/);
 });
 
 test('the markup is an impression paragraph and a list, with the text escaped; a model without parts falls back to paragraphs', () => {

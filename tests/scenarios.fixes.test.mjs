@@ -219,8 +219,8 @@ test('sex and gender wording: gender identity and sex assigned at birth are stat
   }
   const identity = getScenario('sex-identity-entered').caveats.find((c) => c.id === 'sex-identity-used-nondefault').text;
   assert.match(identity, /Neither entry is an error/);
-  assert.match(identity, /both reference sexes/);
-  assert.match(identity, /how long any hormone therapy has been taken/);
+  assert.match(identity, /Comparing both reference inputs can show sensitivity/);
+  assert.match(identity, /neither is individually validated/);
   const everyDecoy = SCENARIOS.flatMap((s) => s.decoyCaveats.map((d) => d.id));
   assert.ok(!everyDecoy.includes('decoy-hormones-change-lungs'), 'the effect of hormone therapy on lung size is not established, so it is not keyed false');
   for (const seed of seeds(60)) {

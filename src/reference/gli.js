@@ -94,6 +94,7 @@ export function createReference(datasets) {
    * @param {'GLI2012'|'GLIglobal'} [spirometryFamily] equation requested for spirometry
    */
   function resolveReference(measure, patient, spirometryFamily = 'GLIglobal') {
+    if (!['M', 'F'].includes(patient.sex)) throw new RangeError('Reference sex input must be explicitly M or F; do not infer it from gender identity or a missing field');
     const family = familyFor(measure);
     if (!family) throw new RangeError(`unknown measure: ${measure}`);
     const sex = patient.sex === 'M' ? 'male' : 'female';

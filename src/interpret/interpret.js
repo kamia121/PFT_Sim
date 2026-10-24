@@ -8,6 +8,7 @@
  * Z-scores decide every label; percent predicted is reported but never used to classify.
  */
 import { INTERPRETATION_2022 as S22 } from '../core/standards.js';
+import { atMost, atLeast } from '../core/comparison.js';
 
 export const LLN_Z = S22.llnZ.value; // -1.645
 export const BORDERLINE_BAND = 0.25; // z units either side of a limit (SPEC default, confirmed by the project physician)
@@ -22,30 +23,30 @@ export const TWO_SIDED = new Set(['tlc', 'rv', 'rv_tlc', 'dlco', 'kco']);
 export const labelOf = (z) => (z < LLN_Z ? 'low' : z > -LLN_Z ? 'high' : 'normal');
 export const borderlineOf = (z) => Math.abs(z - LLN_Z) <= BORDERLINE_BAND || Math.abs(z + LLN_Z) <= BORDERLINE_BAND;
 
-/** Severity from a z-score; the boundary at -1.645 versus -1.65 is unresolved in the sources read, so the lower limit itself is used. */
+/** Impairment bins, ERS/ATS 2022 Fig 7 / 2024 clarification. Full-precision boundaries resolve rounded prose; normal-FEV1 obstruction is mild. */
 export function severityOf(z) {
   if (z >= -2.5) return 'mild';
   if (z >= -4.0) return 'moderate';
   return 'severe';
 }
 
-const SEVERITY_BANDS = ['fev1-normal', 'mild', 'moderate', 'severe'];
+const SEVERITY_BANDS = ['mild', 'moderate', 'severe'];
 /**
  * Bands accepted besides the key when the z-score, as printed to two decimals, is at a cut point: the 2022 text gives the cut points to
- * the precision of its rounding (-1.65, -2.5 and -2.51, -4 and -4.1), so a printed -2.50 or -2.51 does not decide between mild and moderate.
+ * reporting precision: only a printed -2.50 or -4.00 admits its adjacent grade. This is a display-scoring convention, not a diagnostic bin.
  * The key is unchanged.
  */
 export function severityAlso(severity) {
   if (!severity || !Number.isFinite(severity.z) || !(severity.scored || severity.notGraded)) return [];
   const z2 = Number(severity.z.toFixed(2));
   const near = (lo, hi) => z2 >= lo - 1e-9 && z2 <= hi + 1e-9;
-  const pairs = [[near(-1.65, -1.64), 0], [near(-2.51, -2.5), 1], [near(-4.1, -4.0), 2]];
+  const pairs = [[near(-2.5, -2.5), 0], [near(-4.0, -4.0), 1]];
   const out = [];
   for (const [hit, i] of pairs) if (hit && (SEVERITY_BANDS[i] === severity.id || SEVERITY_BANDS[i + 1] === severity.id)) out.push(SEVERITY_BANDS[i] === severity.id ? SEVERITY_BANDS[i + 1] : SEVERITY_BANDS[i]);
   return out;
 }
 
-/** Key value of the severity question for an obstruction whose FEV1 is within normal limits: not graded. */
+/** Legacy response ID retained for old quiz records; no longer emitted by the corrected engine. */
 export const FEV1_NORMAL = 'fev1-normal';
 
 export const PATTERNS = {
@@ -121,8 +122,19 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     else if (spiroLow) pattern = tlcKnown ? 'nonspecific' : 'prism';
     else pattern = 'normal';
   }
-  if (tlcFlag(m, 'tlc')) flags.push({ id: 'hyperinflation', text: 'TLC above the upper limit of normal (hyperinflation).', verification: 'definition unverified' });
-  if ((have('rv') && m.rv.label === 'high') || (have('rv_tlc') && m.rv_tlc.label === 'high')) flags.push({ id: 'air-trapping', text: 'RV or RV/TLC above the upper limit of normal (air trapping).', verification: 'definition unverified' });
+  if (opts.generatorKey) {
+    // Historical generator-v2 anchor metadata; not used as the learner interpretation.
+    if (tlcFlag(m, 'tlc')) flags.push({ id: 'hyperinflation', text: 'TLC above the upper limit of normal (hyperinflation).', verification: 'definition unverified' });
+    if ((have('rv') && m.rv.label === 'high') || (have('rv_tlc') && m.rv_tlc.label === 'high')) flags.push({ id: 'air-trapping', text: 'RV or RV/TLC above the upper limit of normal (air trapping).', verification: 'definition unverified' });
+  } else {
+    const highRatio = have('rv_tlc') && m.rv_tlc.label === 'high';
+    const source = 'ERS/ATS 2022 Figure 10, Table 7 and pp20–22; FRC/TLC reference unavailable in this port';
+    if (tlcFlag(m, 'tlc')) flags.push(highRatio
+      ? { id: 'hyperinflation', text: 'TLC and RV/TLC above their upper limits, consistent with hyperinflation; interpret in context.', verification: source }
+      : { id: 'high-tlc', text: 'TLC above its upper limit. Increased TLC alone does not establish hyperinflation; fractional volumes and context are needed.', verification: source });
+    if (highRatio) flags.push({ id: low('tlc') ? 'high-rv-tlc' : 'air-trapping', text: 'RV/TLC above its upper limit. Gas trapping is one explanation; restriction, muscle weakness and effort also affect this ratio.', verification: source });
+    else if (have('rv') && m.rv.label === 'high') flags.push({ id: 'high-rv', text: 'RV above its upper limit; review fractional volumes, technique and clinical context.', verification: source });
+  }
   if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });
 
   // ------------- severity -------------
@@ -132,22 +144,23 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     if (opts.generatorKey) {
       // The generator's own check of its archetype targets (case.anchorKey) keeps the severity band of FEV1 whatever the label of the learner's key, so that the case and its hashes do not depend on the key's wording.
       severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };
-    } else if (fev1WithinLimits) {
-      // The 2022 statement (Table 1 and its text) grades every measure by z-score and calls z above -1.645 normal; it defines no grade for an obstruction
-      // whose FEV1 is within limits (Table 5 lists the pattern, FEV1 normal with a low ratio, as possibly a normal variant). The key does not call it mild.
-      severity = { id: FEV1_NORMAL, basis: 'FEV1 z-score', z: m.fev1.z, scored: false, notGraded: FEV1_NORMAL, fev1WithinLimits, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])), verification: 'ERS/ATS 2022 Table 1 and p.12 (primary text); no grade is defined for a normal FEV1' };
     } else {
-      severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'cut points -2.5 and -4.0 from the 2022 statement (Table 1, p.12, Figure 7 caption); the -2.51 and -4.1 of its text are read as reporting precision' };
+      severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', measure: 'fev1', z: m.fev1.z, scored: true, fev1WithinLimits,
+        verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024 (doi:10.1183/13993003.00055-2024): low ratio with normal FEV1 is mild obstruction; continuous bins resolve rounded prose' };
     }
+  } else if (pattern === 'restriction' && !opts.generatorKey && have('tlc')) {
+    severity = { id: severityOf(m.tlc.z), basis: 'TLC z-score', measure: 'tlc', z: m.tlc.z, scored: true,
+      verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024: TLC grades restrictive impairment; continuous bins resolve rounded prose' };
   } else if (pattern !== 'normal' && pattern !== 'indeterminate') {
-    severity = { id: null, basis: 'Not scored: the 2022 rule for this pattern has not been checked', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };
+    severity = { id: null, basis: 'No single composite severity grade for this pattern', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };
   }
 
   // ------------- bronchodilator -------------
   let bd = null;
   if (sp.post && have('fev1') && have('fvc') && sp.post.fev1 && sp.post.fvc) {
     const dFev1 = sp.post.fev1 - sp.fev1, dFvc = sp.post.fvc - sp.fvc;
-    const pctPred = { fev1: (100 * dFev1) / m.fev1.predicted, fvc: (100 * dFvc) / m.fvc.predicted };
+    const boundaryPercent = (x) => !opts.generatorKey && atLeast(x, 10) && atMost(x, 10) ? 10 : x;
+    const pctPred = { fev1: boundaryPercent((100 * dFev1) / m.fev1.predicted), fvc: boundaryPercent((100 * dFvc) / m.fvc.predicted) };
     const pctBase = { fev1: (100 * dFev1) / sp.fev1, fvc: (100 * dFvc) / sp.fvc };
     const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;
     const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);
@@ -171,7 +184,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
       subtype = vaLow && kcoLow ? 'both-low' : vaLow && kcoHigh ? 'low-va-high-kco' : vaLow ? 'low-va-normal-kco' : kcoLow ? 'low-kco-preserved-va' : 'low-dlco-only';
     }
     if (cat === 'normal' && have('va') && have('kco') && m.va.label === 'low' && m.kco.label === 'normal') subtype = 'normal-kco-at-low-va';
-    dlco = { category: cat, severity: cat === 'reduced' ? severityOf(m.dlco.z) : null, severityVerification: 'unverified', subtype, vaOverTlc: have('tlc') && have('va') ? m.va.value / m.tlc.value : null };
+    dlco = { category: cat, severity: cat === 'reduced' ? severityOf(m.dlco.z) : null, severityVerification: opts.generatorKey ? 'unverified' : 'ERS/ATS 2022 Figure 7 and authors clarification 2024: DLCO grades diffusion impairment; continuous bins resolve rounded prose', subtype, vaOverTlc: have('tlc') && have('va') ? m.va.value / m.tlc.value : null };
   }
 
   const quality = report.grades ?? {};

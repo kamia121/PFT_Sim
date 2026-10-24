@@ -44,16 +44,16 @@
       "source": "ERS/ATS interpretive strategies technical standard (Stanojevic et al., Eur Respir J 2022;60:2101499)",
       "llnZ": {
         "value": -1.645,
-        "verification": "secondary-source-agreement"
+        "verification": "verified-primary: ERS/ATS 2022 Table 1; rounded fifth-percentile convention"
       },
       "bronchodilatorPercentOfPredicted": {
         "value": 10,
-        "verification": "secondary-source-agreement"
+        "verification": "verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator"
       },
       "severityZ": {
         "mildLower": -2.5,
         "moderateLower": -4,
-        "verification": "secondary-source-agreement"
+        "verification": "verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC"
       }
     },
     "DLCO_MODEL": {
@@ -226,7 +226,7 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "80a2ebc82d4557142f53de9cb3d1d944963bd02790b4489dbad48f664195f4a1",
+      "sha256": "ba93f0b81d7a3af92eef7e572d37024a89706698326d38c38709a53ce77d129d",
       "reviewLines": [
         {
           "line": 12,
@@ -262,133 +262,131 @@
         },
         {
           "line": 24,
-          "text": "llnZ: { value: -1.645, verification: 'secondary-source-agreement' },"
+          "text": "llnZ: { value: -1.645, verification: 'verified-primary: ERS/ATS 2022 Table 1; rounded fifth-percentile convention' },"
         },
         {
           "line": 25,
-          "text": "bronchodilatorPercentOfPredicted: { value: 10, verification: 'secondary-source-agreement' },"
+          "text": "bronchodilatorPercentOfPredicted: { value: 10, verification: 'verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator' },"
         },
         {
           "line": 26,
-          "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'secondary-source-agreement' },"
+          "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },"
+        }
+      ]
+    },
+    {
+      "path": "src/core/comparison.js",
+      "sha256": "7b4e0e412a683468b3320fa9884919c7c3a37f967c643d0ac2a8cd1d80c3b2bb",
+      "reviewLines": [
+        {
+          "line": 2,
+          "text": "const tolerance = (a, b) => 8 * Number.EPSILON * Math.max(1, Math.abs(a), Math.abs(b));"
+        },
+        {
+          "line": 3,
+          "text": "export const atMost = (a, b) => a <= b || a - b <= tolerance(a, b);"
+        },
+        {
+          "line": 4,
+          "text": "export const atLeast = (a, b) => a >= b || b - a <= tolerance(a, b);"
         }
       ]
     },
     {
       "path": "src/core/quality.js",
-      "sha256": "eca54e5b75046d7e7a5169942030a2df14933e241435c75f8d8a1fdedd971e9b",
+      "sha256": "34f4d267d31f66a9db071509ea0ba0e92a70ea4882a37c040ca2a87a12ce0b79",
       "reviewLines": [
         {
-          "line": 8,
+          "line": 9,
           "text": "export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };"
         },
         {
-          "line": 28,
+          "line": 29,
           "text": "/** Phrases for the technologist comment of a maneuver set (\"<phrase> (maneuver 2)\"). */"
         },
         {
-          "line": 88,
-          "text": "const bevBad = m.bev >= bevLimit;"
-        },
-        {
-          "line": 89,
+          "line": 90,
           "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
         },
         {
-          "line": 90,
+          "line": 91,
           "text": "const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;"
         },
         {
-          "line": 101,
+          "line": 102,
           "text": "const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];"
         },
         {
-          "line": 109,
+          "line": 110,
           "text": "const eofe = m.plateau < S.plateauLiters.value"
         },
         {
-          "line": 110,
+          "line": 111,
           "text": "|| m.fet >= S.longFetSeconds.value"
         },
         {
-          "line": 111,
-          "text": "|| m.fvc >= maxFvcInSet - S.eofeRepeatabilityOfLargestFvc.value;"
-        },
-        {
-          "line": 124,
+          "line": 125,
           "text": "const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 127,
-          "text": "if (acceptableValues.length >= 3 && spread <= g.A) return 'A';"
-        },
-        {
           "line": 128,
-          "text": "if (spread <= g.B) return 'B';"
-        },
-        {
-          "line": 129,
-          "text": "if (spread <= g.C) return 'C';"
-        },
-        {
-          "line": 130,
-          "text": "if (spread <= g.D) return 'D';"
-        },
-        {
-          "line": 134,
-          "text": "const largestTwoSpread = (xs) => {"
+          "text": "if (acceptableValues.length >= 3 && atMost(spread, g.A)) return 'A';"
         },
         {
           "line": 135,
-          "text": "if (xs.length < 2) return null;"
+          "text": "const largestTwoSpread = (xs) => {"
         },
         {
           "line": 136,
+          "text": "if (xs.length < 2) return null;"
+        },
+        {
+          "line": 137,
           "text": "const [hi, next] = xs.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 142,
+          "line": 143,
           "text": "* @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },"
         },
         {
-          "line": 147,
+          "line": 148,
           "text": "const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;"
         },
         {
-          "line": 148,
+          "line": 149,
           "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maxFvcInSet));"
         },
         {
-          "line": 149,
+          "line": 150,
           "text": "const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);"
         },
         {
-          "line": 156,
+          "line": 157,
           "text": "value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,"
         },
         {
-          "line": 157,
+          "line": 158,
           "text": "grade: gradeVariable(acc.map((m) => m[key]), use.length),"
         },
         {
-          "line": 159,
+          "line": 160,
           "text": "spread: largestTwoSpread(acc.map((m) => m[key])),"
         },
         {
-          "line": 164,
+          "line": 165,
           "text": "const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;"
         },
         {
-          "line": 166,
+          "line": 167,
           "text": "const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));"
         },
         {
-          "line": 167,
+          "line": 168,
           "text": "const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);"
         },
         {
-          "line": 179,
-          "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && x <= S.repeatabilityLitersAdult.value),"
+          "line": 180,
+          "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && atMost(x, S.repeatabilityLitersAdult.value)),"
         }
       ]
     },
@@ -1598,7 +1596,7 @@
     },
     {
       "path": "src/reference/gli.js",
-      "sha256": "0e0da42e334c4256adf2479fb9d397ae4a88076fd58365ceff5453470f50186d",
+      "sha256": "6435d9c3fa352ec03ab6f3f4de3a8b2d181dcd35ea29b722defcb1dbb22ea901",
       "reviewLines": [
         {
           "line": 38,
@@ -1657,153 +1655,173 @@
           "text": "const familyFor = (measure) => (SPIROMETRY_MEASURES.includes(measure) ? 'spirometry' : VOLUME_MEASURES.includes(measure) ? 'GLI2021vol' : TLCO_MEASURES.includes(measure) ? 'GLI2017tlco' : null);"
         },
         {
-          "line": 100,
+          "line": 101,
           "text": "let equationId = family === 'spirometry' ? spirometryFamily : family;"
         },
         {
-          "line": 102,
+          "line": 103,
           "text": "let fallbackReason = null;"
         },
         {
-          "line": 103,
+          "line": 104,
           "text": "if (family === 'spirometry' && !['GLI2012', 'GLIglobal'].includes(equationId)) throw new RangeError(`unknown spirometry equation: ${equationId}`);"
         },
         {
-          "line": 106,
+          "line": 107,
           "text": "fallbackReason = 'equation-derived-in-european-ancestry-only';"
         },
         {
-          "line": 109,
+          "line": 110,
           "text": "if (equationId === 'GLI2012' && ethnicityCode === undefined) throw new RangeError(`unknown group: ${patient.group}`);"
         },
         {
-          "line": 110,
+          "line": 111,
           "text": "const entry = datasets[equationId].measures[measure][sex];"
         },
         {
-          "line": 111,
+          "line": 112,
           "text": "const base = { measure, equationId, matched, fallbackReason };"
         },
         {
-          "line": 114,
+          "line": 115,
           "text": "const maxAge = Math.min(ages[ages.length - 1], OFFICIAL_MAX_AGE[equationId] ?? Infinity);"
         },
         {
-          "line": 115,
+          "line": 116,
           "text": "const ageClamped = patient.age > maxAge;"
         },
         {
-          "line": 117,
+          "line": 118,
           "text": "const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });"
         },
         {
-          "line": 118,
+          "line": 119,
           "text": "if (params === null) return { ...base, available: false, fallbackReason: 'age-outside-range', predicted: null, lln: null, uln: null, z: null, percentPredicted: null };"
         }
       ]
     },
     {
       "path": "src/interpret/interpret.js",
-      "sha256": "b6b3f7976847e5fe433b57db60c38fe6971857ec7fd1ce605dbe2903bebdfb76",
+      "sha256": "fa8e71b21c9aff9dc0b25f8bd05c6b7580a6df9a8cfdbfd600ab99b8a73e4ee2",
       "reviewLines": [
         {
-          "line": 22,
+          "line": 23,
           "text": "export const labelOf = (z) => (z < LLN_Z ? 'low' : z > -LLN_Z ? 'high' : 'normal');"
         },
         {
-          "line": 23,
+          "line": 24,
           "text": "export const borderlineOf = (z) => Math.abs(z - LLN_Z) <= BORDERLINE_BAND || Math.abs(z + LLN_Z) <= BORDERLINE_BAND;"
         },
         {
-          "line": 27,
+          "line": 28,
           "text": "if (z >= -2.5) return 'mild';"
         },
         {
-          "line": 28,
+          "line": 29,
           "text": "if (z >= -4.0) return 'moderate';"
         },
         {
-          "line": 41,
+          "line": 42,
           "text": "const near = (lo, hi) => z2 >= lo - 1e-9 && z2 <= hi + 1e-9;"
         },
         {
-          "line": 77,
+          "line": 78,
           "text": "* @param {(measure: string, patient: object, family?: string) => object} resolve resolveReference from gli.js"
         },
         {
-          "line": 84,
+          "line": 85,
           "text": "const add = (name, measure, measured, extra = {}) => {"
         },
         {
-          "line": 87,
+          "line": 88,
           "text": "if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }"
         },
         {
-          "line": 90,
+          "line": 91,
           "text": "label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...(r.ageClamped ? { ageClamped: true, ageUsed: r.ageUsed } : {}), ...extra,"
         },
         {
-          "line": 106,
+          "line": 107,
           "text": "const low = (k) => m[k]?.available !== false && m[k]?.label === 'low';"
         },
         {
-          "line": 107,
+          "line": 108,
           "text": "const have = (k) => m[k] && m[k].available !== false;"
         },
         {
-          "line": 124,
+          "line": 127,
           "text": "if (tlcFlag(m, 'tlc')) flags.push({ id: 'hyperinflation', text: 'TLC above the upper limit of normal (hyperinflation).', verification: 'definition unverified' });"
         },
         {
-          "line": 125,
+          "line": 128,
           "text": "if ((have('rv') && m.rv.label === 'high') || (have('rv_tlc') && m.rv_tlc.label === 'high')) flags.push({ id: 'air-trapping', text: 'RV or RV/TLC above the upper limit of normal (air trapping).', verification: 'definition unverified' });"
         },
         {
-          "line": 126,
-          "text": "if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });"
+          "line": 133,
+          "text": "? { id: 'hyperinflation', text: 'TLC and RV/TLC above their upper limits, consistent with hyperinflation; interpret in context.', verification: source }"
         },
         {
           "line": 134,
-          "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };"
+          "text": ": { id: 'high-tlc', text: 'TLC above its upper limit. Increased TLC alone does not establish hyperinflation; fractional volumes and context are needed.', verification: source });"
+        },
+        {
+          "line": 135,
+          "text": "if (highRatio) flags.push({ id: low('tlc') ? 'high-rv-tlc' : 'air-trapping', text: 'RV/TLC above its upper limit. Gas trapping is one explanation; restriction, muscle weakness and effort also affect this ratio.', verification: source });"
+        },
+        {
+          "line": 136,
+          "text": "else if (have('rv') && m.rv.label === 'high') flags.push({ id: 'high-rv', text: 'RV above its upper limit; review fractional volumes, technique and clinical context.', verification: source });"
         },
         {
           "line": 138,
-          "text": "severity = { id: FEV1_NORMAL, basis: 'FEV1 z-score', z: m.fev1.z, scored: false, notGraded: FEV1_NORMAL, fev1WithinLimits, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])), verification: 'ERS/ATS 2022 Table 1 and p.12 (primary text); no grade is defined for a normal FEV1' };"
+          "text": "if (have('erv') && low('erv')) flags.push({ id: 'low-erv', text: `Low ERV; BMI ${(patient.weightKg / (patient.heightCm / 100) ** 2).toFixed(1)} kg/m².`, verification: 'finding, not a pattern' });"
         },
         {
-          "line": 140,
-          "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'cut points -2.5 and -4.0 from the 2022 statement (Table 1, p.12, Figure 7 caption); the -2.51 and -4.1 of its text are read as reporting precision' };"
+          "line": 146,
+          "text": "severity = { id: severityOf(m.fev1.z), basis: 'FEV1 z-score', z: m.fev1.z, scored: true, fev1WithinLimits, verification: 'bands per secondary sources; boundary rule unresolved' };"
         },
         {
-          "line": 143,
-          "text": "severity = { id: null, basis: 'Not scored: the 2022 rule for this pattern has not been checked', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };"
-        },
-        {
-          "line": 152,
-          "text": "const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;"
+          "line": 149,
+          "text": "verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024 (doi:10.1183/13993003.00055-2024): low ratio with normal FEV1 is mild obstruction; continuous bins resolve rounded prose' };"
         },
         {
           "line": 153,
+          "text": "verification: 'ERS/ATS 2022 Figure 7 and authors clarification 2024: TLC grades restrictive impairment; continuous bins resolve rounded prose' };"
+        },
+        {
+          "line": 155,
+          "text": "severity = { id: null, basis: 'No single composite severity grade for this pattern', scored: false, perMeasure: Object.fromEntries(['fev1', 'fvc', 'tlc'].filter(have).map((k) => [k, m[k].z >= LLN_Z ? 'within limits' : severityOf(m[k].z)])) };"
+        },
+        {
+          "line": 162,
+          "text": "const boundaryPercent = (x) => !opts.generatorKey && atLeast(x, 10) && atMost(x, 10) ? 10 : x;"
+        },
+        {
+          "line": 165,
+          "text": "const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;"
+        },
+        {
+          "line": 166,
           "text": "const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);"
         },
         {
-          "line": 156,
+          "line": 169,
           "text": "rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },"
         },
         {
-          "line": 157,
+          "line": 170,
           "text": "rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },"
         },
         {
-          "line": 160,
+          "line": 173,
           "text": "discordant: (dFev1 > 0) !== (dFvc > 0) || Math.abs(pctPred.fvc - pctPred.fev1) > 8,"
         },
         {
-          "line": 178,
+          "line": 191,
           "text": "const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));"
         },
         {
-          "line": 207,
+          "line": 220,
           "text": "const borderline = ['fev1', 'fvc', 'fev1_fvc'].filter((k) => ia.measures[k]?.borderline || ib.measures[k]?.borderline);"
         }
       ]
@@ -1922,7 +1940,7 @@
     },
     {
       "path": "src/scenarios/catalog-reference.js",
-      "sha256": "7a27a1a142cbddb7111aa8a9b8ebb643d5761ef53df601e90645adab9ce988ef",
+      "sha256": "c0d41beac84b12325a86b43b36604d28686393c61bbcd03bfaa6e715d68c7ba2",
       "reviewLines": [
         {
           "line": 21,
@@ -2246,7 +2264,7 @@
     },
     {
       "path": "src/app/answers.js",
-      "sha256": "7fb6928e1e439fd92b4b88f976af5d23be803c2ba10a5e5cc72a1ae722523754",
+      "sha256": "c815dc5a653d2558c3fade561b55675468c8bf461b3445eca3721e07bf7f4556",
       "reviewLines": [
         {
           "line": 23,
