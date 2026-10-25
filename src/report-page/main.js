@@ -57,6 +57,7 @@ function gate() {
 }
 
 async function render() {
+  $('#version').textContent = String(state.caseData.descriptor.v);
   $('#rp-eq').value = state.equation;
   $('#rp-copy').value = state.copy;
   $('#rp-flags').value = state.flags;

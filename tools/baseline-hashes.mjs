@@ -26,9 +26,5 @@ export function hashCase(c) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const ds = await loadDatasets();
-  const rows = BASELINE_DESCRIPTORS.map((d) => ({ ...d, sha256: hashCase(buildCase(d, ds)) }));
-  const text = JSON.stringify({ note: 'sha256 of JSON.stringify(case without the scenario field); generated from baseline commit 2ac98e3', cases: rows }, null, 1) + '\n';
-  if (process.argv.includes('--write')) await fs.writeFile(new URL('../tests/fixtures/baseline-case-hashes.json', import.meta.url), text);
-  else process.stdout.write(text);
+  throw new Error('Historical identity fixtures are immutable. Use tools/versioned-regression-hashes.mjs for reviewed current-version snapshots.');
 }

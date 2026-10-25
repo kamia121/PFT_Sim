@@ -14,11 +14,11 @@ export const QUESTIONS = [
     ['restriction', 'Restriction'],
     ['mixed', 'Mixed obstruction and restriction'],
     ['nonspecific', 'Preserved ratio, low FVC or FEV₁, TLC not low (nonspecific)'],
-    ['prism', 'Preserved ratio with low FVC or FEV₁, no volumes (PRISm)'],
+    ['prism', 'Preserved-ratio spirometric impairment (TLC needed)'],
   ] },
-  { id: 'severity', label: 'Severity of obstruction (FEV₁ z-score)', options: [
+  { id: 'severity', label: 'Ventilatory impairment severity (FEV₁ for obstruction; TLC for restriction)', options: [
     ['mild', 'Mild'], ['moderate', 'Moderate'], ['severe', 'Severe'],
-    ['fev1-normal', 'Not graded: FEV₁ within normal limits'], ['not-graded', 'Not graded for this pattern'], ['na', 'Not applicable (no obstruction)'],
+    ['not-graded', 'Not graded for this pattern'], ['na', 'Not applicable (no graded ventilatory impairment)'],
   ] },
   { id: 'gradeFev1', label: 'FEV₁ quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },
   { id: 'gradeFvc', label: 'FVC quality grade', options: ['A', 'B', 'C', 'D', 'E', 'U', 'F'].map((g) => [g, g]) },
@@ -26,7 +26,7 @@ export const QUESTIONS = [
     ['significant', 'Significant'], ['not-significant', 'Not significant'], ['not-done', 'Not performed'],
   ] },
   { id: 'dlco', label: 'Diffusing capacity (hemoglobin-adjusted)', options: [
-    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['not-done', 'Not performed'],
+    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['unavailable', 'Unavailable for classification'], ['not-done', 'Not performed'],
   ] },
 ];
 
@@ -48,7 +48,7 @@ export function questionLabel(caseData, q) {
 /** Whether the case contains the data a question asks about. */
 export function hasData(caseData, questionId) {
   if (questionId === 'bronchodilator') return Boolean(caseData.report.spirometry.post);
-  if (questionId === 'dlco') return Boolean(caseData.report.dlco);
+  if (questionId === 'dlco') return Boolean(caseData.report.dlco || caseData.report.dlcoQuality);
   return true;
 }
 

@@ -43,7 +43,8 @@
   #case[data-ws] .sheet-live .sheet-mark { grid-column: 1; grid-row: 3 / 6; width: 100%; white-space: normal; }
   #case[data-ws] > .details-bar { display: none; }
   #case[data-ws] > #details-slot { grid-column: 1; grid-row: 3 / 6; min-width: 0; }
-  #case[data-ws] > #reveal { grid-column: 1 / -1; grid-row: 7; margin-top: 16px; }
+  /* The full-width key must paint above the sticky answer pane when the page scrolls into feedback. */
+  #case[data-ws] > #reveal { grid-column: 1 / -1; grid-row: 7; margin-top: 16px; position: relative; z-index: 1; }
   /* The view buttons, drawn as tabs over the data column. */
   #case[data-ws] > .ws-bar { display: flex; grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--border); margin: 0 0 8px; }
   #case[data-ws] .ws-views { display: flex; gap: 2px; }

@@ -1,0 +1,114 @@
+PFT Sim: http://127.0.0.1:5460
+skip baseline fixture: recorded with chromium 141.0.7390.37, running chromium 151.0.7922.34; the in-run invariant still runs
+ok   chromium normal-load-1280: print layout unchanged by the workspace additions (385 boxes, 9 additions stripped)
+ok   normal-load-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   normal-load-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-answered-1280: print layout unchanged by the workspace additions (385 boxes, 9 additions stripped)
+ok   normal-answered-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   normal-answered-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-details-1280: print layout unchanged by the workspace additions (525 boxes, 9 additions stripped)
+ok   normal-details-1280: printed PDF text unchanged by the workspace additions (7 pages)
+ok   normal-details-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-checked-1280: print layout unchanged by the workspace additions (648 boxes, 9 additions stripped)
+ok   normal-checked-1280: printed PDF text unchanged by the workspace additions (9 pages)
+ok   normal-checked-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium obstruction-load-1280: print layout unchanged by the workspace additions (416 boxes, 10 additions stripped)
+ok   obstruction-load-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   obstruction-load-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium obstruction-answered-1280: print layout unchanged by the workspace additions (416 boxes, 10 additions stripped)
+ok   obstruction-answered-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   obstruction-answered-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium obstruction-details-1280: print layout unchanged by the workspace additions (686 boxes, 10 additions stripped)
+ok   obstruction-details-1280: printed PDF text unchanged by the workspace additions (8 pages)
+ok   obstruction-details-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium obstruction-checked-1280: print layout unchanged by the workspace additions (826 boxes, 10 additions stripped)
+ok   obstruction-checked-1280: printed PDF text unchanged by the workspace additions (11 pages)
+ok   obstruction-checked-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-load-1280: print layout unchanged by the workspace additions (420 boxes, 10 additions stripped)
+ok   poorQc-load-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-load-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-answered-1280: print layout unchanged by the workspace additions (420 boxes, 10 additions stripped)
+ok   poorQc-answered-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-answered-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-details-1280: print layout unchanged by the workspace additions (686 boxes, 10 additions stripped)
+ok   poorQc-details-1280: printed PDF text unchanged by the workspace additions (8 pages)
+ok   poorQc-details-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-statement-1280: print layout unchanged by the workspace additions (419 boxes, 10 additions stripped)
+ok   poorQc-statement-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-statement-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-checked-1280: print layout unchanged by the workspace additions (902 boxes, 10 additions stripped)
+ok   poorQc-checked-1280: printed PDF text unchanged by the workspace additions (13 pages)
+ok   poorQc-checked-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-load-1280: print layout unchanged by the workspace additions (371 boxes, 8 additions stripped)
+ok   spiroOnly-load-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   spiroOnly-load-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-answered-1280: print layout unchanged by the workspace additions (371 boxes, 8 additions stripped)
+ok   spiroOnly-answered-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   spiroOnly-answered-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-details-1280: print layout unchanged by the workspace additions (471 boxes, 8 additions stripped)
+ok   spiroOnly-details-1280: printed PDF text unchanged by the workspace additions (6 pages)
+ok   spiroOnly-details-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-statement-1280: print layout unchanged by the workspace additions (381 boxes, 8 additions stripped)
+ok   spiroOnly-statement-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   spiroOnly-statement-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-checked-1280: print layout unchanged by the workspace additions (618 boxes, 8 additions stripped)
+ok   spiroOnly-checked-1280: printed PDF text unchanged by the workspace additions (9 pages)
+ok   spiroOnly-checked-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium notes-load-1280: print layout unchanged by the workspace additions (380 boxes, 9 additions stripped)
+ok   notes-load-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   notes-load-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium notes-answered-1280: print layout unchanged by the workspace additions (380 boxes, 9 additions stripped)
+ok   notes-answered-1280: printed PDF text unchanged by the workspace additions (4 pages)
+ok   notes-answered-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium notes-details-1280: print layout unchanged by the workspace additions (588 boxes, 9 additions stripped)
+ok   notes-details-1280: printed PDF text unchanged by the workspace additions (9 pages)
+ok   notes-details-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium notes-checked-1280: print layout unchanged by the workspace additions (736 boxes, 9 additions stripped)
+ok   notes-checked-1280: printed PDF text unchanged by the workspace additions (12 pages)
+ok   notes-checked-1280: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-details-1440: print layout unchanged by the workspace additions (525 boxes, 9 additions stripped)
+ok   normal-details-1440: printed PDF text unchanged by the workspace additions (7 pages)
+ok   normal-details-1440: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-answered-1024: print layout unchanged by the workspace additions (385 boxes, 9 additions stripped)
+ok   normal-answered-1024: printed PDF text unchanged by the workspace additions (4 pages)
+ok   normal-answered-1024: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-answered-820: print layout unchanged by the workspace additions (385 boxes, 9 additions stripped)
+ok   normal-answered-820: printed PDF text unchanged by the workspace additions (4 pages)
+ok   normal-answered-820: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-answered-390: print layout unchanged by the workspace additions (385 boxes, 9 additions stripped)
+ok   normal-answered-390: printed PDF text unchanged by the workspace additions (4 pages)
+ok   normal-answered-390: printed PDF raster unchanged by the workspace additions
+ok   chromium normal-details-390: print layout unchanged by the workspace additions (525 boxes, 9 additions stripped)
+ok   normal-details-390: printed PDF text unchanged by the workspace additions (7 pages)
+ok   normal-details-390: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-details-1440: print layout unchanged by the workspace additions (686 boxes, 10 additions stripped)
+ok   poorQc-details-1440: printed PDF text unchanged by the workspace additions (8 pages)
+ok   poorQc-details-1440: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-answered-1024: print layout unchanged by the workspace additions (420 boxes, 10 additions stripped)
+ok   poorQc-answered-1024: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-answered-1024: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-answered-820: print layout unchanged by the workspace additions (420 boxes, 10 additions stripped)
+ok   poorQc-answered-820: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-answered-820: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-answered-390: print layout unchanged by the workspace additions (420 boxes, 10 additions stripped)
+ok   poorQc-answered-390: printed PDF text unchanged by the workspace additions (4 pages)
+ok   poorQc-answered-390: printed PDF raster unchanged by the workspace additions
+ok   chromium poorQc-details-390: print layout unchanged by the workspace additions (686 boxes, 10 additions stripped)
+ok   poorQc-details-390: printed PDF text unchanged by the workspace additions (8 pages)
+ok   poorQc-details-390: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-details-1440: print layout unchanged by the workspace additions (471 boxes, 8 additions stripped)
+ok   spiroOnly-details-1440: printed PDF text unchanged by the workspace additions (6 pages)
+ok   spiroOnly-details-1440: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-answered-1024: print layout unchanged by the workspace additions (371 boxes, 8 additions stripped)
+ok   spiroOnly-answered-1024: printed PDF text unchanged by the workspace additions (4 pages)
+ok   spiroOnly-answered-1024: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-answered-820: print layout unchanged by the workspace additions (371 boxes, 8 additions stripped)
+ok   spiroOnly-answered-820: printed PDF text unchanged by the workspace additions (4 pages)
+ok   spiroOnly-answered-820: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-answered-390: print layout unchanged by the workspace additions (371 boxes, 8 additions stripped)
+ok   spiroOnly-answered-390: printed PDF text unchanged by the workspace additions (5 pages)
+ok   spiroOnly-answered-390: printed PDF raster unchanged by the workspace additions
+ok   chromium spiroOnly-details-390: print layout unchanged by the workspace additions (471 boxes, 8 additions stripped)
+ok   spiroOnly-details-390: printed PDF text unchanged by the workspace additions (7 pages)
+ok   spiroOnly-details-390: printed PDF raster unchanged by the workspace additions
+print parity holds

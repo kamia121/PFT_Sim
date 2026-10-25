@@ -55,7 +55,7 @@ export function caseFacts(prep) {
     // A missing hemoglobin is null. It is neither low nor normal, and `null < 11` is true in JavaScript, so it is kept apart on purpose.
     hb: hbKnown(c.dlco) ? c.dlco.hbGdl : null,
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
-    hasVolumes: Boolean(c.volumes), hasDlco: Boolean(c.dlco),
+    hasVolumes: Number.isFinite(c.volumes?.tlc), hasDlco: Number.isFinite(c.dlco?.adjusted),
     lowErv: a.flags.some((x) => x.id === 'low-erv'),
     europeanApplied: measures.some((m) => m.available !== false && m.matched === false),
     unavailable: measures.some((m) => m.available === false),
@@ -95,7 +95,7 @@ const RULES = [
     applies: (f) => !f.equationFlip && f.borderline, decoy: (f) => !f.borderline, why: 'No value lies within 0.25 z-score units of a limit.' },
   { id: 'fb-volumes-needed', topic: 'volumes', weight: 'major', text: 'Without a measured TLC a low FVC cannot be assigned to restriction or to air trapping, so lung volumes are needed.',
     applies: (f, a) => ['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: (f) => f.hasVolumes, why: 'Lung volumes were measured.' },
-  { id: 'fb-no-volumes', topic: 'volumes', weight: 'minor', text: 'When lung volumes and diffusing capacity are not measured, restriction and gas-transfer impairment are not assessed.',
+  { id: 'fb-no-volumes', topic: 'volumes', weight: 'minor', text: 'When TLC is unavailable, restriction cannot be assessed; available diffusing-capacity measurements are interpreted separately.',
     applies: (f, a) => !f.hasVolumes && !['prism', 'obstruction-low-fvc'].includes(a.pattern), decoy: () => false, why: '' },
   { id: 'fb-european', topic: 'european', weight: 'minor', text: 'Lung volume and diffusing capacity equations derived in people of European ancestry may represent a patient of another group less well, which limits how firmly those indices can be classified.',
     applies: (f) => f.europeanApplied, decoy: (f) => !f.europeanApplied && (f.hasVolumes || f.hasDlco), why: 'The reference equations for volumes and diffusing capacity match the group on the requisition.' },
@@ -166,15 +166,21 @@ export function claimsFrom(prep) {
   return {
     quality: a.qualityLimited ? 'limited' : 'adequate',
     pattern: a.pattern,
+    patternReferenceUnavailable: a.patternReason === 'reference-unavailable',
     severity: a.severity?.scored ? a.severity.id : null,
     airTrapping: a.flags.some((x) => x.id === 'air-trapping'),
     hyperinflation: a.flags.some((x) => x.id === 'hyperinflation'),
     dlco: a.dlco ? a.dlco.category : null,
     dlcoSubtype: a.dlco?.subtype ?? null,
+    dlcoSession: c.report.dlcoQuality?.status ?? null,
+    volumeSession: c.report.volumeQuality?.status ?? null,
+    volumeQualification: a.flags.some((f) => f.id === 'volume-measurement-limited'),
     hbMissing: Boolean(c.dlco) && !hbKnown(c.dlco),
     bd: a.bd ? (a.bd.rule2022.significant ? 'significant' : 'not-significant') : null,
     equation: cmp.labelChanges.length > 0 || cmp.patternChanged ? 'dependent' : 'silent',
-    hasVolumes: Boolean(c.volumes),
+    hasVolumes: a.measures.tlc?.available !== false && Number.isFinite(a.measures.tlc?.z),
+    volumeMeasured: Number.isFinite(c.volumes?.tlc),
+    referenceUnavailable: Object.values(a.measures).some((m) => m.available === false && m.reason === 'age-outside-range'),
   };
 }
 
@@ -186,26 +192,30 @@ export function renderClaims(k, v = 0) {
   s.push(k.quality === 'limited'
     ? V(['Test quality is reduced, with a grade of D or poorer in the FEV₁ or the FVC, so the findings are provisional and the study should be repeated before firm conclusions are drawn.', 'The session grade for the FEV₁ or FVC is D or poorer; the findings are therefore provisional and the study should be repeated.'], v)
     : V(['The session grades support interpretation of the forced expiratory indices.', 'Test quality is acceptable for interpreting the forced expiratory indices.'], v));
-  const sev = k.severity ? `, graded ${k.severity} by the FEV₁ z-score` : '';
+  const sev = k.severity ? `, graded ${k.severity} by the ${k.pattern === 'restriction' ? 'TLC' : 'FEV₁'} z-score` : '';
   const text = {
     normal: k.hasVolumes
-      ? V(['The FEV₁/FVC ratio, the FVC, the lung volumes and the gas-transfer measurements, where measured, lie within their reference ranges, so there is no obstructive or restrictive pattern.', 'Airflow, lung volumes and gas transfer fall within their reference ranges, without an obstructive or a restrictive pattern.'], v)
-      : V(['The FEV₁/FVC ratio and the FVC are within their reference ranges, which excludes airflow obstruction but leaves restriction unassessed without lung volumes.', 'The ratio and the FVC are within their ranges; obstruction is excluded, and restriction cannot be assessed without lung volumes.'], v),
+      ? V(['Spirometry shows no airflow obstruction; the reported TLC is not below its lower limit, so restriction is not demonstrated.', 'The ratio and FVC are within their ranges, and the reported TLC does not establish restriction.'], v)
+      : V(['The FEV₁/FVC ratio and the FVC are within their reference ranges, which excludes airflow obstruction but leaves restriction unassessed without an interpretable TLC reference.', 'The ratio and the FVC are within their ranges; obstruction is excluded, and restriction cannot be assessed without an interpretable TLC reference.'], v),
     obstruction: V([`The FEV₁/FVC ratio is below its lower limit of normal, which defines airflow obstruction${sev}.`, `Airflow obstruction is present because the FEV₁/FVC ratio falls below its lower limit of normal${sev}.`], v)
-      + (k.airTrapping ? ' A raised RV or RV/TLC shows air trapping.' : '') + (k.hyperinflation ? ' A TLC above its upper limit shows hyperinflation.' : ''),
-    'obstruction-low-fvc': V(['The FEV₁/FVC ratio and the FVC are both low; obstruction is present, but a low FVC may reflect air trapping or coexisting restriction, which cannot be separated without lung volumes.', 'Obstruction is shown by the low ratio; the low FVC cannot be attributed to air trapping or to restriction until lung volumes are measured.'], v),
+      + (k.airTrapping ? ' Elevated RV/TLC may reflect air trapping; technique and clinical context are needed.' : '') + (k.hyperinflation ? ' The hyperinflation finding requires review of the fractional volumes and clinical context.' : ''),
+    'obstruction-low-fvc': V(['The FEV₁/FVC ratio and the FVC are both low; obstruction is present, but a low FVC may reflect air trapping or coexisting restriction, which cannot be separated without lung volumes.', 'Obstruction is shown by the low ratio; the low FVC cannot be attributed to air trapping or to restriction until TLC can be interpreted with valid reference limits.'], v),
     restriction: V(['The TLC is below its lower limit of normal with a preserved FEV₁/FVC ratio, which defines restriction.', 'Restriction is present: the TLC is below its lower limit and the FEV₁/FVC ratio is preserved.'], v),
     mixed: V(['The FEV₁/FVC ratio and the TLC are both below their lower limits of normal, which defines mixed obstruction and restriction.', 'Both the ratio and the TLC are below their lower limits, so the pattern is mixed obstruction and restriction.'], v),
     nonspecific: V(['The ratio is preserved and the FVC or FEV₁ is low while the TLC is not low; this nonspecific pattern does not establish restriction.', 'A low FVC or FEV₁ with a preserved ratio and a TLC that is not low is a nonspecific pattern and not restriction.'], v),
-    prism: V(['The ratio is preserved with a low FVC or FEV₁ and no lung volumes were measured (PRISm); restriction is possible but unproven.', 'This is preserved ratio with impaired spirometry; without a TLC restriction is possible but not established.'], v),
-    indeterminate: 'No usable maneuver was recorded, so the study cannot be interpreted.',
+    prism: V(['The ratio is preserved with a low FVC or FEV₁ and no lung volumes were measured; TLC is needed to distinguish restriction from a non-specific pattern.', 'This is preserved-ratio spirometric impairment; without a TLC restriction is possible but not established.'], v),
+    indeterminate: k.patternReferenceUnavailable ? 'The spirometric pattern cannot be classified because a required reference is unavailable; the measured values and independently interpretable components remain available.' : 'No usable maneuver was recorded, so the study cannot be interpreted.',
   }[k.pattern];
   s.push(text);
-  if (k.dlco) {
+  if (k.dlco && !['pending', 'unavailable'].includes(k.dlcoSession)) {
     const sub = k.dlco === 'reduced' && k.dlcoSubtype ? SUBTYPE_TEXT[k.dlcoSubtype] ?? '' : '';
     const name = k.hbMissing ? 'DLCO, classified without hemoglobin adjustment because no hemoglobin was available,' : 'hemoglobin-adjusted DLCO';
     s.push(k.dlco === 'reduced' ? `The ${name} is reduced${sub}.` : k.dlco === 'raised' ? `The ${name} is above its upper limit of normal.` : `The ${name} is within its reference range.`);
   }
+  if (['pending', 'unavailable'].includes(k.dlcoSession)) s.push(`DLCO is not reportable from this ${k.dlcoSession} session; no diffusion classification can be assigned.`);
+  else if (k.dlcoSession === 'qualified') s.push('The reported diffusion values require qualification because the session did not meet the best reporting criteria.');
+  if (k.volumeQualification) s.push(k.volumeMeasured ? 'The reported lung volumes require qualification; interpret them with the recorded measurement limitations.' : `Complete TLC/RV are not reportable from this ${k.volumeSession ?? 'limited'} session; restriction remains unassessed.`);
+  if (k.referenceUnavailable) s.push('Some measured indices cannot be classified because age is outside their reference range; their measured values are preserved.');
   if (k.bd) s.push(k.bd === 'significant' ? 'The bronchodilator response is significant by the 2022 criterion.' : 'The bronchodilator response is not significant by the 2022 criterion.');
   if (k.equation === 'dependent') s.push('Because a spirometry classification changes between GLI-2012 and GLI Global, the result is borderline and the reference equation used should be stated.');
   if (k.equation === 'silent' || k.equation === 'independent') s.push('The spirometry classification is the same under GLI-2012 and GLI Global, so the result does not depend on the reference equation chosen.');
@@ -239,7 +249,6 @@ export function fallbackDistractors(prep, variant = 0) {
     const other = SEVERITIES.filter((x) => x !== k.severity);
     push('fb-n-severity', { ...k, severity: other[(variant + (k.severity === 'mild' ? 1 : 0)) % other.length] }, 'States the wrong severity band: severity of obstruction follows the FEV₁ z-score.');
   }
-  if (!k.severity && prep.a.severity?.notGraded && k.pattern === 'obstruction') push('fb-n-severity-normal-fev1', { ...k, severity: 'mild' }, 'Grades an obstruction as mild although the FEV₁ z-score is within the normal range of the 2022 scale, which defines no grade there.');
   for (const [i, [pattern, flaw]] of (WRONG_PATTERN[k.pattern] ?? []).entries()) {
     const sev = ['obstruction', 'obstruction-low-fvc'].includes(pattern) ? 'moderate' : null;
     const noTlc = !k.hasVolumes && ['mixed', 'restriction'].includes(pattern);

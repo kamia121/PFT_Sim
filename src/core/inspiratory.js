@@ -5,7 +5,8 @@
  * expiratory curve in curve.js and are not recomputed from these traces. The inspiratory limb is a smooth,
  * effort-dependent shape whose volume is the forced inspiratory vital capacity (FIVC). It is drawn in the same
  * exhaled-volume coordinate as the expiration: it starts at the FVC and returns toward 0. A loop closes when the
- * FIVC is within max(0.100 L, 5% of FVC) of the FVC (ATS/ERS 2019 FIVC criterion, verified in the research notes).
+ * FIVC is within a symmetric display tolerance of FVC. That geometric closure label is not the
+ * one-sided ATS/ERS 2019 acceptability check, which needs a recorded maximal post-expiratory inspiration.
  *
  * Constants marked "unverified" are teaching choices, not measurements: no source in the research notes gives
  * typical peak inspiratory flow (PIF) values or the shape of the inspiratory limb.
@@ -107,7 +108,7 @@ export function buildInspiratory(maneuver, { seed, index, scenario = null }) {
     v[i] = fvc - acc;
   }
   flags.unshift(loopClosure(fvc, fivc));
-  return { t, v, f, fivc, pif: Math.max(...f.map((x) => -x)), flags };
+  return { recorded: false, role: 'display-only', t, v, f, fivc, pif: Math.max(...f.map((x) => -x)), flags };
 }
 
 /* ---------- Plotted expiration with artifacts ---------- */

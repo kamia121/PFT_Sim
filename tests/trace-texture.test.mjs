@@ -77,7 +77,7 @@ test('drawing a trace does not change the case: the case hash is the same before
   const h0 = h();
   for (const [set, ms] of [['pre', c.spirometry.pre], ['post', c.spirometry.post]]) ms?.maneuvers.forEach((m, i) => maneuverTrace(m, { seed: 11, index: i, set }));
   assert.equal(h(), h0);
-  assert.equal(GENERATOR_VERSION, 2);
+  assert.equal(c.descriptor.v, GENERATOR_VERSION);
 });
 
 test('exact anchors: the warped volume equals the curve at the guard, 25, 50 and 75% of FVC, FEV1 time and the quiet end', () => {
@@ -207,9 +207,9 @@ test('inspiratory limb: FIVC, the closure flag and the sign are kept; PIF is rea
 test('trace rendering is recorded: fixture, identifier and the svg root of every spirometry figure', () => {
   const fx = JSON.parse(fs.readFileSync(new URL('./fixtures/trace-rendering-hashes.json', import.meta.url), 'utf8'));
   assert.equal(fx.traceRendering, TRACE_RENDERING_ID, 'raise TRACE_TEXTURE_MODEL.version when the plotted traces change, then rewrite the fixture');
-  assert.equal(fx.generatorVersion, GENERATOR_VERSION);
+  assert.equal(fx.generatorVersion, 2, 'preserve the historical rendering fixture generation');
   assert.equal(fx.cases.length, TRACE_DESCRIPTORS.length);
-  for (const { descriptor, traces } of fx.cases) assert.deepEqual(traceHashes(buildCase(descriptor, ds)), traces, `${descriptor.archetype} ${descriptor.seed}: plotted traces changed under ${TRACE_RENDERING_ID}`);
+  for (const { descriptor, traces } of fx.cases) assert.deepEqual(traceHashes(buildCase({ ...descriptor, v: fx.generatorVersion }, ds)), traces, `${descriptor.archetype} ${descriptor.seed}: plotted traces changed under ${TRACE_RENDERING_ID}`);
   const c = buildCase({ seed: 11, archetype: 'mixed' }, ds);
   for (const id of ['panel-spirometry', 'flow-volume', 'volume-time', 'rep-flow-volume', 'rep-volume-time']) {
     const f = FIGURES[id];

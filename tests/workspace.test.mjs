@@ -21,6 +21,7 @@ import { TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
 import { GENERATOR_VERSION } from '../src/core/standards.js';
 
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/practice-markup-baseline.json', import.meta.url), 'utf8'));
+const corrected = JSON.parse(fs.readFileSync(new URL('./fixtures/source-corrected-markup.json', import.meta.url), 'utf8'));
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const EXCERPT_RE = /<div class="ws-ctx scroll" data-ws-ui>[\s\S]*?<\/table><\/div>/g;
 
@@ -33,28 +34,31 @@ const STATES = markupStates();
 test('the fixture was recorded at ec5f6cd (figures re-baselined under the current trace rendering) and covers every state', () => {
   assert.equal(baseline.commit, 'ec5f6cd82e39f0b45eac5f0929dae98f1de96d74');
   assert.equal(baseline.traceRendering, TRACE_RENDERING_ID, 'the figures in the full hashes were drawn under another trace rendering');
-  assert.equal(baseline.generatorVersion, GENERATOR_VERSION);
+  assert.equal(baseline.generatorVersion, 2, 'historical main fixture stays at its recorded generator');
+  assert.equal(corrected.generatorVersion, GENERATOR_VERSION);
+  assert.equal(corrected.traceRendering, TRACE_RENDERING_ID);
   assert.deepEqual(Object.keys(baseline.practice).sort(), STATES.map((s) => s.key).sort());
 });
 
-test('outside the svg figures, the practice markup of every state and the reference markup are byte-identical to ec5f6cd', () => {
-  for (const { key, input, opts } of STATES) assert.equal(sha(withoutFigures(strip(renderPractice(markupCtx(input, opts))))), baseline.practiceWithoutFigures[key], key);
-  for (const [k, v] of Object.entries(referenceMarkup())) assert.equal(sha(withoutFigures(v)), baseline.referenceWithoutFigures[k], k);
+test('outside figures, source-corrected markup remains fixed independently of trace rendering', () => {
+  for (const { key, input, opts } of STATES) assert.equal(sha(withoutFigures(strip(renderPractice(markupCtx(input, opts))))), corrected.practiceWithoutFigures[key], key);
+  for (const [k, v] of Object.entries(referenceMarkup())) assert.equal(sha(withoutFigures(v)), corrected.referenceWithoutFigures[k], k);
 });
 
-test('without the workspace additions, the practice markup of every state is the recorded markup (ec5f6cd, figures as now drawn)', () => {
+test('practice markup retains the source-corrected severity and reference notes in every workspace state', () => {
   for (const { key, input, opts } of STATES) {
     const html = renderPractice(markupCtx(input, opts));
     assert.ok(html.includes('data-ws-ui'), `${key}: the workspace additions are present`);
-    assert.equal(sha(strip(html)), baseline.practice[key], `${key}: markup differs from the recorded markup once the additions are removed`);
+    assert.equal(sha(strip(html)), corrected.practice[key], `${key}: markup differs from the source-corrected snapshot once workspace additions are removed`);
   }
 });
 
-test('the fixed and report sheets, the details sheet, the Lab report fallback and the report page are byte-identical to the recorded markup', () => {
+test('fixed/report/detail sheets retain the source-corrected reference notes and contain no workspace markup', () => {
+
   const now = referenceMarkup();
-  assert.deepEqual(Object.keys(now).sort(), Object.keys(baseline.reference).sort());
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(corrected.reference).sort());
   for (const [k, v] of Object.entries(now)) {
-    assert.equal(sha(v), baseline.reference[k], `${k} changed`);
+    assert.equal(sha(v), corrected.reference[k], `${k} changed`);
     assert.doesNotMatch(v, /data-ws|sheet-data/, `${k}: no workspace markup outside the practice page`);
   }
 });

@@ -19,14 +19,14 @@ const find = (pred, n = 600) => {
   throw new Error('no case');
 };
 
-test('obstruction with the FEV1 within normal limits is not graded: key fev1-normal, no band, per-measure bands kept', () => {
+test('obstruction with the FEV1 within normal limits is mild under the 2024 clarification', () => {
   const a = s1();
   assert.equal(a.pattern, 'obstruction');
-  assert.equal(a.key.severity, FEV1_NORMAL);
-  assert.equal(a.severity.scored, false);
-  assert.equal(a.severity.notGraded, FEV1_NORMAL);
+  assert.equal(a.key.severity, 'mild');
+  assert.equal(a.severity.scored, true);
+  assert.equal(a.severity.notGraded, undefined);
   assert.ok(a.severity.z >= -1.645);
-  assert.ok(a.severity.perMeasure.fev1 === 'within limits');
+  assert.equal(a.severity.measure, 'fev1');
 });
 
 test('obstruction with a low FEV1 is graded by the three bands, cut points -2.5 and -4.0 and the key is the band', () => {
@@ -41,8 +41,8 @@ test('a z-score that prints as a cut point is accepted in either adjacent band; 
   assert.deepEqual(severityAlso(sev(-2.503, 'moderate')), ['mild']);
   assert.deepEqual(severityAlso(sev(-2.497, 'mild')), ['moderate']);
   assert.deepEqual(severityAlso(sev(-4.004, 'severe')), ['moderate']);
-  assert.deepEqual(severityAlso(sev(-1.646, 'mild')), ['fev1-normal']);
-  assert.deepEqual(severityAlso(sev(-1.644, 'fev1-normal', false)), ['mild']);
+  assert.deepEqual(severityAlso(sev(-1.646, 'mild')), []);
+  assert.deepEqual(severityAlso(sev(-1.644, 'mild')), []);
   for (const z of [-1.7, -2.0, -3.0, -3.9, -4.2]) assert.deepEqual(severityAlso(sev(z, severityOf(z))), [], String(z));
   const key = { pattern: 'obstruction', severity: 'moderate', severityAlso: ['mild'] };
   const score = (answer) => scoreAnswers({ severity: answer }, key, key, 'GLIglobal', PRACTICE_QUESTIONS).find((s) => s.id === 'severity');
@@ -52,13 +52,13 @@ test('a z-score that prints as a cut point is accepted in either adjacent band; 
   assert.equal(score('severe').status, 'incorrect');
 });
 
-test('the learner is offered the not-graded answers on every case, and mild is wrong for a normal FEV1', () => {
+test('the obsolete normal-FEV1 ungraded option is absent and mild is correct', () => {
   const sev = QUESTIONS.find((q) => q.id === 'severity');
-  assert.deepEqual(sev.options.map(([v]) => v), ['mild', 'moderate', 'severe', 'fev1-normal', 'not-graded', 'na']);
+  assert.deepEqual(sev.options.map(([v]) => v), ['mild', 'moderate', 'severe', 'not-graded', 'na']);
   const a = s1();
   const s = scoreAnswers({ severity: 'mild' }, a.key, a.key, 'GLIglobal', PRACTICE_QUESTIONS).find((x) => x.id === 'severity');
-  assert.equal(s.status, 'incorrect');
-  assert.equal(s.expected, 'fev1-normal');
+  assert.equal(s.status, 'correct');
+  assert.equal(s.expected, 'mild');
 });
 
 test('mixed disease is "not graded for this pattern", not "not applicable (no obstruction)"; no obstruction is not applicable', () => {
@@ -73,7 +73,7 @@ test('the generator\'s own form of the key (case.anchorKey) keeps the FEV1 band 
   const g = s1({ generatorKey: true });
   assert.equal(g.key.severity, 'mild');
   assert.equal(g.key.severityAlso, undefined);
-  assert.equal(s1().key.severity, FEV1_NORMAL);
+  assert.equal(s1().key.severity, 'mild');
   const c = buildCase({ seed: 12, archetype: 'obstruction' }, ds);
   assert.deepEqual(c.anchorKey, interpret(c.report, resolveReference, 'GLIglobal', { generatorKey: true }));
 });

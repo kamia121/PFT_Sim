@@ -135,6 +135,7 @@ test('the tidal loop sits at the end-expiratory level given by the case IC, insi
     const cd = caseData(CASES[name]);
     const data = panel.dataFor(cd);
     const t = data.tidal;
+    if (!Number.isFinite(cd.volumes?.ic)) { assert.equal(t, null); continue; }
     assert.ok(t, name);
     assert.equal(t.ic, cd.volumes.ic);
     const bestPre = data.sets[0].maneuvers[data.sets[0].best];

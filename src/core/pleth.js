@@ -22,6 +22,7 @@
  * Every number marked unverified below is a teaching value, not a published finding. See
  * docs/pleth-dlco-model.md.
  */
+import { summarizePlethSession } from './pleth-session.js';
 import { createStream } from './prng.js';
 
 /** @typedef {'acceptable'|'usable'|'rejected'} TrialStatus */
@@ -249,6 +250,15 @@ function forcedFaults(scenario) {
  * One shutter-closure trial.
  * @returns {PlethTrial & { _truth: object }}
  */
+/** Corrected 2023 Table 2 frequency bands; significant obstruction at 1–1.5 Hz needs review. */
+export function assessPlethPantFrequency(hz, noOrMinimalObstruction) {
+  if (!Number.isFinite(hz) || typeof noOrMinimalObstruction !== 'boolean') return 'unknown';
+  if (hz < .5 || hz > 2 || hz > 1.5 && !noOrMinimalObstruction) return 'rejected';
+  if (hz <= 1 || noOrMinimalObstruction && hz <= 1.5) return 'acceptable';
+  if (noOrMinimalObstruction) return 'usable';
+  return 'review';
+}
+
 function generateTrial(i, ctx) {
   const { seed, tgvTrue, box, u, obstructed, tech, forced, driftSign } = ctx;
   const r = createStream(seed, `pleth-trial-${i}`);
@@ -326,7 +336,11 @@ function generateTrial(i, ctx) {
   const pct = (frcL / tgvTrial - 1) * 100;
   const fLimit = obstructed ? PLETH_MODEL.pantAcceptableHz.value[1] : PLETH_MODEL.pantToleratedMaxHzNoObstruction.value;
   let rejected = false, usable = false;
-  if (f > 1.5) {
+  if (ctx.currentCriteria && !obstructed && f > 1.5 && f <= 2) {
+    faults.push('fast-panting'); usable = true;
+    reasons.push('panting frequency above 1.5 and at or below 2 Hz without obstruction; usable with caution (2023 Table 2)');
+    faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz; usable with caution rather than acceptable.`);
+  } else if (f > 1.5) {
     faults.push('fast-panting'); rejected = true;
     reasons.push('panting frequency above 1.5 Hz');
     faultText.push(`Trial ${i}: panting at ${f.toFixed(2)} Hz, above 1.5 Hz. Mouth pressure underestimates the alveolar pressure swing, so FRC is read ${pct >= 0 ? 'high' : 'low'} by about ${Math.abs(pct).toFixed(0)}%.`);
@@ -389,7 +403,7 @@ export function repeatableGroup(values, tol) {
 export const spreadFraction = (values) => (Math.max(...values) - Math.min(...values)) / mean(values);
 
 /**
- * FRC grade from the acceptable trials (2023 table as summarized in docs/research/pleth-dlco.md):
+ * FRC-only simulator rubric; this is not the corrected 2023 overall grade, which also needs retained SVC quality:
  * A three or more acceptable within 5%, B two within 5%, C two within 10%. D, E, U and F are placeholders:
  * D one acceptable trial, E two or more acceptable but outside 10%, U no acceptable but some usable, F nothing usable.
  */
@@ -678,14 +692,15 @@ export function bestTrialIndex(pleth) {
 function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech }) {
   const M = TIMELINE_MODEL;
   const out = trials.map((tr) => {
+    const trialVolumes = tr.link ? { ic: tr.link.icL, vc: tr.link.svcL, tlc: tr.frcL + tr.link.icL, rv: tr.frcL + tr.link.icL - tr.link.svcL, erv: tr.link.svcL - tr.link.icL } : suggested;
     const rng = createStream(seed, `pleth-timeline-${tr.index}`);
-    const vt = clamp(0.85 * (1 - 0.12 * u) * (1 + 0.04 * rng.normal()), 0.35, 0.6 * suggested.ic);
+    const vt = clamp(0.85 * (1 - 0.12 * u) * (1 + 0.04 * rng.normal()), 0.35, 0.6 * trialVolumes.ic);
     const ti = 1.3 * (1 + 0.06 * rng.normal()), te = 1.65 * (1 + 0.25 * u) * (1 + 0.06 * rng.normal());
     const sim = simulateTidal({ rng, nBreaths: M.quietBreaths, vt, ti, te, dt: M.sampleIntervalS, varFrac: 0.8 * tech.rawBreathVar });
     const closureL = tr.frcL;
     // end-expiratory level after each quiet breath, ending at the closure level
     const eelL = tr.eelDeviationL.map((d) => closureL + d - tr.eelDeviationL[M.quietBreaths - 1]);
-    const stableL = eelL[0]; // the end-expiratory level before any drift toward the closure level
+    const stableL = tr.link ? closureL : eelL[0]; // the end-expiratory level before any drift toward the closure level
     const t = [], v = [], segments = [];
     const push = (id, label, ts, vs) => {
       const i0 = t.length ? t.length - 1 : 0;
@@ -707,15 +722,27 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
     const open = simulateTidal({ rng, nBreaths: 1, vt: 0.9 * vt, ti, te, dt: M.sampleIntervalS, varFrac: 0.3 * tech.rawBreathVar });
     const tOpen = tClose + tPant;
     push('open-shutter', 'Shutter open', open.t.map((x) => tOpen + x), open.theta.map((th, j) => closureL + (stableL - closureL) * smoothstep(th / TAU) + open.vol[j]));
+    if (tr.link) {
+      // Linked IC is inspired first, from this measured FRC to TLC; expiratory SVC follows to RV.
+      const tIn = tOpen + open.t[open.t.length - 1];
+      const dIn = clamp(2.5 + .6 * trialVolumes.ic, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
+      const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);
+      push('inspiration', 'Linked IC to TLC', inT, inT.map((_, j) => closureL + trialVolumes.ic * smootherstep(j / nIn)));
+      const tEx = inT[inT.length - 1];
+      const dEx = clamp(2.2 + 1.5 * trialVolumes.vc, 3, 8), nEx = Math.ceil(dEx / M.sampleIntervalS);
+      const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);
+      push('expiration', 'Linked expiratory SVC to RV', exT, exT.map((_, j) => trialVolumes.tlc - trialVolumes.vc * smootherstep(j / nEx)));
+    } else {
     // slow expiration to RV, slow inspiration to TLC (smooth, zero flow at both ends)
     const tEx = tOpen + open.t[open.t.length - 1];
-    const dEx = clamp(2.2 + 1.5 * suggested.erv, 3, 6), nEx = Math.ceil(dEx / M.sampleIntervalS);
+    const dEx = clamp(2.2 + 1.5 * trialVolumes.erv, 3, 6), nEx = Math.ceil(dEx / M.sampleIntervalS);
     const exT = Array.from({ length: nEx + 1 }, (_, j) => tEx + (j / nEx) * dEx);
-    push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - suggested.rv) * smootherstep(j / nEx)));
+    push('expiration', 'Expiration to RV', exT, exT.map((_, j) => stableL - (stableL - trialVolumes.rv) * smootherstep(j / nEx)));
     const tIn = exT[exT.length - 1];
-    const dIn = clamp(2.5 + 0.6 * suggested.vc, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
+    const dIn = clamp(2.5 + 0.6 * trialVolumes.vc, 4, 7), nIn = Math.ceil(dIn / M.sampleIntervalS);
     const inT = Array.from({ length: nIn + 1 }, (_, j) => tIn + (j / nIn) * dIn);
-    push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => suggested.rv + (suggested.tlc - suggested.rv) * smootherstep(j / nIn)));
+    push('inspiration', 'Inspiration to TLC', inT, inT.map((_, j) => trialVolumes.rv + (trialVolumes.tlc - trialVolumes.rv) * smootherstep(j / nIn)));
+    }
     const closureOffsetL = closureL - stableL;
     return {
       trial: tr.index,
@@ -724,7 +751,7 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
       eelL: eelL.map((x) => round(x, 4)),
       levels: {
         reportedFrcL: round(reportedFrc, 4), trialFrcL: tr.frcL, closureOffsetL: round(closureOffsetL, 4), stableEelL: round(stableL, 4),
-        rvL: round(suggested.rv, 4), tlcL: round(suggested.tlc, 4), ervL: round(suggested.erv, 4), icL: round(suggested.ic, 4),
+        rvL: round(trialVolumes.rv, 4), tlcL: round(trialVolumes.tlc, 4), ervL: round(trialVolumes.erv, 4), icL: round(trialVolumes.ic, 4),
         tidalVolumeL: round(mean(sim.breaths.map((q) => q.vt)), 3),
       },
       lane: { trial: tr.index, tStartS: round(tClose, 3), t: tr.t, pm: tr.pm, pbox: tr.pbox, panFreqHz: tr.panFreqHz },
@@ -733,7 +760,7 @@ function buildTimeline({ seed, trials, reportedFrc, suggested, basis, u, tech })
   });
   return {
     version: M.version, breathingMode: 'tidal',
-    anchor: `Volume axis anchored at the reported FRC (mean of the ${basis} trials); RV and TLC are the reported values`,
+    anchor: trials[0]?.link ? 'Individual linked FRC/IC/SVC measurements before session selection; these are not the reported session averages' : `Volume axis anchored at the reported FRC (mean of the ${basis} trials); RV and TLC are the reported values`,
     reportedFrcL: round(reportedFrc, 4), trials: out,
   };
 }
@@ -825,5 +852,59 @@ export function buildPleth({ seed, truth, volumes, technique = 'good', scenario 
     faults,
     suggestedVolumes,
     unverified: Object.entries(PLETH_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),
+  };
+}
+
+
+/**
+ * Generator v3: measured linked IC/SVC, retained-pair reporting and explicit missing results.
+ * Random fault probabilities and amplitude distributions are synthetic teaching choices.
+ * Source-based assessment/selection is kept in pleth-session.js.
+ */
+export function buildMeasuredPleth({ seed, truth, volumes, age, fvcL, technique = 'good', scenario = null, ratioZ, barometricMmHg } = {}) {
+  if (!volumes || !truth) return null;
+  const tech = TECHNIQUE[technique] ?? TECHNIQUE.good;
+  const box = makeBox(barometricMmHg ?? scenario?.barometricMmHg ?? PLETH_MODEL.barometricMmHg.value);
+  const z = trueRatioZ(truth, ratioZ), u = clamp(obstructionMeasure(z) / 3.5, 0, 1);
+  const ctx = { currentCriteria: true, seed, tgvTrue: volumes.frc, box, u, obstructed: z < -1.645, tech, forced: forcedFaults(scenario), driftSign: createStream(seed, 'pleth-setup').uniform() < 0.5 ? -1 : 1 };
+  const sessionRng = createStream(seed, 'pleth-linked-session-v3');
+  const unlinkedSession = technique === 'poor' && sessionRng.uniform() < 0.14;
+  const trials = [];
+  let session;
+  for (let i = 1; i <= TRIALS_MAX; i++) {
+    const tr = generateTrial(i, ctx), rng = createStream(seed, `pleth-linked-v3-${i}`);
+    const sigma = technique === 'good' ? 0.003 : technique === 'fair' ? 0.015 : 0.035;
+    const incomplete = Boolean(scenario?.incompleteIc) || technique !== 'good' && rng.uniform() < (technique === 'poor' ? 0.4 : 0.1);
+    const leak = technique === 'poor' && rng.uniform() < 0.12;
+    const icL = volumes.ic * Math.exp(sigma * rng.normal()) * (incomplete && !scenario?.incompleteIc ? rng.range(0.55, 0.8) : 1);
+    const ervL = volumes.erv * Math.exp(sigma * rng.normal());
+    const notes = [...(unlinkedSession ? ['Mouthpiece removed before linked spirometry.'] : []), ...(incomplete ? ['Incomplete maximal inspiration on linked IC/SVC.'] : []), ...(leak ? ['Leak during linked spirometry.'] : [])];
+    tr.link = { linked: !unlinkedSession, icL, svcL: icL + ervL, withinManeuverStatus: leak || incomplete ? 'rejected' : 'acceptable', notes };
+    trials.push(tr);
+    session = summarizePlethSession({ age, fvcL, trials: trials.map((t) => ({ id: t.index, frcL: t.frcL, frcStatus: t.status, link: t.link })) });
+    if (i >= TRIALS_MIN && session.grades.overall === 'A' && session.status === 'reported') break;
+  }
+  const reportedFrc = session.volumes.frc, selected = new Set(session.selectedIds);
+  for (const tr of trials) {
+    tr.selected = selected.has(tr.index);
+    tr.linkAssessment = session.assessed.find((t) => t.id === tr.index).linkAssessment;
+    tr.deviationPct = Number.isFinite(reportedFrc) ? 100 * (tr.frcL - reportedFrc) / reportedFrc : null;
+  }
+  const raw = Number.isFinite(reportedFrc) ? buildRawLoop({ seed, box, tgvTrue: volumes.frc, frcReported: reportedFrc, u, z, phenotype: truth.phenotype ?? null, tech, restricted: Number.isFinite(truth.latent?.zTLC) && truth.latent.zTLC < -1.645 }) : null;
+  if (raw) {
+    raw.rawBasis.frcL = reportedFrc;
+    raw.rawBasis.definition = 'Raw = sRaw / reported FRC (mean of retained trials)';
+  }
+  const full = Number.isFinite(session.volumes.tlc) && Number.isFinite(session.volumes.rv);
+  const timeline = full ? buildTimeline({ seed, trials, reportedFrc, suggested: session.volumes, basis: 'retained', u, tech }) : null;
+  const flags = session.warnings.map((text) => ({ code: 'measurement-session-limited', text, severity: 'major' }));
+  if (session.grades.overall !== 'A' && session.grades.overall !== 'B') flags.push({ code: 'measurement-session-qualified', text: `Plethysmography is ${session.status}; overall grade ${session.grades.overall ?? 'not assignable'}.`, severity: 'major' });
+  return {
+    version: 3, method: 'whole-body plethysmography', box, trials, session,
+    reportedFrcL: reportedFrc, trueFrcL: volumes.frc, frcBasis: 'retained', grade: session.grades.overall,
+    repeatability: { spreadFraction: session.repeatability.fraction, nAcceptable: trials.filter((t) => t.status === 'acceptable').length, nUsable: trials.filter((t) => t.status === 'usable').length, nTrials: trials.length, nRetained: session.selectedIds.length, nWithin5Pct: session.selectionPolicy === 'acceptable-within-5pct' ? session.selectedIds.length : 0 },
+    replicateTable: trials.map((t) => ({ trial: t.index, panFreqHz: t.panFreqHz, frcL: t.frcL, deviationPct: t.deviationPct, status: t.status, acceptable: t.acceptable, selected: t.selected, icL: t.link.icL, svcL: t.link.svcL, linkedStatus: t.linkAssessment.status, notes: [...t.reasons, ...t.link.notes].map((s) => s.replace(/[.\s]+$/, '')).join('; ') })),
+    raw, timeline, flags, faults: trials.flatMap((t) => [...t.faultText, ...t.link.notes]), suggestedVolumes: { ...session.volumes, status: session.status, reason: session.warnings.join(' ') },
+    unverified: ['linked maneuver amplitude/technique probabilities; curve fault recognition remains synthetic'],
   };
 }

@@ -143,12 +143,13 @@ test('equation names appear per index, and fallbacks are stated', () => {
   assert.match(field(g, 'Reference equations'), /DLCO: GLI-2017 TLCO/);
   assert.match(g.referenceNote[0], /group-neutral/);
   assert.match(table(g, 'volumes').footnote, /reference population of European ancestry/);
-  assert.match(g.referenceNote.join(' '), /derived in people of European ancestry/);
+  assert.match(g.referenceNote.join(' '), /European-ancestry-derived reference populations/);
   const o = makeModel({ seed: 90, archetype: 'normal', group: 'Black or African American' }, { equation: 'GLI2012' }).model;
   assert.match(field(o, 'Reference equations'), /Spirometry: GLI-2012/);
   assert.match(o.referenceNote[0], /GLI-2012 equation for the requisition group "Black or African American"/);
   assert.match(table(o, 'spirometry').footnote, /GLI-2012 \(equation for "Black or African American"\)/);
   const w = makeModel({ seed: 5, archetype: 'normal', group: 'White' }).model;
+  assert.match(w.referenceNote.join(' '), /European-ancestry-derived reference populations/);
   assert.ok(!/European/.test(table(w, 'volumes').footnote));
   assert.throws(() => { const { c, interp } = makeModel(SAMPLE_INPUTS[0]); buildReportModel(c, interp, { equation: 'GLI2012' }); }, RangeError);
 });
@@ -157,7 +158,7 @@ test('lung volume and DLCO tables carry the specified rows and respect the panel
   const { model } = makeModel(SAMPLE_INPUTS[0]);
   assert.deepEqual(table(model, 'volumes').rows.map((r) => r.id), ['tlc', 'vc', 'ic', 'frc', 'erv', 'rv', 'rv_tlc', 'sraw', 'sgaw', 'raw']);
   assert.equal(row(table(model, 'volumes'), 'rv_tlc').unit, '%');
-  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['hb', 'hb-factor', 'dlco', 'va', 'kco', 'vi-vc', 'breath-hold']);
+  assert.deepEqual(table(model, 'dlco').rows.map((r) => r.id), ['hb', 'hb-factor', 'dlco', 'va', 'kco', 'vc-comparator', 'mean-vi', 'vi-vc']);
   assert.match(table(model, 'dlco').footnote, /ATS\/ERS 2017, eqs 31 and 32/);
   const s = makeModel({ seed: 44, archetype: 'mixed', panel: 'spirometry' }).model;
   assert.equal(table(s, 'volumes'), undefined);
@@ -179,7 +180,7 @@ test('a plethysmography replicate table appears only when caseData.pleth exists'
   assert.equal(t.rows.length, 3);
   assert.equal(t.rows[1].frc, 3.2);
   assert.match(t.footnote, /Mean FRCpleth 3\.10 L/);
-  assert.match(t.footnote, /grade A/);
+  assert.match(t.footnote, /FRC-only simulator rubric A/);
 });
 
 test('the model never carries the key or the ground truth', () => {

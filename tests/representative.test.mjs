@@ -57,7 +57,8 @@ test('captions name the maneuver, trial and test and never its kind', () => {
     assert.equal(cap['rep-flow-volume'], cap['rep-volume-time']);
     const tr = k.c.pleth.trials[r.pleth.trial];
     assert.equal(cap['rep-pleth-loop'], `Shutter closed: trial ${r.pleth.trial + 1} of ${k.c.pleth.trials.length}, TGV ${tr.frcL.toFixed(2)} L; reported FRC ${k.c.pleth.reportedFrcL.toFixed(2)} L`);
-    assert.equal(cap['rep-dlco'], 'Single-breath DLCO: test 1 of 1');
+    assert.equal(cap['rep-dlco'], `Single-breath DLCO: test ${(r.dlco?.test ?? 0) + 1} of ${k.c.dlcoTrace.tests?.length ?? 1}`);
+
     for (const f of REPRESENTATIVE_FIGURES) {
       const svg = f.render(f.dataFor(withInterp(k), k.rt), { palette: 'white' });
       assert.ok(svg.includes(`>${cap[f.id]}<`), `${f.id}: caption in the figure`);

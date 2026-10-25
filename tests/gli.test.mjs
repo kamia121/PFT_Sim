@@ -72,26 +72,19 @@ test('ages below the published range are reported, not extrapolated', () => {
   assert.equal(resolveReference('tlc', { age: 4.5, sex: 'M', heightCm: 110, group: 'White' }).fallbackReason, 'age-outside-range');
 });
 
-test('above the upper age limit the values for the last available age are used and flagged', () => {
+test('clinical references fail closed outside age ranges; synthetic clamping must be explicit', () => {
   const p = { sex: 'M', heightCm: 175, group: 'White', measured: 6 };
-  // Volumes end at 80 years, TLCO at 85 (the workbook runs to 90), so older patients take the values at those ages.
-  const tlc80 = resolveReference('tlc', { ...p, age: 80 });
-  const tlc88 = resolveReference('tlc', { ...p, age: 88 });
-  assert.equal(tlc88.available, true);
-  assert.equal(tlc88.ageClamped, true);
-  assert.equal(tlc88.ageUsed, 80);
-  assert.equal(tlc88.ageRequested, 88);
-  assert.equal(tlc88.predicted, tlc80.predicted);
-  assert.equal(tlc88.z, tlc80.z);
-  assert.equal(tlc80.ageClamped, undefined);
-  const d85 = resolveReference('dlco', { ...p, age: 85, measured: 25 });
-  for (const age of [86, 90, 95]) {
-    const d = resolveReference('dlco', { ...p, age, measured: 25 });
-    assert.equal(d.ageUsed, 85);
-    assert.equal(d.predicted, d85.predicted);
-    assert.equal(d.z, d85.z);
+  assert.equal(resolveReference('tlc', { ...p, age: 80 }).available, true);
+  for (const [measure, age] of [['tlc', 80.001], ['dlco', 85.001], ['dlco', 95]]) {
+    const r = resolveReference(measure, { ...p, age });
+    assert.equal(r.available, false); assert.equal(r.fallbackReason, 'age-outside-range');
+    for (const k of ['predicted', 'lln', 'uln', 'z', 'percentPredicted']) assert.equal(r[k], null);
   }
-  assert.equal(resolveReference('fvc', { ...p, age: 94, measured: 3 }).ageClamped, undefined);
+  assert.equal(resolveReference('fvc', { ...p, age: 94 }).available, true);
+  const synthetic = createReference(datasets, { rangePolicy: 'synthetic-anchor-clamp' }).resolveReference;
+  const c = synthetic('tlc', { ...p, age: 88 });
+  assert.equal(c.ageClamped, true); assert.equal(c.ageUsed, 80);
+  assert.equal(c.predicted, resolveReference('tlc', { ...p, age: 80 }).predicted);
 });
 
 test('spline interpolation is linear between the workbook rows', () => {

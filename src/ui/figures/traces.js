@@ -35,8 +35,13 @@ export function computeManeuverTrace(m, { seed, index, set = 'pre', scenario = n
   const texture = expiratoryTexture(m.curve, m.fet, { seed, set, index, protectUntil });
   const sampled = sampleTextured(m.curve, plotGrid(m.fet), texture);
   const exp = applyArtifacts(sampled, m.faults ?? [], artifactSeed(seed, index, set));
-  const insp0 = m.inspiratory ?? buildInspiratory(m, { seed, index: index + (set === 'post' ? 100 : 0), scenario });
-  const insp = textureInspiration(insp0, { seed, set, index });
+  let insp = m.inspiratory ?? buildInspiratory(m, { seed, index: index + (set === 'post' ? 100 : 0), scenario });
+  if (!['t', 'v', 'f'].every((k) => Array.isArray(insp[k]) && insp[k].length >= 2 && insp[k].length === insp.t?.length && insp[k].every(Number.isFinite))) {
+    // A supplied scalar/observation is not a complete waveform, irrespective of recorded status.
+    // Preserve expiration; never synthesize an inspiration to match this observation.
+    insp = { ...insp, t: [], v: [], f: [], flags: ['inspiratory-trace-not-recorded'] };
+  }
+  else insp = textureInspiration({ ...insp, flags: insp.flags ?? [] }, { seed, set, index });
   return { exp, insp, texture };
 }
 
@@ -65,6 +70,7 @@ export function maneuverTrace(m, opts) {
   const value = deepFreeze(computeManeuverTrace(m, opts));
   byM.set(slot, { fp, value });
   return value;
+
 }
 
 /** Index of the maneuver shown on the volume-time curve: acceptable first, then the largest FVC + FEV1. */

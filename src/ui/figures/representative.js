@@ -159,7 +159,7 @@ function plethData(c, rt) {
   const trial = p.trials[k];
   return {
     raw: p.raw, box: p.box, trial, number: k + 1, n: p.trials.length,
-    caption: `Shutter closed: trial ${k + 1} of ${p.trials.length}, TGV ${trial.frcL.toFixed(2)} L; reported FRC ${p.reportedFrcL.toFixed(2)} L`,
+    caption: `Shutter closed: trial ${k + 1} of ${p.trials.length}, TGV ${trial.frcL.toFixed(2)} L; reported FRC ${Number.isFinite(p.reportedFrcL) ? `${p.reportedFrcL.toFixed(2)} L` : 'unavailable'}`,
     conventionLine: 'Shutter open, tidal breaths; shift + = alveolar compression',
   };
 }

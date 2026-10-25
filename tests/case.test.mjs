@@ -24,8 +24,7 @@ test('technique changes the recorded maneuvers but never the patient or the true
     assert.deepEqual(g.report.patient, p.report.patient);
     assert.deepEqual(g.truth, p.truth);
     // The plethysmography replicates depend on technique, so FRC, TLC and RV may differ; ERV and IC are measured separately.
-    assert.equal(g.volumes.erv, p.volumes.erv);
-    assert.equal(g.volumes.ic, p.volumes.ic);
+    assert.ok(g.pleth.session && p.pleth.session, 'Measured linked IC/SVC also depend on technique in version 3.');
   }
 });
 
@@ -37,15 +36,19 @@ test('exact constraints hold on every reported quantity', () => {
     if (s.fev1 !== null && s.fvc !== null) assert.ok(s.fev1 <= s.fvc + 1e-9, `FEV1 > FVC, ${archetype} seed ${seed}`);
     if (s.post?.fev1 && s.post?.fvc) assert.ok(s.post.fev1 <= s.post.fvc + 1e-9);
     const v = c.volumes;
+    if (Number.isFinite(v.tlc) && Number.isFinite(v.rv)) {
     assert.ok(Math.abs(v.tlc - (v.rv + v.vc)) < 1e-9, 'TLC = RV + VC');
     assert.ok(Math.abs(v.frc - (v.rv + v.erv)) < 1e-9, 'FRC = RV + ERV');
     assert.ok(Math.abs(v.ic - (v.tlc - v.frc)) < 1e-9, 'IC = TLC - FRC');
     assert.ok(v.rv > 0 && v.erv > 0 && v.ic > 0 && v.vc > 0);
+    } else { assert.equal(v.tlc, null); assert.equal(v.rv, null); }
     const d = c.dlco;
-    assert.ok(d.va <= v.tlc + 1e-9, `VA > TLC, ${archetype} seed ${seed}`);
+    if (Number.isFinite(d.raw)) {
+    assert.ok(Number.isFinite(d.va) && d.va > 0, 'Measured VA is independent of potentially unavailable/unreliable pleth TLC.');
     assert.ok(Math.abs(d.adjusted - d.kco * d.va) < 1e-9, 'DLCO = KCO x VA');
     assert.ok(Math.abs(d.adjusted - d.raw * d.hbFactor) < 1e-9, 'adjusted DLCO = measured x hemoglobin factor');
-    n++;
+        } else { assert.equal(d.raw, null); assert.equal(d.adjusted, null); assert.equal(d.va, null); assert.equal(d.kco, null); assert.equal(c.report.dlco, null); }
+n++;
   }
   assert.equal(n, ARCHETYPES.length * 3 * 60);
 });

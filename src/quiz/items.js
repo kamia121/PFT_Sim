@@ -52,7 +52,7 @@ const LABELS = {
 };
 
 const GRADE_ORDER = ['A', 'B', 'C', 'D', 'E'];
-const SEVERITY_ORDER = ['fev1-normal', 'mild', 'moderate', 'severe'];
+const SEVERITY_ORDER = ['mild', 'moderate', 'severe'];
 export const NONE_ID = 'none';
 export const NONE_LABEL = 'None of these statements applies.';
 
@@ -65,11 +65,11 @@ function categorical(prep, qid, seed) {
   const q = QUESTIONS.find((x) => x.id === qid);
   const scored = scoreAnswers({}, prep.a.key, prep.b.key).find((s) => s.id === qid);
   let options = q.options.map(([id, label]) => ({ id, label: lbl(qid, id, label, seed) }));
-  if (qid === 'pattern') options = options.concat([{ id: 'indeterminate', label: 'Not interpretable (no usable maneuver)' }]);
-  if (qid === 'bronchodilator' || qid === 'dlco') options = options.filter((o) => o.id !== 'not-done');
+  if (qid === 'pattern') options = options.concat([{ id: 'indeterminate', label: 'Pattern not classifiable from the available measurements and references' }]);
+  if (qid === 'bronchodilator' || qid === 'dlco') options = options.filter((o) => o.id !== 'not-done' && (o.id !== 'unavailable' || scored.expected === 'unavailable'));
   return {
     id: qid, skill: SKILL_OF[qid], type: 'single', ordered: qid === 'severity' || qid === 'gradeFev1' || qid === 'gradeFvc',
-    stem: pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,
+    stem: qid === 'dlco' && scored.expected === 'unavailable' ? (prep.a.measures.dlco?.available === false ? 'What can be reported about DLCO classification when its reference is unavailable?' : 'What can be reported about diffusing capacity from this session?') : qid === 'severity' && prep.a.severity?.measure === 'tlc' ? 'Grade restrictive impairment using the TLC z-score.' : pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,
     key: { correct: scored.expected, alt: scored.other !== scored.expected ? scored.other : null, altEquation: otherEquation(prep.equation), ...(qid === 'severity' && prep.a.key.severityAlso?.length ? { also: [...prep.a.key.severityAlso] } : {}) },
     explain: { kind: qid },
   };
@@ -118,9 +118,17 @@ function limitationsItem(prep, seed) {
   const trueTexts = new Set(truths.map((t) => t.text));
   const pool = fb.decoyCaveats.filter((d) => !liveTopics.has(d.topic) && !trueTexts.has(d.text));
   const target = truths.length ? truths.reduce((t, x) => t + x.text.length, 0) / truths.length : 170;
-  const want = Math.max(3, 6 - truths.length);
-  const nearest = shuffled(pool, seed, 'quiz-decoy-pick').sort((p, q) => Math.abs(p.text.length - target) - Math.abs(q.text.length - target)).slice(0, want * 2);
-  const decoys = shuffled(nearest, seed, 'quiz-decoy-select').slice(0, want);
+  // Four substantive decoys keep the none-of-these option from rewarding a select-all-substantive strategy.
+  const want = Math.max(4, 6 - truths.length);
+  // Match the range of true-option lengths, rather than only their mean: an unusually long
+  // source qualification should not make the longest option an answer cue.
+  const targets = truths.length ? truths.map((t) => t.text.length).sort((a, b) => b - a) : [target];
+  const remaining = shuffled(pool, seed, 'quiz-decoy-pick'), decoys = [];
+  for (let i = 0; i < want && remaining.length; i++) {
+    const length = targets[i % targets.length];
+    remaining.sort((p, q) => Math.abs(p.text.length - length) - Math.abs(q.text.length - length));
+    decoys.push(remaining.shift());
+  }
   const entries = [
     ...truths.map((t) => ({ sem: t.id, text: t.text, truth: true, weight: weight(t) })),
     ...decoys.map((d) => ({ sem: d.id, text: d.text, truth: false, why: d.why ?? null })),

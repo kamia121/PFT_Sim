@@ -266,6 +266,7 @@ const unit = (dx, dy) => { const n = Math.hypot(dx, dy) || 1; return [dx / n, dy
 export function loopPath(m, sx, sy, corner = 8) {
   const E = m.exp.v.map((v, i) => [sx(v), sy(m.exp.f[i])]);
   const I = m.insp.v.map((v, i) => [sx(v), sy(m.insp.f[i])]);
+  if (I.length < 2) return poly(E); // A scalar FIVC observation does not supply an inspiratory trace.
   const A = E[E.length - 1];
   let jb = 1;
   while (jb < I.length - 2 && dist(A, I[jb]) < corner) jb++;

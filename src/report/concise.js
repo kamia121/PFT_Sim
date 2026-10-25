@@ -22,7 +22,7 @@ const HEAD = {
   restriction: 'Restriction',
   mixed: 'Mixed obstruction and restriction',
   nonspecific: 'Nonspecific pattern (preserved ratio, low FVC or FEV₁, TLC not low)',
-  prism: 'Preserved ratio with a low FVC or FEV₁ (PRISm; lung volumes needed)',
+  prism: 'Preserved-ratio spirometric impairment (TLC needed)',
   indeterminate: 'Not interpretable',
 };
 const SUB = { 'low-kco-preserved-va': 'low KCO with preserved VA', 'low-va-high-kco': 'low VA with raised KCO', 'low-va-normal-kco': 'low VA with normal KCO', 'both-low': 'VA and KCO both low', 'low-dlco-only': 'VA and KCO individually within limits' };
@@ -38,12 +38,12 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   const lines = [];
 
   // Impression: the pattern, its severity where the scale grades it, the findings that change what a reader does with it, and the standing of the study.
-  let head = HEAD[interp.pattern] ?? PATTERNS[interp.pattern] ?? 'Not classified';
+  let head = interp.patternReason === 'reference-unavailable' ? 'Spirometric pattern not classified: reference unavailable' : HEAD[interp.pattern] ?? PATTERNS[interp.pattern] ?? 'Not classified';
   if (sev?.scored) head += `, ${sev.id}`;
-  else if (sev?.notGraded) head += ', not graded (FEV₁ within normal limits)';
+
   const extra = [];
-  if (interp.flags.some((f) => f.id === 'hyperinflation')) extra.push('hyperinflation');
-  if (interp.flags.some((f) => f.id === 'air-trapping')) extra.push('air trapping');
+  if (interp.flags.some((f) => f.id === 'possible-hyperinflation')) extra.push('possible hyperinflation');
+  if (interp.flags.some((f) => f.id === 'air-trapping')) extra.push('possible air trapping');
   if (interp.dlco && interp.dlco.category !== 'normal') extra.push(`${interp.dlco.category} DLCO`);
   if (interp.bd?.rule2022.significant) extra.push('a significant bronchodilator response');
   const joined = extra.length > 1 ? `${extra.slice(0, -1).join(', ')} and ${extra[extra.length - 1]}` : extra[0];
@@ -52,6 +52,17 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   if (interp.bd && !interp.bd.rule2022.significant) impression += ' No significant bronchodilator response.';
   if (interp.qualityLimited) impression += ' Test quality limits confidence in these values.';
 
+  if (caseData.pleth?.session && !Number.isFinite(caseData.volumes?.tlc)) {
+    impression = impression.replace(/\.$/, '') + '; TLC unavailable, restriction unassessed.';
+    lines.push({ label: 'Lung volumes', text: `Complete TLC/RV are not reportable. ${caseData.pleth.session.warnings.join(' ')}` });
+  }
+
+  const volumeLimit = interp.flags.find((f) => f.id === 'volume-measurement-limited');
+  if (volumeLimit && Number.isFinite(caseData.volumes?.tlc)) {
+    impression = impression.replace(/\.$/, '') + `; Lung volumes require qualification (grade ${caseData.pleth.grade ?? 'unassigned'}).`;
+    lines.push({ label: 'Lung-volume quality', text: volumeLimit.text });
+  }
+
   // Quality.
   const g = caseData.report?.grades;
   if (g?.fev1) {
@@ -59,19 +70,22 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
     lines.push({ label: 'Quality', text: `Grades FEV₁ ${g.fev1}, FVC ${g.fvc}${post ? ` (after bronchodilator ${post.fev1}, ${post.fvc})` : ''}: ${interp.qualityLimited ? 'a grade of D or worse limits confidence in the values' : 'adequate for interpretation'}.` });
   }
 
+  const outsideRange = Object.values(m).filter((x) => x.available === false && x.reason === 'age-outside-range');
+  if (outsideRange.length) lines.push({ label: 'Reference limits', text: 'Measured values are preserved, but age is outside the supported reference range for some indices. No limits, z-scores or classification are assigned to those indices; restriction or diffusion impairment cannot be assessed from an unavailable reference.' });
+
   // Spirometry and severity.
   const sp = ['fev1_fvc', 'fev1', 'fvc'].filter(has).map((k) => `${{ fev1_fvc: 'FEV₁/FVC', fev1: 'FEV₁', fvc: 'FVC' }[k]} ${zt(m[k].z)}${m[k].z < LLN_Z ? ' (low)' : ''}`);
   let spText = sp.length ? `z-scores ${sp.join(', ')}.` : '';
-  if (sev?.scored) spText += ` Severity ${sev.id} by the FEV₁ z-score (2022 scale: mild to ${MINUS}2.5, moderate to ${MINUS}4.0, severe below).`;
-  else if (sev?.notGraded) spText += ` Severity not graded: the FEV₁ is within the normal range of the 2022 scale, which defines bands only below the LLN; a low ratio with normal FEV₁ and FVC may be a normal variant.`;
+  if (sev?.scored) spText += ` Severity ${sev.id} by the ${sev.measure === 'tlc' ? 'TLC' : 'FEV₁'} z-score (2022 scale: mild to ${MINUS}2.5, moderate to ${MINUS}4.0, severe below).`;
+
   else if (interp.pattern !== 'normal' && interp.pattern !== 'indeterminate') spText += ' Severity not graded for this pattern.';
   if (spText) lines.push({ label: 'Spirometry', text: spText.trim() });
 
   // Lung volumes.
   if (has('tlc')) {
-    const parts = [`TLC ${zt(m.tlc.z)} (${m.tlc.z < LLN_Z ? 'reduced: restriction' : m.tlc.z > -LLN_Z ? 'above ULN: hyperinflation' : 'not reduced: no restriction'})`];
+    const parts = [`TLC ${zt(m.tlc.z)} (${m.tlc.z < LLN_Z ? 'reduced: restriction' : m.tlc.z > -LLN_Z ? 'above ULN; review fractional volumes' : 'not reduced: no restriction'})`];
     const abn = ['rv', 'rv_tlc'].filter((k) => has(k) && word(k, m[k].z) !== 'within limits');
-    if (abn.length) parts.push(`${abn.map((k) => `${{ rv: 'RV', rv_tlc: 'RV/TLC' }[k]} ${zt(m[k].z)}`).join(', ')} ${abn.every((k) => m[k].z > 0) ? 'above ULN: air trapping' : 'outside limits'}`);
+    if (abn.length) parts.push(`${abn.map((k) => `${{ rv: 'RV', rv_tlc: 'RV/TLC' }[k]} ${zt(m[k].z)}`).join(', ')} ${abn.every((k) => m[k].z > 0) ? 'above ULN; interpret with TLC, technique and context' : 'outside limits'}`);
     lines.push({ label: 'Lung volumes', text: `z-scores ${parts.join('; ')}.` });
   }
 
@@ -81,11 +95,17 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
     const hb = hbKnown(dl);
     const basis = hb ? 'measured value against the reference adjusted for hemoglobin' : 'no hemoglobin available: reference not adjusted';
     const sub = interp.dlco.subtype && SUB[interp.dlco.subtype] ? `; ${SUB[interp.dlco.subtype]}` : '';
-    let text = `${interp.dlco.category[0].toUpperCase()}${interp.dlco.category.slice(1)}, z ${zt(m.dlco.z)}${sub}; ${basis}.`;
+    let text = `${interp.dlco.severity ? `${interp.dlco.severity} diffusion impairment; ` : ''}${interp.dlco.category[0].toUpperCase()}${interp.dlco.category.slice(1)}, z ${zt(m.dlco.z)}${sub}; ${basis}.`;
     const sc = caseData.scenario;
     if (coHbMeasured(sc) && cohbReferenceMultiplier(sc.coHbPercent) !== null) text += ` COHb ${sc.coHbPercent.toFixed(1)}% is above 2%: the supplementary COHb-adjusted line on the report is not the basis of this classification.`;
     else if (sc && Number.isFinite(sc.coHbPercent) && sc.coHbPercent > 0 && !coHbMeasured(sc)) text += ' COHb was not measured; recent smoking could lower the DLCO.';
     lines.push({ label: 'DLCO', text });
+  }
+
+  const diffusionLimit = interp.flags.find((f) => f.id === 'dlco-measurement-limited');
+  if (diffusionLimit) {
+    impression = impression.replace(/\.$/, '') + `; DLCO session ${caseData.dlcoTrace.session.status}.`;
+    lines.push({ label: 'DLCO quality', text: `Session ${caseData.dlcoTrace.session.status}; retained maneuvers ${caseData.dlcoTrace.session.selectedIds.join(', ') || 'none'}. ${caseData.dlcoTrace.session.warnings[0] ?? ''}` });
   }
 
   // Bronchodilator response.
@@ -109,7 +129,7 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
 
   // Caveats of the session, one line each, and the reference population.
   for (const c of [...(caveats.major ?? []), ...(caveats.minor ?? [])]) lines.push({ label: 'Caveat', text: `${c.charAt(0).toUpperCase()}${c.slice(1)}.` });
-  if (['tlc', 'dlco'].some((k) => m[k] && m[k].available !== false && m[k].matched === false)) lines.push({ label: 'Reference', text: 'The volume and DLCO references come from a European-ancestry population and may represent this patient less well; no ancestry adjustment is applied.' });
+  if (['tlc', 'dlco'].some((k) => m[k] && m[k].available !== false)) lines.push({ label: 'Reference', text: 'The volume and DLCO references come from a European-ancestry population and have population-fit limitations for every patient; no ancestry adjustment is applied.' });
 
   return { impression, lines };
 }

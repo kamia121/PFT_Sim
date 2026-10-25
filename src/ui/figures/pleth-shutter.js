@@ -85,10 +85,10 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
   out.push(text(cx, y - 8, 'Reported FRC', { size: 10.5, fill: palette.axis }));
   out.push(text(cx, y + 12, `${num(data.reportedFrcL, 2)} L`, { size: 21, weight: 700, fill: palette.measured }));
   y += 28;
-  out.push(text(cx, y, data.frcBasis === 'acceptable' || !showQuality ? 'mean of the acceptable trials' : `mean of the ${data.frcBasis} trials`, { size: 10, fill: palette.axis }));
+  out.push(text(cx, y, data.session ? (Number.isFinite(data.reportedFrcL) ? 'mean of retained trials' : 'FRC not reportable') : data.frcBasis === 'acceptable' || !showQuality ? 'mean of the acceptable trials' : `mean of the ${data.frcBasis} trials`, { size: 10, fill: palette.axis }));
   if (showQuality) {
     const sp = data.repeatability?.spreadFraction;
-    out.push(text(cx, y + 14, `Grade ${data.grade}${sp != null ? `, spread ${num(sp * 100, 1)}%` : ''}`, { size: 10.5, fill: palette.text }));
+    out.push(text(cx, y + 14, `${data.session ? 'Overall grade' : 'FRC-only rubric'} ${data.grade ?? 'unassigned'}${sp != null ? `, spread ${num(sp * 100, 1)}%` : ''}`, { size: 10.5, fill: palette.text }));
   }
   const box = data.box;
   const mlPerPa = (box.freeVolumeL / box.barometricPa) * 1000;

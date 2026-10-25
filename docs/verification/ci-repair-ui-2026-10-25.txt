@@ -1,0 +1,61 @@
+PFT Sim: http://127.0.0.1:5199
+modules: sheets present, technologist report and challenges present
+ok   toolbar has the Quality challenge select (Off, On, Varies)
+ok   toolbar has the flag setting (two values)
+ok   the interpretation box is inside the summary area
+ok   the interpretation box is moved into the sheet element sheet-interpretation
+ok   page 2 has a labelled control, closed at first
+ok   page 2 is not shown before it is opened
+ok   wide layout: the report data beside the interpretation box, page 1 and page 2 chosen above the data
+ok   structured questions: named controls in order, with visible pattern, severity, bronchodilator and DLCO labels
+ok   the grade questions are not among the structured questions
+ok   optional free-text impression, labelled as not scored
+ok   no key is shown before checking
+ok   link carries an opaque code, not the archetype
+ok   page 2 opens from the keyboard
+ok   focus stays on the page 2 control after it opens
+ok   page 2 holds the figures (4 drawings; a spirometry-only case has the panel and the z-score graphic)
+skip figure download controls (the details sheet draws its own figures)
+ok   the page 1 button puts the summary back beside the answers
+ok   checking answers shows a score
+ok   feedback lists every item
+ok   the impression is shown beside the composed statement
+ok   the tally counts the checked case
+ok   the reveal compares GLI-2012 with GLI Global
+ok   reloading the link reproduces the same report
+ok   the equation is kept in the address
+ok   the equation choice survives the redraw
+ok   a link with eq=GLI2012 opens with that equation
+ok   the flag setting is kept in the address
+ok   the default flag setting leaves the address short
+ok   no console or page errors over 60 cases
+ok   method tab opens
+ok   a link with qc=1 opens with the challenge on
+ok   stage 1 (advanced review): the statement is requested by a button, and a scored check waits
+ok   stage 1: no grade statement in the page source
+ok   stage 1 with page 2 open: no grade or acceptability text in the page source
+ok   stage 2: focus moves to the note that announces the statement
+ok   stage 2: a scored check is now possible
+ok   stage 2: the test-quality answers are fixed
+ok   stage 3: the quality section appears
+ok   the details line says what page 2 held, and notes when it was not opened
+ok   the details line never calls opening page 2 unnecessary
+ok   opening page 2 changes no item status (it is not scored)
+ok   challenge off: no statement step, and the address drops qc
+ok   report tab opens
+ok   the practice sheets leave the page while the report view is open
+ok   report withholds grades and acceptability before answers are checked
+ok   interpretation toggle is disabled before checking
+ok   CSV export is non-empty and tidy
+ok   CSV file name carries the case code (pft-report-0000008.csv)
+ok   wide CSV downloads
+ok   report HTML downloads
+ok   grades appear in the report view once the answers are checked
+ok   interpretation statement can be added after checking
+ok   print view hides the page chrome and keeps the report
+ok   no console or page errors in the report view
+ok   returning to Practice restores the checked state
+ok   theme toggled (dark)
+ok   theme toggled (light)
+ok   no horizontal page overflow at 390 px, stage 1 with page 2 open (0)
+ok   no horizontal page overflow at 390 px after the key (0)

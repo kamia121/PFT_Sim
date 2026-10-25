@@ -1,0 +1,12 @@
+/** Claim-level source status. A verified rule does not imply validated numerical outputs. */
+export const CLAIMS = Object.freeze(Object.fromEntries(Object.entries({
+  'volume.restriction': { state: 'verified-primary', citation: 'Stanojevic2022', locator: 'Figure 10 p21; TLC below LLN defines restriction', reader: 'Parent primary-source research worker and local Codex journal PDF', date: '2026-10-24' },
+  'model.unvalidated-claim': { state: 'under-review', citation: 'No primary evidence', locator: 'Explicit test of source gate; not used by catalog', reader: 'None', date: '2026-10-24' },
+  'reference.scope': { state: 'verified-primary', citation: 'Quanjer2012; Hall2021; Bowerman2023; ATS2023', locator: 'Original equation scope; ATS2023 Key Conclusions and Recommendations', reader: 'Parent primary-source research worker; ATS2023 additionally opened by local Codex', date: '2026-10-24' },
+  'reference.measurements': { state: 'verified-primary', citation: 'ATS2023', locator: 'Key Conclusions and Recommendations; reference-equation implementation implications', reader: 'Parent primary-source research worker; local Codex', date: '2026-10-24' },
+  'reference.inputs': { state: 'verified-primary', citation: 'Graham2019', locator: 'Patient Details', reader: 'Parent primary-source research worker', date: '2026-10-24' },
+  'reference.transgender-uncertainty': { state: 'verified-primary', citation: 'Stanojevic2022', locator: 'Comparison of Measured Values to a Healthy Population', reader: 'Parent primary-source research worker; precise finding supplied in handoff', date: '2026-10-24' },
+  'severity.obstruction-normal-fev1': { state: 'verified-primary', citation: 'doi:10.1183/13993003.00055-2024', locator: 'Authors reply, 1 February 2024: normal-FEV1 obstruction is mild', reader: 'Parent research worker directly inspected publisher-indexed primary text; local direct fetch 403', date: '2026-10-24' },
+  'severity.restriction-tlc': { state: 'verified-primary', citation: 'doi:10.1183/13993003.00055-2024', locator: 'Authors clarification', reader: 'Parent primary-source research worker, directly read published clarification', date: '2026-10-24' },
+  'severity.diffusion-dlco': { state: 'verified-primary', citation: 'doi:10.1183/13993003.00055-2024', locator: 'Authors clarification', reader: 'Parent primary-source research worker, directly read published clarification', date: '2026-10-24' },
+}).map(([id, value]) => [id, Object.freeze(value)])));

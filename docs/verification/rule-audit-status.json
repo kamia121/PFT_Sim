@@ -1,0 +1,375 @@
+{
+  "scope": "41 semantic rule groups. Not a count of every numeric generator constant; the separate line inventory captures those. Source-text verification does not mean numerical GLI validation. Corrected is an overlapping implementation axis.",
+  "date": "2026-10-25",
+  "counts": {
+    "blocked-complete-coefficient-or-output-validation": 5,
+    "modeled-heuristic": 8,
+    "partially-verified-open-implementation-or-source-detail": 8,
+    "verified-rule-text": 20
+  },
+  "correctedGroups": 25,
+  "rules": [
+    {
+      "id": 1,
+      "rule": "Limits, `interpret/interpret.js`, `reference/gli.js`",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 Table 1; GLI LMS definitions",
+      "coverageAndGap": "`interpret`, `gli`, `two-sided`; rounded cutoff convention vs exact 5th percentile must be explicit"
+    },
+    {
+      "id": 2,
+      "rule": "Borderline, `interpret/interpret.js`",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project teaching convention",
+      "coverageAndGap": "`interpret`; not a society diagnostic band"
+    },
+    {
+      "id": 3,
+      "rule": "Obstruction",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Fig 8 / interpretation algorithm",
+      "coverageAndGap": "`interpret`, `quiz-adapters`, interpretation fixture; exact branch/source audit pending"
+    },
+    {
+      "id": 4,
+      "rule": "Restriction / mixed",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ERS/ATS 2022 Fig 8 / volume algorithm",
+      "coverageAndGap": "`interpret`; no FVC-only diagnosis of restriction"
+    },
+    {
+      "id": 5,
+      "rule": "Preserved ratio / low spirometry",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 text / Fig 8",
+      "coverageAndGap": "2022 Table 5 p18 and nonspecific-pattern text p19 support FEV1 and/or FVC. Without TLC the display now says preserved-ratio spirometric impairment; no universal epidemiologic PRISm definition is asserted."
+    },
+    {
+      "id": 6,
+      "rule": "Hyperinflation",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 volume interpretation",
+      "coverageAndGap": "2022 Table 7 needs FRC/TLC, which is absent. High TLC plus high RV/TLC now means possible hyperinflation only; narrative/concise/fallback paths preserve qualification.",
+      "remainingGapKind": [
+        "absent-reference-feature",
+        "external-reference-dependency"
+      ]
+    },
+    {
+      "id": 7,
+      "rule": "Air trapping",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 volume interpretation",
+      "coverageAndGap": "High RV/TLC is qualified in every narrative variant; restriction, muscle weakness and effort remain alternatives. Regression seed 2 and three restriction/effort contexts checked."
+    },
+    {
+      "id": 8,
+      "rule": "Severity",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Table 1 / Fig 7, text rounding",
+      "coverageAndGap": "FEV1 grades obstruction (normal FEV1 with low ratio is mild); TLC grades restriction; DLCO independently grades diffusion. Mixed/nonspecific composite severity is not scored. Continuous boundary convention is documented."
+    },
+    {
+      "id": 9,
+      "rule": "Severity accepted alternatives",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": true,
+      "source": "Project rounding/scoring choice",
+      "coverageAndGap": "Display-adjacent score alternatives retained only at printed \u22122.50 and \u22124.00. This is a scoring convention, not a physiological cutoff."
+    },
+    {
+      "id": 10,
+      "rule": "BDR 2022",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Table 1",
+      "coverageAndGap": "`interpret`, `bd-2005-display`; dedicated hand fixtures added separately; floating boundary review"
+    },
+    {
+      "id": 11,
+      "rule": "BDR 2005",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Pellegrino 2005 Table 9 printed p960; adjacent BDR prose differs on equality",
+      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention. Decision, display/qualifier, unit-conversion and narrative reason paths now share the same comparison allowance; 200 mL and 12% HTML/CSV/feedback regression fixtures cover exact equality and just-below values.",
+      "remainingGapKind": [
+        "internal-standard-equality-ambiguity"
+      ]
+    },
+    {
+      "id": 12,
+      "rule": "BDR discordance marker",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project convention",
+      "coverageAndGap": "`interpret`; not diagnostic criterion"
+    },
+    {
+      "id": 13,
+      "rule": "DLCO low/normal/high",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS 2022 Fig 11",
+      "coverageAndGap": "`interpret`; subtype/severity rules not fully verified; unscored",
+      "implementationNote": "KCO/VA explanatory claims qualified; raised KCO does not establish structurally intact tissue, and normal KCO does not erase a reduced DLCO."
+    },
+    {
+      "id": 14,
+      "rule": "Quality limits",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project policy grounded in quality standard",
+      "coverageAndGap": "`quality-review`, `challenges-items`; grade does not itself prove uninterpretable"
+    },
+    {
+      "id": 15,
+      "rule": "BEV acceptability",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 Table 7",
+      "coverageAndGap": "2019 Table 7 uses inclusive BEV and plateau limits; prose uses strict comparisons. Explicit inclusive Table 7 convention selected and tested immediately around/exactly at both BEV branches and plateau. Source discrepancy remains.",
+      "remainingGapKind": [
+        "internal-standard-equality-ambiguity"
+      ]
+    },
+    {
+      "id": 16,
+      "rule": "Maneuver faults",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 Table 7",
+      "coverageAndGap": "2019 Table 7 fault matrix includes explicit zero-flow assessment. Recorded maximal post-expiratory FIVC uses the one-sided inclusive difference, rejects acceptability of both values but not usability, and preserves other fault overrides. Missing/unconfirmed/display-only observations are explicitly not assessed, with report/export disclosure. Default inspiratory limbs remain display-only; no automatic acquisition or fault detector is claimed. Pediatric and extrathoracic-obstruction investigation scope is absent."
+    },
+    {
+      "id": 17,
+      "rule": "Pause at TLC",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 text; project's scoring extrapolation",
+      "coverageAndGap": "The >2 s pause is now a procedural coaching warning, not an independent Table 7 FEV1 veto. The physiological size of the simulated pause effect remains modeled."
+    },
+    {
+      "id": 18,
+      "rule": "EOFE",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 EOFE text / Table 7",
+      "coverageAndGap": "Completed-set maximum comparison is supported by 2019 EOFE prose. Singleton no-plateau short FET remains unconfirmed; pre/post remain separate. Adult tolerance only; plateau window is assumed by input and pediatric criteria absent.",
+      "remainingGapKind": [
+        "absent-pediatric-feature-outside-adult-scope"
+      ]
+    },
+    {
+      "id": 19,
+      "rule": "Spirometry grades",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2019 Table 10, adult",
+      "coverageAndGap": "`quality`; pediatric criteria not implemented"
+    },
+    {
+      "id": 20,
+      "rule": "Reported maxima",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Graham 2019 reporting; last clamp is model policy",
+      "coverageAndGap": "`quality`, `rt-invariant`; clamp needs explicit provenance, not primary assertion"
+    },
+    {
+      "id": 21,
+      "rule": "DLCO inspired volume",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2017 acceptability table",
+      "coverageAndGap": "V4 computes VI/VC using the largest eligible measured same-session forced or linked slow VC; no latent VC or VI substitution. Low-VI A requires largest VA from another acceptable maneuver, with no self comparison or circular low-VI-only acceptance. A completed B-only session may report qualified B fallback while explicitly retaining the unconfirmed A alternative. Root/set selection is a documented engineering resolution, not a quoted published algorithm."
+    },
+    {
+      "id": 22,
+      "rule": "DLCO timings",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2017 Figure 5 pp14\u201315 and acceptability Table 3",
+      "coverageAndGap": "V5 Jones\u2013Meade uses back-extrapolated zero, t90-based inspiratory time and arithmetic sample-time midpoint throughout forward decay/analyzer/figures/full-precision quality. Independent nonlinear and asymmetric fixtures plus legacy v2\u2013v4 numeric hashes. t85 criterion remains separate. Synthetic waveform validation and 2018 instrument QA pipeline are not claimed."
+    },
+    {
+      "id": 23,
+      "rule": "DLCO washout/sample",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Graham 2017",
+      "coverageAndGap": "Classical sample exception VC <1.0 L plus confirmed clearance, reduced washout VC <2.0 L, RGA virtual sample 0.085\u20130.500 L and clearance are criterion-tested in the session core. Synthetic acquisition remains classical only; its clearance proxy is a teaching model, not a complete RGA instrument implementation."
+    },
+    {
+      "id": 24,
+      "rule": "DLCO grades A\u2013D",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Graham 2017 Table 3, pp21\u201322 and Reporting values p25; 2018 measurement correction distinguished",
+      "coverageAndGap": "V4 uses explicit interim matching rows, A-only repeatable subset preference, qualified nonrepeatable/single A, then B-D fallback after repeated testing; F-only reports nothing. Unknown criteria and unspecified mixed failures remain pending/unclassified, not an invented letter. No session letter grade. Rooted low-VI acceptance-set selection, subset ties and KCO quotient of reported DLCO/mean VA are disclosed engineering policies requiring focused independent review. Primary table does not uniquely specify all mixed-failure mappings.",
+      "remainingGapKind": [
+        "standard-underspecification",
+        "disclosed-engineering-policy"
+      ]
+    },
+    {
+      "id": 25,
+      "rule": "Hb adjustment",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 eqs 31\u201333",
+      "coverageAndGap": "`dlco-reference`, `scenarios.fixes`; verify unit g/dL and sex/age input; coefficient sex is not gender identity"
+    },
+    {
+      "id": 26,
+      "rule": "COHb reference adjustment",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "Graham 2017 eq 37",
+      "coverageAndGap": "`dlco-reference`; simulator measured effect uses 1.5% baseline and 1% slope, separate teaching model; eq38 not simulated"
+    },
+    {
+      "id": 27,
+      "rule": "Pleth panting",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Bhakta 2023 lung-volume standard",
+      "coverageAndGap": "Corrected 2023 Table 2 0.5/1/1.5/2 Hz boundaries and actual seed10 normal/poor 1.681Hz usable trial tested. No-obstruction band implemented; significant-versus-minimal obstruction cannot be inferred from a universal source cutoff, so reduced-input obstruction context and synthetic amplitude/fault recognition remain qualified. Existing 1\u20131.5Hz obstruction handling is a simulator review policy, not a complete source-defined mapping.",
+      "remainingGapKind": [
+        "absent-context-input",
+        "no-universal-source-cutoff"
+      ]
+    },
+    {
+      "id": 28,
+      "rule": "Pleth repeatability",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Bhakta 2023 grading/reporting table",
+      "coverageAndGap": "Retained-pair means, outlier exclusions, linked IC/SVC, null/pending outputs and source counts integrated in v3+. Parent independent review adjudicated retained eligible linked SVC for RV as defensible from primary reporting selection/discard wording; no discarded SVC/unrelated FVC substitution. Engineering subset/tie preferences and synthetic within-maneuver assessment remain documented. V3 linked acquisition order corrected to FRC\u2192TLC (IC)\u2192RV (expiratory SVC)."
+    },
+    {
+      "id": 29,
+      "rule": "Pleth grades D/E/U/F",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "Bhakta 2023 corrected Table 4, Table 3 linkage and reporting pp18\u201319",
+      "coverageAndGap": "V3 implements retained FRC/SVC counts independently; A/B <=5%, C/D/U <=10%, E singleton, F none; weakest component limits overall grade. Singleton repeatability remains unassessable, pending pairs have no assigned overall grade. Synthetic quality recognition is not clinical waveform validation. V2 retains labeled FRC-only rubric."
+    },
+    {
+      "id": 30,
+      "rule": "Resistance",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Original resistance references + pleth standard",
+      "coverageAndGap": "`pleth-loop`, `panel-pleth`; universal ULN and synthetic morphology unverified"
+    },
+    {
+      "id": 31,
+      "rule": "GLI LMS",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Quanjer 2012 / Bowerman Global / Hall2021 / corrected Stanojevic2017",
+      "coverageAndGap": "`gli`, `vectors`, `dlco-reference`; authoritative off-grid and inversion outputs still needed"
+    },
+    {
+      "id": 32,
+      "rule": "GLI2012 group terms",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Quanjer 2012 supplement",
+      "coverageAndGap": "`gli`, 2664 rspiro vectors; independent agreement is not coefficient provenance"
+    },
+    {
+      "id": 33,
+      "rule": "GLI Global",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Bowerman Global original paper and workbook; ATS2023",
+      "coverageAndGap": "`gli`, `vectors`; coefficient version/hash audit pending"
+    },
+    {
+      "id": 34,
+      "rule": "GLI2021 volumes",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Hall2021 Table 3 + workbook",
+      "coverageAndGap": "Archived spline-workbook comparison is recorded; original printed coefficient table still needs independent rechecking and official-output fixtures remain unavailable. Do not request the already archived spline workbook again."
+    },
+    {
+      "id": 35,
+      "rule": "GLI2017 TLCO",
+      "sourceStatus": "blocked-complete-coefficient-or-output-validation",
+      "correctedInThisBranch": false,
+      "source": "Stanojevic 2020 correction Table 2 + corrected SI/traditional workbooks",
+      "coverageAndGap": "`dlco-reference`; original 2017 supplement alone insufficient; provenance JSON records corrected workbook hashes"
+    },
+    {
+      "id": 36,
+      "rule": "Reference range",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Each source's applicability text",
+      "coverageAndGap": "Clinical reference outputs now fail closed outside supported ages; measured results remain. Explicit synthetic anchor clamp preserves construction only. Original TLCO 5\u201385 versus corrected dataset 5\u201380 provenance remains unresolved; source/correction applicability still requires confirmation.",
+      "remainingGapKind": [
+        "external-source-version-applicability-block"
+      ]
+    },
+    {
+      "id": 37,
+      "rule": "Sex input",
+      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "correctedInThisBranch": true,
+      "source": "Reference tables / ERS/ATS 2022 transgender text",
+      "coverageAndGap": "Missing/invalid reference-sex input now rejected. Gender identity and binary model input remain distinct. Reference input choice after GAHT is unresolved; population validation is not established.",
+      "remainingGapKind": [
+        "scientific-population-validation-ambiguity"
+      ]
+    },
+    {
+      "id": 38,
+      "rule": "Equation comparison",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": false,
+      "source": "ATS2023 + method contract",
+      "coverageAndGap": "`interpret`, `scenarios.fixes`; no fictional GLI2012 lung-volume comparison"
+    },
+    {
+      "id": 39,
+      "rule": "Race-neutral use / discordance",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ATS2023 https://pmc.ncbi.nlm.nih.gov/articles/PMC10112445/",
+      "coverageAndGap": "Primary supplied by research and opened in this audit; numerical population validation remains distinct"
+    },
+    {
+      "id": 40,
+      "rule": "Transgender context",
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
+      "source": "ERS/ATS2022 reference-equation section",
+      "coverageAndGap": "2019 Patient Details; 2022 Comparison of Measured Values to Healthy Population; Foer2021 Table2. No universal hormone-duration switch; qualitative dual-reference sensitivity is not individual validation."
+    },
+    {
+      "id": 41,
+      "rule": "Scenario caveat grades, study judgment, quiz partial credit",
+      "sourceStatus": "modeled-heuristic",
+      "correctedInThisBranch": false,
+      "source": "Project educational conventions",
+      "coverageAndGap": "`quiz-scoring`, `challenges-items`, `quality-review`; not society diagnostic rules"
+    }
+  ],
+  "measurementCoreCheckpoint": {
+    "date": "2026-10-24",
+    "module": "src/core/pleth-session.js",
+    "integratedIntoProduct": true,
+    "status": "V5 timing correction and fail-closed clinical age handling added for independent review. v2\u2013v4 acquisition fixtures preserved; synthetic waveforms, KCO/root/tie policies and outstanding GLI coefficient/output blocks remain explicit."
+  }
+}
