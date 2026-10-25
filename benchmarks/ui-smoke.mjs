@@ -56,7 +56,10 @@ try {
   }, wideLayout);
   check(order, wideLayout ? 'wide layout: the report data beside the interpretation box, page 1 and page 2 chosen above the data' : 'order on the page: summary, interpretation box, page 2 control');
   const page2Control = wideLayout ? 'button[data-ws-view="details"]' : '#toggle-details';
-  check((await page.locator('#answer-form fieldset legend').allInnerTexts()).slice(0, 4).join('|').match(/Pattern.*Severity.*Bronchodilator.*Diffusing/s) !== null, 'structured questions: pattern, severity, bronchodilator, DLCO');
+  const firstQuestionNames = await page.locator('#answer-form fieldset').evaluateAll((fields) => fields.slice(0, 4).map((f) => f.querySelector('input[type=radio]')?.name));
+  check(firstQuestionNames.join('|') === 'pattern|severity|bronchodilator|dlco'
+    && /Pattern.*severity.*Bronchodilator.*Diffusing/is.test((await page.locator('#answer-form fieldset legend').allInnerTexts()).slice(0, 4).join('|')),
+    'structured questions: named controls in order, with visible pattern, severity, bronchodilator and DLCO labels');
   check(!/FEV.? grade|FVC grade/.test(await page.locator('#answer-form').innerText()), 'the grade questions are not among the structured questions');
   check((await page.locator('#impression').count()) === 1 && /not scored/.test(await page.locator('label[for=impression]').innerText()), 'optional free-text impression, labelled as not scored');
   check(!(await page.locator('#reveal').count()), 'no key is shown before checking');

@@ -1,0 +1,1614 @@
+{
+ "provenance": "Reviewed generator v2-v5 behavior after source-backed interpretation corrections, linked pleth v3, replicate DLCO v4, Jones–Meade v5 and explicit FIVC assessment metadata. Historical hashes are retained; old cross-version identity failures are not reclassified as historical passes. These locks do not validate clinical models or GLI outputs.",
+ "originalFixtureSha256": "22cbe203fac44e223fb2162e20dbbf94bc3ddb021c07ab492513241dab19b84d",
+ "versions": {
+  "2": [
+   {
+    "seed": 1000,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "d15104bc7bcbc4cf32299e97b2f6b3f554e0a65698f685d84a3ba4257192d1d4"
+   },
+   {
+    "seed": 1037,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "c9d47eea4bd0cfe92e5fab34f3f4c1632fdeb273fb14bb2e54cfaf7946abd4bc"
+   },
+   {
+    "seed": 1074,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "fea0b38f3b4eec1a2562366db1779fcce0ceaa6696f5f99cdd8a46cefb6f97cd"
+   },
+   {
+    "seed": 1111,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f2e55eaeb3834d22b518e3abd007f8df66a10aa0d5027bd90070f3acb059dd4a"
+   },
+   {
+    "seed": 1148,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "2f1d65d1fdf977744a8d90bc53be9c5302344d98d970d279eafbf0ed12d77e19"
+   },
+   {
+    "seed": 1185,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "7f2d5528e2f8edfd0b13aa3b83fdef9450de2d77188486b0ead71430a41dfa03"
+   },
+   {
+    "seed": 1222,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "0500f48e0810c8acd70ef2be49643f05186d0c9c70ba9fc8cb9e1b25261c8e42"
+   },
+   {
+    "seed": 1259,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "f98af07912c541499c405af3a5d942172070adfeb447c53a5d785d6af4303e51"
+   },
+   {
+    "seed": 1296,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "4581b0779749b98a3f65e5c6bd3b095b09f4422f646ba2a0e1c7372ff8308e0a"
+   },
+   {
+    "seed": 1333,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "85e2720a7995d30c01a1d0b8a3e27061ab6f1c39fa04843b51962ea2c9897237"
+   },
+   {
+    "seed": 1370,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "96b3b54e1a6e1fd7d0f7b7b108cb1b3d0604ac77ecd0ea83a4944b032e0dc02b"
+   },
+   {
+    "seed": 1407,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "55f43480cc8e984d5ff6b1903b5a777aaff5078cdde578ffad4bf8784bc21e5d"
+   },
+   {
+    "seed": 1444,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "0a68d3c4297a06579eaebbf523d97d26001aaf996e523d83bcb7214e839f9d04"
+   },
+   {
+    "seed": 1481,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "1f10c13d07717065d748e7a2fced71416193834a39af40f4b69f51e5eb9bc055"
+   },
+   {
+    "seed": 1518,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "5abae66a3cca1c537eb2e2c07ecadc7dfcb799af3954e84acfe755a388e12a6d"
+   },
+   {
+    "seed": 1555,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "c4ea52d0ba5f4b04b4774a2d0e4abd728ae3461d545b27e0e0ffb6a5ab412c91"
+   },
+   {
+    "seed": 1592,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "9266d1483efbec47c9aa9d4b0faf180fc7fdbb804d54541bda6ca102907cf7d9"
+   },
+   {
+    "seed": 1629,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "43715f010969478e61ec599e0b0377151b158f5b196968ff3c0ccf6a374a96fb"
+   },
+   {
+    "seed": 1666,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "76269563f39c12effce59baeabde60840c1fdd8fa68258cbfd1de2bac586b4a0"
+   },
+   {
+    "seed": 1703,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "e574d8f8522c72488e325bdd4626e4e35fadde58ca8b316a1c1ea751ceb9f7a2"
+   },
+   {
+    "seed": 1740,
+    "archetype": "normal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "785cf129b4ccd3e8bbd63f0dfdc6e9a40b0e553733a934828f0d3d95ea63453c"
+   },
+   {
+    "seed": 1777,
+    "archetype": "obstruction",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "415528bcd23a500a68d456655b096d7fcf087826177e0e87f71141244951b780"
+   },
+   {
+    "seed": 1814,
+    "archetype": "restriction-parenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "1c2bad59ca51151d467f2bfbb6c5c618f100f8edf82ef400b1b3e9f558ba9c46"
+   },
+   {
+    "seed": 1851,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "1c3b98660985a1876e477490cc6db61203817cff582f501bb525c163f6f897ca"
+   },
+   {
+    "seed": 1888,
+    "archetype": "mixed",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "dcbbdaa3ef8591f44714eeb0c9ccb2a2a46c7f4f1c2e6fcd78a228f495708fe6"
+   },
+   {
+    "seed": 1925,
+    "archetype": "nonspecific",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "511e3d4b9c40a8e7cf5fc6b0331b9f20ac5f26d2650fddd21042a682560ecbf0"
+   },
+   {
+    "seed": 1962,
+    "archetype": "low-dlco",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "63389432237c614e71558d3cba6191c38bdb6cb15c79e01a0acbf8b6161231fc"
+   },
+   {
+    "seed": 1999,
+    "archetype": "anemia",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "a5f04fb9a80172449411c790e5a9e5ac1f5b8f30703f384ea4e4ca33a7eee339"
+   },
+   {
+    "seed": 2036,
+    "archetype": "obesity-low-erv",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "7b76bd0ec03b2696dc0cfb1a47262649cf2fdbc0c77a37b96d6ebd26c0e55030"
+   },
+   {
+    "seed": 2073,
+    "archetype": "bd-discordant",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "a02f170751b7e66b117d304a379021300c6ae44924f27b00c5272ef892ed8ef8"
+   },
+   {
+    "seed": 2110,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "35ef219b7b8513ce2bcec348bd69fe27d8ca072c63b8f86988697747c7f1d553"
+   },
+   {
+    "seed": 2147,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "f2330f2ec1dc5bba1105f26d5a3b2febea94372f1caa24de663225e68c06a5a5"
+   },
+   {
+    "seed": 2184,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "47eb277def41e7e0d76086ecc31d6d9d3e956a3da77ac6d45eee8b22cea5bf17"
+   },
+   {
+    "seed": 2221,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "e68ea9991ae6108ac92470b7e3469f449ceb8e7e7c7f8ee25d568b0bcbf8d813"
+   },
+   {
+    "seed": 2258,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "7f73b89d112d398ae77fcc0d39af0215ec45f2edaa6a713b2cdd80ae1f973e94"
+   },
+   {
+    "seed": 2295,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "561a53c731ea85ec4e95018f90ce737521bcf7bbbcd3c2c1065f4bcb7700d333"
+   },
+   {
+    "seed": 2332,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "8fe40658fcb0e9d88fa77ec40b05a3dc1fe234617d5c455f8fcaf0e861efa1f1"
+   },
+   {
+    "seed": 2369,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "dafd1248822760349955961f01b3bf4d569baa2b99fe24e576f6a449a4592902"
+   },
+   {
+    "seed": 2406,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "4c45dafc066b24ccf7c1551e5d0f93d7286a09eb60e1bba6645316747a243c94"
+   },
+   {
+    "seed": 2443,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "d9ef53dcdf7344b2129df4fdc915b5c0d88bcaf7bc38cb79db36fcddd2c6dd54"
+   },
+   {
+    "seed": 2480,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "30b6d15d573aef16afd254f5f38f3d31a12a50232c2d35d984975b4761935e85"
+   },
+   {
+    "seed": 2517,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "92d7b7ecd9f65cd01b3af56640a6fa8c75684deaf383e8f7740b875c87fdc494"
+   },
+   {
+    "seed": 2554,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "fc6a75867ec4c55d64a80e7244697dab9ea53c212dc9d7c658586a852b73df5c"
+   },
+   {
+    "seed": 2591,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "665539053159ff2fe14dbc4c9ab9335054add50ea018549a7ef3e363dbe8bb58"
+   },
+   {
+    "seed": 2628,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "d7ade8c85c213ef388bdf2d143c7001d92a1648c1a65997b104e83beb53dcf62"
+   },
+   {
+    "seed": 2665,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "6ea538fb01ac323315808fdc33a8ee1877966d09cb6ac51aab1b89169c4268c5"
+   },
+   {
+    "seed": 2702,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "3a6e557e2bc2381d43b1678fc15412cb09db2262c43cc1a642c79e7723dfe8e7"
+   },
+   {
+    "seed": 2739,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "abd73cf21460bfddeddf4dd6c15da1596433db4af26865e38d093ff95db58af0"
+   },
+   {
+    "seed": 2776,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "871d82ec2a7e063e7110b5de8878c1f76d90d87ef972c2723dc0a9b3d77b57f1"
+   },
+   {
+    "seed": 2813,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "6adb16fa969f767e306a8fcd6ec3a97398f5683727461527b352b10f2d9eaaa2"
+   }
+  ],
+  "3": [
+   {
+    "seed": 1000,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "73e858c9636fe9185b5ea6a20b3c68922b098c175a716ad5b83bf3cd289948bb"
+   },
+   {
+    "seed": 1037,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "83275eeb6e51dd33a92b3a628feea426ee6c83b91033fa30b67958fed3a4d1a6"
+   },
+   {
+    "seed": 1074,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "283dba07d127e80a9da164dcc60903ced1ae8e0bcb6acfe0e9563f476e28d929"
+   },
+   {
+    "seed": 1111,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "2ce1c0d4d9aec3f9b939e14c2745b00b3a1f9c0278fb62235361a9cb86923caa"
+   },
+   {
+    "seed": 1148,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "826bfca820bebc1c787537604b6a36dfee9c1e3307f45c03d03fe1a82b245ad7"
+   },
+   {
+    "seed": 1185,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "4a0065d58d10c56e045d3e7d469edc99db21a1f762df41a07dee9e3634390c08"
+   },
+   {
+    "seed": 1222,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "fa8efc7bc98c10dab5921e427ce9c5ab42839196f3486736c7894bb4f375e901"
+   },
+   {
+    "seed": 1259,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "baebf5254dd1a77164f7f87b471ffe784af1a43dbb1f2c4028d9cdf641efe9dc"
+   },
+   {
+    "seed": 1296,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "4bb6e45dfc51f800a9fab16744f9e2e8c6fe42ebb01cc373762a9751d85ffbdd"
+   },
+   {
+    "seed": 1333,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "54b7cfcea454a17ade733d3b7b686234194c9879d164030a41f0ce572ee3d41e"
+   },
+   {
+    "seed": 1370,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "a83752e2e27802069d120a716089289e9fd8e3655bd9fa2d295e6bb05e169600"
+   },
+   {
+    "seed": 1407,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "7619c79e2048de62e93432b5b61ac7b2d7dd5ebaa73e83988206cb20611989b4"
+   },
+   {
+    "seed": 1444,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "31e4b3998ea5809e7283ce43bcfac91748956869a2f5cd8748e8f2f9d6697005"
+   },
+   {
+    "seed": 1481,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "9cea6b66786cbc5042357c037e58ed28c3a60aa0bc39a6860f704422c193abeb"
+   },
+   {
+    "seed": 1518,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "158b0b05033e310d677154243328fd172635d7fc888844937773a698622522cb"
+   },
+   {
+    "seed": 1555,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "25e74b913b4e3910e7bdb160ac2d13f304f553fb67663b5dee809a17095c0281"
+   },
+   {
+    "seed": 1592,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "f68823d03739524868bb73d9a74aad236e8550f4a8281a32efd4d834aeecc6c6"
+   },
+   {
+    "seed": 1629,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "114ed34797f096a38ddd3ff4373ce2d13ea433b144718e0b0fc11bc019f0a320"
+   },
+   {
+    "seed": 1666,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "c10f73bb03de4ffea49e1139642ba806cd49c6d81b0c2237830e0181e94d68fd"
+   },
+   {
+    "seed": 1703,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "1d7aab3a697a69565f10e82ea17b989d80916f5a35d56806912ba1fa809351a3"
+   },
+   {
+    "seed": 1740,
+    "archetype": "normal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "5ad6e85729958e8b050dd1cfceb998287d46d3b5155eaac78b46599a83e74fcb"
+   },
+   {
+    "seed": 1777,
+    "archetype": "obstruction",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "1778b0b354ae0bbb35ebefadc147c8f6b98b4c1d30b1454fb856d6eb322b00d4"
+   },
+   {
+    "seed": 1814,
+    "archetype": "restriction-parenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "8219f17b87c000ac482185a172d464511bfe973b54788982a013a01ae46c6bc7"
+   },
+   {
+    "seed": 1851,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "1d54a92e5f98e2232d10e98b9a55f1944a5f2d4c0fa926bc04ebcff9f68f50af"
+   },
+   {
+    "seed": 1888,
+    "archetype": "mixed",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f7a75ebf690f9e5698d91a393bed42b51a7a104bc4720d59ab560a5cfd21e724"
+   },
+   {
+    "seed": 1925,
+    "archetype": "nonspecific",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "34755438646f1cee4a0ea0906394cec4025d768ae0cb744e245e22a7b08b44d8"
+   },
+   {
+    "seed": 1962,
+    "archetype": "low-dlco",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "564acb78cea2d8cac7d4fea6b9337efb67fb887404ed6e274be1822d3f2acc58"
+   },
+   {
+    "seed": 1999,
+    "archetype": "anemia",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "60a47a04eed775dde8a2a429afad2808870affa4321614a9ca1766680ee7ee7c"
+   },
+   {
+    "seed": 2036,
+    "archetype": "obesity-low-erv",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "0a85d294b416207255d5061627ae03f1303834a77a7c5270a5bc412c1f7d0f2d"
+   },
+   {
+    "seed": 2073,
+    "archetype": "bd-discordant",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "29225121575b50b37ca89b7f1c77142483a7c208a73054a56ac62ae4f6d94454"
+   },
+   {
+    "seed": 2110,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "50351470dc7a2948cd94ca5fe6dc84cf8ccfc9a0c0efa0a9e81c76f94dbf0b1d"
+   },
+   {
+    "seed": 2147,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "d6da466c64379dba746470123c189e1314112069281ffdba588b5a93d5b8eddd"
+   },
+   {
+    "seed": 2184,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "253c541b0aa7eb6901467e468947dcf856f616951b446700b083714ef98a6700"
+   },
+   {
+    "seed": 2221,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "7458b4fcba170cac31ed14ce51789d192e55afdb67221ad545bc874de7940f6d"
+   },
+   {
+    "seed": 2258,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "340fbba64eb84983e66e02e81c8aac17f0b2932e1be375a8499d349eee50ca62"
+   },
+   {
+    "seed": 2295,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "17e7421511c3fe4b25a9d5fccc193134761a5f455ebd69cb8dddf1ea26aa7765"
+   },
+   {
+    "seed": 2332,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "9c0b9bded7891a8296b62471d8217c2a92325a5ef40ef8bd59f6a76f234eea92"
+   },
+   {
+    "seed": 2369,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "da4176a0af0ec9a358b23b7481ac9996843d5eb19b72798b59712f380dd2f008"
+   },
+   {
+    "seed": 2406,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "d1666c684fdb9a04418d1936600a54359d39780ed381526253489cfabb522053"
+   },
+   {
+    "seed": 2443,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "fe838f369b50222e1b767e2b853494896cf3f470a63ae114f9a05ebdb6762b94"
+   },
+   {
+    "seed": 2480,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "509c087974b5e3a54b9c3a5ee687307ff23da26c2c9606281f5b45200c802f4d"
+   },
+   {
+    "seed": 2517,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "fe6732f1573537b71ea58aa8c88a2fe578e89b1d294baf603cd74e44b337f019"
+   },
+   {
+    "seed": 2554,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f61f5f20653a02852660777a87a5a36a74f67f232412725fa51108eb7ec6c20b"
+   },
+   {
+    "seed": 2591,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "30f3673fa86e8e5eb515f3b1db3884973df05352bfc30a733bf8ced2bca5911f"
+   },
+   {
+    "seed": 2628,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "dd7315d900ebc0c7967fb66ae35ecc42afa364c64b749b9fa0a55908e8299014"
+   },
+   {
+    "seed": 2665,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "c9570a033a12ff714253a6083e7a86e7cb14409c61ce117c0b0f515677f0766e"
+   },
+   {
+    "seed": 2702,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "b7c2a0afce61629a95061ebf27ef406a8d552b99e1aa81f391e356f7620416b5"
+   },
+   {
+    "seed": 2739,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "349d39a2142088b968a269c4b45d4e5fe4e067165acc114c78efa0a98905605f"
+   },
+   {
+    "seed": 2776,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "4b20954e5534d11c293703854f69b42f7143d21e36ffe3aa0930fa372b52b784"
+   },
+   {
+    "seed": 2813,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "a136019d7d052975d226fac775c063ac5984072e3b1d6712ee7f8d11a0ba71b0"
+   }
+  ],
+  "4": [
+   {
+    "seed": 1000,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "ca8c5bd4f877322b3f1f333031b777bbcb3c0272c99c12902613be461f7d967f"
+   },
+   {
+    "seed": 1037,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "19bbd39364c9128af8ea2067da143c3fa3728e2ae516a54ba3ad7657a6669897"
+   },
+   {
+    "seed": 1074,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "ffe3fae889131513f01a8708679951d6b9d645aca4f6406b3b4db32caa5068e1"
+   },
+   {
+    "seed": 1111,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "327439f8867f5551dd38347fc52241bde61f09412c8f9e76983e972730c0443a"
+   },
+   {
+    "seed": 1148,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "3acf18664d1b244f91b55016b1ec391c4e822d64e489a2cbfa373e490c9fc202"
+   },
+   {
+    "seed": 1185,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "5abe84a6ea974dd71e4b9f28778786b626aefd996862334e18cbc28b5c302c92"
+   },
+   {
+    "seed": 1222,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "039b26313bfbd0e2dc821c6bea92f5e5b366ceba2394d2cf65c6096a9dd36d92"
+   },
+   {
+    "seed": 1259,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "6101cd0ed091db703ef7fe1cc5d379b5f5c33e602965ffa711a571cdfb2f065f"
+   },
+   {
+    "seed": 1296,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "b15777fdcd869f274e415f84ae7968f56d98e147f272eb34bf079185a0cd006b"
+   },
+   {
+    "seed": 1333,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "4dfa4662f5a8e2fe9265b4f2042fa2e911cf8c8433f56f28f13299ce06161f91"
+   },
+   {
+    "seed": 1370,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "b48b8ad3b2f7632a8eca87df10c217d60576096c8ff58f6e912d220f90a7a36a"
+   },
+   {
+    "seed": 1407,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "a6cb94e2e3e944fe056ca9b82c932e1ca8cc0afea5b7cc642a04d95695170d89"
+   },
+   {
+    "seed": 1444,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "2418a92f664df4c7f3fb51d4c20ed3839983a25ed28168ab974fc819b794aa81"
+   },
+   {
+    "seed": 1481,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "3d37ef31d1ccd610137e77216840d7e158d895724031d947e07690005e8d2621"
+   },
+   {
+    "seed": 1518,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "6ccc6ef017ea1c4409fa6d13815d3da27e894cce00a93f9fc93d5da38fe5f04e"
+   },
+   {
+    "seed": 1555,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "a0cf8f91a443cf82eef1679394f1c11a156c8f4b13203692498f93be91c39f7f"
+   },
+   {
+    "seed": 1592,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "9335faf06021c1057a42afd74a9f07549000452f502b200806c294892593f388"
+   },
+   {
+    "seed": 1629,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "d5f1f94adf164b0a8727ba9d669e57330a15249acd3986bc73a470f4ad3d3049"
+   },
+   {
+    "seed": 1666,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "d652da548b2f0a557a76e254eb2992a86593bd4bbd7dff1a2b51ce41027bce1f"
+   },
+   {
+    "seed": 1703,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "fd7932bdfceb2ed04a21dc5e9fc14d1c14776466d43160f0b09824df9b8c56de"
+   },
+   {
+    "seed": 1740,
+    "archetype": "normal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "7cc2eb286b924e952b2a6f09a52e26d5d37d52a37c827ccb63f054ca276df864"
+   },
+   {
+    "seed": 1777,
+    "archetype": "obstruction",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "6f37e28fff54a94094ecf9c278ad500c82549798f96b052d560c6ebbd767a262"
+   },
+   {
+    "seed": 1814,
+    "archetype": "restriction-parenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "3f93aa86f5b1041e7d94b76ef932ad04d7c92c964f171ac2becca999a80b9e07"
+   },
+   {
+    "seed": 1851,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "facc759dd3537ff2b9743d0c6f478afaebe24e9a669b7ec29ffba0f0b1d37590"
+   },
+   {
+    "seed": 1888,
+    "archetype": "mixed",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "63641c4e3f205930a3af3dcc20ddc613bb6c5173550c604a2788ac8a9980c1a9"
+   },
+   {
+    "seed": 1925,
+    "archetype": "nonspecific",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "37e9dbd2e69b83b2542ec045004fc9f196da4a92f9bd5180df0cacf10fca22af"
+   },
+   {
+    "seed": 1962,
+    "archetype": "low-dlco",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "c8f6febf0c59639af01181041db536e18d4f155ffeed5b773a395f71c270004e"
+   },
+   {
+    "seed": 1999,
+    "archetype": "anemia",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "55c84f94a3fcd8b9a032d4e312a9ae4bd7f6a9200784cf75bbc351cc68e680d0"
+   },
+   {
+    "seed": 2036,
+    "archetype": "obesity-low-erv",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "e33665071d461dc53ad4eb6d609225e0bc1f08c18f652effcdba8e96c5ccfc8c"
+   },
+   {
+    "seed": 2073,
+    "archetype": "bd-discordant",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "bea62ee28392e26b4c7542cfd7841998ff5fe4112475987ade04c42045f5b698"
+   },
+   {
+    "seed": 2110,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f7af5f8049ea71cb1c65597c14e7434fdf88d4f2d8919180decea6a07e072c97"
+   },
+   {
+    "seed": 2147,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "359fdfbab43208d3776b7f1abfdea2122eb3cd14c592dde38bf61f26ed0cfe33"
+   },
+   {
+    "seed": 2184,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "e1a17a0e8e172f69e0b99c759c5026eed3da35190bc776d38ee5ac4f47abf67a"
+   },
+   {
+    "seed": 2221,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "de850ffb9967856d7e9808f81b04afd5069025043be05665168c979cf37710a9"
+   },
+   {
+    "seed": 2258,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "eea52a7a90d1893503444f1388daf123ba7ca9c882553087fd8e1ed55c841c64"
+   },
+   {
+    "seed": 2295,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "c217f925e8d178ab4df34d8b2de8834a24bae59b9533f985ac9571173bfd7d51"
+   },
+   {
+    "seed": 2332,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "69cbbdd7da799b2a59900895acf6eca63495a600254b00de29b7aeb49c758572"
+   },
+   {
+    "seed": 2369,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "8a668547eef594339981d0d2515958eb6bcad3eb677fc8778929607083d86e73"
+   },
+   {
+    "seed": 2406,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "a0c2a7a7980ce11081fc1e61fa1ab37211a2eb08edd1f4ae26272b6b58ef7cd2"
+   },
+   {
+    "seed": 2443,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f4e4c26433267f0015651d71c8e18c08c23a438442a1a30ec436df4da06a984c"
+   },
+   {
+    "seed": 2480,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "8a2e15c15f08e5bf59ab142af4ef94d5216ef4e17a17b4c2f779aecc86a57bbc"
+   },
+   {
+    "seed": 2517,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "20ca56c5be51aafb04b93520a87adecbe5381441a0e9de01a57bb1af96636730"
+   },
+   {
+    "seed": 2554,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "3d2d679160673dcefe2e19bc8788b29db57dd223607cf5fb955de86ed4efccaa"
+   },
+   {
+    "seed": 2591,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "940c875b2f8c97aefad084b3b350829b66c4ac7b7de148e86892489315a84090"
+   },
+   {
+    "seed": 2628,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "d3545cb04b07b693d36c4f8e0dd0faeb882679679feecce0ce571c1f1117e80c"
+   },
+   {
+    "seed": 2665,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "392bdf89078323354cd258386c582982098eb838624b2d780a5c96efed177d1a"
+   },
+   {
+    "seed": 2702,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "5406783a7c72443bbbf21ce823aa4ec8e9fd33c2182ff860c86f86d8a0331321"
+   },
+   {
+    "seed": 2739,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "1cd75b5eaef043947c0e4e4dfdfd408650bf700d1d204ec66c8223835f09fdf6"
+   },
+   {
+    "seed": 2776,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "fc7d72c58a74cd873f73453b534be33a2f595c5a0752264c746dd79910351e3a"
+   },
+   {
+    "seed": 2813,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "51755ee71f0dd2f6dc9fedd0ff8150be43f7c76a79a09abf40b0f5453bbb15bb"
+   }
+  ],
+  "5": [
+   {
+    "seed": 1000,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "6e87ac749b808a355378a940a6d79edc5a015418efab319c666abf4daad26b4b"
+   },
+   {
+    "seed": 1037,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "3fba89e3ad2ae999e5333156cc7c4f560df94f03573d24de1a7fa6855825dd59"
+   },
+   {
+    "seed": 1074,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "dddca3354f38cbdf3c942cd33de7830c8521bd1a7f0b9c94c0c78c0630fe273f"
+   },
+   {
+    "seed": 1111,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "e31f95d8a4272bcd5015164a3e9edea44938eabe6f56d58cd22712168c2efe10"
+   },
+   {
+    "seed": 1148,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "42f36fd3f4c3245ba69bc455e3fafadd94629de276280d95d84e74f63aba45d2"
+   },
+   {
+    "seed": 1185,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "14fc7bdd62625c2f23eff34dbb58425748465f09e0bc7aac0b3bd91a740de5f9"
+   },
+   {
+    "seed": 1222,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "04ed55835ec685ae461519eff040a3dbf27d595317f0cea8eb8fdef1de7dcaf6"
+   },
+   {
+    "seed": 1259,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "c647d76e8a95a657ae5d8b2a22dfc24e9533f487b9825b6a6851fe134411e0be"
+   },
+   {
+    "seed": 1296,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "e36070a0bc6603dbd0c063a3aa378351c2476cd5aed5f5f5544364c76d7a19aa"
+   },
+   {
+    "seed": 1333,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "067c1bed1c591e37f1a66a8209848e4baf3f7ebe7adcd58192b5f433e70d74f6"
+   },
+   {
+    "seed": 1370,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "79424b744dd805fdcf4d699a53a04985f9e7eea60107b5015502485f0b1ff62e"
+   },
+   {
+    "seed": 1407,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "1ceebbbc5f500b96cfd0d4665b8503fdef3bc9c56c6ca7a056b52e586632251f"
+   },
+   {
+    "seed": 1444,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "ee0a93b416d0859e8bf7b0e0f42afc1fbe65ea772591d13ab02a128c8fb171be"
+   },
+   {
+    "seed": 1481,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "111aeb54019dd4a0f87c4394b269051ce7bdd76e617b703d52d014ec96c0a522"
+   },
+   {
+    "seed": 1518,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "2e96062bde312049675f304fbee4a946a3ccb56b6dddd8932d4ad8a2425b84dd"
+   },
+   {
+    "seed": 1555,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "de70699e32b5c12d6602f5a9dbda12e078591857299cb7bd811e1f7eae9e8b70"
+   },
+   {
+    "seed": 1592,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "1387ed0b58a846fad618c26cc5933c25c98be9ef4d19151e9181bc2ccc7f0f89"
+   },
+   {
+    "seed": 1629,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "30958b5a2359e6ec40f0d1de369832930e9e49a4fa327815c8fdb6fdf1330fa2"
+   },
+   {
+    "seed": 1666,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "09bab8946ecbed4faa983ee95cd0d42ebfc4537f32b4327ec0852409c99897dd"
+   },
+   {
+    "seed": 1703,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "7aa650efed690f532659bbaa1ecd11e4885f6ec0f690ed42f8c639e32530afc4"
+   },
+   {
+    "seed": 1740,
+    "archetype": "normal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "4780c1dd180d730f46c44f1b961d73f454ae6b823eecb1445defd11623777c87"
+   },
+   {
+    "seed": 1777,
+    "archetype": "obstruction",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "ad38fb41651a52652939a411fea3ee199823cd5ec43dd4f3ec4447f981070b25"
+   },
+   {
+    "seed": 1814,
+    "archetype": "restriction-parenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "a29b61073a12bb34397470286d34562f782e511c418805883691d4c63f8904e0"
+   },
+   {
+    "seed": 1851,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "097119928213304a2e78f59a4f6e2c8c7e8684d409515c20fbaad7666f98848c"
+   },
+   {
+    "seed": 1888,
+    "archetype": "mixed",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "574943657906e1a7430bba8270de64b9a979dd209fd9cda78824c3984994f6a8"
+   },
+   {
+    "seed": 1925,
+    "archetype": "nonspecific",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "2cc47262844f52a64e7af55ea76eab5365940d22c53abdde082bac76768de39c"
+   },
+   {
+    "seed": 1962,
+    "archetype": "low-dlco",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "fa7ed1be7fdf0aad9e7d3811bea6f1833947dbed6d8f99cba2096eac1b6f5d2a"
+   },
+   {
+    "seed": 1999,
+    "archetype": "anemia",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "72f739e7d76471ead44e7b0b264a9f22b7142f4377a660e4e1e56bd0d1596dff"
+   },
+   {
+    "seed": 2036,
+    "archetype": "obesity-low-erv",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "c1a5f08620fbde9c1147f3a5aac8bc57db1d2c535abe08d6eb6a33a2319542df"
+   },
+   {
+    "seed": 2073,
+    "archetype": "bd-discordant",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "11f4773ba8c6cc4c42b69c7973f8a4d0853e0bd0392eab5274b683eb25f1f969"
+   },
+   {
+    "seed": 2110,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "9d1f80314ebcad21c7aa1372b2147cf2bf79a84ac8b7fb0a1845a03af5072ff6"
+   },
+   {
+    "seed": 2147,
+    "archetype": "obstruction",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "172ad470bce6bd02573885553a47e1036fb9d0443e477f3e21e0797119fb08a3"
+   },
+   {
+    "seed": 2184,
+    "archetype": "restriction-parenchymal",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "8ceef563faac5474e2d2ec9ed22cbebe633b428261b66b69b109951a73e96567"
+   },
+   {
+    "seed": 2221,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "210989f6bd6ca3b08c4dbd796ba5c7b61d37f0ee6970a9fbf76ba047061a5b78"
+   },
+   {
+    "seed": 2258,
+    "archetype": "mixed",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "spirometry",
+    "sha256": "abb5745ffedb6c1fc1ecc9737dc95aca556eef9658bcc345e1bce77f4619c60d"
+   },
+   {
+    "seed": 2295,
+    "archetype": "nonspecific",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "9af5a98b9a9d454bc5fe53eee3cc4d603a2b809d91e3faa7d65701b0c8ef197f"
+   },
+   {
+    "seed": 2332,
+    "archetype": "low-dlco",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "e9f63eea0e874543a7e582a4cbc9a697019e599c3209b93a22305abcf45261b0"
+   },
+   {
+    "seed": 2369,
+    "archetype": "anemia",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "fc3166929c66a2543dca1e4dbfea3022df48c5009590c66b4f5992dbd4a6d6ac"
+   },
+   {
+    "seed": 2406,
+    "archetype": "obesity-low-erv",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "32b0c80b809ce458968a5576414a0a23536363b220b8578dd805cd8f52b600e2"
+   },
+   {
+    "seed": 2443,
+    "archetype": "bd-discordant",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "6b66b7d0bf1818dd19323bd297802031962e6d66b2072780319f056a2084a98c"
+   },
+   {
+    "seed": 2480,
+    "archetype": "normal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "d1dc27afaf9365461a31ffe851467ed5ca84a61135fb9e5dfbfddc1517dd6cda"
+   },
+   {
+    "seed": 2517,
+    "archetype": "obstruction",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "spirometry",
+    "sha256": "d4021d3d17c86516fe79a4f165e0853a3d3988df0eb4e8541a55c316a3999fa8"
+   },
+   {
+    "seed": 2554,
+    "archetype": "restriction-parenchymal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "08fb500f4ef22c281e443ec9a6b7f696eb7652575775565294bb6c8fb900fbf6"
+   },
+   {
+    "seed": 2591,
+    "archetype": "restriction-extraparenchymal",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "2a8b1f132ff629be7ffe72dd401cdf645fffe4d352c5476c2f020ed7cb2d14aa"
+   },
+   {
+    "seed": 2628,
+    "archetype": "mixed",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "3333d5e9784324783f63528ca2f7efc60e364dfbc1ed7cb80abb6965e6763e33"
+   },
+   {
+    "seed": 2665,
+    "archetype": "nonspecific",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full",
+    "sha256": "f952c48467b14aab4463a84090c9c4a4341892bbc40794f93f3b27a4390daa38"
+   },
+   {
+    "seed": 2702,
+    "archetype": "low-dlco",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "af446be1b0c8561efbc241c2916ea1ba882b7cb39da888c0044545462c1a66e4"
+   },
+   {
+    "seed": 2739,
+    "archetype": "anemia",
+    "technique": "poor",
+    "severity": 3,
+    "panel": "full",
+    "sha256": "f374924e14689557993ceb28a1b47cf00ddd164b4de5eb22744ca0c4b3543031"
+   },
+   {
+    "seed": 2776,
+    "archetype": "obesity-low-erv",
+    "technique": "good",
+    "severity": 1,
+    "panel": "spirometry",
+    "sha256": "168ae770cb2ad1207cfa78c1d51e0a2e110edceab82c8cd54168dc20f827126c"
+   },
+   {
+    "seed": 2813,
+    "archetype": "bd-discordant",
+    "technique": "fair",
+    "severity": 2,
+    "panel": "full",
+    "sha256": "6a059464840a1d50e1228b9b5a0a31770821ded8b9a9abb44765d70aa1f43bb8"
+   }
+  ]
+ }
+}
