@@ -436,6 +436,9 @@ export function buildReportModel(caseData, interp, options = {}) {
     // The value is the set's reported one (the largest among the maneuvers acceptable for FVC, else the usable ones).
     extraRow('fef2575', 'FEF25-75', 'L/s', 2, preSet.summary.fef2575, postSet?.summary.fef2575 ?? null),
   ];
+  if (Number.isFinite(preSet.summary.fivc) || Number.isFinite(postSet?.summary.fivc)) {
+    spRows.push(extraRow('fivc', 'FIVC (recorded post-expiratory)', 'L', 2, preSet.summary.fivc, postSet?.summary.fivc ?? null));
+  }
   const spFootParts = [`Reference values: ${eqName(equation)}${equation === 'GLI2012' ? ` (equation for "${patient.group}")` : ' (group-neutral)'}.`];
   // The change in volume and in percent of baseline are arithmetic on the printed values; the percent of predicted is not.
   if (hasPost) spFootParts.push('Change, % of predicted, is computed from the unrounded values.');
@@ -461,12 +464,15 @@ export function buildReportModel(caseData, interp, options = {}) {
       return {
         id: String(i + 1), index: String(i + 1), fvc: round(mv.fvc, 2), fev1: round(mv.fev1, 2), pef: round(mv.pef, 1), fet: round(mv.fet, 1), bev: round(mv.bev, 3),
         ...(includeGrades ? { acceptable: acc.length === 2 ? 'both' : acc.length ? acc[0] : 'neither' } : {}),
-        comment: mv.faults.map((f) => faultWording(f, 'short')).join(', '),
+        comment: [mv.faults.map((f) => faultWording(f, 'short')).join(', '),
+          ...(ev.fivc?.fivcL !== null && Number.isFinite(ev.fivc?.fivcL) ? [`Recorded FIVC ${ev.fivc.fivcL.toFixed(2)} L${includeGrades ? `; FIVC check ${ev.fivc.status}` : ''}`] : [])].filter(Boolean).join('; '),
       };
     });
     const acceptNote = includeGrades ? ' Accept.: variable(s) for which the maneuver meets ATS/ERS 2019 criteria.'
       : options.gradesWithheld === null ? '' : options.gradesWithheld ? ` Acceptability is ${options.gradesWithheld}.` : ' Acceptability is shown after the answers are checked.';
-    return { id, caption, columns: cols, rows, footnote: `BEV: back-extrapolated volume.${acceptNote}` };
+    const fivcMissing = set.summary.evaluations.filter((e) => !e.fivc || e.fivc.status === 'not-assessed').length;
+    const fivcNote = fivcMissing ? ` Post-expiratory FIVC check not assessed in ${fivcMissing} of ${set.maneuvers.length} maneuvers: no confirmed recorded maximal inspiration. Synthetic display limbs are not measurements. Absence alone does not invalidate ordinary spirometry.` : ' Post-expiratory FIVC observations were recorded; the one-sided comparison applies to acceptability, not usability.';
+    return { id, caption, columns: cols, rows, footnote: `BEV: back-extrapolated volume.${acceptNote}${fivcNote}` };
   };
   const spTables = [spTable, maneuverTable(preSet, 'maneuvers-pre', 'Forced maneuvers before bronchodilator')];
   if (hasPost) spTables.push(maneuverTable(postSet, 'maneuvers-post', 'Forced maneuvers after bronchodilator'));

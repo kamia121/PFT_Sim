@@ -703,7 +703,7 @@ function patternSentence(ctx, P, claim, sevState, skipNear = false) {
     const l = lowSpirometry(ctx);
     s = P(id === 'prism' ? 'p-prism' : 'p-nonspecific', { low: l.low, relL: `${l.verb} ${l.rel}`, sev: sevText });
   } else {
-    s = P('p-indeterminate', {});
+    s = ctx.interp.patternReason === 'reference-unavailable' ? 'The spirometric pattern cannot be interpreted because a required reference is unavailable; measured values and independently interpretable components are preserved.' : P('p-indeterminate', {});
   }
   const extra = [];
   if (!claim.synthetic && (id === 'obstruction' || id === 'obstruction-low-fvc') && ctx.has('fvc') && ctx.m.fvc.label === 'low') {

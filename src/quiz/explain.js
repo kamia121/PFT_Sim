@@ -37,7 +37,8 @@ function zTable(prep, names, title) {
 
 function explainPattern(item, prep) {
   const { a, b } = prep;
-  const out = [`<h4>${esc(PATTERNS[a.pattern])}</h4>`, paras(PATTERN_TEXT[a.pattern] ?? [])];
+  const reason = a.patternReason === 'reference-unavailable' ? '<p>The spirometric pattern cannot be classified because a required reference is unavailable. Measured values and independently interpretable components are preserved; a missing FEV₁/FVC reference is not a normal ratio.</p>' : paras(PATTERN_TEXT[a.pattern] ?? []);
+  const out = [`<h4>${esc(PATTERNS[a.pattern])}</h4>`, reason];
   if (a.pattern !== b.pattern) out.push(`<p><span class="flag">The pattern depends on the equation.</span> ${esc(EQUATION_NAMES[otherEquation(prep.equation)])} gives ${esc(PATTERNS[b.pattern])}, so either answer is accepted.</p>`);
   out.push(zTable(prep, ['fev1', 'fvc', 'fev1_fvc', 'tlc'], 'Values behind the pattern under both spirometry equations'));
   for (const f of a.flags) out.push(f.id === 'low-erv' ? `<p>${esc(LOW_ERV_TEXT)}</p>` : `<p><strong>${esc(f.text)}</strong> ${esc(f.verification ?? 'Source status unavailable')}</p>`);
@@ -61,7 +62,7 @@ function explainGrade(item, prep, result, opts) {
   const rule = which === 'fev1'
     ? 'The FEV₁ is judged on its own: a maneuver counts toward the FEV₁ grade when its back-extrapolated volume is at or below 5% of the FVC or 0.100 L, whichever is greater, and there is no cough or glottic closure in the first second.'
     : 'The FVC is judged on its own: a maneuver counts toward the FVC grade when its back-extrapolated volume is within the same limit, there is no glottic closure at any time, and expiration ended with a plateau, a forced expiratory time of at least 15 s, or an FVC within 0.150 L of the largest FVC in the set.';
-  return `<p>${esc(rule)} BEV and plateau equality follow the inclusive 2019 Table 7 convention; adjacent prose uses strict comparisons. The grade then depends on how many acceptable maneuvers exist and how far apart the two largest values lie, because repeatability is the check that the patient could reproduce the result.</p><p>Grade <strong>${g}</strong>: ${esc(GRADE_TEXT[g])}</p>
+  return `<p>${esc(rule)} BEV and plateau equality follow the inclusive 2019 Table 7 convention; adjacent prose uses strict comparisons. A confirmed maximal post-expiratory FIVC exceeding FVC by more than the larger of 0.100 L or 5% of FVC invalidates acceptability of both values, while preserving potential usability. A missing or display-only inspiratory observation is not assessed and does not alone invalidate ordinary spirometry. The grade then depends on how many acceptable maneuvers exist and how far apart the two largest values lie, because repeatability is the check that the patient could reproduce the result.</p><p>Grade <strong>${g}</strong>: ${esc(GRADE_TEXT[g])}</p>
     <details><summary>Acceptability of each maneuver</summary>${R.renderManeuvers(prep.caseData.spirometry.pre, 'Pre-bronchodilator maneuvers with acceptability', { revealed: true, id: `${opts.idPrefix}key-maneuvers-${which}` })}</details>`;
 }
 
@@ -76,7 +77,11 @@ function explainBd(item, prep) {
 
 function explainDlco(item, prep) {
   const d = prep.a.dlco, c = prep.caseData;
-  if (!d) return '<p>DLCO is not reportable from this session. Review the maneuver criteria and repeat testing; no normal or abnormal diffusion label can be assigned.</p>';
+  if (!d) {
+    if (prep.a.measures.dlco?.available === false) return '<p>The measured DLCO is preserved, but its reference is unavailable for this patient. No normal or abnormal diffusion classification can be assigned. Repeating an acceptable measurement does not resolve reference applicability; check the equation and supported age range.</p>';
+    if (!c.report.dlco && !c.report.dlcoQuality) return '<p>DLCO was not performed; no diffusion classification is available.</p>';
+    return '<p>DLCO is not reportable from this pending or unavailable acquisition session. Review the recorded maneuver criteria and missing observations before deciding whether repeat testing is needed; no normal or abnormal diffusion label can be assigned.</p>';
+  }
   const known = hbKnown(c.dlco);
   const out = [`<p>${esc(known ? DLCO_TEXT[d.category] : DLCO_TEXT.unadjusted)}</p>`];
   if (d.subtype) out.push(`<p>${esc(DLCO_TEXT.subtype[d.subtype])}</p>`);

@@ -20,6 +20,11 @@
         "bev": "Select inclusive ≤ max(0.100 L, 5% FVC); Table 7 prints ≤ while prose prints <. This is a project convention, not unambiguous source agreement.",
         "plateau": "Select inclusive ≤ 0.025 L; Table 7 and prose differ on equality. Other EOFE alternatives can still establish acceptability."
       },
+      "fivcDifference": {
+        "absoluteL": 0.1,
+        "fractionOfFvc": 0.05,
+        "verification": "Graham 2019 Table 7 and maximal inspiration after forced expiration: one-sided FIVC−FVC limit; absence alone does not preclude ordinary acceptability"
+      },
       "plateauWindowSeconds": {
         "value": 1,
         "verification": "verified-primary"
@@ -269,6 +274,47 @@
         "verification": "secondary"
       }
     },
+    "INSPIRATORY_CONSTANTS": {
+      "pifFromFvc": {
+        "value": {
+          "intercept": 2.2,
+          "slope": 0.62
+        },
+        "verification": "unverified"
+      },
+      "pifBoundsLps": {
+        "value": [
+          1.8,
+          8
+        ],
+        "verification": "unverified"
+      },
+      "inspiratoryTimeBoundsS": {
+        "value": [
+          0.8,
+          3.5
+        ],
+        "verification": "unverified"
+      },
+      "closureAbsoluteLiters": {
+        "value": 0.1,
+        "verification": "verified-primary"
+      },
+      "closureFraction": {
+        "value": 0.05,
+        "verification": "verified-primary"
+      },
+      "incompleteProbability": {
+        "value": {
+          "early-termination": 0.5,
+          "glottic-closure": 0.35,
+          "variable-effort": 0.5,
+          "cough": 0.2,
+          "slow-start": 0.15
+        },
+        "verification": "unverified"
+      }
+    },
     "COHB": {
       "referencePercent": {
         "value": 1.5,
@@ -287,7 +333,7 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "a7a14ad3964f8384a2502632b24809e10e6052c7570d1a4a1e92bd94c26ae50d",
+      "sha256": "252972273099685b0b1ceaeec364429d29baba549fcd8dd94ab56a4a1a800976",
       "reviewLines": [
         {
           "line": 12,
@@ -307,42 +353,46 @@
         },
         {
           "line": 19,
-          "text": "plateauWindowSeconds: { value: 1, verification: 'verified-primary' },"
+          "text": "fivcDifference: { absoluteL: 0.1, fractionOfFvc: 0.05, verification: 'Graham 2019 Table 7 and maximal inspiration after forced expiration: one-sided FIVC−FVC limit; absence alone does not preclude ordinary acceptability' },"
         },
         {
           "line": 20,
-          "text": "longFetSeconds: { value: 15, verification: 'verified-primary' },"
+          "text": "plateauWindowSeconds: { value: 1, verification: 'verified-primary' },"
         },
         {
           "line": 21,
-          "text": "eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },"
+          "text": "longFetSeconds: { value: 15, verification: 'verified-primary' },"
         },
         {
           "line": 22,
-          "text": "repeatabilityLitersAdult: { value: 0.15, verification: 'verified-primary' },"
+          "text": "eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },"
         },
         {
           "line": 23,
+          "text": "repeatabilityLitersAdult: { value: 0.15, verification: 'verified-primary' },"
+        },
+        {
+          "line": 24,
           "text": "gradeSpreadLiters: { A: 0.15, B: 0.15, C: 0.2, D: 0.25, verification: 'verified-primary' },"
         },
         {
-          "line": 28,
+          "line": 29,
           "text": "llnZ: { value: -1.645, verification: 'verified-primary: ERS/ATS 2022 Table 1; rounded fifth-percentile convention' },"
         },
         {
-          "line": 29,
+          "line": 30,
           "text": "bronchodilatorPercentOfPredicted: { value: 10, verification: 'verified-primary: ERS/ATS 2022 Box 1; strict greater than, predicted denominator' },"
         },
         {
-          "line": 30,
+          "line": 31,
           "text": "severityZ: { mildLower: -2.5, moderateLower: -4.0, verification: 'verified-primary: ERS/ATS 2022 Figure 7; 2024 authors clarification; continuous equality convention documented in SPEC' },"
         },
         {
-          "line": 37,
+          "line": 38,
           "text": "verification: 'primary corrected Table 3, Table 4 and reporting text read; source rules are not synthetic-signal validation',"
         },
         {
-          "line": 51,
+          "line": 52,
           "text": "verification: 'Primary Table 3 and reporting text read; interim rows overlap and do not allocate all mixed failures. No session-letter grade or clinical waveform validation is inferred.',"
         }
       ]
@@ -769,7 +819,7 @@
     },
     {
       "path": "src/core/quality.js",
-      "sha256": "b44f9eab933530288539a3e04d39687c4e8ba11cf2ed1f779bb15b6ceb8fb7dd",
+      "sha256": "e2c9b6820fb0aca2b2d77437e8cdb16bc7bb778a56d2f0da34eaa22b69f3cb85",
       "reviewLines": [
         {
           "line": 5,
@@ -780,87 +830,115 @@
           "text": "/** Phrases for the technologist comment of a maneuver set (\"<phrase> (maneuver 2)\"). */"
         },
         {
-          "line": 88,
-          "text": "// Select the inclusive Table 7 BEV/plateau convention: 2019 Table 7 uses ≤, its prose <."
-        },
-        {
-          "line": 92,
-          "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
+          "line": 90,
+          "text": "const limitL = Number.isFinite(m.fvc) && m.fvc > 0"
         },
         {
           "line": 93,
+          "text": "const unknown = (reason) => ({ status: 'not-assessed', fivcL: null, differenceL: null, limitL, reason });"
+        },
+        {
+          "line": 96,
+          "text": "if (!Number.isFinite(o.fivc) || o.fivc <= 0 || limitL === null) return unknown('Valid recorded FIVC and FVC measurements are required.');"
+        },
+        {
+          "line": 110,
+          "text": "// Select the inclusive Table 7 BEV/plateau convention: 2019 Table 7 uses ≤, its prose <."
+        },
+        {
+          "line": 114,
+          "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
+        },
+        {
+          "line": 115,
           "text": "const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;"
         },
         {
-          "line": 107,
+          "line": 131,
           "text": "const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];"
         },
         {
-          "line": 117,
+          "line": 141,
           "text": "|| m.fet >= S.longFetSeconds.value"
         },
         {
-          "line": 131,
+          "line": 156,
           "text": "const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 134,
+          "line": 159,
           "text": "if (acceptableValues.length >= 3 && atMost(spread, g.A)) return 'A';"
         },
         {
-          "line": 141,
+          "line": 166,
           "text": "const largestTwoSpread = (xs) => {"
         },
         {
-          "line": 142,
+          "line": 167,
           "text": "if (xs.length < 2) return null;"
         },
         {
-          "line": 143,
+          "line": 168,
           "text": "const [hi, next] = xs.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 149,
+          "line": 174,
           "text": "* @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },"
         },
         {
-          "line": 154,
+          "line": 179,
           "text": "const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;"
         },
         {
-          "line": 155,
+          "line": 180,
           "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maneuvers.length > 1 ? maxFvcInSet : null));"
         },
         {
-          "line": 156,
+          "line": 181,
           "text": "const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);"
         },
         {
-          "line": 163,
+          "line": 188,
           "text": "value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,"
         },
         {
-          "line": 164,
+          "line": 189,
           "text": "grade: gradeVariable(acc.map((m) => m[key]), use.length),"
         },
         {
-          "line": 166,
+          "line": 191,
           "text": "spread: largestTwoSpread(acc.map((m) => m[key])),"
         },
         {
-          "line": 171,
+          "line": 196,
           "text": "const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;"
         },
         {
-          "line": 173,
+          "line": 198,
           "text": "const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));"
         },
         {
-          "line": 174,
+          "line": 199,
           "text": "const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);"
         },
         {
-          "line": 186,
+          "line": 204,
+          "text": "fivc: maxOf('fivcL', evaluations.map((e) => e.fivc).filter((a) => a.fivcL !== null)),"
+        },
+        {
+          "line": 205,
+          "text": "fivcAssessment: { pass: evaluations.filter((e) => e.fivc.status === 'pass').length,"
+        },
+        {
+          "line": 206,
+          "text": "fail: evaluations.filter((e) => e.fivc.status === 'fail').length,"
+        },
+        {
+          "line": 207,
+          "text": "notAssessed: evaluations.filter((e) => e.fivc.status === 'not-assessed').length },"
+        },
+        {
+          "line": 217,
           "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && atMost(x, S.repeatabilityLitersAdult.value)),"
         }
       ]
@@ -2160,6 +2238,282 @@
       ]
     },
     {
+      "path": "src/core/inspiratory.js",
+      "sha256": "bd283db2d02fe5357305ddaf0c78686faa88574412f0a7dcfe6c3abb76a341d5",
+      "reviewLines": [
+        {
+          "line": 18,
+          "text": "pifFromFvc: { value: { intercept: 2.2, slope: 0.62 }, verification: 'unverified' },"
+        },
+        {
+          "line": 19,
+          "text": "pifBoundsLps: { value: [1.8, 8], verification: 'unverified' },"
+        },
+        {
+          "line": 20,
+          "text": "inspiratoryTimeBoundsS: { value: [0.8, 3.5], verification: 'unverified' },"
+        },
+        {
+          "line": 22,
+          "text": "closureAbsoluteLiters: { value: 0.1, verification: 'verified-primary' },"
+        },
+        {
+          "line": 23,
+          "text": "closureFraction: { value: 0.05, verification: 'verified-primary' },"
+        },
+        {
+          "line": 27,
+          "text": "verification: 'unverified',"
+        },
+        {
+          "line": 37,
+          "text": "export const loopTolerance = (fvc) => Math.max(INSPIRATORY_CONSTANTS.closureAbsoluteLiters.value, INSPIRATORY_CONSTANTS.closureFraction.value * fvc);"
+        },
+        {
+          "line": 42,
+          "text": "if (Math.abs(fivc - fvc) <= tol) return 'closed';"
+        },
+        {
+          "line": 43,
+          "text": "return fivc < fvc ? 'incomplete-loop' : 'fivc-exceeds-fvc';"
+        },
+        {
+          "line": 46,
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+        },
+        {
+          "line": 51,
+          "text": "* Stream name: `inspiratory-<index>`. The same random draws are made in every branch so one fault does not"
+        },
+        {
+          "line": 60,
+          "text": "const rng = createStream(seed >>> 0, `inspiratory-${index}`);"
+        },
+        {
+          "line": 70,
+          "text": "const pFault = faults.reduce((p, f) => Math.max(p, pMap[f] ?? 0), 0);"
+        },
+        {
+          "line": 71,
+          "text": "const incomplete = faults.some((f) => CERTAIN_INCOMPLETE.includes(f)) || uIncomplete < pFault;"
+        },
+        {
+          "line": 72,
+          "text": "const belowTlc = faults.some((f) => BELOW_TLC.includes(f));"
+        },
+        {
+          "line": 90,
+          "text": "for (let i = 0; i <= N; i++) {"
+        },
+        {
+          "line": 96,
+          "text": "const integral = g.reduce((s, x, i) => s + (i === 0 || i === N ? x / 2 : x), 0) / N; // trapezoid on [0, 1]"
+        },
+        {
+          "line": 104,
+          "text": "for (let i = 0; i <= N; i++) {"
+        },
+        {
+          "line": 107,
+          "text": "if (i > 0) acc += 0.5 * (-f[i - 1] - f[i]) * dt;"
+        },
+        {
+          "line": 111,
+          "text": "return { recorded: false, role: 'display-only', t, v, f, fivc, pif: Math.max(...f.map((x) => -x)), flags };"
+        },
+        {
+          "line": 124,
+          "text": "const add = (k) => { if (k >= 0 && k < end) set.add(k); };"
+        },
+        {
+          "line": 125,
+          "text": "for (let i = 0; i < 80; i++) add(i * 50);"
+        },
+        {
+          "line": 126,
+          "text": "for (let i = 0; i < 110; i++) add(4000 + i * 100);"
+        },
+        {
+          "line": 127,
+          "text": "for (let k = 15000; k < end - 1200; k += 500) add(k);"
+        },
+        {
+          "line": 128,
+          "text": "for (let k = Math.max(0, end - 1200); k < end; k += 50) add(k);"
+        },
+        {
+          "line": 129,
+          "text": "const out = [...set].sort((x, y) => x - y).map((k) => k / 1e4);"
+        },
+        {
+          "line": 137,
+          "text": "* @param {{ volume: (c: object, t: number) => number, flow: (c: object, t: number) => number }} fns"
+        },
+        {
+          "line": 143,
+          "text": "return { t, v: t.map((x) => fns.volume(curve, x)), f: t.map((x) => fns.flow(curve, x)) };"
+        },
+        {
+          "line": 146,
+          "text": "const interp = (t, y, x) => {"
+        },
+        {
+          "line": 147,
+          "text": "if (x <= t[0]) return y[0];"
+        },
+        {
+          "line": 148,
+          "text": "if (x >= t[t.length - 1]) return y[y.length - 1];"
+        },
+        {
+          "line": 150,
+          "text": "while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m] <= x) lo = m; else hi = m; }"
+        },
+        {
+          "line": 155,
+          "text": "const hump = (x, ta, tb) => (x <= ta || x >= tb ? 0 : Math.pow(Math.sin((Math.PI * (x - ta)) / (tb - ta)), 2));"
+        },
+        {
+          "line": 180,
+          "text": "const rng = createStream(seed >>> 0, 'artifact-plot');"
+        },
+        {
+          "line": 182,
+          "text": "const r = Array.from({ length: 24 }, () => rng.uniform());"
+        },
+        {
+          "line": 187,
+          "text": "const has = (x) => faults.includes(x);"
+        },
+        {
+          "line": 191,
+          "text": "for (let i = 1; i < n && t[i] <= 2; i++) if (f[i] > f[ip]) ip = i;"
+        },
+        {
+          "line": 197,
+          "text": "if (has('slow-start') && tPk < 0.15) {"
+        },
+        {
+          "line": 199,
+          "text": "const s = (u) => 2 * u * u - u * u * u, ds = (u) => 4 * u - 3 * u * u;"
+        },
+        {
+          "line": 201,
+          "text": "for (let i = 0; i < n; i++) {"
+        },
+        {
+          "line": 202,
+          "text": "if (t_[i] >= tb) break;"
+        },
+        {
+          "line": 212,
+          "text": "const rr = (k, lo, hi) => lo + (hi - lo) * r[k];"
+        },
+        {
+          "line": 216,
+          "text": "for (let j = 0; j < k && start + 0.14 <= 1.0; j++) {"
+        },
+        {
+          "line": 226,
+          "text": "if (has('variable-effort') && tF - tAfterPeak > 0.3 && tEnd - 1.2 > tF + 0.4) {"
+        },
+        {
+          "line": 227,
+          "text": "const sign = r[8] < 0.5 ? 1 : -1;"
+        },
+        {
+          "line": 233,
+          "text": "if (has('leak') && tEnd > tF + 0.8) {"
+        },
+        {
+          "line": 239,
+          "text": "if (has('mouthpiece-obstruction') && tF > 0.7) {"
+        },
+        {
+          "line": 246,
+          "text": "const eps = (x) => {"
+        },
+        {
+          "line": 251,
+          "text": "if (x > h.ta && x <= h.tb) e -= 0.55 * (interp(sampled.t, sampled.v, x) - va);"
+        },
+        {
+          "line": 252,
+          "text": "else if (x > h.tb && x < h.tb + h.recover) {"
+        },
+        {
+          "line": 266,
+          "text": "const de = t.map((x) => (eps(x + dh) - eps(Math.max(0, x - dh))) / (x + dh - Math.max(0, x - dh)));"
+        },
+        {
+          "line": 269,
+          "text": "for (let i = 0; i < n; i++) if (de[i] < 0 && f[i] + kScale * de[i] < 0) kScale = Math.max(0, f[i] / -de[i]);"
+        },
+        {
+          "line": 270,
+          "text": "for (let i = 0; i < n; i++) { v[i] += kScale * e[i]; f[i] += kScale * de[i]; }"
+        },
+        {
+          "line": 275,
+          "text": "if (has('glottic-closure') && n > 12) {"
+        },
+        {
+          "line": 278,
+          "text": "while (ia > 0 && t[ia] > tEnd - delta) ia--;"
+        },
+        {
+          "line": 280,
+          "text": "if (dV > 1e-6 && tEnd - ta > 1e-6) {"
+        },
+        {
+          "line": 282,
+          "text": "for (let i = ia; i < n; i++) {"
+        }
+      ]
+    },
+    {
+      "path": "src/ui/figures/traces.js",
+      "sha256": "1931155c810464b65261c598dce43f2e094ce26c3050e57fa8a390012e0169b4",
+      "reviewLines": [
+        {
+          "line": 11,
+          "text": "export const artifactSeed = (seed, index, set) => ((seed >>> 0) + (index + (set === 'post' ? 100 : 0)) * 0x9e3779b1) >>> 0;"
+        },
+        {
+          "line": 21,
+          "text": "if (insp.recorded === true && !['t', 'v', 'f'].every((k) => Array.isArray(insp[k]) && insp[k].length >= 2 && insp[k].length === insp.t?.length && insp[k].every(Number.isFinite))) {"
+        },
+        {
+          "line": 32,
+          "text": "set.maneuvers.forEach((m, i) => {"
+        },
+        {
+          "line": 35,
+          "text": "if (score > bestScore) { bestScore = score; bestI = i; }"
+        },
+        {
+          "line": 40,
+          "text": "export const isAcceptable = (set, i) => set.summary.evaluations[i].fev1.acceptable && set.summary.evaluations[i].fvc.acceptable;"
+        },
+        {
+          "line": 51,
+          "text": "const rng = createStream(seed >>> 0, 'volume-time-tidal');"
+        },
+        {
+          "line": 58,
+          "text": "for (let x = tStart; x < tI0; x += 0.05) { t.push(x); v.push(level + (vt / 2) * Math.cos((2 * Math.PI * (x - tI0)) / period)); }"
+        },
+        {
+          "line": 61,
+          "text": "for (let i = 0; i <= n; i++) { const u = i / n; t.push(tI0 + u * (tI1 - tI0)); v.push((a * (1 + Math.cos(Math.PI * u))) / 2); }"
+        },
+        {
+          "line": 66,
+          "text": "export const curvePeak = (curve) => peakFlow(curve);"
+        }
+      ]
+    },
+    {
       "path": "src/core/case.js",
       "sha256": "48bac8f654efa418a0dc748a99aa91c7685d5d83ae39070be7a245839a0dda98",
       "reviewLines": [
@@ -2361,7 +2715,7 @@
     },
     {
       "path": "src/interpret/interpret.js",
-      "sha256": "910d3b22bdb416b084cb149d9ccade7f3f3dfac70ad633cb7084477cf4288904",
+      "sha256": "611e5be7b7364333705db72d4d7d9a18f625b2939440fc1e8d90743cb23977cd",
       "reviewLines": [
         {
           "line": 23,
@@ -2393,7 +2747,7 @@
         },
         {
           "line": 88,
-          "text": "if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }"
+          "text": "if (!r.available || !Number.isFinite(r.z)) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason ?? 'reference-result-unavailable', equationId: r.equationId }; return; }"
         },
         {
           "line": 91,
@@ -2492,7 +2846,11 @@
           "text": "const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));"
         },
         {
-          "line": 224,
+          "line": 208,
+          "text": "const patternReason = pattern === 'indeterminate' && SPIRO.some((k) => m[k]?.available === false) ? 'reference-unavailable' : null;"
+        },
+        {
+          "line": 225,
           "text": "const borderline = ['fev1', 'fvc', 'fev1_fvc'].filter((k) => ia.measures[k]?.borderline || ib.measures[k]?.borderline);"
         }
       ]

@@ -38,7 +38,7 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
   const lines = [];
 
   // Impression: the pattern, its severity where the scale grades it, the findings that change what a reader does with it, and the standing of the study.
-  let head = HEAD[interp.pattern] ?? PATTERNS[interp.pattern] ?? 'Not classified';
+  let head = interp.patternReason === 'reference-unavailable' ? 'Spirometric pattern not classified: reference unavailable' : HEAD[interp.pattern] ?? PATTERNS[interp.pattern] ?? 'Not classified';
   if (sev?.scored) head += `, ${sev.id}`;
 
   const extra = [];

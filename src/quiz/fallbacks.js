@@ -166,6 +166,7 @@ export function claimsFrom(prep) {
   return {
     quality: a.qualityLimited ? 'limited' : 'adequate',
     pattern: a.pattern,
+    patternReferenceUnavailable: a.patternReason === 'reference-unavailable',
     severity: a.severity?.scored ? a.severity.id : null,
     airTrapping: a.flags.some((x) => x.id === 'air-trapping'),
     hyperinflation: a.flags.some((x) => x.id === 'hyperinflation'),
@@ -203,7 +204,7 @@ export function renderClaims(k, v = 0) {
     mixed: V(['The FEV₁/FVC ratio and the TLC are both below their lower limits of normal, which defines mixed obstruction and restriction.', 'Both the ratio and the TLC are below their lower limits, so the pattern is mixed obstruction and restriction.'], v),
     nonspecific: V(['The ratio is preserved and the FVC or FEV₁ is low while the TLC is not low; this nonspecific pattern does not establish restriction.', 'A low FVC or FEV₁ with a preserved ratio and a TLC that is not low is a nonspecific pattern and not restriction.'], v),
     prism: V(['The ratio is preserved with a low FVC or FEV₁ and no lung volumes were measured; TLC is needed to distinguish restriction from a non-specific pattern.', 'This is preserved-ratio spirometric impairment; without a TLC restriction is possible but not established.'], v),
-    indeterminate: 'No usable maneuver was recorded, so the study cannot be interpreted.',
+    indeterminate: k.patternReferenceUnavailable ? 'The spirometric pattern cannot be classified because a required reference is unavailable; the measured values and independently interpretable components remain available.' : 'No usable maneuver was recorded, so the study cannot be interpreted.',
   }[k.pattern];
   s.push(text);
   if (k.dlco && !['pending', 'unavailable'].includes(k.dlcoSession)) {

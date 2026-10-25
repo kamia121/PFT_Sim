@@ -151,3 +151,8 @@ Current status supersedes the historical checkpoints above: **41 groups: 20 sour
 Groups 16 and 22 are promoted within their stated scope. Group 11 stays partial because its source equality discrepancy remains, despite the completed correction. Changes include: documented 2005 Table 9 equality convention with floating-point boundary fixtures; explicitly assessed zero-flow fault matrix; corrected Jones–Meade time endpoints with independent nonlinear/asymmetric fixtures. Group 36 remains partial despite fail-closed range handling because corrected TLCO applicability/provenance is still unresolved. No coefficient/output group is promoted. Coefficient-source metadata and regeneration/checking tools no longer claim direct printed-table proof.
 
 See SPEC.md generator-v5 section and source-gap-checkpoint-2026-10-24.md for code, verification and remaining limits. The 2018 syringe correction does not replace the existing BTPS-to-STPD uptake conversion. No blocked calculator/publisher route or locked-Mac UI was retried.
+
+
+## Recorded FIVC / missing-reference follow-up (25 October 2026, current)
+
+Counts remain 20 source-text verified, 8 partial, 8 modeled and 5 coefficient/output blocked; 25 groups now have corrections on the overlapping axis. FIVC is assessed only from an explicit recorded maximal post-expiratory observation; missing/display-only data are not assessed. The 2019 Table 7 absence footnote is preserved. Three reviewed missing-reference defects are corrected across v2–v5, with acquisition and applicability explanations separated. See fivc-reference-checkpoint-2026-10-25.md and remaining-partial-groups-2026-10-25.md for exact source locators, tests and the classification of all eight partial groups.

@@ -16,6 +16,7 @@ export const SPIROMETRY_2019 = {
     bev: 'Select inclusive ≤ max(0.100 L, 5% FVC); Table 7 prints ≤ while prose prints <. This is a project convention, not unambiguous source agreement.',
     plateau: 'Select inclusive ≤ 0.025 L; Table 7 and prose differ on equality. Other EOFE alternatives can still establish acceptability.',
   },
+  fivcDifference: { absoluteL: 0.1, fractionOfFvc: 0.05, verification: 'Graham 2019 Table 7 and maximal inspiration after forced expiration: one-sided FIVC−FVC limit; absence alone does not preclude ordinary acceptability' },
   plateauWindowSeconds: { value: 1, verification: 'verified-primary' },
   longFetSeconds: { value: 15, verification: 'verified-primary' },
   eofeRepeatabilityOfLargestFvc: { value: 0.15, verification: 'verified-primary' },

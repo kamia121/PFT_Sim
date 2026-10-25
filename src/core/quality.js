@@ -74,10 +74,32 @@ export function faultWording(id, form = 'text') {
  * @property {number} plateau volume change over the last second (L)
  * @property {boolean} coughFirstSecond
  * @property {number|null} glottisClosedAt time of glottic closure (s), or null
+ * @property {{fivc: number, recorded: boolean, maximal: boolean, afterEofe: boolean}} [inspiratory] explicit acquired observation; plotting-only data do not qualify
  * @property {boolean} [zeroFlowError] explicitly assessed zero-flow fault; no automated detector is implied
  * @property {string[]} [faults] fault ids recorded by the generator (leak, mouthpiece-obstruction, ...)
  * @property {number} [pauseSeconds] length of a pause at total lung capacity before the blast (s)
  */
+
+/**
+ * Graham 2019 Table 7, its maximal-inspiration footnote and the post-expiratory inspiration text.
+ * A recorded maximal inspiration after EOFE can identify a start below TLC. A display-only
+ * inspiratory limb is not an acquired observation. Missing/unconfirmed data never mean failure.
+ * This ordinary-spirometry assessment does not cover an extrathoracic-obstruction investigation.
+ */
+export function assessPostExpirationFivc(m) {
+  const limitL = Number.isFinite(m.fvc) && m.fvc > 0
+    ? Math.max(S.fivcDifference.absoluteL, S.fivcDifference.fractionOfFvc * m.fvc) : null;
+  const o = m.inspiratory;
+  const unknown = (reason) => ({ status: 'not-assessed', fivcL: null, differenceL: null, limitL, reason });
+  if (!o || o.recorded !== true) return unknown('No recorded post-expiratory FIVC observation; a synthetic display limb does not establish this check.');
+  if (o.afterEofe !== true || o.maximal !== true) return unknown('A maximal inspiration immediately after forced expiration is not confirmed.');
+  if (!Number.isFinite(o.fivc) || o.fivc <= 0 || limitL === null) return unknown('Valid recorded FIVC and FVC measurements are required.');
+  const differenceL = o.fivc - m.fvc;
+  const pass = atMost(differenceL, limitL);
+  return { status: pass ? 'pass' : 'fail', fivcL: o.fivc, differenceL, limitL,
+    reason: pass ? 'The one-sided FIVC−FVC limit is met; this check alone does not certify the maneuver.'
+      : 'Recorded maximal FIVC exceeds FVC beyond the 2019 Table 7 limit; the maneuver did not start at full inflation.' };
+}
 
 /**
  * @param {Maneuver} m
@@ -94,6 +116,8 @@ export function evaluateManeuver(m, maxFvcInSet = null) {
 
   // An explicitly assessed fault; no waveform-based detector is claimed (2019 Table 7).
   const zeroFlowBad = m.zeroFlowError === true || m.faults?.includes('zero-flow-error');
+  const fivc = assessPostExpirationFivc(m);
+  const fivcReasons = fivc.status === 'fail' ? ['post-expiratory FIVC exceeds FVC beyond the allowed difference'] : [];
   const fev1Reasons = [];
   if (zeroFlowBad) fev1Reasons.push('incorrect zero-flow setting');
   if (bevBad) fev1Reasons.push('back-extrapolated volume above limit');
@@ -111,7 +135,7 @@ export function evaluateManeuver(m, maxFvcInSet = null) {
   if (bevBad) fvcUsableReasons.push('back-extrapolated volume above limit');
   if (closureFirstSecond) fvcUsableReasons.push('glottic closure in the first second');
 
-  const fvcReasons = [...fvcUsableReasons, ...leakReasons];
+  const fvcReasons = [...fvcUsableReasons, ...leakReasons, ...fivcReasons];
   if (closureLater) fvcReasons.push('glottic closure after the first second');
   const eofe = atMost(m.plateau, S.plateauLiters.value)
     || m.fet >= S.longFetSeconds.value
@@ -119,7 +143,8 @@ export function evaluateManeuver(m, maxFvcInSet = null) {
   if (!eofe) fvcReasons.push('no end-of-forced-expiration indicator');
 
   return {
-    fev1: { usable: fev1Reasons.length === 0, acceptable: fev1Reasons.length === 0 && leakReasons.length === 0, reasons: [...fev1Reasons, ...leakReasons], warnings: pauseReasons },
+    fivc,
+    fev1: { usable: fev1Reasons.length === 0, acceptable: fev1Reasons.length === 0 && leakReasons.length === 0 && fivcReasons.length === 0, reasons: [...fev1Reasons, ...leakReasons, ...fivcReasons], warnings: pauseReasons },
     fvc: { usable: fvcUsableReasons.length === 0, acceptable: fvcReasons.length === 0, reasons: fvcReasons },
   };
 }
@@ -174,6 +199,12 @@ export function summarizeSession(maneuvers) {
   const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);
   return {
     evaluations,
+    // 2019 measured-variable text: largest immediate post-expiratory FIVC from all maneuvers.
+    // An unacceptable expiratory result does not erase its recorded inspiratory observation.
+    fivc: maxOf('fivcL', evaluations.map((e) => e.fivc).filter((a) => a.fivcL !== null)),
+    fivcAssessment: { pass: evaluations.filter((e) => e.fivc.status === 'pass').length,
+      fail: evaluations.filter((e) => e.fivc.status === 'fail').length,
+      notAssessed: evaluations.filter((e) => e.fivc.status === 'not-assessed').length },
     grades: { fev1: out.fev1.grade, fvc: out.fvc.grade },
     nAcceptable: { fev1: out.fev1.n, fvc: out.fvc.n },
     fvc: out.fvc.value,

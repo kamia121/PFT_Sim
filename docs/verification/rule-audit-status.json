@@ -7,7 +7,7 @@
     "partially-verified-open-implementation-or-source-detail": 8,
     "verified-rule-text": 20
   },
-  "correctedGroups": 24,
+  "correctedGroups": 25,
   "rules": [
     {
       "id": 1,
@@ -29,7 +29,7 @@
       "id": 3,
       "rule": "Obstruction",
       "sourceStatus": "verified-rule-text",
-      "correctedInThisBranch": false,
+      "correctedInThisBranch": true,
       "source": "ERS/ATS 2022 Fig 8 / interpretation algorithm",
       "coverageAndGap": "`interpret`, `quiz-adapters`, interpretation fixture; exact branch/source audit pending"
     },
@@ -55,7 +55,11 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "ERS/ATS 2022 volume interpretation",
-      "coverageAndGap": "2022 Table 7 needs FRC/TLC, which is absent. High TLC plus high RV/TLC now means possible hyperinflation only; narrative/concise/fallback paths preserve qualification."
+      "coverageAndGap": "2022 Table 7 needs FRC/TLC, which is absent. High TLC plus high RV/TLC now means possible hyperinflation only; narrative/concise/fallback paths preserve qualification.",
+      "remainingGapKind": [
+        "absent-reference-feature",
+        "external-reference-dependency"
+      ]
     },
     {
       "id": 7,
@@ -95,7 +99,10 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Pellegrino 2005 Table 9 printed p960; adjacent BDR prose differs on equality",
-      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention."
+      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention.",
+      "remainingGapKind": [
+        "internal-standard-equality-ambiguity"
+      ]
     },
     {
       "id": 12,
@@ -128,7 +135,10 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Graham 2019 Table 7",
-      "coverageAndGap": "2019 Table 7 uses inclusive BEV and plateau limits; prose uses strict comparisons. Explicit inclusive Table 7 convention selected and tested immediately around/exactly at both BEV branches and plateau. Source discrepancy remains."
+      "coverageAndGap": "2019 Table 7 uses inclusive BEV and plateau limits; prose uses strict comparisons. Explicit inclusive Table 7 convention selected and tested immediately around/exactly at both BEV branches and plateau. Source discrepancy remains.",
+      "remainingGapKind": [
+        "internal-standard-equality-ambiguity"
+      ]
     },
     {
       "id": 16,
@@ -136,7 +146,7 @@
       "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
       "source": "Graham 2019 Table 7",
-      "coverageAndGap": "Fault matrix now includes explicitly assessed zero-flow error, invalidating FEV1/FVC acceptability and usability. No automated fault detection or complete instrument model is claimed; FIVC and pediatric scope remain unimplemented."
+      "coverageAndGap": "2019 Table 7 fault matrix includes explicit zero-flow assessment. Recorded maximal post-expiratory FIVC uses the one-sided inclusive difference, rejects acceptability of both values but not usability, and preserves other fault overrides. Missing/unconfirmed/display-only observations are explicitly not assessed, with report/export disclosure. Default inspiratory limbs remain display-only; no automatic acquisition or fault detector is claimed. Pediatric and extrathoracic-obstruction investigation scope is absent."
     },
     {
       "id": 17,
@@ -152,7 +162,10 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Graham 2019 EOFE text / Table 7",
-      "coverageAndGap": "Completed-set maximum comparison is supported by 2019 EOFE prose. Singleton no-plateau short FET remains unconfirmed; pre/post remain separate. Adult tolerance only; plateau window is assumed by input and pediatric criteria absent."
+      "coverageAndGap": "Completed-set maximum comparison is supported by 2019 EOFE prose. Singleton no-plateau short FET remains unconfirmed; pre/post remain separate. Adult tolerance only; plateau window is assumed by input and pediatric criteria absent.",
+      "remainingGapKind": [
+        "absent-pediatric-feature-outside-adult-scope"
+      ]
     },
     {
       "id": 19,
@@ -200,7 +213,11 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Graham 2017 Table 3, pp21\u201322 and Reporting values p25; 2018 measurement correction distinguished",
-      "coverageAndGap": "V4 uses explicit interim matching rows, A-only repeatable subset preference, qualified nonrepeatable/single A, then B-D fallback after repeated testing; F-only reports nothing. Unknown criteria and unspecified mixed failures remain pending/unclassified, not an invented letter. No session letter grade. Rooted low-VI acceptance-set selection, subset ties and KCO quotient of reported DLCO/mean VA are disclosed engineering policies requiring focused independent review. Primary table does not uniquely specify all mixed-failure mappings."
+      "coverageAndGap": "V4 uses explicit interim matching rows, A-only repeatable subset preference, qualified nonrepeatable/single A, then B-D fallback after repeated testing; F-only reports nothing. Unknown criteria and unspecified mixed failures remain pending/unclassified, not an invented letter. No session letter grade. Rooted low-VI acceptance-set selection, subset ties and KCO quotient of reported DLCO/mean VA are disclosed engineering policies requiring focused independent review. Primary table does not uniquely specify all mixed-failure mappings.",
+      "remainingGapKind": [
+        "standard-underspecification",
+        "disclosed-engineering-policy"
+      ]
     },
     {
       "id": 25,
@@ -224,7 +241,11 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Bhakta 2023 lung-volume standard",
-      "coverageAndGap": "Corrected 2023 Table 2 0.5/1/1.5/2 Hz boundaries and actual seed10 normal/poor 1.681Hz usable trial tested. No-obstruction band implemented; significant-versus-minimal obstruction cannot be inferred from a universal source cutoff, so reduced-input obstruction context and synthetic amplitude/fault recognition remain qualified. Existing 1\u20131.5Hz obstruction handling is a simulator review policy, not a complete source-defined mapping."
+      "coverageAndGap": "Corrected 2023 Table 2 0.5/1/1.5/2 Hz boundaries and actual seed10 normal/poor 1.681Hz usable trial tested. No-obstruction band implemented; significant-versus-minimal obstruction cannot be inferred from a universal source cutoff, so reduced-input obstruction context and synthetic amplitude/fault recognition remain qualified. Existing 1\u20131.5Hz obstruction handling is a simulator review policy, not a complete source-defined mapping.",
+      "remainingGapKind": [
+        "absent-context-input",
+        "no-universal-source-cutoff"
+      ]
     },
     {
       "id": 28,
@@ -296,7 +317,10 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Each source's applicability text",
-      "coverageAndGap": "Clinical reference outputs now fail closed outside supported ages; measured results remain. Explicit synthetic anchor clamp preserves construction only. Original TLCO 5\u201385 versus corrected dataset 5\u201380 provenance remains unresolved; source/correction applicability still requires confirmation."
+      "coverageAndGap": "Clinical reference outputs now fail closed outside supported ages; measured results remain. Explicit synthetic anchor clamp preserves construction only. Original TLCO 5\u201385 versus corrected dataset 5\u201380 provenance remains unresolved; source/correction applicability still requires confirmation.",
+      "remainingGapKind": [
+        "external-source-version-applicability-block"
+      ]
     },
     {
       "id": 37,
@@ -304,7 +328,10 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Reference tables / ERS/ATS 2022 transgender text",
-      "coverageAndGap": "Missing/invalid reference-sex input now rejected. Gender identity and binary model input remain distinct. Reference input choice after GAHT is unresolved; population validation is not established."
+      "coverageAndGap": "Missing/invalid reference-sex input now rejected. Gender identity and binary model input remain distinct. Reference input choice after GAHT is unresolved; population validation is not established.",
+      "remainingGapKind": [
+        "scientific-population-validation-ambiguity"
+      ]
     },
     {
       "id": 38,

@@ -65,11 +65,11 @@ function categorical(prep, qid, seed) {
   const q = QUESTIONS.find((x) => x.id === qid);
   const scored = scoreAnswers({}, prep.a.key, prep.b.key).find((s) => s.id === qid);
   let options = q.options.map(([id, label]) => ({ id, label: lbl(qid, id, label, seed) }));
-  if (qid === 'pattern') options = options.concat([{ id: 'indeterminate', label: 'Not interpretable (no usable maneuver)' }]);
+  if (qid === 'pattern') options = options.concat([{ id: 'indeterminate', label: 'Pattern not classifiable from the available measurements and references' }]);
   if (qid === 'bronchodilator' || qid === 'dlco') options = options.filter((o) => o.id !== 'not-done' && (o.id !== 'unavailable' || scored.expected === 'unavailable'));
   return {
     id: qid, skill: SKILL_OF[qid], type: 'single', ordered: qid === 'severity' || qid === 'gradeFev1' || qid === 'gradeFvc',
-    stem: qid === 'dlco' && scored.expected === 'unavailable' ? 'What can be reported about diffusing capacity from this session?' : qid === 'severity' && prep.a.severity?.measure === 'tlc' ? 'Grade restrictive impairment using the TLC z-score.' : pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,
+    stem: qid === 'dlco' && scored.expected === 'unavailable' ? (prep.a.measures.dlco?.available === false ? 'What can be reported about DLCO classification when its reference is unavailable?' : 'What can be reported about diffusing capacity from this session?') : qid === 'severity' && prep.a.severity?.measure === 'tlc' ? 'Grade restrictive impairment using the TLC z-score.' : pick(qid === 'dlco' && !hbKnown(prep.caseData.dlco) ? STEMS.dlcoNoHb : STEMS[qid], seed, `quiz-stem-${qid}`), options,
     key: { correct: scored.expected, alt: scored.other !== scored.expected ? scored.other : null, altEquation: otherEquation(prep.equation), ...(qid === 'severity' && prep.a.key.severityAlso?.length ? { also: [...prep.a.key.severityAlso] } : {}) },
     explain: { kind: qid },
   };

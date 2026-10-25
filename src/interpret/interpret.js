@@ -85,7 +85,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
   const add = (name, measure, measured, extra = {}) => {
     if (measured === null || measured === undefined || !Number.isFinite(measured)) return;
     const r = resolve(measure, { ...patient, measured }, spirometryEquation);
-    if (!r.available) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason, equationId: r.equationId }; return; }
+    if (!r.available || !Number.isFinite(r.z)) { measures[name] = { measure, value: measured, available: false, reason: r.fallbackReason ?? 'reference-result-unavailable', equationId: r.equationId }; return; }
     measures[name] = {
       measure, value: measured, predicted: r.predicted, lln: r.lln, uln: r.uln, z: r.z, percentPredicted: r.percentPredicted,
       label: labelOf(r.z), borderline: borderlineOf(r.z), equationId: r.equationId, matched: r.matched, fallbackReason: r.fallbackReason, ...(r.ageClamped ? { ageClamped: true, ageUsed: r.ageUsed } : {}), ...extra,
@@ -110,7 +110,7 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
 
   // ------------- pattern -------------
   let pattern;
-  if (!have('fev1') || !have('fvc')) pattern = 'indeterminate';
+  if (!have('fev1') || !have('fvc') || !have('fev1_fvc')) pattern = 'indeterminate';
   else {
     const ratioLow = low('fev1_fvc');
     const spiroLow = low('fvc') || low('fev1');
@@ -199,13 +199,14 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     gradeFev1: quality.fev1 ?? null,
     gradeFvc: quality.fvc ?? null,
     bronchodilator: bd ? (bd.rule2022.significant ? 'significant' : 'not-significant') : null,
-    dlco: dlco ? dlco.category : report.dlcoQuality ? 'unavailable' : null,
+    dlco: dlco ? dlco.category : report.dlco || report.dlcoQuality ? 'unavailable' : null,
   };
   // Scenario caveats the laboratory record supports (src/scenarios); absent for a plain case.
   const also = opts.generatorKey ? [] : severityAlso(severity);
   if (also.length) key.severityAlso = also;
   if (report.caveatIds?.length) key.caveatIds = [...new Set(report.caveatIds)].sort();
-  return { spirometryEquation, measures, pattern, patternLabel: PATTERNS[pattern], flags, severity, bd, dlco, qualityLimited: limited, key };
+  const patternReason = pattern === 'indeterminate' && SPIRO.some((k) => m[k]?.available === false) ? 'reference-unavailable' : null;
+  return { spirometryEquation, measures, pattern, ...(patternReason ? { patternReason } : {}), patternLabel: PATTERNS[pattern], flags, severity, bd, dlco, qualityLimited: limited, key };
 }
 
 function tlcFlag(m, k) { return m[k] && m[k].available !== false && m[k].label === 'high'; }
