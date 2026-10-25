@@ -9,7 +9,7 @@ import { COHB } from '../src/core/physiology.js';
 
 const files = [
   'src/core/standards.js', 'src/core/pleth-session.js', 'src/core/dlco-session.js', 'src/core/dlco-replicates.js', 'src/core/comparison.js', 'src/core/quality.js', 'src/core/dlco-trace.js', 'src/core/pleth.js', 'src/core/physiology.js',
-  'src/core/inspiratory.js', 'src/ui/figures/traces.js', 'src/core/case.js', 'src/reference/gli.js', 'src/interpret/interpret.js', 'src/interpret/precision.js', 'src/interpret/narrative.js', 'src/report/model.js',
+  'src/core/trace-texture.js', 'src/core/inspiratory.js', 'src/ui/figures/traces.js', 'src/core/case.js', 'src/reference/gli.js', 'src/interpret/interpret.js', 'src/interpret/precision.js', 'src/interpret/narrative.js', 'src/report/model.js',
   'src/challenges/items.js', 'src/scenarios/catalog-reference.js', 'src/scenarios/catalog-prep.js',
   'src/scenarios/catalog-quality.js', 'src/quiz/scoring.js', 'src/app/answers.js',
   ...['gli2012', 'gli_global', 'gli_tlco', 'gli_volumes'].map((id) => `src/reference/data/${id}.json`),

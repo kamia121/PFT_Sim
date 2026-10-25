@@ -2238,8 +2238,214 @@
       ]
     },
     {
+      "path": "src/core/trace-texture.js",
+      "sha256": "d90b655e9117b94e587345f3f02a1aa6ecc7b240c0629c6b5990428cf8a82b5c",
+      "reviewLines": [
+        {
+          "line": 23,
+          "text": "* Random streams: `spiro-texture-<set>-<index>` and `spiro-texture-insp-<set>-<index>`, a fixed number of draws each. No other"
+        },
+        {
+          "line": 48,
+          "text": "verification: 'unverified',"
+        },
+        {
+          "line": 64,
+          "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
+        },
+        {
+          "line": 65,
+          "text": "const smoothstep = (x) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };"
+        },
+        {
+          "line": 83,
+          "text": "for (let k = 0; k < 4; k++) { s += b[k] * coef[i + k]; q += b[k] * b[k]; }"
+        },
+        {
+          "line": 90,
+          "text": "const fine = Array.from({ length: FINE_DRAWS }, () => rng.normal());"
+        },
+        {
+          "line": 91,
+          "text": "const broad = Array.from({ length: BROAD_DRAWS }, () => rng.normal());"
+        },
+        {
+          "line": 106,
+          "text": "for (let j = 1; j < t.length; j++) out[j] = out[j - 1] + 0.5 * (y[j] + y[j - 1]) * (t[j] - t[j - 1]);"
+        },
+        {
+          "line": 120,
+          "text": "const rng = createStream(seed >>> 0, `spiro-texture-${set}-${index}`);"
+        },
+        {
+          "line": 127,
+          "text": "if (curveFlow(curve, hi) > P.peakGuardFractionOfPef * pef || protectUntil >= tStop) return empty;"
+        },
+        {
+          "line": 128,
+          "text": "for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (curveFlow(curve, mid) > P.peakGuardFractionOfPef * pef) lo = mid; else hi = mid; }"
+        },
+        {
+          "line": 131,
+          "text": "if (!(tQuiet - tGuard > P.guardRampS + P.endRampS)) return empty;"
+        },
+        {
+          "line": 136,
+          "text": "const cand = [...P.anchorsFractionOfFvc.map((q) => timeAtVolume(curve, q * fvc)), t0 + 1];"
+        },
+        {
+          "line": 137,
+          "text": "const anchors = [tGuard, ...cand.filter((x) => Number.isFinite(x) && x > tGuard + 1e-6 && x < tQuiet - 1e-6).sort((a, b) => a - b), tQuiet]"
+        },
+        {
+          "line": 138,
+          "text": ".filter((x, k, a) => k === 0 || x - a[k - 1] > 1e-6);"
+        },
+        {
+          "line": 142,
+          "text": "for (let k = 0; k + 1 < anchors.length; k++) {"
+        },
+        {
+          "line": 144,
+          "text": "for (let j = k === 0 ? 0 : 1; j <= n; j++) grid.push(j === n ? b : a + ((b - a) * j) / n);"
+        },
+        {
+          "line": 146,
+          "text": "const f = grid.map((x) => curveFlow(curve, x));"
+        },
+        {
+          "line": 147,
+          "text": "const uFine = cumtrapz(grid, f.map((q) => knotRate(q, P.fineLengthOfFvc * fvc, P.fineMinCorrelationS)));"
+        },
+        {
+          "line": 148,
+          "text": "const uBroad = cumtrapz(grid, f.map((q) => knotRate(q, P.broadLengthOfFvc * fvc, P.broadMinCorrelationS)));"
+        },
+        {
+          "line": 149,
+          "text": "const env = grid.map((x) => smoothstep((x - tGuard) / P.guardRampS) * (1 - smoothstep((x - (tQuiet - P.endRampS)) / P.endRampS)));"
+        },
+        {
+          "line": 150,
+          "text": "const m0 = grid.map((_, j) => {"
+        },
+        {
+          "line": 158,
+          "text": "for (let k = 0; k + 1 < anchors.length; k++) {"
+        },
+        {
+          "line": 160,
+          "text": "while (j1 < grid.length - 1 && grid[j1] < anchors[k + 1]) j1++;"
+        },
+        {
+          "line": 162,
+          "text": "const phi = (x) => Math.sin((Math.PI * (x - a)) / (b - a)) ** 2;"
+        },
+        {
+          "line": 164,
+          "text": "for (let j = j0 + 1; j <= j1; j++) {"
+        },
+        {
+          "line": 170,
+          "text": "for (let j = j0; j <= j1; j++) m[j] = m0[j] - c * phi(grid[j]);"
+        },
+        {
+          "line": 178,
+          "text": "let scale = mMax > P.cap ? P.cap / mMax : 1;"
+        },
+        {
+          "line": 179,
+          "text": "const peakOk = (s) => grid.every((x, j) => curveFlow(curve, x + s * delta[j]) * (1 + s * m[j]) <= P.peakCeilingOfPef * pef);"
+        },
+        {
+          "line": 180,
+          "text": "for (let it = 0; it < 30 && !peakOk(scale); it++) scale *= 0.8;"
+        },
+        {
+          "line": 182,
+          "text": "const mOut = m.map((q) => q * scale);"
+        },
+        {
+          "line": 183,
+          "text": "delta = delta.map((q) => q * scale);"
+        },
+        {
+          "line": 189,
+          "text": "if (!tex.active || x <= tex.active[0] || x >= tex.active[1]) return { delta: 0, m: 0 };"
+        },
+        {
+          "line": 192,
+          "text": "while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (g[mid] <= x) lo = mid; else hi = mid; }"
+        },
+        {
+          "line": 202,
+          "text": "* @param {import('./curve.js').Curve} curve @param {number[]} t @param {ReturnType<typeof expiratoryTexture>} tex"
+        },
+        {
+          "line": 207,
+          "text": "for (let i = 0; i < t.length; i++) {"
+        },
+        {
+          "line": 225,
+          "text": "const rng = createStream(seed >>> 0, `spiro-texture-insp-${set}-${index}`);"
+        },
+        {
+          "line": 229,
+          "text": "if (n < 4 || !(insp.fivc > 0)) return { ...insp, t: t.slice(), v: insp.v.slice(), f: f.slice(), flags: [...insp.flags], texture: { model: TRACE_TEXTURE_MODEL.version, applied: false } };"
+        },
+        {
+          "line": 231,
+          "text": "const absF = f.map((q) => Math.abs(q));"
+        },
+        {
+          "line": 232,
+          "text": "const uFine = cumtrapz(t, absF.map((q) => knotRate(q, P.fineLengthOfFivc * fivc, P.fineMinCorrelationS)));"
+        },
+        {
+          "line": 233,
+          "text": "const uBroad = cumtrapz(t, absF.map((q) => knotRate(q, P.broadLengthOfFivc * fivc, P.broadMinCorrelationS)));"
+        },
+        {
+          "line": 234,
+          "text": "const m0 = t.map((_, j) => P.cap * Math.tanh((amp * (P.fineSd * process(fine, uFine[j]) + P.broadSd * process(broad, uBroad[j]))) / P.cap));"
+        },
+        {
+          "line": 236,
+          "text": "const phi = t.map((x) => Math.sin((Math.PI * (x - t[0])) / Ti) ** 2);"
+        },
+        {
+          "line": 238,
+          "text": "for (let j = 1; j < n; j++) {"
+        },
+        {
+          "line": 244,
+          "text": "const mc = m0.map((q, j) => q - c * phi[j]);"
+        },
+        {
+          "line": 247,
+          "text": "const m = mMax > P.cap ? mc.map((q) => (q * P.cap) / mMax) : mc;"
+        },
+        {
+          "line": 248,
+          "text": "const ft = f.map((q, j) => q * (1 + m[j]));"
+        },
+        {
+          "line": 252,
+          "text": "for (let j = 0; j < n; j++) {"
+        },
+        {
+          "line": 253,
+          "text": "if (j > 0) acc += 0.5 * (-ft[j - 1] - ft[j]) * (t[j] - t[j - 1]);"
+        },
+        {
+          "line": 257,
+          "text": "return { ...insp, t: t.slice(), flags: [...insp.flags], v, f: ft, pif: Math.max(...ft.map((q) => -q)), texture: { model: TRACE_TEXTURE_MODEL.version, applied: true } };"
+        }
+      ]
+    },
+    {
       "path": "src/core/inspiratory.js",
-      "sha256": "bd283db2d02fe5357305ddaf0c78686faa88574412f0a7dcfe6c3abb76a341d5",
+      "sha256": "92f7ab8d121814d2898cdea07c7b29113d738858e762efc9de95f07102272ab6",
       "reviewLines": [
         {
           "line": 18,
@@ -2374,141 +2580,157 @@
           "text": "const hump = (x, ta, tb) => (x <= ta || x >= tb ? 0 : Math.pow(Math.sin((Math.PI * (x - ta)) / (tb - ta)), 2));"
         },
         {
-          "line": 180,
+          "line": 200,
           "text": "const rng = createStream(seed >>> 0, 'artifact-plot');"
         },
         {
-          "line": 182,
+          "line": 202,
           "text": "const r = Array.from({ length: 24 }, () => rng.uniform());"
         },
         {
-          "line": 187,
+          "line": 207,
           "text": "const has = (x) => faults.includes(x);"
         },
         {
-          "line": 191,
+          "line": 211,
           "text": "for (let i = 1; i < n && t[i] <= 2; i++) if (f[i] > f[ip]) ip = i;"
         },
         {
-          "line": 197,
+          "line": 217,
           "text": "if (has('slow-start') && tPk < 0.15) {"
         },
         {
-          "line": 199,
+          "line": 219,
           "text": "const s = (u) => 2 * u * u - u * u * u, ds = (u) => 4 * u - 3 * u * u;"
         },
         {
-          "line": 201,
+          "line": 221,
           "text": "for (let i = 0; i < n; i++) {"
         },
         {
-          "line": 202,
+          "line": 222,
           "text": "if (t_[i] >= tb) break;"
         },
         {
-          "line": 212,
+          "line": 232,
           "text": "const rr = (k, lo, hi) => lo + (hi - lo) * r[k];"
         },
         {
-          "line": 216,
+          "line": 236,
           "text": "for (let j = 0; j < k && start + 0.14 <= 1.0; j++) {"
         },
         {
-          "line": 226,
+          "line": 246,
           "text": "if (has('variable-effort') && tF - tAfterPeak > 0.3 && tEnd - 1.2 > tF + 0.4) {"
         },
         {
-          "line": 227,
+          "line": 247,
           "text": "const sign = r[8] < 0.5 ? 1 : -1;"
         },
         {
-          "line": 233,
+          "line": 253,
           "text": "if (has('leak') && tEnd > tF + 0.8) {"
         },
         {
-          "line": 239,
+          "line": 259,
           "text": "if (has('mouthpiece-obstruction') && tF > 0.7) {"
         },
         {
-          "line": 246,
+          "line": 266,
           "text": "const eps = (x) => {"
         },
         {
-          "line": 251,
+          "line": 271,
           "text": "if (x > h.ta && x <= h.tb) e -= 0.55 * (interp(sampled.t, sampled.v, x) - va);"
         },
         {
-          "line": 252,
+          "line": 272,
           "text": "else if (x > h.tb && x < h.tb + h.recover) {"
         },
         {
-          "line": 266,
+          "line": 286,
           "text": "const de = t.map((x) => (eps(x + dh) - eps(Math.max(0, x - dh))) / (x + dh - Math.max(0, x - dh)));"
         },
         {
-          "line": 269,
+          "line": 289,
           "text": "for (let i = 0; i < n; i++) if (de[i] < 0 && f[i] + kScale * de[i] < 0) kScale = Math.max(0, f[i] / -de[i]);"
         },
         {
-          "line": 270,
+          "line": 290,
           "text": "for (let i = 0; i < n; i++) { v[i] += kScale * e[i]; f[i] += kScale * de[i]; }"
         },
         {
-          "line": 275,
+          "line": 295,
           "text": "if (has('glottic-closure') && n > 12) {"
         },
         {
-          "line": 278,
+          "line": 298,
           "text": "while (ia > 0 && t[ia] > tEnd - delta) ia--;"
         },
         {
-          "line": 280,
+          "line": 300,
           "text": "if (dV > 1e-6 && tEnd - ta > 1e-6) {"
         },
         {
-          "line": 282,
+          "line": 302,
           "text": "for (let i = ia; i < n; i++) {"
         }
       ]
     },
     {
       "path": "src/ui/figures/traces.js",
-      "sha256": "c5d69eac3b4a6b3e6c6bcaf260fc2d92561f5130133af1eec616fb577f1d458e",
+      "sha256": "e09dbfd88319ff0c2cb1721e1fde7a2093d22daba29ddb5f11172e8356d821f1",
       "reviewLines": [
         {
-          "line": 11,
+          "line": 12,
           "text": "export const artifactSeed = (seed, index, set) => ((seed >>> 0) + (index + (set === 'post' ? 100 : 0)) * 0x9e3779b1) >>> 0;"
         },
         {
-          "line": 21,
+          "line": 39,
           "text": "if (!['t', 'v', 'f'].every((k) => Array.isArray(insp[k]) && insp[k].length >= 2 && insp[k].length === insp.t?.length && insp[k].every(Number.isFinite))) {"
         },
         {
-          "line": 33,
-          "text": "set.maneuvers.forEach((m, i) => {"
+          "line": 53,
+          "text": "export const traceFingerprint = (m, { seed, index, set = 'pre', scenario = null }) => {"
         },
         {
-          "line": 36,
-          "text": "if (score > bestScore) { bestScore = score; bestI = i; }"
+          "line": 55,
+          "text": "return JSON.stringify([TRACE_RENDERING_ID, seed >>> 0, set, index, c.A, c.a, c.k, c.r, c.T, m.fet, m.fvc, m.faults ?? [], scenario?.faults ?? [], m.inspiratory ?? null]);"
         },
         {
-          "line": 41,
-          "text": "export const isAcceptable = (set, i) => set.summary.evaluations[i].fev1.acceptable && set.summary.evaluations[i].fvc.acceptable;"
-        },
-        {
-          "line": 52,
-          "text": "const rng = createStream(seed >>> 0, 'volume-time-tidal');"
-        },
-        {
-          "line": 59,
-          "text": "for (let x = tStart; x < tI0; x += 0.05) { t.push(x); v.push(level + (vt / 2) * Math.cos((2 * Math.PI * (x - tI0)) / period)); }"
-        },
-        {
-          "line": 62,
-          "text": "for (let i = 0; i <= n; i++) { const u = i / n; t.push(tI0 + u * (tI1 - tI0)); v.push((a * (1 + Math.cos(Math.PI * u))) / 2); }"
+          "line": 57,
+          "text": "const deepFreeze = (x) => {"
         },
         {
           "line": 67,
+          "text": "const slot = `${opts.seed >>> 0}|${opts.set ?? 'pre'}|${opts.index}`;"
+        },
+        {
+          "line": 80,
+          "text": "set.maneuvers.forEach((m, i) => {"
+        },
+        {
+          "line": 83,
+          "text": "if (score > bestScore) { bestScore = score; bestI = i; }"
+        },
+        {
+          "line": 88,
+          "text": "export const isAcceptable = (set, i) => set.summary.evaluations[i].fev1.acceptable && set.summary.evaluations[i].fvc.acceptable;"
+        },
+        {
+          "line": 99,
+          "text": "const rng = createStream(seed >>> 0, 'volume-time-tidal');"
+        },
+        {
+          "line": 106,
+          "text": "for (let x = tStart; x < tI0; x += 0.05) { t.push(x); v.push(level + (vt / 2) * Math.cos((2 * Math.PI * (x - tI0)) / period)); }"
+        },
+        {
+          "line": 109,
+          "text": "for (let i = 0; i <= n; i++) { const u = i / n; t.push(tI0 + u * (tI1 - tI0)); v.push((a * (1 + Math.cos(Math.PI * u))) / 2); }"
+        },
+        {
+          "line": 114,
           "text": "export const curvePeak = (curve) => peakFlow(curve);"
         }
       ]
