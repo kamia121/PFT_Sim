@@ -10,9 +10,8 @@
  * The data come from the GLI lookup workbooks through tools/extract-gli.py and are covered by the
  * notice in src/reference/NOTICE, not by the MIT license of the surrounding code. Splines are
  * interpolated linearly in age between the 0.25-year rows of the workbooks. Ages below the
- * published range return null; nothing is extrapolated. Above the upper limit the reference
- * values for the last available age are used and the result says so (`ageUsed`, `ageClamped`),
- * as laboratory software does for the oldest patients.
+ * published range return unavailable; nothing is extrapolated. Synthetic anchors may explicitly
+ * request the legacy clamp policy; those values are not valid patient reference outputs,
  */
 
 export const Z_LIMIT = 1.645;
@@ -83,7 +82,8 @@ export const zScore = ({ L, M, S }, x) => (L === 0 ? Math.log(x / M) / S : (Math
  * @param {Record<string, { id: string, measures: object }>} datasets keyed by equation id:
  *   GLI2012, GLIglobal, GLI2021vol, GLI2017tlco
  */
-export function createReference(datasets) {
+export function createReference(datasets, { rangePolicy = 'unavailable' } = {}) {
+  if (!['unavailable', 'synthetic-anchor-clamp'].includes(rangePolicy)) throw new RangeError('Unknown reference range policy');
   const familyFor = (measure) => (SPIROMETRY_MEASURES.includes(measure) ? 'spirometry' : VOLUME_MEASURES.includes(measure) ? 'GLI2021vol' : TLCO_MEASURES.includes(measure) ? 'GLI2017tlco' : null);
 
   /**
@@ -110,9 +110,12 @@ export function createReference(datasets) {
     if (equationId === 'GLI2012' && ethnicityCode === undefined) throw new RangeError(`unknown group: ${patient.group}`);
     const entry = datasets[equationId].measures[measure][sex];
     const base = { measure, equationId, matched, fallbackReason };
-    // Above the last published age the values for that age are used, so the oldest patients are still graded.
+    // Clinical interpretation fails closed; clamping is opt-in for synthetic construction only.
     const ages = entry.splines.age;
     const maxAge = Math.min(ages[ages.length - 1], OFFICIAL_MAX_AGE[equationId] ?? Infinity);
+    if (!Number.isFinite(patient.age) || !Number.isFinite(patient.heightCm) || patient.heightCm <= 0) throw new RangeError('Finite age and positive measured height are required');
+    const outside = patient.age < ages[0] || patient.age > maxAge;
+    if (outside && rangePolicy === 'unavailable') return { ...base, available: false, fallbackReason: 'age-outside-range', ageRequested: patient.age, ageRange: [ages[0], maxAge], predicted: null, lln: null, uln: null, z: null, percentPredicted: null };
     const ageClamped = patient.age > maxAge;
     const ageUsed = ageClamped ? maxAge : patient.age;
     const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });

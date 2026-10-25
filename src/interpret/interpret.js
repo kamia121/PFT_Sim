@@ -166,11 +166,12 @@ export function interpret(report, resolve, spirometryEquation = 'GLIglobal', opt
     const pctPred = { fev1: boundaryPercent((100 * dFev1) / m.fev1.predicted), fvc: boundaryPercent((100 * dFvc) / m.fvc.predicted) };
     const pctBase = { fev1: (100 * dFev1) / sp.fev1, fvc: (100 * dFvc) / sp.fvc };
     const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;
-    const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);
+    // Select inclusive Table 9 thresholds (ATS/ERS 2005 p960); adjacent prose differs on equality.
+    const rule2005 = (atLeast(pctBase.fev1, 12) && atLeast(dFev1, 0.2)) || (atLeast(pctBase.fvc, 12) && atLeast(dFvc, 0.2));
     bd = {
       dFev1, dFvc, pctPred, pctBase,
       rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },
-      rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },
+      rule2005: { significant: rule2005, verification: 'ATS/ERS 2005 Table 9 inclusive >=12% baseline AND >=200 mL; selected table convention, prose differs; machine-equality tolerance only', which: [atLeast(pctBase.fev1, 12) && atLeast(dFev1, 0.2) && 'FEV1', atLeast(pctBase.fvc, 12) && atLeast(dFvc, 0.2) && 'FVC'].filter(Boolean) },
       rulesAgree: rule2022 === rule2005,
       postRatio: sp.post.fev1 / sp.post.fvc,
       discordant: (dFev1 > 0) !== (dFvc > 0) || Math.abs(pctPred.fvc - pctPred.fev1) > 8,

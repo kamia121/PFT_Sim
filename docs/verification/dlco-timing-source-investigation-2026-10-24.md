@@ -1,5 +1,7 @@
 # DLCO source investigation and quiz review checkpoint
 
+Historical investigation at 8507c25. The subsequent implementation and current status are in source-gap-checkpoint-2026-10-24.md; the timing defect documented below has now been corrected in generator v5.
+
 Inspected measurement commit `658c63e` on 24 October 2026. This checkpoint changes quiz feedback only; it deliberately leaves measurement timing and numeric outputs stable for independent review. No browser interaction, publication, deployment or new official GLI output occurred.
 
 ## Quiz corrections

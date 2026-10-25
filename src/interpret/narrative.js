@@ -971,7 +971,7 @@ function referenceSection(ctx, P) {
   const fb = [];
   for (const [k, what] of [['tlc', 'lung volumes'], ['dlco', 'transfer factor']]) if (m[k] && m[k].available !== false && m[k].matched === false && m[k].fallbackReason === 'equation-derived-in-european-ancestry-only') fb.push({ what, eq: eqName(m[k].equationId) });
   if (fb.length) { const eqs = [...new Set(fb.map((x) => x.eq))]; out.push(sentence(P('r-fallback', { group, what: list(fb.map((x) => x.what)), eqs: `${list(eqs)} equation${eqs.length > 1 ? 's' : ''}`, was: eqs.length > 1 ? 'were' : 'was' }))); }
-  for (const [k, what] of [['fev1', 'spirometry'], ['tlc', 'lung volumes'], ['dlco', 'transfer factor']]) if (m[k] && m[k].available === false && m[k].fallbackReason === 'age-outside-range') out.push(sentence(P('r-age', { what, eq: eqName(m[k].equationId) })));
+  for (const [k, what] of [['fev1', 'spirometry'], ['tlc', 'lung volumes'], ['dlco', 'transfer factor']]) if (m[k] && m[k].available === false && m[k].reason === 'age-outside-range') out.push(sentence(P('r-age', { what, eq: eqName(m[k].equationId) })));
   const capped = [['fev1', 'spirometry'], ['tlc', 'lung volumes'], ['dlco', 'transfer factor']].filter(([k]) => m[k]?.ageClamped);
   for (const [k, what] of capped) out.push(sentence(P('r-age-cap', { what, eq: eqName(m[k].equationId), max: m[k].ageUsed })));
   const sc = ctx.scen;

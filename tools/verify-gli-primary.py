@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 """
-Compares the GLI-2021 volume and GLI-2017 TLCO data used by PFT_Sim with the PRIMARY sources, as supplied in the
-"GLI primary verification packet" (retrieved from the ERS publisher on 2026-10-20; see its provenance.json for URLs and hashes):
+Compares GLI-2021 volume and corrected-2020 GLI-2017 TLCO data against a PRIOR
+coefficient transcription and archived spline workbooks. The historical packet attributes
+its transcription to Hall 2021 Table 3 and corrected Stanojevic Table 2. This script cannot
+establish that attribution: the original printed tables have not been independently
+rechecked in the current audit. Its coefficient arrays are comparison data, not an oracle.
 
-  1. The regression coefficients printed in Hall 2021 (Eur Respir J 57:2000289), Table 3, and in the 2020 correction to Stanojevic 2017
-     (Eur Respir J 56:1750010), corrected Table 2. They are transcribed below from the printed tables as read by the packet's author
-     (coefficient_facts.txt). The transcription is data in this file; it is not code from any package.
-  2. The spline lookup tables published by the ERS with those papers (Hall2021_Lookup_tables.xlsx and the corrected Stanojevic workbooks).
-
-Scope. This is a comparison of stored numbers with the printed coefficients and the published lookup tables. It is NOT a validation of
-units, of interpolation between the 0.25-year rows, of behavior at the age boundaries, or of the LMS calculation (src/reference/gli.js)
-against an official calculator. No official online-calculator case has been run (the calculator is behind a CAPTCHA and a paid key).
-The printed tables were inspected visually in the publisher PDFs (Hall 2021 Table 3, PDF page 5; 2020 correction to Stanojevic 2017,
-corrected Table 2, PDF page 2) and transcribed by the packet's author; the transcription is the weak link of this check. A separate Codex audit (2026-10-20)
-matched 120/120 coefficient values and recomputed 100 measurements with the stored splines to 1e-12, but could not rerun the workbook
-comparison (403), so the spline comparison is this script's alone. Source hashes are in src/reference/sources.json and in
-docs/verification/gli-packet-2026-10-20/provenance.json.
+A passing check establishes transcription agreement and archived-workbook spline agreement.
+It does not verify source-table transcription, units, interpolation, age handling, LMS output,
+or agreement with the official GLI calculator. See docs/verification/coefficient-source-request.md
+and the packet provenance/hashes for the exact outstanding sources. No official calculator
+outputs have been obtained; do not describe this script as closing that gap.
 
 Usage: python3 tools/verify-gli-primary.py PACKET_DIR
 Exit status 1 if any coefficient differs or any spline value differs by more than 1e-9.
@@ -136,5 +131,5 @@ if problems:
     print(f'{len(problems)} PROBLEM(S):')
     print('\n'.join(problems))
     sys.exit(1)
-print('All coefficients equal the transcribed printed values (to 1e-12) and all spline tables equal the published workbooks (to 1e-9).')
+print('Stored coefficients match prior transcription (1e-12); splines match archived workbooks (1e-9). Printed-table transcription and official outputs remain independently unverified.')
 print('Not checked here: units, interpolation, age boundaries, LMS evaluation against an official calculator (none was run).')

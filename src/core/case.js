@@ -110,11 +110,11 @@ export function buildCase(input, datasets) {
     const forcedVc = [pre, post].filter(Boolean).flatMap((set) => set.maneuvers.filter((_, i) => set.summary.evaluations[i].fvc.usable).map((m) => m.fvc));
     const vcCandidates = [...forcedVc, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)].filter((v) => Number.isFinite(v) && v > 0);
     const vcL = vcCandidates.length ? Math.max(...vcCandidates) : null;
-    dlcoTrace = buildDlcoReplicates({ seed: d.seed, truth, dlco, vcL, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    dlcoTrace = buildDlcoReplicates({ seed: d.seed, truth, dlco, vcL, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });
     const v = dlcoTrace.session.values;
     dlco = { ...dlco, raw: v.dlco, adjusted: v.dlco === null ? null : v.dlco * dlco.hbFactor, va: v.vaL, kco: v.kco === null ? null : v.kco * dlco.hbFactor };
   } else if (dlco) {
-    dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });
     if (dlcoTrace && dlcoTrace.reproducesCase === false && dlcoTrace.values) {
       const scale = dlcoTrace.values.dlcoMlMinMmHg / dlco.raw;
       const va = Math.min(dlcoTrace.values.vaL, 0.99 * (d.v >= 3 ? dlcoModelTlc : volumes.tlc));

@@ -649,7 +649,7 @@ export function buildReportModel(caseData, interp, options = {}) {
       signatureLabel: 'Simulated interpreting physician (not signed)',
       dateLabel: 'Date',
       disclaimer: SIMULATION_DISCLAIMER,
-      generator: `PFT Sim generator version ${GENERATOR_VERSION}`,
+      generator: `PFT Sim generator version ${d.v ?? GENERATOR_VERSION}`,
       caseCode: code,
       marker: SIMULATION_MARKER,
     },

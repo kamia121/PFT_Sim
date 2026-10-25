@@ -287,7 +287,7 @@
   "files": [
     {
       "path": "src/core/standards.js",
-      "sha256": "3eff553f0e4bc8fd8160a2b610e856e33466eb30f2471eba60816379b5efd0ce",
+      "sha256": "a7a14ad3964f8384a2502632b24809e10e6052c7570d1a4a1e92bd94c26ae50d",
       "reviewLines": [
         {
           "line": 12,
@@ -729,7 +729,7 @@
     },
     {
       "path": "src/core/dlco-replicates.js",
-      "sha256": "0e43eb573c3327297299a51587ab51baa212a171c341d02098e9ab237f4e62c1",
+      "sha256": "827650937f7cd68f9ab9d6b6e503adb13ed391a9d962e026ab56c43e238e9ae1",
       "reviewLines": [
         {
           "line": 10,
@@ -769,468 +769,504 @@
     },
     {
       "path": "src/core/quality.js",
-      "sha256": "4853d3793725b473b098680333fc262dbeed1ad784024b8fdf00ad122190af7d",
+      "sha256": "b44f9eab933530288539a3e04d39687c4e8ba11cf2ed1f779bb15b6ceb8fb7dd",
       "reviewLines": [
         {
           "line": 5,
           "text": "export const PAUSE_AT_TLC_MAX_SECONDS = { value: 2, verification: 'verified-primary (text), not a Table 7 row' };"
         },
         {
-          "line": 25,
+          "line": 26,
           "text": "/** Phrases for the technologist comment of a maneuver set (\"<phrase> (maneuver 2)\"). */"
         },
         {
-          "line": 84,
+          "line": 88,
           "text": "// Select the inclusive Table 7 BEV/plateau convention: 2019 Table 7 uses ≤, its prose <."
         },
         {
-          "line": 88,
+          "line": 92,
           "text": "const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;"
         },
         {
-          "line": 89,
+          "line": 93,
           "text": "const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;"
         },
         {
-          "line": 100,
+          "line": 107,
           "text": "const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];"
         },
         {
-          "line": 109,
+          "line": 117,
           "text": "|| m.fet >= S.longFetSeconds.value"
         },
         {
-          "line": 123,
+          "line": 131,
           "text": "const [hi, next] = acceptableValues.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 126,
+          "line": 134,
           "text": "if (acceptableValues.length >= 3 && atMost(spread, g.A)) return 'A';"
         },
         {
-          "line": 133,
+          "line": 141,
           "text": "const largestTwoSpread = (xs) => {"
         },
         {
-          "line": 134,
+          "line": 142,
           "text": "if (xs.length < 2) return null;"
         },
         {
-          "line": 135,
+          "line": 143,
           "text": "const [hi, next] = xs.slice().sort((a, b) => b - a);"
         },
         {
-          "line": 141,
+          "line": 149,
           "text": "* @returns {{ evaluations: ReturnType<typeof evaluateManeuver>[], grades: { fev1: string, fvc: string },"
         },
         {
-          "line": 146,
+          "line": 154,
           "text": "const maxFvcInSet = maneuvers.length ? Math.max(...maneuvers.map((m) => m.fvc)) : 0;"
         },
         {
-          "line": 147,
+          "line": 155,
           "text": "const evaluations = maneuvers.map((m) => evaluateManeuver(m, maneuvers.length > 1 ? maxFvcInSet : null));"
         },
         {
-          "line": 148,
+          "line": 156,
           "text": "const pick = (key, flag) => maneuvers.filter((_, i) => evaluations[i][key][flag]);"
         },
         {
-          "line": 155,
+          "line": 163,
           "text": "value: pool.length ? Math.max(...pool.map((m) => m[key])) : null,"
         },
         {
-          "line": 156,
+          "line": 164,
           "text": "grade: gradeVariable(acc.map((m) => m[key]), use.length),"
         },
         {
-          "line": 158,
+          "line": 166,
           "text": "spread: largestTwoSpread(acc.map((m) => m[key])),"
         },
         {
-          "line": 163,
+          "line": 171,
           "text": "const fvcAdjusted = out.fvc.value !== null && out.fev1.value !== null && out.fev1.value > out.fvc.value;"
         },
         {
-          "line": 165,
+          "line": 173,
           "text": "const poolFor = (key) => (pick(key, 'acceptable').length ? pick(key, 'acceptable') : pick(key, 'usable'));"
         },
         {
-          "line": 166,
+          "line": 174,
           "text": "const maxOf = (field, pool) => (pool.length ? Math.max(...pool.map((m) => m[field])) : null);"
         },
         {
-          "line": 178,
+          "line": 186,
           "text": "repeatable: [out.fev1.spread, out.fvc.spread].every((x) => x !== null && atMost(x, S.repeatabilityLitersAdult.value)),"
         }
       ]
     },
     {
       "path": "src/core/dlco-trace.js",
-      "sha256": "b978a26ff87e41d784158ae6e57cecedbf3c50834e495bbbf1b297df451c4a2a",
+      "sha256": "809fc71b4bbd76c542de90369850c65cb1d136b86f314cee690978c275679f76",
       "reviewLines": [
         {
-          "line": 32,
+          "line": 33,
           "text": "testGas: { value: { tracer: 'CH4', fiTracerPct: 0.3, fiCoPct: 0.3, o2Pct: 21, balance: 'N2' }, verification: 'secondary' },"
         },
         {
-          "line": 33,
+          "line": 34,
           "text": "waterVaporMmHg: { value: 47, verification: 'secondary' },"
         },
         {
-          "line": 34,
+          "line": 35,
           "text": "viOverVcMin: { value: 0.9, alternative: 0.85, verification: 'secondary' },"
         },
         {
-          "line": 35,
+          "line": 36,
           "text": "inspiration85PctMaxS: { value: 4.0, verification: 'secondary' },"
         },
         {
-          "line": 36,
+          "line": 37,
           "text": "breathHoldWindowS: { value: [8, 12], verification: 'secondary' },"
         },
         {
-          "line": 37,
+          "line": 38,
           "text": "sampleCompleteWithinS: { value: 4.0, verification: 'secondary' },"
         },
         {
-          "line": 38,
+          "line": 39,
           "text": "washoutVolumeL: { value: [0.75, 1.0], smallVcMin: 0.5, smallVcLimitL: 2.0, verification: 'secondary' },"
         },
         {
-          "line": 39,
+          "line": 40,
           "text": "sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.0, verification: 'primary text: VC <1 L with confirmed dead-space clearance' },"
         },
         {
-          "line": 40,
+          "line": 41,
           "text": "apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },"
         },
         {
-          "line": 41,
+          "line": 42,
           "text": "anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },"
         },
         {
-          "line": 42,
+          "line": 43,
           "text": "phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },"
         },
         {
-          "line": 43,
+          "line": 44,
           "text": "alveolarPlateauSlopePerL: { value: [0.01, 0.08], verification: 'unverified' },"
         },
         {
-          "line": 44,
+          "line": 45,
           "text": "lowViDlcoExponent: { value: 0.5, verification: 'unverified' },"
         },
         {
-          "line": 45,
+          "line": 46,
           "text": "valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },"
         },
         {
-          "line": 46,
+          "line": 47,
           "text": "muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },"
         },
         {
-          "line": 47,
+          "line": 48,
           "text": "pressureFlagCmH2O: { value: 8, verification: 'unverified' },"
         },
         {
-          "line": 48,
+          "line": 49,
           "text": "gradeRules: { value: 'A all criteria met; B reserved; C a modeled criterion failed or remains unconfirmed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },"
         },
         {
-          "line": 53,
+          "line": 54,
           "text": "const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);"
         },
         {
-          "line": 54,
+          "line": 55,
           "text": "const round = (x, d) => { const p = 10 ** d; return Math.round(x * p) / p; };"
         },
         {
-          "line": 55,
+          "line": 56,
           "text": "const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;"
         },
         {
-          "line": 56,
+          "line": 57,
           "text": "const gridDown = (x, g = 0.05) => Math.round(x / g) * g;"
         },
         {
-          "line": 60,
+          "line": 61,
           "text": "const s = x < 0 ? -1 : 1, a = Math.abs(x) / Math.SQRT2;"
         },
         {
-          "line": 67,
+          "line": 68,
           "text": "const insp = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 6 * x * x - 8 * x ** 3 + 3 * x ** 4);"
         },
         {
-          "line": 70,
+          "line": 71,
           "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (insp(m) < frac) lo = m; else hi = m; }"
         },
         {
-          "line": 75,
+          "line": 76,
           "text": "const gam = (u) => 1 - (1 + u) * Math.exp(-u);"
         },
         {
-          "line": 76,
+          "line": 77,
           "text": "const expNorm = (u) => gam(Math.min(Math.max(u, 0), UMAX)) / gam(UMAX); // fraction of the exhaled volume at u = t / tau"
         },
         {
-          "line": 79,
+          "line": 80,
           "text": "for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (expNorm(m) < frac) lo = m; else hi = m; }"
         },
         {
-          "line": 84,
+          "line": 88,
+          "text": "|| time90S <= timeZeroS || sampleStartS < time90S || sampleEndS <= sampleStartS) throw new RangeError('Invalid Jones–Meade timing inputs');"
+        },
+        {
+          "line": 95,
           "text": "export const vaStpdMl = (vaBtpsL, pbMmHg = 760) => vaBtpsL * 1000 * ((pbMmHg - 47) / 760) * (273 / 310);"
         },
         {
-          "line": 85,
+          "line": 96,
           "text": "export const vaFromTracer = (fiTracer, faTracer, viL, vdL) => (fiTracer / faTracer) * (viL - vdL);"
         },
         {
-          "line": 86,
+          "line": 97,
           "text": "export const dlcoFromDecay = (vaStpd, tBhSeconds, pbMmHg, fCo0, fCoT) => (vaStpd / ((tBhSeconds / 60) * (pbMmHg - 47))) * Math.log(fCo0 / fCoT);"
         },
         {
-          "line": 96,
+          "line": 108,
           "text": "bv.volumeL.forEach((v, i) => { if (v >= lo && v <= hi) idx.push(i); });"
         },
         {
-          "line": 97,
+          "line": 109,
           "text": "const faTr = mean(idx.map((i) => bv.tracer[i])) / 100;"
         },
         {
-          "line": 98,
+          "line": 110,
           "text": "const faCo = mean(idx.map((i) => bv.co[i])) / 100;"
         },
         {
-          "line": 117,
+          "line": 114,
+          "text": "const tBh = trace.version >= 2"
+        },
+        {
+          "line": 131,
           "text": "if (q.viOverVc < DLCO_MODEL.viOverVcMin.alternative) invalid.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 85%`);"
         },
         {
-          "line": 118,
+          "line": 132,
           "text": "else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) {"
         },
         {
-          "line": 122,
+          "line": 136,
           "text": "if (q.contamination > 0.03) invalid.push('alveolar sample begins inside the dead-space transition');"
         },
         {
-          "line": 124,
+          "line": 138,
           "text": "if (q.breathHoldS < bhLo || q.breathHoldS > bhHi) failed.push(`breath-hold ${q.breathHoldS.toFixed(1)} s, outside 8 to 12 s`);"
         },
         {
-          "line": 125,
+          "line": 139,
           "text": "if (q.sampleEndS > DLCO_MODEL.sampleCompleteWithinS.value) failed.push(`alveolar sample finished ${q.sampleEndS.toFixed(1)} s after the start of exhalation, over 4 s`);"
         },
         {
-          "line": 130,
+          "line": 144,
           "text": "if (q.sampleL < 0.085 || q.sampleL > 0.5) failed.push('RGA virtual sample outside 0.085 to 0.500 L');"
         },
         {
-          "line": 133,
+          "line": 147,
           "text": "const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];"
         },
         {
-          "line": 134,
+          "line": 148,
           "text": "if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);"
         },
         {
-          "line": 136,
+          "line": 150,
           "text": "if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= DLCO_MODEL.sampleVolumeL.smallVcAllowanceL)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);"
         },
         {
-          "line": 137,
+          "line": 151,
           "text": "else if (q.sampleL < sr[0] - 1e-9 && q.deadSpaceClearanceConfirmed !== true) unknown.push('small-VC sample exception needs confirmed dead-space clearance');"
         },
         {
-          "line": 139,
+          "line": 153,
           "text": "if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) failed.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s; the criterion is strictly less than 4 s`);"
         },
         {
-          "line": 167,
+          "line": 181,
           "text": "const choose = (u) => { let c = 0; for (const [name, w] of table) { c += w; if (u < c) return name; } return 'early-sample'; };"
         },
         {
-          "line": 168,
+          "line": 182,
           "text": "if (d[0] < gate) {"
         },
         {
-          "line": 170,
+          "line": 184,
           "text": "if (technique === 'poor' && d[2] < 0.3) out.add(choose(d[3]));"
         },
         {
-          "line": 190,
+          "line": 204,
           "text": "if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;"
         },
         {
-          "line": 198,
+          "line": 212,
           "text": "const d = Array.from({ length: 24 }, () => r.uniform());"
         },
         {
-          "line": 200,
+          "line": 214,
           "text": "const has = (f) => faults.includes(f);"
         },
         {
-          "line": 215,
+          "line": 229,
           "text": "const smallVc = vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL;"
         },
         {
-          "line": 216,
+          "line": 230,
           "text": "let vw = smallVc ? 0.5 : vcL < 3 ? 0.75 : 0.75 + 0.05 * Math.floor(d[8] * 6);"
         },
         {
-          "line": 217,
+          "line": 231,
           "text": "vw = Math.max(vw, gridDown(vd + 4 * sigma + 0.03, 0.05) + (vd + 4 * sigma + 0.03 > gridDown(vd + 4 * sigma + 0.03, 0.05) ? 0.05 : 0));"
         },
         {
-          "line": 220,
+          "line": 234,
           "text": "vs = Math.max(vcL < 1 ? 0.2 : 0.5, Math.min(vs, gridDown(0.8 * vi - vw, 0.05)));"
         },
         {
-          "line": 228,
+          "line": 242,
           "text": "if ((vi0 - vd) / vaCase > 0.97) {"
         },
         {
-          "line": 254,
+          "line": 263,
+          "text": "const t30 = timingVersion >= 2 ? timeZeroS + 0.3 * (time90S - timeZeroS) : tIn0 + inspInverse(0.3) * ti;"
+        },
+        {
+          "line": 273,
           "text": "const tEndFor = (tauX) => tauX * expInverse((vw + vs) / vHoldEnd);"
         },
         {
-          "line": 255,
+          "line": 274,
           "text": "if (tEndFor(tau) > 3.6) tau = 3.6 / expInverse((vw + vs) / vHoldEnd);"
         },
         {
-          "line": 258,
-          "text": "if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;"
-        },
-        {
-          "line": 274,
-          "text": "const vols = Array.from({ length: K + 1 }, (_, k) => round(k * STEP_L, 2));"
-        },
-        {
           "line": 275,
-          "text": "const wDead = (v) => 1 - Phi((v - vd) / sigma);"
-        },
-        {
-          "line": 276,
-          "text": "const plateau = (v) => 1 - sPlateau * (v - vmid);"
-        },
-        {
-          "line": 277,
-          "text": "const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;"
-        },
-        {
-          "line": 278,
-          "text": "const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);"
+          "text": "const tMidX = timingVersion >= 2"
         },
         {
           "line": 279,
-          "text": "const meanW = mean(winIdx.map((k) => wDead(vols[k])));"
-        },
-        {
-          "line": 280,
-          "text": "const meanWG = mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k])));"
-        },
-        {
-          "line": 285,
-          "text": "const concAt = (vx, amp, fi) => wDead(vx) * fi + (1 - wDead(vx)) * amp * plateau(vx);"
-        },
-        {
-          "line": 289,
-          "text": "const noisy = (arrFn, fi) => {"
-        },
-        {
-          "line": 290,
-          "text": "const clean = vols.map((v) => arrFn(v));"
-        },
-        {
-          "line": 291,
-          "text": "const e = clean.map((c) => NOISE * c * nz.normal());"
-        },
-        {
-          "line": 292,
-          "text": "const m = mean(winIdx.map((k) => e[k]));"
-        },
-        {
-          "line": 293,
-          "text": "return clean.map((c, k) => (inWin(vols[k]) ? c + e[k] - m : c + e[k]));"
+          "text": "if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;"
         },
         {
           "line": 295,
-          "text": "const trVol = noisy((v) => concAt(v, ampTr, fiTr) * 100);"
+          "text": "const vols = Array.from({ length: K + 1 }, (_, k) => round(k * STEP_L, 2));"
         },
         {
           "line": 296,
-          "text": "const coVol = noisy((v) => concAt(v, ampCo, fiCo) * 100);"
+          "text": "const wDead = (v) => 1 - Phi((v - vd) / sigma);"
         },
         {
-          "line": 304,
-          "text": "const leakShape = (t) => (t <= tIe ? 0 : t >= tExh0 ? 1 : Math.min(1, (t - tIe) / Math.max(tExh0 - tIe, 0.1)));"
+          "line": 297,
+          "text": "const plateau = (v) => 1 - sPlateau * (v - vmid);"
         },
         {
-          "line": 305,
-          "text": "for (let j = 0; j < nT; j++) {"
+          "line": 298,
+          "text": "const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;"
         },
         {
-          "line": 308,
-          "text": "if (t < tIn0) { vol = 0; co = 0; tr = 0; }"
+          "line": 299,
+          "text": "const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);"
         },
         {
-          "line": 309,
-          "text": "else if (t < tIe) { const x = (t - tIn0) / ti; vol = vi * insp(x); const rise = 1 - Math.exp(-(t - tIn0) / 0.15); co = fiCo * 100 * rise; tr = fiTr * 100 * rise; }"
+          "line": 300,
+          "text": "const meanW = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => wDead(vols[k]))) : 0;"
+        },
+        {
+          "line": 301,
+          "text": "const meanWG = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k]))) : 1;"
+        },
+        {
+          "line": 306,
+          "text": "const concAt = (vx, amp, fi) => wDead(vx) * fi + (1 - wDead(vx)) * amp * plateau(vx);"
         },
         {
           "line": 310,
+          "text": "const noisy = (arrFn, fi) => {"
+        },
+        {
+          "line": 311,
+          "text": "const clean = vols.map((v) => arrFn(v));"
+        },
+        {
+          "line": 312,
+          "text": "const e = clean.map((c) => NOISE * c * nz.normal());"
+        },
+        {
+          "line": 313,
+          "text": "const m = mean(winIdx.map((k) => e[k]));"
+        },
+        {
+          "line": 314,
+          "text": "return clean.map((c, k) => (inWin(vols[k]) ? c + e[k] - m : c + e[k]));"
+        },
+        {
+          "line": 316,
+          "text": "const trVol = noisy((v) => concAt(v, ampTr, fiTr) * 100);"
+        },
+        {
+          "line": 317,
+          "text": "const coVol = noisy((v) => concAt(v, ampCo, fiCo) * 100);"
+        },
+        {
+          "line": 325,
+          "text": "const leakShape = (t) => (t <= tIe ? 0 : t >= tExh0 ? 1 : Math.min(1, (t - tIe) / Math.max(tExh0 - tIe, 0.1)));"
+        },
+        {
+          "line": 326,
+          "text": "for (let j = 0; j < nT; j++) {"
+        },
+        {
+          "line": 329,
+          "text": "if (t < tIn0) { vol = 0; co = 0; tr = 0; }"
+        },
+        {
+          "line": 330,
+          "text": "else if (t < tIe) { const x = (t - tIn0) / ti; vol = vi * insp(x); const rise = 1 - Math.exp(-(t - tIn0) / 0.15); co = fiCo * 100 * rise; tr = fiTr * 100 * rise; }"
+        },
+        {
+          "line": 331,
           "text": "else if (t < tExh0) {"
         },
         {
-          "line": 321,
+          "line": 342,
           "text": "if (pAmp && t >= valStart && t <= valEnd) { const x = (t - valStart) / Math.max(valEnd - valStart, 0.5); p = pAmp * Math.min(1, 6 * x, 6 * (1 - x)); }"
         },
         {
-          "line": 346,
+          "line": 353,
+          "text": "method: timingVersion >= 2 ? 'single-breath diffusing capacity, virtual classical sample, tracer CH4; volumes normalized to BTPS' : 'single-breath diffusing capacity, rapid gas analyzer, tracer CH4',"
+        },
+        {
+          "line": 359,
+          "text": "breathHold: { seconds: round(tBh, 3), holdOnlyS: round(tExh0 - tIe, 3), definition: timingVersion >= 2 ? 'back-extrapolated zero plus 0.3 of inspiratory time to 90% VI, to midpoint of sample collection time (Graham 2017 Figure 5)' : 'legacy approximation: 30% of inspired volume to sample volume midpoint; not the 2017 timing definition' },"
+        },
+        {
+          "line": 367,
           "text": "byVolume: { volumeL: vols, co: coVol.map((x) => round(x, 6)), tracer: trVol.map((x) => round(x, 6)) },"
         },
         {
-          "line": 347,
+          "line": 368,
           "text": "faults: faults.map((f) => ({ code: f, text: FAULTS[f].text, affectsNumbers: FAULTS[f].numbers, visualOnly: !FAULTS[f].numbers })),"
         },
         {
-          "line": 356,
+          "line": 377,
           "text": "unverified: Object.entries(DLCO_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),"
         },
         {
-          "line": 361,
+          "line": 380,
+          "text": "if (timingVersion >= 2) {"
+        },
+        {
+          "line": 383,
+          "text": "const completeSample = vw + vs <= vHoldEnd && endS > startS;"
+        },
+        {
+          "line": 410,
+          "text": "trace.breathHold.seconds = timingVersion >= 2 ? rec.breathHoldS : round(rec.breathHoldS, 3); // difference of the rounded markers, so the stored value matches the plotted ones"
+        },
+        {
+          "line": 411,
           "text": "const near = (a, b) => Math.abs(a / b - 1) <= 0.01;"
         },
         {
-          "line": 368,
+          "line": 418,
           "text": "adjustments.push(`Printed VA ${rec.vaL.toFixed(2)} L (${dv >= 0 ? '+' : ''}${dv.toFixed(1)}% from the case value) and DLCO ${rec.dlco.toFixed(1)} mL/min/mmHg (${dd >= 0 ? '+' : ''}${dd.toFixed(1)}%) because of the technique faults in this test.`);"
         },
         {
-          "line": 373,
+          "line": 423,
           "text": "const holdIdx = T.map((t, j) => (t > tIe + 0.2 && t < tExh0 - 0.2 ? j : -1)).filter((j) => j >= 0);"
         },
         {
-          "line": 374,
+          "line": 424,
           "text": "const pHold = holdIdx.map((j) => P[j]);"
         },
         {
-          "line": 375,
+          "line": 425,
           "text": "const volHold = holdIdx.map((j) => V[j]);"
         },
         {
-          "line": 380,
+          "line": 430,
           "text": "deadSpaceClearanceConfirmed: contamination <= 0.03,"
         },
         {
-          "line": 387,
+          "line": 437,
           "text": "valsalva: pHold.length ? Math.max(...pHold) > flagCm : false,"
         },
         {
-          "line": 388,
+          "line": 438,
           "text": "mueller: pHold.length ? Math.min(...pHold) < -flagCm : false,"
         },
         {
-          "line": 389,
+          "line": 439,
           "text": "leak: volHold.length ? volHold[0] - volHold[volHold.length - 1] > 0.1 : false,"
         }
       ]
@@ -2003,7 +2039,7 @@
     },
     {
       "path": "src/core/physiology.js",
-      "sha256": "a7b15f3ce3a0a49e0286b183aed1d24f4b92b401e4cf5fda69271246e105b827",
+      "sha256": "3656d8f7f99285bfcfe8e9cdf6cd2c4b94e93df81b233504d32fd96638590312",
       "reviewLines": [
         {
           "line": 40,
@@ -2125,7 +2161,7 @@
     },
     {
       "path": "src/core/case.js",
-      "sha256": "e4f338580de75aa0406edf5a842e10db1d9dd455f7ddbc056aaa0eecdcdc0246",
+      "sha256": "48bac8f654efa418a0dc748a99aa91c7685d5d83ae39070be7a245839a0dda98",
       "reviewLines": [
         {
           "line": 18,
@@ -2188,8 +2224,12 @@
           "text": "const vcCandidates = [...forcedVc, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)].filter((v) => Number.isFinite(v) && v > 0);"
         },
         {
+          "line": 113,
+          "text": "dlcoTrace = buildDlcoReplicates({ seed: d.seed, truth, dlco, vcL, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });"
+        },
+        {
           "line": 117,
-          "text": "dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });"
+          "text": "dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });"
         },
         {
           "line": 120,
@@ -2203,58 +2243,58 @@
     },
     {
       "path": "src/reference/gli.js",
-      "sha256": "6435d9c3fa352ec03ab6f3f4de3a8b2d181dcd35ea29b722defcb1dbb22ea901",
+      "sha256": "126c2abac8ea6ecc80c878215baf5ff1818facbac7fd7e37ce0e29e9783650c6",
       "reviewLines": [
         {
-          "line": 38,
+          "line": 37,
           "text": "if (age < a[0] || age > a[a.length - 1]) return null;"
         },
         {
-          "line": 40,
+          "line": 39,
           "text": "while (hi - lo > 1) {"
         },
         {
-          "line": 41,
+          "line": 40,
           "text": "const mid = (lo + hi) >> 1;"
         },
         {
-          "line": 42,
+          "line": 41,
           "text": "if (a[mid] <= age) lo = mid; else hi = mid;"
         },
         {
-          "line": 48,
+          "line": 47,
           "text": "const linear = (t, lnAge, age, lnHt, ht) => t.const + t.ageLn * lnAge + t.age * age + t.htLn * lnHt + t.ht * ht;"
         },
         {
-          "line": 52,
+          "line": 51,
           "text": "* @param {string} equationId"
         },
         {
-          "line": 56,
+          "line": 55,
           "text": "export function lms(entry, equationId, { age, heightCm, ethnicityCode = 1 }) {"
         },
         {
-          "line": 62,
+          "line": 61,
           "text": "if (equationId === 'GLI2012') {"
         },
         {
-          "line": 64,
+          "line": 63,
           "text": "const aTerm = k >= 0 ? entry.a[3 + k] : 0;"
         },
         {
-          "line": 65,
+          "line": 64,
           "text": "const pTerm = k >= 0 ? entry.p[2 + k] : 0;"
         },
         {
-          "line": 79,
+          "line": 78,
           "text": "export const valueAtZ = ({ L, M, S }, z) => (L === 0 ? M * Math.exp(S * z) : M * Math.pow(1 + L * S * z, 1 / L));"
         },
         {
-          "line": 80,
+          "line": 79,
           "text": "export const zScore = ({ L, M, S }, x) => (L === 0 ? Math.log(x / M) / S : (Math.pow(x / M, L) - 1) / (L * S));"
         },
         {
-          "line": 83,
+          "line": 82,
           "text": "* @param {Record<string, { id: string, measures: object }>} datasets keyed by equation id:"
         },
         {
@@ -2295,21 +2335,33 @@
         },
         {
           "line": 116,
-          "text": "const ageClamped = patient.age > maxAge;"
+          "text": "if (!Number.isFinite(patient.age) || !Number.isFinite(patient.heightCm) || patient.heightCm <= 0) throw new RangeError('Finite age and positive measured height are required');"
+        },
+        {
+          "line": 117,
+          "text": "const outside = patient.age < ages[0] || patient.age > maxAge;"
         },
         {
           "line": 118,
-          "text": "const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });"
+          "text": "if (outside && rangePolicy === 'unavailable') return { ...base, available: false, fallbackReason: 'age-outside-range', ageRequested: patient.age, ageRange: [ages[0], maxAge], predicted: null, lln: null, uln: null, z: null, percentPredicted: null };"
         },
         {
           "line": 119,
+          "text": "const ageClamped = patient.age > maxAge;"
+        },
+        {
+          "line": 121,
+          "text": "const params = lms(entry, equationId, { age: ageUsed, heightCm: patient.heightCm, ethnicityCode });"
+        },
+        {
+          "line": 122,
           "text": "if (params === null) return { ...base, available: false, fallbackReason: 'age-outside-range', predicted: null, lln: null, uln: null, z: null, percentPredicted: null };"
         }
       ]
     },
     {
       "path": "src/interpret/interpret.js",
-      "sha256": "dde7cdd6aad988ec326593ef700b1aedef9b0e02d30bb669c56884cd6f779b7d",
+      "sha256": "910d3b22bdb416b084cb149d9ccade7f3f3dfac70ad633cb7084477cf4288904",
       "reviewLines": [
         {
           "line": 23,
@@ -2424,27 +2476,23 @@
           "text": "const rule2022 = pctPred.fev1 > 10 || pctPred.fvc > 10;"
         },
         {
-          "line": 169,
-          "text": "const rule2005 = (pctBase.fev1 >= 12 && dFev1 >= 0.2) || (pctBase.fvc >= 12 && dFvc >= 0.2);"
-        },
-        {
-          "line": 172,
+          "line": 173,
           "text": "rule2022: { significant: rule2022, which: [pctPred.fev1 > 10 && 'FEV1', pctPred.fvc > 10 && 'FVC'].filter(Boolean), verification: opts.generatorKey ? 'threshold from secondary sources; inclusive or exclusive boundary unresolved' : 'ERS/ATS 2022 Table 1: change above 10% of the predicted value in FEV1 or FVC (strict comparison)' },"
         },
         {
-          "line": 173,
-          "text": "rule2005: { significant: rule2005, which: [pctBase.fev1 >= 12 && dFev1 >= 0.2 && 'FEV1', pctBase.fvc >= 12 && dFvc >= 0.2 && 'FVC'].filter(Boolean) },"
+          "line": 174,
+          "text": "rule2005: { significant: rule2005, verification: 'ATS/ERS 2005 Table 9 inclusive >=12% baseline AND >=200 mL; selected table convention, prose differs; machine-equality tolerance only', which: [atLeast(pctBase.fev1, 12) && atLeast(dFev1, 0.2) && 'FEV1', atLeast(pctBase.fvc, 12) && atLeast(dFvc, 0.2) && 'FVC'].filter(Boolean) },"
         },
         {
-          "line": 176,
+          "line": 177,
           "text": "discordant: (dFev1 > 0) !== (dFvc > 0) || Math.abs(pctPred.fvc - pctPred.fev1) > 8,"
         },
         {
-          "line": 194,
+          "line": 195,
           "text": "const limited = ['fev1', 'fvc'].some((k) => ['D', 'E', 'U', 'F'].includes(quality[k]));"
         },
         {
-          "line": 223,
+          "line": 224,
           "text": "const borderline = ['fev1', 'fvc', 'fev1_fvc'].filter((k) => ia.measures[k]?.borderline || ib.measures[k]?.borderline);"
         }
       ]
@@ -2887,7 +2935,7 @@
     },
     {
       "path": "src/app/answers.js",
-      "sha256": "1d36f130f25b6e683925db9c51b330c5415de4e7eb8a7026900bc240a84dae53",
+      "sha256": "5381186eb150adae5f9eef071bfa5b1784aaa931d034374e66dde4e994e6478c",
       "reviewLines": [
         {
           "line": 23,
@@ -2943,12 +2991,12 @@
     },
     {
       "path": "src/reference/data/gli_tlco.json",
-      "sha256": "483e307493b675f96a7f9d609d04848d9b1d000a7d277cdb4e7850459a76fa45",
+      "sha256": "46c7808c64396c74b9b767bde223145390cfbdcf66aae18fceeeb258e69df4df",
       "reviewLines": []
     },
     {
       "path": "src/reference/data/gli_volumes.json",
-      "sha256": "c5ab7ee45f6d1ecb8bf1ca9380fa07f3f48b8b40716e1561b9b1d0d14f38742f",
+      "sha256": "eb5e441d14156731e35048546848232dc5e66cb885dd0a26e17595a685b2d92f",
       "reviewLines": []
     }
   ]

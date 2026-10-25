@@ -1,13 +1,13 @@
 {
   "scope": "41 semantic rule groups. Not a count of every numeric generator constant; the separate line inventory captures those. Source-text verification does not mean numerical GLI validation. Corrected is an overlapping implementation axis.",
-  "date": "2026-10-24",
+  "date": "2026-10-25",
   "counts": {
     "blocked-complete-coefficient-or-output-validation": 5,
     "modeled-heuristic": 8,
-    "partially-verified-open-implementation-or-source-detail": 10,
-    "verified-rule-text": 18
+    "partially-verified-open-implementation-or-source-detail": 8,
+    "verified-rule-text": 20
   },
-  "correctedGroups": 21,
+  "correctedGroups": 24,
   "rules": [
     {
       "id": 1,
@@ -93,9 +93,9 @@
       "id": 11,
       "rule": "BDR 2005",
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
-      "correctedInThisBranch": false,
-      "source": "Pellegrino 2005 BDR text",
-      "coverageAndGap": "`interpret`, `bd-2005-display`; verify published equality wording before changing"
+      "correctedInThisBranch": true,
+      "source": "Pellegrino 2005 Table 9 printed p960; adjacent BDR prose differs on equality",
+      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention."
     },
     {
       "id": 12,
@@ -133,10 +133,10 @@
     {
       "id": 16,
       "rule": "Maneuver faults",
-      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
-      "correctedInThisBranch": false,
+      "sourceStatus": "verified-rule-text",
+      "correctedInThisBranch": true,
       "source": "Graham 2019 Table 7",
-      "coverageAndGap": "Modeled cough/closure/leak/mouthpiece faults follow the supplied Table 7 acceptability/usability matrix. Zero-flow error is not modeled; no claim of a complete instrument-quality implementation."
+      "coverageAndGap": "Fault matrix now includes explicitly assessed zero-flow error, invalidating FEV1/FVC acceptability and usability. No automated fault detection or complete instrument model is claimed; FIVC and pediatric scope remain unimplemented."
     },
     {
       "id": 17,
@@ -181,10 +181,10 @@
     {
       "id": 22,
       "rule": "DLCO timings",
-      "sourceStatus": "partially-verified-open-implementation-or-source-detail",
+      "sourceStatus": "verified-rule-text",
       "correctedInThisBranch": true,
-      "source": "Graham 2017 acceptability table",
-      "coverageAndGap": "V4 full-precision t85 <4 s, BH 8\u201312 s and sample completion <=4 s; exact boundary tests. Interim letters are separate from session reporting. Jones\u2013Meade waveform timing and 2018 corrected gas-conversion model still need independent source verification; waveform recognition remains synthetic."
+      "source": "Graham 2017 Figure 5 pp14\u201315 and acceptability Table 3",
+      "coverageAndGap": "V5 Jones\u2013Meade uses back-extrapolated zero, t90-based inspiratory time and arithmetic sample-time midpoint throughout forward decay/analyzer/figures/full-precision quality. Independent nonlinear and asymmetric fixtures plus legacy v2\u2013v4 numeric hashes. t85 criterion remains separate. Synthetic waveform validation and 2018 instrument QA pipeline are not claimed."
     },
     {
       "id": 23,
@@ -280,7 +280,7 @@
       "sourceStatus": "blocked-complete-coefficient-or-output-validation",
       "correctedInThisBranch": false,
       "source": "Hall2021 Table 3 + workbook",
-      "coverageAndGap": "`gli`, `dlco-reference`; original printed table and complete spline recheck needed"
+      "coverageAndGap": "Archived spline-workbook comparison is recorded; original printed coefficient table still needs independent rechecking and official-output fixtures remain unavailable. Do not request the already archived spline workbook again."
     },
     {
       "id": 35,
@@ -294,9 +294,9 @@
       "id": 36,
       "rule": "Reference range",
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
-      "correctedInThisBranch": false,
+      "correctedInThisBranch": true,
       "source": "Each source's applicability text",
-      "coverageAndGap": "`gli`, `dlco-reference`; clamping is project fallback, not validation outside age range"
+      "coverageAndGap": "Clinical reference outputs now fail closed outside supported ages; measured results remain. Explicit synthetic anchor clamp preserves construction only. Original TLCO 5\u201385 versus corrected dataset 5\u201380 provenance remains unresolved; source/correction applicability still requires confirmation."
     },
     {
       "id": 37,
@@ -343,6 +343,6 @@
     "date": "2026-10-24",
     "module": "src/core/pleth-session.js",
     "integratedIntoProduct": true,
-    "status": "Linked pleth v3+ and replicate DLCO v4 integrated for local independent review. Mixed-failure table limits, subset/root policies and synthetic waveform assumptions are explicit; no official GLI validation claimed."
+    "status": "V5 timing correction and fail-closed clinical age handling added for independent review. v2\u2013v4 acquisition fixtures preserved; synthetic waveforms, KCO/root/tie policies and outstanding GLI coefficient/output blocks remain explicit."
   }
 }

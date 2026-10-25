@@ -26,7 +26,7 @@ export const QUESTIONS = [
     ['significant', 'Significant'], ['not-significant', 'Not significant'], ['not-done', 'Not performed'],
   ] },
   { id: 'dlco', label: 'Diffusing capacity (hemoglobin-adjusted)', options: [
-    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['unavailable', 'Attempted; not reportable'], ['not-done', 'Not performed'],
+    ['reduced', 'Reduced'], ['normal', 'Normal'], ['raised', 'Raised'], ['unavailable', 'Unavailable for classification'], ['not-done', 'Not performed'],
   ] },
 ];
 

@@ -21,5 +21,5 @@ test('v3 linked IC precedes expiratory SVC with measured pair amplitudes; legacy
   const t=make(3,'fair',2).pleth.timeline.trials[0];assert.ok(t.segments.find(s=>s.id==='expiration').t0<t.segments.find(s=>s.id==='inspiration').t0);
 });
 test('HTML, print rules and CSV describe the actual case generator version',()=>{
- for(const version of [2,3,4]){const c=make(3,'fair',version),m=buildReportModel(c,interpret(c.report,resolveReference));assert.equal(m.meta.generatorVersion,version);assert.match(renderReportDocument(m,{css:''}),new RegExp(`generator version ${version}`));assert.match(toCsv(m),new RegExp(`generator version,value,${version}`));}
+ for(const version of [2,3,4,5]){const c=make(3,'fair',version),m=buildReportModel(c,interpret(c.report,resolveReference));assert.equal(m.meta.generatorVersion,version);assert.equal(m.footer.generator,`PFT Sim generator version ${version}`);assert.match(renderReportDocument(m,{css:''}),new RegExp(`generator version ${version}`));assert.match(toCsv(m),new RegExp(`generator version,value,${version}`));}
 });

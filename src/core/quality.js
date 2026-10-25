@@ -21,6 +21,7 @@ export const FAULT_LABELS = {
   'pause-at-TLC': 'pause at full inspiration',
   'submaximal-effort': 'submaximal effort',
   'no-plateau': 'no plateau at end of expiration',
+  'zero-flow-error': 'incorrect zero-flow setting',
 };
 /** Phrases for the technologist comment of a maneuver set ("<phrase> (maneuver 2)"). */
 export const FAULT_TEXT = {
@@ -34,6 +35,7 @@ export const FAULT_TEXT = {
   'pause-at-TLC': 'pause at full inspiration before the blast',
   'submaximal-effort': 'submaximal effort',
   'no-plateau': 'expiration stopped before a plateau',
+  'zero-flow-error': 'incorrect zero-flow setting',
 };
 /** Short wording for the per-maneuver table. */
 export const FAULT_SHORT = {
@@ -47,6 +49,7 @@ export const FAULT_SHORT = {
   'pause-at-TLC': 'pause at TLC',
   'submaximal-effort': 'submaximal effort',
   'no-plateau': 'no plateau',
+  'zero-flow-error': 'zero-flow error',
 };
 /** @param {string} id @param {'text'|'short'|'label'} [form] readable wording for a fault id; an unknown id is spelled out, not printed raw */
 export function faultWording(id, form = 'text') {
@@ -71,6 +74,7 @@ export function faultWording(id, form = 'text') {
  * @property {number} plateau volume change over the last second (L)
  * @property {boolean} coughFirstSecond
  * @property {number|null} glottisClosedAt time of glottic closure (s), or null
+ * @property {boolean} [zeroFlowError] explicitly assessed zero-flow fault; no automated detector is implied
  * @property {string[]} [faults] fault ids recorded by the generator (leak, mouthpiece-obstruction, ...)
  * @property {number} [pauseSeconds] length of a pause at total lung capacity before the blast (s)
  */
@@ -88,7 +92,10 @@ export function evaluateManeuver(m, maxFvcInSet = null) {
   const closureFirstSecond = m.glottisClosedAt !== null && m.glottisClosedAt < 1;
   const closureLater = m.glottisClosedAt !== null && m.glottisClosedAt >= 1;
 
+  // An explicitly assessed fault; no waveform-based detector is claimed (2019 Table 7).
+  const zeroFlowBad = m.zeroFlowError === true || m.faults?.includes('zero-flow-error');
   const fev1Reasons = [];
+  if (zeroFlowBad) fev1Reasons.push('incorrect zero-flow setting');
   if (bevBad) fev1Reasons.push('back-extrapolated volume above limit');
   if (m.coughFirstSecond) fev1Reasons.push('cough in the first second');
   if (closureFirstSecond) fev1Reasons.push('glottic closure in the first second');
@@ -100,6 +107,7 @@ export function evaluateManeuver(m, maxFvcInSet = null) {
   const pauseReasons = m.pauseSeconds !== undefined && m.pauseSeconds > PAUSE_AT_TLC_MAX_SECONDS.value ? ['pause at total lung capacity longer than 2 s'] : [];
 
   const fvcUsableReasons = [];
+  if (zeroFlowBad) fvcUsableReasons.push('incorrect zero-flow setting');
   if (bevBad) fvcUsableReasons.push('back-extrapolated volume above limit');
   if (closureFirstSecond) fvcUsableReasons.push('glottic closure in the first second');
 

@@ -70,6 +70,9 @@ export function conciseSummary({ caseData, interp, cmp = null, caveats = { major
     lines.push({ label: 'Quality', text: `Grades FEV₁ ${g.fev1}, FVC ${g.fvc}${post ? ` (after bronchodilator ${post.fev1}, ${post.fvc})` : ''}: ${interp.qualityLimited ? 'a grade of D or worse limits confidence in the values' : 'adequate for interpretation'}.` });
   }
 
+  const outsideRange = Object.values(m).filter((x) => x.available === false && x.reason === 'age-outside-range');
+  if (outsideRange.length) lines.push({ label: 'Reference limits', text: 'Measured values are preserved, but age is outside the supported reference range for some indices. No limits, z-scores or classification are assigned to those indices; restriction or diffusion impairment cannot be assessed from an unavailable reference.' });
+
   // Spirometry and severity.
   const sp = ['fev1_fvc', 'fev1', 'fvc'].filter(has).map((k) => `${{ fev1_fvc: 'FEV₁/FVC', fev1: 'FEV₁', fvc: 'FVC' }[k]} ${zt(m[k].z)}${m[k].z < LLN_Z ? ' (low)' : ''}`);
   let spText = sp.length ? `z-scores ${sp.join(', ')}.` : '';

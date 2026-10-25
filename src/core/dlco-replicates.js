@@ -3,7 +3,7 @@ import { createStream } from './prng.js';
 import { buildDlcoTrace } from './dlco-trace.js';
 import { summarizeDlcoSession } from './dlco-session.js';
 
-export function buildDlcoReplicates({ seed, truth, dlco, vcL, patient, technique, scenario, ratioZ }) {
+export function buildDlcoReplicates({ seed, truth, dlco, vcL, patient, technique, scenario, ratioZ, timingVersion = 2 }) {
   const tests = [], maneuvers = [];
   const stream = createStream(seed, 'dlco-replicates-v4');
   let session = summarizeDlcoSession({ maneuvers, vcL, completed: true });
@@ -12,7 +12,7 @@ export function buildDlcoReplicates({ seed, truth, dlco, vcL, patient, technique
       const replicateSeed = stream.int(0, 0xffffffff);
       // Dispersion is a teaching choice, not a published frequency or uncertainty model.
       const raw = dlco.raw * Math.exp(.012 * stream.normal()), va = dlco.va * Math.exp(.006 * stream.normal());
-      const trace = buildDlcoTrace({ seed: replicateSeed, truth, dlco: { raw, va }, volumes: { vc: vcL }, patient, technique, scenario, ratioZ, fullPrecisionQuality: true });
+      const trace = buildDlcoTrace({ seed: replicateSeed, truth, dlco: { raw, va }, volumes: { vc: vcL }, patient, technique, scenario, ratioZ, timingVersion, fullPrecisionQuality: true });
       trace.maneuverId = i;
       tests.push(trace);
       maneuvers.push({ id: i, dlco: trace.values.dlcoMlMinMmHg, vaL: trace.values.vaL, viL: trace.inspired.volumeL, quality: trace.quality });

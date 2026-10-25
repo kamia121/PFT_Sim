@@ -11,8 +11,9 @@
  * FA,tr and FA,CO,t are the mean of the tracer and CO traces over the alveolar sample window, plotted
  * against expired volume. PB cancels in DLCO; it is carried so that the equations are written out.
  *
- * Breath-hold time is computed in the Jones-Meade form: from the instant 30% of VI has been inspired
- * to the midpoint of the alveolar sample (unverified for the 2017 standard, see docs/research).
+ * Timing v2 uses Graham 2017 Figure 5 / pp14–15: back-extrapolated zero plus
+ * 0.3 of inspiratory time to 90% VI, ending at the midpoint of sample collection time.
+ * Timing v1 preserves the legacy volume-event approximation for generator v2–4.
  *
  * The trace is built forward from the case values: given VA and DLCO it computes the alveolar tracer
  * fraction and the CO decay for the chosen VI, dead space and breath-hold time, draws the expiration,
@@ -80,6 +81,16 @@ function expInverse(frac) {
   return (lo + hi) / 2;
 }
 
+/** Graham 2017 Figure 5 and pp14–15, doi:10.1183/13993003.00016-2016.
+ * Inputs are assessed times, not inspired/expired volume fractions. */
+export function jonesMeadeTiming(timeZeroS, time90S, sampleStartS, sampleEndS) {
+  if (![timeZeroS, time90S, sampleStartS, sampleEndS].every(Number.isFinite)
+      || time90S <= timeZeroS || sampleStartS < time90S || sampleEndS <= sampleStartS) throw new RangeError('Invalid Jones–Meade timing inputs');
+  const startS = timeZeroS + 0.3 * (time90S - timeZeroS);
+  const endS = (sampleStartS + sampleEndS) / 2;
+  return { startS, endS, seconds: endS - startS };
+}
+
 /** Single-breath equations, exported so that tests and callers use the same definitions. */
 export const vaStpdMl = (vaBtpsL, pbMmHg = 760) => vaBtpsL * 1000 * ((pbMmHg - 47) / 760) * (273 / 310);
 export const vaFromTracer = (fiTracer, faTracer, viL, vdL) => (fiTracer / faTracer) * (viL - vdL);
@@ -90,6 +101,7 @@ export const dlcoFromDecay = (vaStpd, tBhSeconds, pbMmHg, fCo0, fCoT) => (vaStpd
  * @param {object} trace a DlcoTrace
  */
 export function analyzeDlcoTrace(trace) {
+  if (trace.quality?.sampleCollectionComplete === false) return { vaL: null, dlco: null, kco: null, faTracer: null, faCo: null, fCo0: null, breathHoldS: null, windowPoints: 0, reason: 'incomplete-sample' };
   const { byVolume: bv, markers: mk, gas } = trace;
   const lo = mk.sample.startL - 1e-9, hi = mk.sample.endL + 1e-9;
   const idx = [];
@@ -99,7 +111,9 @@ export function analyzeDlcoTrace(trace) {
   const fiTr = gas.fiTracerPct / 100, fiCo = gas.fiCoPct / 100;
   const vaBtps = vaFromTracer(fiTr, faTr, trace.inspired.volumeL, trace.deadSpaceL);
   const fCo0 = fiCo * (faTr / fiTr);
-  const tBh = mk.tSampleMidS - mk.t30PctS;
+  const tBh = trace.version >= 2
+    ? jonesMeadeTiming(mk.tZeroS, mk.t90PctS, mk.sample.startS, mk.sample.endS).seconds
+    : mk.tSampleMidS - mk.t30PctS;
   const dlco = dlcoFromDecay(vaStpdMl(vaBtps, trace.barometricMmHg), tBh, trace.barometricMmHg, fCo0, faCo);
   return { vaL: vaBtps, dlco, kco: dlco / vaBtps, faTracer: faTr, faCo, fCo0, breathHoldS: tBh, windowPoints: idx.length };
 }
@@ -186,7 +200,7 @@ function pickFaults(d, technique, scenario) {
  * @param {object} [args.scenario] { ids: DLC-01 to DLC-06 force faults; viOverVc: the VI/VC fraction a forced DLC-01 uses }
  * @param {number} [args.ratioZ] true FEV1/FVC z-score if known; otherwise approximated from the truth
  */
-export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ, fullPrecisionQuality = false } = {}) {
+export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ, timingVersion = 1, fullPrecisionQuality = false } = {}) {
   if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;
   const pb = patient.barometricMmHg ?? scenario?.barometricMmHg ?? 760;
   const gas = { ...DLCO_MODEL.testGas.value };
@@ -241,7 +255,12 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
 
   // Timeline.
   const tIn0 = 1.0;
-  const t30 = tIn0 + inspInverse(0.3) * ti;
+  // For F(x)=6x²−8x³+3x⁴, maximum slope is at x=1/3.
+  // Its tangent intercept is x−F/F′ = 5/48. This is exact for this synthetic curve,
+  // not a claim to have detected time zero in a real recorded maneuver.
+  const timeZeroS = tIn0 + (5 / 48) * ti;
+  const time90S = tIn0 + inspInverse(0.9) * ti;
+  const t30 = timingVersion >= 2 ? timeZeroS + 0.3 * (time90S - timeZeroS) : tIn0 + inspInverse(0.3) * ti;
   const tIe = tIn0 + ti;
   const t85 = inspInverse(0.85) * ti;
   const tBhTarget = has('short-hold') ? 5.0 + 2.4 * d[11] : has('long-hold') ? (scenario?.ids?.includes('DLC-03') ? 14.5 + 1.0 * d[11] : 12.8 + 3.2 * d[11]) : 9.0 + 2.0 * d[11];
@@ -253,7 +272,9 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   let tau = 1.3 + 1.2 * u + 0.4 * d[14];
   const tEndFor = (tauX) => tauX * expInverse((vw + vs) / vHoldEnd);
   if (tEndFor(tau) > 3.6) tau = 3.6 / expInverse((vw + vs) / vHoldEnd);
-  const tMidX = tau * expInverse(vmid / vHoldEnd);
+  const tMidX = timingVersion >= 2
+    ? tau * (expInverse(vw / vHoldEnd) + expInverse((vw + vs) / vHoldEnd)) / 2
+    : tau * expInverse(vmid / vHoldEnd);
   let tExh0 = t30 + tBhTarget - tMidX;
   if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;
   const tSampleMid = tExh0 + tMidX;
@@ -276,8 +297,8 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   const plateau = (v) => 1 - sPlateau * (v - vmid);
   const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;
   const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);
-  const meanW = mean(winIdx.map((k) => wDead(vols[k])));
-  const meanWG = mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k])));
+  const meanW = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => wDead(vols[k]))) : 0;
+  const meanWG = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k]))) : 1;
   const solve = !has('early-sample');
   // Amplitude of the alveolar plateau so that the window mean equals the clean alveolar value.
   const ampTr = solve ? (faTrClean - fiTr * meanW) / meanWG : faTrClean;
@@ -328,14 +349,14 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
 
   /** @type {any} */
   const trace = {
-    version: DLCO_MODEL.version,
-    method: 'single-breath diffusing capacity, rapid gas analyzer, tracer CH4',
+    version: timingVersion,
+    method: timingVersion >= 2 ? 'single-breath diffusing capacity, virtual classical sample, tracer CH4; volumes normalized to BTPS' : 'single-breath diffusing capacity, rapid gas analyzer, tracer CH4',
     gas,
     barometricMmHg: pb,
     deadSpaceL: vd,
     deadSpaceTransitionWidthL: round(sigma, 3),
     inspired: { volumeL: round(vi, 4), vcL: round(vcL, 4), viOverVc: round(vi / vcL, 4), inspirationTimeS: round(ti, 2), timeTo85PctS: round(t85, 2) },
-    breathHold: { seconds: round(tBh, 3), holdOnlyS: round(tExh0 - tIe, 3), definition: 'from 30% of the inspired volume to the midpoint of the alveolar sample (Jones-Meade form, unverified for the 2017 standard)' },
+    breathHold: { seconds: round(tBh, 3), holdOnlyS: round(tExh0 - tIe, 3), definition: timingVersion >= 2 ? 'back-extrapolated zero plus 0.3 of inspiratory time to 90% VI, to midpoint of sample collection time (Graham 2017 Figure 5)' : 'legacy approximation: 30% of inspired volume to sample volume midpoint; not the 2017 timing definition' },
     markers: {
       tInspStartS: tIn0, t30PctS: round(t30, 3), tInspEndS: round(tIe, 3), tExhaleStartS: round(tExh0, 3), tSampleMidS: round(tSampleMid, 3),
       exhalationStartVolumeL: round(vHoldEnd, 4),
@@ -356,8 +377,37 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
     unverified: Object.entries(DLCO_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),
   };
 
+  if (timingVersion >= 2) {
+    // Keep decision inputs at full precision; figure formatters round display only.
+    const startS = tExh0 + tau * expInverse(vw / vHoldEnd), endS = tExh0 + sampleEndS;
+    const completeSample = vw + vs <= vHoldEnd && endS > startS;
+    const timing = completeSample ? jonesMeadeTiming(timeZeroS, time90S, startS, endS)
+      : { startS: t30, endS: (startS + endS) / 2 };
+    if (!completeSample) {
+      // A leak/very small expiration can terminate before the requested sample ends.
+      // Preserve the attempted trace but never fabricate a completed sample or gas result.
+      trace.values = { vaL: null, dlcoMlMinMmHg: null, kco: null, faTracerPct: null, faCoPct: null, faCo0Pct: null, breathHoldS: null };
+      trace.caseValues = { vaL: dlco.va, dlcoMlMinMmHg: dlco.raw };
+      trace.reproducesCase = false; trace.adjusted = null;
+      trace.breathHold = { ...trace.breathHold, seconds: null };
+      trace.quality = { samplingMethod: 'classical', sampleCollectionComplete: false, visualQualityConfirmed: false,
+        stableBreathHold: !has('leak'), leak: has('leak'), valsalva: has('valsalva'), mueller: has('mueller'),
+        viOverVc: vi/vcL, vcL, t85S: t85, breathHoldS: null, sampleEndS,
+        washoutL: vw, sampleL: vs, deadSpaceClearanceConfirmed: false };
+      trace.grade = { grade: 'unassigned', acceptable: false, wouldBeRejected: true,
+        invalid: ['Expiration ended before the requested sample was collected.'], noted: [] };
+      trace.adjustments.push('Expiration ended before the requested sample was collected; no VA, DLCO or KCO is reported from this attempt.');
+    }
+    trace.markers = { ...trace.markers, tZeroS: timeZeroS, t90PctS: time90S,
+      tBhStartS: timing.startS, tSampleMidS: timing.endS,
+      sample: { ...trace.markers.sample, startS, endS } };
+    delete trace.markers.t30PctS;
+  }
+
+  if (trace.values?.dlcoMlMinMmHg === null) return trace;
+
   const rec = analyzeDlcoTrace(trace);
-  trace.breathHold.seconds = round(rec.breathHoldS, 3); // difference of the rounded markers, so the stored value matches the plotted ones
+  trace.breathHold.seconds = timingVersion >= 2 ? rec.breathHoldS : round(rec.breathHoldS, 3); // difference of the rounded markers, so the stored value matches the plotted ones
   const near = (a, b) => Math.abs(a / b - 1) <= 0.01;
   const reproduces = near(rec.vaL, dlco.va) && near(rec.dlco, dlco.raw);
   trace.values = { vaL: round(rec.vaL, 4), dlcoMlMinMmHg: round(rec.dlco, 4), kco: round(rec.kco, 4), faTracerPct: round(rec.faTracer * 100, 5), faCoPct: round(rec.faCo * 100, 5), faCo0Pct: round(rec.fCo0 * 100, 5), breathHoldS: round(rec.breathHoldS, 3) };

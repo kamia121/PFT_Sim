@@ -71,7 +71,7 @@ function valueAt({ L, M, S }, z) {
  */
 export function generatePhysiology(seed, d, datasets) {
   const rng = createStream(seed, 'physiology');
-  const { resolveReference } = createReference(datasets);
+  const { resolveReference } = createReference(datasets, { rangePolicy: 'synthetic-anchor-clamp' });
   const pat = { age: d.age, sex: d.sex, heightCm: d.heightCm, group: ANCHOR.group };
   const anchor = (measure) => resolveReference(measure, pat, ANCHOR.spirometry).lms;
   const at = (measure, z) => valueAt(anchor(measure), z);

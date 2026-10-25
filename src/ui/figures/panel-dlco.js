@@ -232,7 +232,9 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
     }
   }
   ry += 14;
-  strip.push(text(M, ry, `VA from tracer dilution; DLCO and KCO are before hemoglobin adjustment. Breath-hold from 30% of VI to the sample midpoint. PB ${t0.barometricMmHg} mmHg.`, { size: 9.5, fill: palette.axis }));
+  strip.push(text(M, ry, `VA from tracer dilution; DLCO and KCO before hemoglobin adjustment. PB ${t0.barometricMmHg} mmHg.`, { size: 9.5, fill: palette.axis }));
+  ry += 13;
+  strip.push(text(M, ry, t0.version >= 2 ? 'Timing: back-extrapolated zero + 0.3 inspiratory time to 90% VI; sample time midpoint.' : 'Legacy volume-event timing; not the 2017 breath-hold definition.', { size: 9.5, fill: palette.axis }));
   const H = height ?? Math.ceil(ry + 12);
 
   const desc = description ?? `Single-breath DLCO${mode === 'separate' ? `, ${items.length} test${items.length > 1 ? 's' : ''} on separate plots` : mode === 'all' && items.length > 1 ? `, ${items.length} tests overlaid` : ''}: CO and ${t0.gas.tracer} tracer fractions in percent against expired volume, with the discarded washout to ${num(t0.markers.washout.endL, 2)} L, the alveolar sample from ${num(t0.markers.sample.startL, 2)} to ${num(t0.markers.sample.endL, 2)} L and the dead-space volume ${num(t0.deadSpaceL, 2)} L marked, above a table of inspired volume as a percent of vital capacity, time to 85% of the inspired volume, breath-hold time, washout and sample volumes, VA, DLCO and KCO.`;

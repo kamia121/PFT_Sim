@@ -32,7 +32,7 @@ test('v3 reports the selected measured linked pairs and v2 links retain their le
   const old = buildCase(parseDescriptor('v=2&s=3&a=normal&t=fair'), ds);
   assert.equal(old.descriptor.v, 2); assert.equal(old.pleth.session, undefined);
   assert.equal(old.pleth.repeatability.spreadFraction, 0.0935);
-  assert.equal(parseDescriptor(serializeDescriptor(resolveDescriptor({ seed: 3, archetype: 'normal' }))).v, 4);
+  assert.equal(parseDescriptor(serializeDescriptor(resolveDescriptor({ seed: 3, archetype: 'normal' }))).v, 5);
 });
 
 for (const [name, c] of [['FRC only', make(2)], ['pending pair', make(26)], ['all FRC rejected', make(5, 'good', { archetype: 'obstruction', scenarioIds: ['pleth-pant-fast'] })]]) {
