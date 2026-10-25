@@ -19,6 +19,7 @@
  * The rules are documented in docs/narrative-model.md, including the 2022 rules that are still
  * unverified against the primary text.
  */
+import { atLeast } from '../core/comparison.js';
 import { createStream } from '../core/prng.js';
 import { hbKnown, coHbMeasured, coHbUnmeasured, sexUndisclosed } from '../app/format.js';
 import { bdPctPredText, bdPctPredQualifier, bdPctBaseText, bdMlText } from './precision.js';
@@ -807,7 +808,7 @@ function bdWhy(ctx) {
   if (bd.rule2022.significant) {
     const v = bd.rule2022.which[0]; const k = v.toLowerCase();
     const d = k === 'fev1' ? bd.dFev1 : bd.dFvc;
-    const fail = bd.pctBase[k] < 12 ? `${bdPctBaseText(bd.pctBase[k])}% of the baseline value, under the 12% the earlier criterion requires` : `${bdMlText(d)} mL, under the 200 mL the earlier criterion requires`;
+    const fail = !atLeast(bd.pctBase[k], 12) ? `${bdPctBaseText(bd.pctBase[k])}% of the baseline value, under the 12% the earlier criterion requires` : `${bdMlText(d)} mL, under the 200 mL the earlier criterion requires`;
     return `the ${v} change is ${pctPred(bd.pctPred[k])} of the predicted value, above the 10% the 2022 criterion requires, but ${fail}`;
   }
   const v = bd.rule2005.which[0]; const k = v.toLowerCase();

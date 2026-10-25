@@ -99,7 +99,7 @@
       "sourceStatus": "partially-verified-open-implementation-or-source-detail",
       "correctedInThisBranch": true,
       "source": "Pellegrino 2005 Table 9 printed p960; adjacent BDR prose differs on equality",
-      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention.",
+      "coverageAndGap": "Inclusive table convention retained and documented, with machine-equality tolerance for 200 mL/12% and just-below fixtures. This is explicit reconciliation, not unambiguous source equality. Equality remains an internal source discrepancy, so this group stays partial despite the implemented convention. Decision, display/qualifier, unit-conversion and narrative reason paths now share the same comparison allowance; 200 mL and 12% HTML/CSV/feedback regression fixtures cover exact equality and just-below values.",
       "remainingGapKind": [
         "internal-standard-equality-ambiguity"
       ]

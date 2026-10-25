@@ -18,8 +18,9 @@ export function maneuverTrace(m, { seed, index, set = 'pre', scenario = null }) 
   const sampled = sampleExpiration({ volume, flow }, m.curve, m.fet);
   const exp = applyArtifacts(sampled, m.faults ?? [], artifactSeed(seed, index, set));
   let insp = m.inspiratory ?? buildInspiratory(m, { seed, index: index + (set === 'post' ? 100 : 0), scenario });
-  if (insp.recorded === true && !['t', 'v', 'f'].every((k) => Array.isArray(insp[k]) && insp[k].length >= 2 && insp[k].length === insp.t?.length && insp[k].every(Number.isFinite))) {
-    // A recorded scalar is not a recorded waveform; do not synthesize one to match it.
+  if (!['t', 'v', 'f'].every((k) => Array.isArray(insp[k]) && insp[k].length >= 2 && insp[k].length === insp.t?.length && insp[k].every(Number.isFinite))) {
+    // A supplied scalar/observation is not a complete waveform, irrespective of recorded status.
+    // Preserve expiration; never synthesize an inspiration to match this observation.
     insp = { ...insp, t: [], v: [], f: [], flags: ['inspiratory-trace-not-recorded'] };
   }
   return { exp, insp };

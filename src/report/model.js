@@ -15,6 +15,7 @@
  * acceptability and comments derived from them are included only when `includeGrades` is true (the
  * default, as on a real report); the learner page passes false until answers are checked.
  */
+import { atLeast } from '../core/comparison.js';
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
 import { bdPctPredDp, bdPctPredQualifier, bdPctBaseText, BD_2005_PCT_BASE, BD_2005_LITERS } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
@@ -412,8 +413,8 @@ export function buildReportModel(caseData, interp, options = {}) {
         const bd = interp?.bd;
         if (bd) {
           const rawL = id === 'fev1' ? bd.dFev1 : bd.dFvc, rawB = bd.pctBase[id];
-          if ((row.changePct >= BD_2005_PCT_BASE) !== (rawB >= BD_2005_PCT_BASE)) row.changePct = `${rawB >= 0 ? '+' : ''}${bdPctBaseText(rawB)}`;
-          if ((row.change >= BD_2005_LITERS) !== (rawL >= BD_2005_LITERS)) row.change = `${rawL < 0 ? '' : '+'}${rawL.toFixed(4)} (${rawL >= BD_2005_LITERS ? 'at or above' : 'below'} 0.200 L)`;
+          if (atLeast(row.changePct, BD_2005_PCT_BASE) !== atLeast(rawB, BD_2005_PCT_BASE)) row.changePct = `${rawB >= 0 ? '+' : ''}${bdPctBaseText(rawB)}`;
+          if (atLeast(row.change, BD_2005_LITERS) !== atLeast(rawL, BD_2005_LITERS)) row.change = `${rawL < 0 ? '' : '+'}${rawL.toFixed(4)} (${atLeast(rawL, BD_2005_LITERS) ? 'at or above' : 'below'} 0.200 L)`;
         }
         const raw = interp?.bd?.pctPred?.[id] ?? (100 * (pv - r.value)) / r.predicted;
         row.changePctPred = round(raw, 1);
