@@ -6,6 +6,8 @@
  * wrapper), the practice markup of every state in tests/helpers/practice-markup.mjs hashes to what ec5f6cd rendered, and the fixed
  * sheets, the details sheet, the Lab report fallback and the report page are byte-identical to ec5f6cd
  * (tests/fixtures/practice-markup-baseline.json, written by tools/practice-markup-hashes.mjs at that commit).
+ * The figures were re-baselined once for the spirometry trace texture (traceRendering in the fixture): everything outside the svg
+ * figures is still byte-identical to ec5f6cd (the figure-free hashes), and the full hashes include the figures as drawn now.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,29 +16,33 @@ import crypto from 'node:crypto';
 import { renderPractice, workspaceBarHtml, sheetCells, EXCERPTS } from '../src/app/practice-view.js';
 import { markupCtx, markupStates, MARKUP_CASES, mods } from './helpers/practice-markup.mjs';
 import { referenceMarkup } from './helpers/reference-markup.mjs';
+import { stripWorkspace, withoutFigures } from '../tools/practice-markup-hashes.mjs';
+import { TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
+import { GENERATOR_VERSION } from '../src/core/standards.js';
 
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/practice-markup-baseline.json', import.meta.url), 'utf8'));
 const corrected = JSON.parse(fs.readFileSync(new URL('./fixtures/source-corrected-markup.json', import.meta.url), 'utf8'));
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const EXCERPT_RE = /<div class="ws-ctx scroll" data-ws-ui>[\s\S]*?<\/table><\/div>/g;
 
-/** The practice markup without the workspace additions. */
-function strip(html) {
-  let out = html.replace(workspaceBarHtml(), '').replace(EXCERPT_RE, '');
-  if (out.includes('<div class="sheet-data">')) {
-    out = out.replace('<div class="sheet-content"><div class="sheet-data">', '<div class="sheet-content">');
-    // The wrapper closes immediately before the comment and interpretation boxes; any one of the adjacent closing tags is it.
-    out = out.replace('</div><div class="sheet-boxes', '<div class="sheet-boxes');
-  }
-  return out;
-}
+/** The practice markup without the workspace additions (shared with the fixture tool, so both strip the same way). */
+const strip = stripWorkspace;
 const sheetOf = (ctx) => mods.summarySheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, flags: ctx.flags, showQualityLines: ctx.vis.showQualityLines, narrowZ: true });
 const excerptsIn = (html) => html.match(EXCERPT_RE) ?? [];
 const STATES = markupStates();
 
-test('the fixture was recorded at ec5f6cd and covers every state', () => {
+test('the fixture was recorded at ec5f6cd (figures re-baselined under the current trace rendering) and covers every state', () => {
   assert.equal(baseline.commit, 'ec5f6cd82e39f0b45eac5f0929dae98f1de96d74');
+  assert.equal(baseline.traceRendering, TRACE_RENDERING_ID, 'the figures in the full hashes were drawn under another trace rendering');
+  assert.equal(baseline.generatorVersion, 2, 'historical main fixture stays at its recorded generator');
+  assert.equal(corrected.generatorVersion, GENERATOR_VERSION);
+  assert.equal(corrected.traceRendering, TRACE_RENDERING_ID);
   assert.deepEqual(Object.keys(baseline.practice).sort(), STATES.map((s) => s.key).sort());
+});
+
+test('outside figures, source-corrected markup remains fixed independently of trace rendering', () => {
+  for (const { key, input, opts } of STATES) assert.equal(sha(withoutFigures(strip(renderPractice(markupCtx(input, opts))))), corrected.practiceWithoutFigures[key], key);
+  for (const [k, v] of Object.entries(referenceMarkup())) assert.equal(sha(withoutFigures(v)), corrected.referenceWithoutFigures[k], k);
 });
 
 test('practice markup retains the source-corrected severity and reference notes in every workspace state', () => {
@@ -48,6 +54,7 @@ test('practice markup retains the source-corrected severity and reference notes 
 });
 
 test('fixed/report/detail sheets retain the source-corrected reference notes and contain no workspace markup', () => {
+
   const now = referenceMarkup();
   assert.deepEqual(Object.keys(now).sort(), Object.keys(corrected.reference).sort());
   for (const [k, v] of Object.entries(now)) {

@@ -55,8 +55,10 @@ test('captions name the maneuver, trial and test and never its kind', () => {
     assert.ok(cap['rep-flow-volume'].startsWith(`Pre: maneuver ${r.pre.index + 1} of ${pre}`), cap['rep-flow-volume']);
     if (k.c.spirometry.post) assert.ok(cap['rep-flow-volume'].includes(`; post: maneuver ${r.post.index + 1} of ${k.c.spirometry.post.maneuvers.length}`));
     assert.equal(cap['rep-flow-volume'], cap['rep-volume-time']);
-    assert.equal(cap['rep-pleth-loop'], `Plethysmography: trial ${r.pleth.trial + 1} of ${k.c.pleth.trials.length}`);
+    const tr = k.c.pleth.trials[r.pleth.trial];
+    assert.equal(cap['rep-pleth-loop'], `Shutter closed: trial ${r.pleth.trial + 1} of ${k.c.pleth.trials.length}, TGV ${tr.frcL.toFixed(2)} L; reported FRC ${k.c.pleth.reportedFrcL.toFixed(2)} L`);
     assert.equal(cap['rep-dlco'], `Single-breath DLCO: test ${(r.dlco?.test ?? 0) + 1} of ${k.c.dlcoTrace.tests?.length ?? 1}`);
+
     for (const f of REPRESENTATIVE_FIGURES) {
       const svg = f.render(f.dataFor(withInterp(k), k.rt), { palette: 'white' });
       assert.ok(svg.includes(`>${cap[f.id]}<`), `${f.id}: caption in the figure`);
