@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { loadDatasets } from '../src/reference/load.js';
 import { buildCase } from '../src/core/case.js';
+import { regressionCaseHash, SNAPSHOT_DECIMAL_PLACES } from '../tools/regression-serialization.mjs';
 import { GENERATOR_VERSION } from '../src/core/standards.js';
 import { BASELINE_DESCRIPTORS, hashCase } from '../tools/baseline-hashes.mjs';
 
@@ -13,6 +14,7 @@ const stored = JSON.parse(fs.readFileSync(new URL('./fixtures/versioned-case-has
 test('reviewed case snapshots are explicit for every supported generator; historical baseline stays unchanged', () => {
   const original = fs.readFileSync(new URL('./fixtures/baseline-case-hashes.json', import.meta.url));
   assert.equal(createHash('sha256').update(original).digest('hex'),stored.originalFixtureSha256);
+  assert.equal(stored.numericDecimalPlaces,SNAPSHOT_DECIMAL_PLACES);
   assert.deepEqual(Object.keys(stored.versions),['2','3','4','5']);
   assert.equal(Number(Object.keys(stored.versions).at(-1)),GENERATOR_VERSION,'the default generator must have a reviewed snapshot');
   for(const [version,rows] of Object.entries(stored.versions)) {
@@ -21,7 +23,7 @@ test('reviewed case snapshots are explicit for every supported generator; histor
       const {sha256,...descriptor}=row;
       assert.deepEqual(descriptor,BASELINE_DESCRIPTORS[i]);
       const c=buildCase({...descriptor,v:Number(version)},ds);
-      assert.equal(hashCase(c),sha256,`v${version} case ${i} changed`);
+      assert.equal(regressionCaseHash(c),sha256,`v${version} case ${i} changed`);
       assert.equal(c.scenario.level,'none');assert.equal('scenarioLevel' in c.descriptor,false);
       assert.equal('caveatIds' in c.anchorKey.key,false);assert.equal('caveatIds' in c.report,false);
     });
@@ -33,7 +35,7 @@ test('explicit scenario level none equals the plain case within each supported g
    const {sha256,...descriptor}=row;
    const plain=buildCase({...descriptor,v:Number(version)},ds);
    const explicit=buildCase({...descriptor,v:Number(version),scenarioLevel:'none'},ds);
-   assert.equal(hashCase(explicit),hashCase(plain));assert.equal(hashCase(explicit),sha256);
+   assert.equal(hashCase(explicit),hashCase(plain));assert.equal(regressionCaseHash(explicit),sha256);
  }
 });
 
@@ -48,7 +50,7 @@ test('a case with scenarios shares its demographics and true physiology with the
 });
 
 test('versioned case regression hashes detect a measured-value change',()=>{
- const c=buildCase({v:5,seed:3,archetype:'normal'},ds), before=hashCase(c);
+ const c=buildCase({v:5,seed:3,archetype:'normal'},ds), before=regressionCaseHash(c);
  c.report.spirometry.fev1+=.000001;
- assert.notEqual(hashCase(c),before);
+ assert.notEqual(regressionCaseHash(c),before);
 });
