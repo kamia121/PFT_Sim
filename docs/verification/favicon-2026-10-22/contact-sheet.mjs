@@ -20,10 +20,14 @@ const icoFrames = (f) => {
 const one = (uri) => ({ 16: uri, 32: uri, 48: uri });
 const ICONS = [
   ['Previous (main a275126)', one(svgUri(`${DIR}/previous.svg`))],
+  ['Round 1 sailboat (PR 14)', one(svgUri(`${DIR}/round1-sailboat.svg`))],
   ['1. Outline loop', one(svgUri(`${DIR}/candidate-1-outline.svg`))],
-  ['2. Two-tone loop (selected)', one(svgUri('assets/icons/favicon.svg'))],
   ['3. Tileless adaptive outline', one(svgUri(`${DIR}/candidate-3-tileless.svg`))],
-  ['2. Shipped favicon.ico frames', icoFrames('assets/icons/favicon.ico')],
+  ['Round 2 E, plain tint', one(svgUri(`${DIR}/round2-candidate-e.svg`))],
+  ['Round 2 F, stronger tint', one(svgUri(`${DIR}/round2-candidate-f.svg`))],
+  ['Round 2 H, wider loop', one(svgUri(`${DIR}/round2-candidate-h.svg`))],
+  ['Round 2 G, shipped favicon.svg', one(svgUri('assets/icons/favicon.svg'))],
+  ['Shipped favicon.ico frames', icoFrames('assets/icons/favicon.ico')],
 ];
 const BG = {
   light: [['White', '#FFFFFF'], ['Chrome light tab strip', '#DEE1E6'], ['Firefox light', '#F0F0F4']],
