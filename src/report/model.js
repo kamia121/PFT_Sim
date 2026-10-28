@@ -17,7 +17,7 @@
  */
 import { atLeast } from '../core/comparison.js';
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
-import { bdPctPredDp, bdPctPredQualifier, bdPctBaseText, BD_2005_PCT_BASE, BD_2005_LITERS } from '../interpret/precision.js';
+import { bdPctPredDp, bdPctPredQualifier, bdPctBaseText, BD_2005_PCT_BASE, BD_2005_LITERS, BD_PCT_PRED_LABEL, BD_PCT_BASE_LABEL, BD_PCT_PRED_NOTE, BD_PCT_BASE_NOTE } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
 import { cohbReferenceMultiplier } from '../core/physiology.js';
 import { GENERATOR_VERSION } from '../core/standards.js';
@@ -381,8 +381,9 @@ export function buildReportModel(caseData, interp, options = {}) {
       { key: 'postZ', label: 'z-score', group: G2, dp: 2 },
       { key: 'postPct', label: '%Pred', group: G2, dp: 0 },
       { key: 'change', label: 'Change', group: G2, rowDp: true, signed: true, unit: 'row' },
-      { key: 'changePct', label: '% change of baseline', group: G2, dp: 1, signed: true },
-      { key: 'changePctPred', label: 'Change, % of predicted', group: G2, dp: 1, dpKey: 'changePctPredDp', signed: true },
+      // The quantity of the 2022 decision first; the percent of baseline of the 2005 criterion follows as a secondary column.
+      { key: 'changePctPred', label: BD_PCT_PRED_LABEL, group: G2, dp: 1, dpKey: 'changePctPredDp', signed: true },
+      { key: 'changePct', label: BD_PCT_BASE_LABEL, group: G2, dp: 1, signed: true },
     ] : []),
   ];
   const postRef = (measure, measured) => {
@@ -442,7 +443,7 @@ export function buildReportModel(caseData, interp, options = {}) {
   }
   const spFootParts = [`Reference values: ${eqName(equation)}${equation === 'GLI2012' ? ` (equation for "${patient.group}")` : ' (group-neutral)'}.`];
   // The change in volume and in percent of baseline are arithmetic on the printed values; the percent of predicted is not.
-  if (hasPost) spFootParts.push('Change, % of predicted, is computed from the unrounded values.');
+  if (hasPost) spFootParts.push(BD_PCT_PRED_NOTE, BD_PCT_BASE_NOTE);
   // gradesWithheld === null leaves the quality sentence out altogether: a sentence that says grades are withheld shows that there are grades.
   if (includeGrades) spFootParts.push(spirometryGradeLine(caseData));
   else if (options.gradesWithheld !== null) spFootParts.push(`Test quality: ${options.gradesWithheld ?? 'grades are shown after the answers are checked'}.`);

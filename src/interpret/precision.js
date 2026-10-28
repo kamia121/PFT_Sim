@@ -11,6 +11,19 @@ import { atLeast, atMost } from '../core/comparison.js';
 /** The threshold of the 2022 rule, in percent of the predicted value (as coded in interpret.js). */
 export const BD_PCT_PRED_THRESHOLD = 10;
 
+/*
+ * Labels and notes of the bronchodilator change, shared by the report model (CSV, TSV, clipboard), page 1, the narrow-screen excerpt and the
+ * card view. ERS/ATS 2022 (Box 1): 100 × (post − pre) / predicted value, the predicted value from the GLI spirometry equation in use; it is
+ * the same value before and after the bronchodilator, and page 1 does not print it. The percent of baseline belongs to the 2005 criterion
+ * (with at least 0.200 L), which the 2022 statement no longer recommends, so it is a secondary column of the exports only.
+ */
+export const BD_PCT_PRED_LABEL = 'Change (% predicted)';
+export const BD_PCT_BASE_LABEL = 'Change (% of baseline; 2005 rule, superseded)';
+/** Footnote sentence that defines the denominator; it follows the sentence that names the reference equation. */
+export const BD_PCT_PRED_NOTE = 'Change (% predicted) = 100 × (post − pre) / predicted value (same before and after), unrounded.';
+/** Footnote sentence of the secondary column, in the exports only. */
+export const BD_PCT_BASE_NOTE = 'Change (% of baseline) = 100 × change / pre-bronchodilator value, from the printed values; the 2005 criterion, superseded in 2022, read it with a change of at least 0.200 L.';
+
 /** 'above' or 'below' when even two decimals print the threshold for a value that is not the threshold; otherwise null. @param {number} x */
 export function bdPctPredQualifier(x) {
   if (!Number.isFinite(x) || x === BD_PCT_PRED_THRESHOLD || Number(x.toFixed(2)) !== BD_PCT_PRED_THRESHOLD) return null;

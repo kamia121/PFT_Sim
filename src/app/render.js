@@ -2,7 +2,7 @@ import { esc, num, signed, MEASURES, EQUATION_NAMES, hbKnown, hbLow, coHbMeasure
 import { PATTERN_TEXT, DLCO_TEXT, BD_TEXT, GRADE_TEXT, ANCHOR_TEXT, LOW_ERV_TEXT, bdArtifactText, ARCHETYPE_NOTE_OVERRIDES } from './explain.js';
 import { QUESTIONS, questionLabel, label as answerLabel } from './answers.js';
 import { PATTERNS } from '../interpret/interpret.js';
-import { bdPctPredDp, bdPctPredQualifier } from '../interpret/precision.js';
+import { bdPctPredDp, bdPctPredQualifier, BD_PCT_PRED_LABEL, BD_PCT_BASE_LABEL } from '../interpret/precision.js';
 import { FIGURES, PANEL_IDS } from '../ui/figures/index.js';
 import { PAGE_PALETTE } from '../ui/palettes.js';
 import { availableFigures, downloadControlsHtml } from './figure-downloads.js';
@@ -120,11 +120,11 @@ export function renderBronchodilator(c, interp, { maneuvers = true } = {}) {
   <p class="muted">No change from baseline is calculated: a pre- or post-bronchodilator FEV₁ or FVC is not available.</p></section>`;
   }
   const rows = [['FEV₁', pre.fev1, po.fev1, bd.dFev1, bd.pctBase.fev1, bd.pctPred.fev1], ['FVC', pre.fvc, po.fvc, bd.dFvc, bd.pctBase.fvc, bd.pctPred.fvc]].map(([n, a, b, d, pb, pp]) =>
-    `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pb, 1)}%</td><td>${signed(pp, bdPctPredDp(pp))}%${bdPctPredQualifier(pp) ? ` (${bdPctPredQualifier(pp)} 10)` : ''}</td></tr>`).join('');
+    `<tr><th scope="row" class="l">${n}</th><td>${num(a)}</td><td>${num(b)}</td><td>${signed(d, 2)}</td><td>${signed(pp, bdPctPredDp(pp))}%${bdPctPredQualifier(pp) ? ` (${bdPctPredQualifier(pp)} 10)` : ''}</td><td>${signed(pb, 1)}%</td></tr>`).join('');
   return `<section class="card" aria-labelledby="h-bd"><h2 id="h-bd">After bronchodilator</h2>
   ${maneuvers ? renderManeuvers(post, 'Post-bronchodilator maneuvers', { revealed: false, id: 'post-maneuvers' }) : ''}
-  <div class="scroll"><table class="data"><caption>Change from baseline</caption><thead><tr><th class="l">Measure</th><th>Before (L)</th><th>After (L)</th><th>Change (L)</th><th>Change, % of baseline</th><th>Change, % of predicted</th></tr></thead><tbody>${rows}</tbody></table></div>
-  <p class="muted">Post-bronchodilator FEV₁/FVC ${num(bd.postRatio, 3)}. Percent of predicted uses the reference equation selected for spirometry.</p></section>`;
+  <div class="scroll"><table class="data"><caption>Change from baseline</caption><thead><tr><th class="l">Measure</th><th>Before (L)</th><th>After (L)</th><th>Change (L)</th><th>${BD_PCT_PRED_LABEL}</th><th>${BD_PCT_BASE_LABEL}</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="muted">Post-bronchodilator FEV₁/FVC ${num(bd.postRatio, 3)}. The change as a percent of predicted is 100 × (post − pre) / predicted value, the predicted value of the reference equation selected for spirometry, the same before and after the bronchodilator.</p></section>`;
 }
 
 export function renderVolumes(c, interp, { flags = 'lln' } = {}) {

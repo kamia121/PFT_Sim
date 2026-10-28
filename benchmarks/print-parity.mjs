@@ -9,6 +9,8 @@
  *      markup and styles (tests/workspace.test.mjs pins that markup to the ec5f6cd hashes).
  *   2. Baseline fixture (Chromium): the same signatures recorded from the ec5f6cd build (benchmarks/fixtures/print-baseline.json,
  *      written with --write). Compared when the fixture was recorded with the same Chromium version; otherwise reported as skipped.
+ *      The runs listed under `amended` were re-recorded on 9822a77 for the deliberate page-1 change of the bronchodilator column
+ *      (Change (% predicted) and its footnote instead of %Chng); each is a case with a bronchodilator study, and the rest are ec5f6cd's.
  *
  * Usage: node benchmarks/print-parity.mjs [--write benchmarks/fixtures/print-baseline.json]
  * PFT_SERVE_DIR names the build to serve (dist/ in CI). PFT_RASTER=0 leaves out the raster comparison.

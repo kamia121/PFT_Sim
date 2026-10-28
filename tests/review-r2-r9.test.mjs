@@ -9,6 +9,7 @@ import { buildCase } from '../src/core/case.js';
 import { interpret, compareEquations } from '../src/interpret/interpret.js';
 import { buildReportModel } from '../src/report/model.js';
 import { tableMatrix } from '../src/report/table.js';
+import { BD_PCT_PRED_NOTE, BD_PCT_BASE_NOTE } from '../src/interpret/precision.js';
 import { toCsv } from '../src/report/export.js';
 import { reportPageHref, renderReportHtml } from '../src/report/html.js';
 import { parseReportQuery } from '../src/report-page/query.js';
@@ -128,7 +129,7 @@ test('R4: the volume change and the percent of baseline stay arithmetic on the p
     assert.equal(Number((r.post - r.pre).toFixed(2)), r.change);
     assert.equal(r.changePct, Number(((100 * r.change) / r.pre).toFixed(1)));
   }
-  assert.match(t.footnote, /Change, % of predicted, is computed from the unrounded values/);
+  assert.ok(t.footnote.includes(BD_PCT_PRED_NOTE) && t.footnote.includes(BD_PCT_BASE_NOTE), 'the footnote defines both change columns and says which is exact');
 });
 
 /* ------------------------------------------------------------------------------------------------------ R5 */
