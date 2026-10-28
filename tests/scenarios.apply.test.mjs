@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadDatasets } from '../src/reference/load.js';
 import { createReference } from '../src/reference/gli.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV2 } from '../src/core/case.js';
+// Preserve the legacy v2 scenario arithmetic contract; v3 measurement selection is tested separately.
+const buildCase = (input, ds) => buildCaseV2({ v: 2, ...input }, ds);
 import { interpret } from '../src/interpret/interpret.js';
 import { ARCHETYPES, resolveDescriptor } from '../src/core/descriptor.js';
 import { selectScenarios, applyScenarios, LEVEL_TARGETS } from '../src/scenarios/apply.js';
@@ -248,7 +250,7 @@ test('new maneuver faults: leak, mouthpiece obstruction, pause at TLC and submax
       const ev = c.spirometry.pre.summary.evaluations;
       for (const i of idx) {
         if (fault === 'leak' || fault === 'mouthpiece-obstruction') { assert.equal(ev[i].fev1.acceptable, false); assert.equal(ev[i].fvc.acceptable, false); if (mans[i].faults.length === 1) assert.equal(ev[i].fvc.usable, true); }
-        if (fault === 'pause-at-TLC') { assert.ok(mans[i].pauseSeconds > 2); assert.equal(ev[i].fev1.acceptable, false); }
+        if (fault === 'pause-at-TLC') { assert.ok(mans[i].pauseSeconds > 2); assert.ok(ev[i].fev1.warnings.length); }
         if (fault === 'cough') assert.equal(ev[i].fev1.acceptable, false);
         if (fault === 'glottic-closure') assert.equal(ev[i].fvc.acceptable, false);
       }

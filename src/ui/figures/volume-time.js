@@ -14,6 +14,7 @@
  * caseData fields read by dataFor: spirometry.pre/post, descriptor.seed, revealed, showSchematic and interp. The best
  * maneuver is chosen as in the maneuver table (acceptable first, then the larger FVC + FEV1).
  */
+import { TRACE_RENDERING_ATTRS } from '../../core/trace-texture.js';
 import { wrapSvg, text, resolvePalette } from './svg.js';
 import { spirometryData, chooseShown, vtRanges, drawVolumeTime, legendRows, legendItems, tileGrid, noteLines } from './panel-spirometry.js';
 
@@ -72,7 +73,7 @@ function render(data, opts = {}) {
 
   const title = opts.title ?? 'Volume-time curve';
   const description = opts.description ?? `Exhaled volume in liters against time in seconds for the ${view === 'best' ? 'best maneuver' : 'selected maneuvers'}${data.sets.length > 1 ? ' before and after bronchodilator' : ''}, from 1 s before the back-extrapolated start of the forced expiration. FEV1 is marked by a tick one second after time zero.`;
-  return wrapSvg({ palette, width: W, height: H, title, description, body: g });
+  return wrapSvg({ palette, width: W, height: H, title, description, body: g, attrs: TRACE_RENDERING_ATTRS });
 }
 
 export default { id: 'volume-time', title: 'Volume-time curve', render, dataFor };

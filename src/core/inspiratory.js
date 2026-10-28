@@ -5,7 +5,8 @@
  * expiratory curve in curve.js and are not recomputed from these traces. The inspiratory limb is a smooth,
  * effort-dependent shape whose volume is the forced inspiratory vital capacity (FIVC). It is drawn in the same
  * exhaled-volume coordinate as the expiration: it starts at the FVC and returns toward 0. A loop closes when the
- * FIVC is within max(0.100 L, 5% of FVC) of the FVC (ATS/ERS 2019 FIVC criterion, verified in the research notes).
+ * FIVC is within a symmetric display tolerance of FVC. That geometric closure label is not the
+ * one-sided ATS/ERS 2019 acceptability check, which needs a recorded maximal post-expiratory inspiration.
  *
  * Constants marked "unverified" are teaching choices, not measurements: no source in the research notes gives
  * typical peak inspiratory flow (PIF) values or the shape of the inspiratory limb.
@@ -107,7 +108,7 @@ export function buildInspiratory(maneuver, { seed, index, scenario = null }) {
     v[i] = fvc - acc;
   }
   flags.unshift(loopClosure(fvc, fivc));
-  return { t, v, f, fivc, pif: Math.max(...f.map((x) => -x)), flags };
+  return { recorded: false, role: 'display-only', t, v, f, fivc, pif: Math.max(...f.map((x) => -x)), flags };
 }
 
 /* ---------- Plotted expiration with artifacts ---------- */
@@ -152,6 +153,26 @@ const interp = (t, y, x) => {
 
 /** Raised-sine hump on [ta, tb]: zero value and zero slope at both ends. */
 const hump = (x, ta, tb) => (x <= ta || x >= tb ? 0 : Math.pow(Math.sin((Math.PI * (x - ta)) / (tb - ta)), 2));
+
+/**
+ * Latest time (s from the start of exhalation) up to which applyArtifacts can change a sampled expiration that carries these
+ * faults, an upper bound of the windows used there (cough and mouthpiece obstruction within the first second, slow start within
+ * 0.8 s, variable effort until 2 s after the FEV1 time, leak until 1.8 s after it). Glottic closure acts only in the last 0.06 s
+ * and early termination not at all. The within-blow texture (trace-texture.js) is kept out of this span, so every named
+ * artifact is drawn on the same samples as before the texture existed.
+ * @param {string[]} faults @param {{ t0: number }} at back-extrapolated time zero of the curve
+ */
+export function artifactSpanEnd(faults, { t0 }) {
+  const tF = t0 + 1;
+  let end = 0;
+  for (const f of faults ?? []) {
+    if (f === 'cough' || f === 'mouthpiece-obstruction') end = Math.max(end, 1.0);
+    else if (f === 'slow-start') end = Math.max(end, 0.8);
+    else if (f === 'variable-effort') end = Math.max(end, tF + 2.0);
+    else if (f === 'leak') end = Math.max(end, tF + 1.8);
+  }
+  return end;
+}
 
 /**
  * Modify a sampled expiration so that it looks like the fault it carries. Volume changes are added as a function

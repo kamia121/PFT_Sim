@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { loadDatasets } from '../src/reference/load.js';
 import { ARCHETYPES, TECHNIQUE_LEVELS } from '../src/core/descriptor.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV3 } from '../src/core/case.js';
+// Single-trace geometry contract; v4 replicate sessions have independent integration tests.
+const buildCase = (input, ds) => buildCaseV3({ v: 3, ...input }, ds);
 import { buildDlcoTrace, gradeDlcoTest, vaStpdMl } from '../src/core/dlco-trace.js';
 
 const ds = await loadDatasets();
@@ -71,7 +73,8 @@ test('fault-free tests reproduce the case VA and DLCO from the plotted arrays wi
     assert.equal(t.reproducesCase, true);
     assert.equal(t.adjusted, null);
     assert.equal(t.faults.length, 0);
-    assert.equal(t.grade.grade, 'A');
+    // A fault-free generated trace can still miss a corrected sample-volume criterion.
+    if (t.grade.grade !== 'A') assert.ok(t.grade.failed.some((r) => /sample volume/.test(r)), JSON.stringify(t.grade));
     n++;
   }
   assert.ok(n >= 200);
@@ -168,8 +171,8 @@ test('forced technique faults: grade, flags and numerical effects', () => {
 
   const slow = by('DLC-02');
   assert.ok(slow.inspired.timeTo85PctS >= 4);
-  assert.equal(slow.grade.grade, 'B');
-  assert.ok(slow.grade.acceptable && !slow.grade.wouldBeRejected);
+  assert.equal(slow.grade.grade, 'C');
+  assert.ok(!slow.grade.acceptable && slow.grade.wouldBeRejected);
   assert.equal(slow.reproducesCase, true);
 
   const long = by('DLC-03');
@@ -226,7 +229,7 @@ test('a VA that the tracer cannot dilute to is adjusted and said so', () => {
 test('grading rules', () => {
   const ok = { viOverVc: 0.95, t85S: 2, breathHoldS: 10, sampleEndS: 2.5, washoutL: 0.8, sampleL: 0.7, vcL: 4, contamination: 0, valsalva: false, mueller: false, leak: false };
   assert.equal(gradeDlcoTest(ok).grade, 'A');
-  assert.equal(gradeDlcoTest({ ...ok, t85S: 4.5 }).grade, 'B');
+  assert.equal(gradeDlcoTest({ ...ok, t85S: 4.5 }).grade, 'C');
   assert.equal(gradeDlcoTest({ ...ok, breathHoldS: 7.9 }).grade, 'C');
   assert.equal(gradeDlcoTest({ ...ok, breathHoldS: 12.1 }).grade, 'C');
   assert.equal(gradeDlcoTest({ ...ok, breathHoldS: 8 }).grade, 'A');

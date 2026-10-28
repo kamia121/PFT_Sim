@@ -15,7 +15,8 @@ import { bestIndex } from '../ui/figures/traces.js';
 export function fallbackRtReport(caseData, model = {}) {
   const { pre, post } = caseData.spirometry;
   const grades = (set) => (set ? { fev1: set.summary.grades.fev1, fvc: set.summary.grades.fvc } : null);
-  const dl = caseData.dlcoTrace?.grade ?? null;
+  const session = caseData.dlcoTrace?.session;
+  const dl = session ? { acceptable: session.status === 'repeatable', invalid: [], failed: session.status === 'repeatable' ? [] : session.warnings } : caseData.dlcoTrace?.grade ?? null;
   const pl = caseData.pleth ?? null;
   const verdict = (ok) => (ok ? 'acceptable' : 'not-acceptable');
   const reps = (set) => (set ? { index: bestIndex(set), kind: 'best', faults: set.maneuvers[bestIndex(set)].faults.slice() } : null);
@@ -31,7 +32,7 @@ export function fallbackRtReport(caseData, model = {}) {
       dlco: dl ? { acceptable: dl.acceptable, reasons: [...dl.invalid, ...dl.failed] } : null,
       pleth: pl ? { acceptable: pl.grade === 'A' || pl.grade === 'B', reasons: [] } : null,
     },
-    representative: { pre: reps(pre), post: reps(post), pleth: pl?.trials?.length ? { trial: 0 } : null, dlco: caseData.dlcoTrace ? { test: 0 } : null },
+    representative: { pre: reps(pre), post: reps(post), pleth: pl?.trials?.length ? { trial: 0 } : null, dlco: caseData.dlcoTrace ? { test: caseData.dlcoTrace.tests ? Math.max(0, caseData.dlcoTrace.tests.findIndex((t) => t.selected)) : 0 } : null },
     needsDetails: false,
     detailsReasons: [],
     stub: true,

@@ -1,0 +1,5 @@
+
+> pft-sim@0.1.0 build
+> node scripts/build.mjs
+
+Static site built in dist/

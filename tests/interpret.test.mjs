@@ -47,11 +47,11 @@ test('severity bands follow z -2.5 and -4.0', () => {
   assert.equal(severityOf(-4.01), 'severe');
 });
 
-test('severity is scored only for obstruction patterns; other patterns report per-measure bands without a key', () => {
+test('restrictive impairment is graded on TLC after the 2024 clarification', () => {
   const r = interpret(fx.cases.find((c) => c.name.startsWith('Restriction: preserved')).report, fakeResolve);
-  assert.equal(r.severity.scored, false);
-  assert.equal(r.key.severity, null);
-  assert.ok(r.severity.perMeasure.tlc);
+  assert.equal(r.severity.scored, true);
+  assert.equal(r.severity.measure, 'tlc');
+  assert.equal(r.key.severity, severityOf(r.measures.tlc.z));
 });
 
 test('equation comparison attributes a label change to the spirometry measurement that moved', () => {

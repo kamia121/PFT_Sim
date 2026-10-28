@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeModel } from './report-helpers.mjs';
+import { atLeast } from '../src/core/comparison.js';
 import { tableMatrix } from '../src/report/table.js';
 import { bdPctBaseText, bdMlText } from '../src/interpret/precision.js';
 
@@ -39,8 +40,8 @@ test('in the report table no printed change or percent of baseline reads as meet
         const pb = cell('changePct'), pl = cell('change');
         checked++;
         if (/\(/.test(pl) || /\(/.test(pb)) near++;
-        assert.equal(/\(below/.test(pl) || (!/\(/.test(pl) && Number(pl) < 0.2), rawL < 0.2, `seed ${seed} ${archetype} ${id}: change ${pl} vs ${rawL}`);
-        assert.equal(/\(below/.test(pb) || (!/\(/.test(pb) && Number(pb) < 12), rawB < 12, `seed ${seed} ${archetype} ${id}: % of baseline ${pb} vs ${rawB}`);
+        assert.equal(/\(below/.test(pl) || (!/\(/.test(pl) && Number(pl) < 0.2), !atLeast(rawL, 0.2), `seed ${seed} ${archetype} ${id}: change ${pl} vs ${rawL}`);
+        assert.equal(/\(below/.test(pb) || (!/\(/.test(pb) && Number(pb) < 12), !atLeast(rawB, 12), `seed ${seed} ${archetype} ${id}: % of baseline ${pb} vs ${rawB}`);
       }
     }
   }

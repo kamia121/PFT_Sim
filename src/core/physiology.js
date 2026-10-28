@@ -31,7 +31,7 @@ const ARCHETYPE_NOTES = {
   'restriction-parenchymal': 'Restriction with low diffusing capacity and a preserved or raised FEV1/FVC.',
   'restriction-extraparenchymal': 'Restriction from the chest wall or respiratory muscles: raised RV/TLC, low ERV, mildly low DLCO, raised KCO.',
   mixed: 'Obstruction and restriction together.',
-  nonspecific: 'Low FVC with a preserved ratio and a TLC that is not low. Spirometry alone labels this preserved ratio with impaired spirometry (PRISm).',
+  nonspecific: 'Low FVC with a preserved ratio and a TLC that is not low. Spirometry alone labels this preserved-ratio spirometric impairment; TLC distinguishes restriction from a non-specific pattern.',
   'low-dlco': 'Isolated reduction in diffusing capacity with normal spirometry and volumes.',
   anemia: 'Low measured DLCO caused by anemia; normal after hemoglobin correction.',
   'obesity-low-erv': 'Obesity with low expiratory reserve volume and FRC, normal or mildly low TLC, and a DLCO that is not reduced.',
@@ -71,7 +71,7 @@ function valueAt({ L, M, S }, z) {
  */
 export function generatePhysiology(seed, d, datasets) {
   const rng = createStream(seed, 'physiology');
-  const { resolveReference } = createReference(datasets);
+  const { resolveReference } = createReference(datasets, { rangePolicy: 'synthetic-anchor-clamp' });
   const pat = { age: d.age, sex: d.sex, heightCm: d.heightCm, group: ANCHOR.group };
   const anchor = (measure) => resolveReference(measure, pat, ANCHOR.spirometry).lms;
   const at = (measure, z) => valueAt(anchor(measure), z);

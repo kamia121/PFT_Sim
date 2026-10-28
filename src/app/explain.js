@@ -11,7 +11,7 @@ export const PATTERN_TEXT = {
   ],
   obstruction: [
     'Airflow obstruction is present when the FEV₁/FVC ratio falls below its lower limit of normal. The ratio is used because the airways narrow or lose recoil and the first second of a forced expiration empties a smaller share of the vital capacity. A fixed ratio of 0.70 is not used here, because the lower limit changes with age, sex and height and a fixed value misclassifies older and younger people in opposite directions.',
-    'Severity is graded from the FEV₁ z-score, not from the ratio. A normal TLC with RV or RV/TLC above its upper limit indicates air trapping, and a TLC above its upper limit indicates hyperinflation; the TLC method matters, because gas dilution underestimates TLC where ventilation is uneven.',
+    'Severity is graded from the FEV₁ z-score, not from the ratio. RV/TLC above its upper limit can support gas trapping in context; TLC above its upper limit alone does not establish hyperinflation. Review fractional volumes and the clinical context; the TLC method matters, because gas dilution underestimates TLC where ventilation is uneven.',
   ],
   'obstruction-low-fvc': [
     'A low FEV₁/FVC ratio with a low FVC shows obstruction, but a low FVC can also arise from air trapping that prevents full emptying, or from coexisting restriction. Spirometry alone cannot separate these. Lung volumes are required: a low TLC identifies mixed disease, and a preserved or raised TLC with a raised RV identifies obstruction with air trapping.',
@@ -25,7 +25,7 @@ export const PATTERN_TEXT = {
   ],
   nonspecific: [
     'A low FVC or FEV₁ with a preserved ratio and a TLC that is not low is a nonspecific pattern. The vital capacity is reduced although the lungs hold a normal amount of gas at full inflation, so the residual volume is relatively high: expiration stops early, from air trapping without airflow obstruction by the ratio, from poor effort, or from a process that is not yet classifiable.',
-    'The same spirometric finding, reported when no lung volumes were measured, is called preserved ratio with impaired spirometry (PRISm). The label describes spirometry only; some people with this finding have restriction when TLC is measured.',
+    'The same spirometric finding, reported when no lung volumes were measured, is called preserved-ratio spirometric impairment. The label describes spirometry only; some people with this finding have restriction when TLC is measured.',
   ],
   prism: [
     'A preserved FEV₁/FVC ratio with a low FVC or FEV₁ and no lung volumes cannot be classified further. Restriction is possible but unproven, because a low FVC can also reflect incomplete expiration. Lung volumes by plethysmography or gas dilution are the next test.',
@@ -39,9 +39,9 @@ export const DLCO_TEXT = {
   raised: 'A DLCO above the upper limit can reflect increased pulmonary capillary blood volume, for example in left-to-right shunting or after recent exercise. A high hemoglobin concentration raises the measured value, which the adjustment removes.',
   subtype: {
     'low-kco-preserved-va': 'The KCO is reduced while the alveolar volume is preserved: the gas-transfer defect is intrinsic to the lung, as in emphysema, interstitial disease or pulmonary vascular disease.',
-    'low-va-high-kco': 'The alveolar volume is reduced and the KCO is raised. The lung is incompletely expanded or reduced in volume but its gas-exchanging tissue is structurally intact, as in chest wall or neuromuscular restriction.',
+    'low-va-high-kco': 'The alveolar volume is reduced and the KCO is raised. This can accompany incomplete expansion or localized volume loss. A raised KCO does not establish structurally intact gas-exchanging tissue.',
     'low-va-normal-kco': 'The alveolar volume is reduced and the KCO is within the reference range. Because KCO normally rises as alveolar volume falls with incomplete expansion, a KCO that stays in the normal range at a low volume points to a coexisting intrinsic defect.',
-    'both-low': 'Both the alveolar volume and the KCO are reduced, which implies volume loss together with an intrinsic gas-transfer defect.',
+    'both-low': 'Both the alveolar volume and the KCO are reduced, which can reflect volume loss together with impaired gas transfer.',
     'low-dlco-only': 'The DLCO is reduced although the alveolar volume and KCO are individually within their ranges; the defect is mild or borderline in both components.',
     'normal-kco-at-low-va': 'The DLCO is normal, but the KCO is not raised as expected for the reduced alveolar volume, which can indicate a mild coexisting intrinsic defect.',
   },

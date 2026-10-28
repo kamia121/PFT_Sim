@@ -1,0 +1,29 @@
+✔ percent of baseline prints the digits that show the side of 12% (0.382542ms)
+✔ milliliters print the digits that show the side of 200 mL (0.166416ms)
+✔ in the report table no printed change or percent of baseline reads as meeting a threshold the unrounded value fails, or the reverse (2955.192334ms)
+✔ 2019 FIVC is a one-sided inclusive difference, not symmetric loop closure (0.4785ms)
+✔ missing, display-only, nonmaximal, wrong timing and invalid FIVC are explicitly not assessed, never failed (0.376625ms)
+✔ FIVC pass/absence never rescues independent faults and FIVC failure preserves potential usability (0.075375ms)
+✔ reported FIVC uses all confirmed observations while expiratory selection obeys acceptability/usability (0.525417ms)
+✔ default acquired records stay unassessed despite rendered display limbs, with no invented report FIVC (18.813666ms)
+✔ recorded FIVC is reported with its check; scalar-only observations never fabricate an inspiratory waveform (9.67675ms)
+✔ supplied scalar FIVC with recorded=false preserves expiration without inventing inspiration (23.746416ms)
+✔ supplied scalar FIVC with recorded=true preserves expiration without inventing inspiration (9.260917ms)
+✔ supplied scalar FIVC with recorded=undefined preserves expiration without inventing inspiration (7.703167ms)
+✔ incomplete, mismatched and nonfinite supplied inspiratory arrays are omitted regardless of recorded status (2.578333ms)
+✔ 200mL decimal equality: engine, precision, HTML, CSV and feedback agree (7.535959ms)
+✔ 200mL within L-unit machine equality: engine, precision, HTML, CSV and feedback agree (6.140708ms)
+✔ 200mL below machine equality: engine, precision, HTML, CSV and feedback agree (5.883917ms)
+✔ 12 percent decimal equality: engine, precision, HTML, CSV and feedback agree (5.625333ms)
+✔ 12 percent from 2L: engine, precision, HTML, CSV and feedback agree (5.669416ms)
+✔ 12 percent below machine equality: engine, precision, HTML, CSV and feedback agree (5.419333ms)
+✔ liter-to-milliliter formatting preserves the engine equality allowance before unit conversion (0.086917ms)
+✔ discordant-rule narrative chooses the actual failed legacy criterion using shared equality (4.341625ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3007.225333

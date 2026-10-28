@@ -99,8 +99,8 @@ test('perfect and empty responses over real cases, and the rubric by skill adds 
   for (const k of SKILLS) assert.ok(s.bySkill[k].n > 0, `${k} is asked`);
 });
 
-test('feedback exists for every item and status, opens on physiology, and flags unchecked rules', () => {
-  let flagged = 0;
+test('feedback exists for every item and status and uses source-specific verification rather than obsolete disclaimers', () => {
+  let sourced = 0;
   for (const d of sweep(3)) {
     const { prep, items } = build(d);
     for (const it of items) {
@@ -110,11 +110,12 @@ test('feedback exists for every item and status, opens on physiology, and flags 
         assert.match(html, /class="feedback"/);
         assert.ok(html.length > 150, `${it.id} has an explanation`);
         assert.doesNotMatch(html, /undefined|NaN|\[object/);
-        if (/have not been checked|has not been checked|not yet checked/.test(html)) flagged++;
+        assert.doesNotMatch(html, /Cotes formula, which this tool has not yet checked/);
+        if (/2017|2022|2024/.test(html)) sourced++;
       }
     }
   }
-  assert.ok(flagged > 20);
+  assert.ok(sourced > 0);
 });
 
 test('explanations contain no treatment advice', () => {

@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadDatasets } from '../src/reference/load.js';
 import { createReference } from '../src/reference/gli.js';
-import { buildCase } from '../src/core/case.js';
+import { buildCase as buildCaseV2 } from '../src/core/case.js';
+// Legacy v2 plot contract. Version 3 measured and unavailable sessions have dedicated integration coverage.
+const buildCase = (input, ds) => buildCaseV2({ v: 2, ...input }, ds);
 import { interpret } from '../src/interpret/interpret.js';
 import { PALETTES, PALETTE_IDS } from '../src/ui/palettes.js';
 import { buildPleth } from '../src/core/pleth.js';

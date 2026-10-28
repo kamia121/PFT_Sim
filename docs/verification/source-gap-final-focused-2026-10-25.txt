@@ -1,0 +1,35 @@
+✔ every item is well formed for every archetype, technique, panel and equation (299.088542ms)
+✔ categorical keys equal the engine key under the displayed equation, with the other equation as the alternative (192.924625ms)
+✔ public items carry no key, no explanation payload and no correctness marker (71.126916ms)
+✔ items are a pure function of the descriptor (71.532416ms)
+✔ option order depends on the seed, keeps the same set, and keeps "none" and ordinal scales fixed (2.769334ms)
+✔ decoy caveats are true statements whose subject is absent from the case, and true caveats follow the case (178.848208ms)
+✔ the limitations key is "none" exactly when no statement applies (175.047667ms)
+✔ the equation sensitivity item appears only when a classification changes, and its distractors change nothing (218.258083ms)
+✔ the skills filter removes items (2.315792ms)
+✔ intake notes: a pool of twelve with variants, a seeded subset, level-dependent count (0.442625ms)
+✔ statements vary between cases with different seeds (29.046ms)
+✔ categorical unavailable key is an offered reportability answer with adapters disabled (14.276542ms)
+✔ categorical pending key is an offered reportability answer with adapters disabled (4.20875ms)
+✔ fallback preserves qualified diffusion and lung-volume reporting without conflating spirometry quality (5.219583ms)
+✔ categorical answer keys remain available across source-backed normal and failed cases (24.825ms)
+✔ 2023 frequency boundary bands and actual normal trial above 1.5 Hz are usable (11.907875ms)
+✔ reportable qualified volume results carry a domain-specific concise caution (4.357208ms)
+✔ v3 linked IC precedes expiratory SVC with measured pair amplitudes; legacy is unchanged (5.350583ms)
+✔ HTML, print rules and CSV describe the actual case generator version (34.32425ms)
+✔ Jones–Meade uses back-extrapolated zero and arithmetic midpoint of collection times (0.418375ms)
+✔ nonlinear inspiration and expiration use independent timing endpoints, decay and full-precision quality (14.643041ms)
+✔ analyzer uses time midpoint even with asymmetric collection and ignores legacy volume-event marker (3.071167ms)
+✔ explicit v2–v4 acquisitions retain pre-correction numeric fixtures from 8507c25 (7.808833ms)
+✔ inclusive legacy BDR convention handles binary 200mL and 12% boundaries without clinical rounding (0.550208ms)
+✔ explicit zero-flow assessment rejects both values, including otherwise acceptable plateau and repeated sets (0.131459ms)
+✔ older patients preserve measured volumes but receive no invented reference z-scores or diffusion labels (11.865542ms)
+✔ incomplete sampled expiration remains an attempted trace with no gas result and finite SVG (5.815375ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1291.081583

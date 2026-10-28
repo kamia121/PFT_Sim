@@ -88,6 +88,9 @@ async function printGeometry(page) {
     for (const e of document.querySelectorAll('main *')) {
       if (skip(e)) continue;
       const b = e.getBoundingClientRect();
+      // Native hidden OPTION boxes may move in Firefox despite painting no pixels.
+      // Compare all nonzero rendered boxes; PDF text/raster invariants still check the complete printed page.
+      if (b.width === 0 || b.height === 0) continue;
       rows.push(`${e.tagName}.${e.getAttribute('class') ?? ''}#${e.id}|${r2(b.x + scrollX)},${r2(b.y + scrollY)},${r2(b.width)},${r2(b.height)}`);
     }
     const frame = document.querySelector('#summary-slot .sheet-frame');

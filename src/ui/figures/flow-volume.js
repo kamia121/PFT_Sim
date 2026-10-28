@@ -18,6 +18,7 @@
  * caseData fields read by dataFor: spirometry.pre/post, descriptor.seed, revealed (default false),
  * showSchematic and interp (for the constructed predicted curve).
  */
+import { TRACE_RENDERING_ATTRS } from '../../core/trace-texture.js';
 import { wrapSvg, text, resolvePalette } from './svg.js';
 import { spirometryData, chooseShown, loopRanges, loopScale, drawLoop, legendRows, legendItems, tileGrid, SET_LABEL } from './panel-spirometry.js';
 
@@ -87,7 +88,7 @@ function render(data, opts = {}) {
   const n = data.sets.map((s) => `${s.maneuvers.length} ${SET_LABEL[s.id].toLowerCase()}`).join(' and ');
   const title = opts.title ?? 'Flow-volume loop';
   const description = opts.description ?? `Flow-volume loops of ${n} maneuvers. Exhaled volume in liters on the horizontal axis, flow in liters per second on the vertical axis, expiration up and inspiration down, 2 L/s drawn as long as 1 L.${data.predicted ? ' The dashed predicted expiratory curve is constructed from the predicted FEV1 and FVC.' : ''}`;
-  return wrapSvg({ palette, width: W, height: H, title, description, body: g });
+  return wrapSvg({ palette, width: W, height: H, title, description, body: g, attrs: TRACE_RENDERING_ATTRS });
 }
 
 export default { id: 'flow-volume', title: 'Expiratory and inspiratory flow-volume loop', render, dataFor };

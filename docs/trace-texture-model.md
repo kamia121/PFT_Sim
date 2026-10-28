@@ -1,0 +1,107 @@
+# Within-blow trace texture and the open-shutter resistance summary figure: model record
+
+This note records the first release of within-blow irregularity on the plotted spirometry traces (`src/core/trace-texture.js`, trace rendering `spirometry-texture-v2`) and the change of the summary plethysmography figure from the shutter-closed trial to the open-shutter specific airway-resistance loop (`rep-pleth-loop` in `src/ui/figures/representative.js`). Both are uncalibrated simulator choices for interpretation practice. The amplitudes and correlation lengths are provisional heuristics chosen for face plausibility and are awaiting review by a clinician; no published standard prescribes them, and the numerical checks below show internal consistency with the tabulated values, not clinical validity.
+
+## 1. Physiology and what the texture represents
+
+During a maximal forced expiration, flow over most of the descending limb is largely independent of further increases in driving pressure, because the airways are dynamically compressed and flow is limited at a choke point. Small irregularities of the recorded flow on that limb therefore arise mainly from sources other than the expiratory effort itself, such as changes of glottic and upper-airway aperture, transmitted cardiac activity and the measuring system, although no list of mechanisms is exhaustive. Forced inspiratory flow is not flow-limited in the same way and follows the inspiratory effort more closely, so its irregularities are larger. The simulator expresses this difference as a smaller relative modulation of expiratory flow (about 2%) than of inspiratory flow (about 3.5%). Both values are teaching choices, not measured quantities.
+
+The texture changes only how a maneuver is drawn. The tabulated FVC, FEV1, PEF, FEF25-75, back-extrapolated volume (BEV), plateau and forced expiratory time (FET) are computed by `src/core/maneuver.js` from the maneuver's curve as before. Quality grades, acceptability, the interpretation key, the classification and the bronchodilator outcome read only those tabulated values, so none of them can change. The case object and its hashes are unchanged. The generator version therefore stays 2 (section 5 states the reproducibility contract).
+
+## 2. Construction
+
+**Expiration.** The plotted expiration is the maneuver's own volume-time curve V(t) read at a slightly shifted time, a monotone time warp:
+
+tau(t) = t + delta(t),   delta(t) = integral of m(s) ds from 0 to t,   plotted volume V(tau(t)),   plotted flow F(tau(t)) (1 + m(t)),
+
+where F = dV/dt is the analytic flow of `src/core/curve.js`. The plotted flow is the exact derivative of the plotted volume, not a numerical difference, and at every exhaled volume the plotted flow is the curve's flow multiplied by (1 + m). The modulation m (dimensionless) is:
+
+- zero from the start of exhalation until flow has fallen below 0.9 of PEF after the peak (followed by a 0.05 s ramp), so time zero, BEV and PEF are those of the curve;
+- zero in the last 1 s of the record (after a 0.3 s ramp), so FVC, the plateau and FET are those of the curve, and so is any glottic-closure or early-termination ending;
+- zero up to the end of every named fault artifact's window (cough and mouthpiece obstruction 1.0 s, slow start 0.8 s, variable effort FEV1 time + 2 s, leak FEV1 time + 1.8 s; `artifactSpanEnd` in `src/core/inspiratory.js`), so the artifacts of `applyArtifacts` act on exactly the samples they acted on before;
+- integrated to zero between consecutive anchors: the guard time, the times at which 25, 50 and 75% of the FVC are exhaled, the FEV1 time (1 s after the back-extrapolated time zero) and the start of the quiet end. The integral is made zero by subtracting a sin² bump on each segment, which vanishes with zero slope at both anchors, so m stays smooth and delta is zero at every anchor.
+
+Within those limits, m is the sum of two unit-variance cubic B-spline processes with independent standard-normal coefficients, each indexed by exhaled volume. The fine process has a correlation length of 0.04 FVC and SD 0.02, and the broad process 0.2 FVC and SD 0.015. A per-maneuver multiplier exp(0.25 N(0,1)) makes the blows of one session differ. The knot coordinate advances at the rate min(|flow| / (length × FVC), 1 / tmin), with tmin 0.04 s for the fine and 0.25 s for the broad process. This floor keeps the modulation smooth on the plotting grid; it is not a hard limit of the frequency content. The modulation is soft-limited by a tanh at 8% and, after the anchor correction, scaled down if any value exceeds 8% or if the plotted flow after the guard would exceed 0.97 PEF. Scaling m scales delta and keeps every anchor.
+
+**Inspiration.** The inspiratory limb of `buildInspiratory` (flow negative, exhaled-volume coordinate) has its flow multiplied by (1 + m). Here m is built the same way on inspired volume (fine 0.05 FIVC, SD 0.035, tmin 0.08 s; broad 0.25 FIVC, SD 0.02, tmin 0.3 s; cap 12%) and corrected so that the trapezoid integral of the modulated flow equals the inspired volume. If the corrected modulation exceeds the cap anywhere, the whole modulation is scaled down to it. Scaling is linear, so the flow-weighted integral stays zero; clipping would not keep FIVC. The volume is then integrated again with the same trapezoid rule, so the forced inspiratory vital capacity (FIVC) and the loop-closure flag are unchanged. Peak inspiratory flow (PIF) is read from the modulated array, as before. The leak and mouthpiece ripple already in `buildInspiratory` is kept underneath.
+
+**Random streams.** `spiro-texture-<set>-<index>` and `spiro-texture-insp-<set>-<index>` (set `pre` or `post`), each with a fixed 45 draws: the amplitude, 32 fine and 12 broad coefficients. No existing stream is read, so no latent, demographic, maneuver or artifact draw moves. The texture does not depend on technique or on the faults a maneuver carries, so it carries no information about the quality grade.
+
+## 3. Report contract and numerical checks
+
+The report tabulates PEF and the mean FEF25-75; it does not tabulate or display instantaneous FEF25, FEF50 or FEF75. Preserving the 25% and 75% crossing times therefore preserves what the report states. Instantaneous flows at those volumes do change, by the local modulation (1 + m), and are not claimed to be preserved. All checks are in `tests/trace-texture.test.mjs` (12 seeds × 10 archetypes with technique and severity cycling, plus six scenario cases with fault artifacts; pre and post sets).
+
+| Check | Maneuvers without faults | Maneuvers with faults |
+|---|---|---|
+| Plotted samples before the start and after the end of the active window | bitwise equal to the previous rendering | bitwise equal to the previous rendering (artifact windows included) |
+| PEF, BEV, FVC and plateau read from the plot | bitwise equal to the previous rendering | bitwise equal to the previous rendering, which may already differ from the table (cough spikes exceed the tabulated PEF by up to 2.9 L/s; this is the existing artifact model) |
+| Volume at the FEV1 time read by linear interpolation on the plot grid | within 1 mL of the table; within 0.1 mL of the previous rendering (observed 0.07 mL) | observed within 0.08 mL of the previous rendering |
+| FEF25-75 from the plotted 25% and 75% crossings | within 0.2% of the previous rendering, 0.5% of the table | observed within 0.0002 L/s of the previous rendering |
+| Exact volume at every anchor (warp function) | within 1e-9 L | not applicable where the window is protected |
+| Flow sign, monotone volume, finite values | flow ≥ 0, volume non-decreasing | as before (the artifact model already enforces non-negative flow) |
+| No new peak | plotted flow after the guard ≤ 0.97 PEF (fixed number in the test) | not asserted; the artifacts own the first seconds |
+| Independent trapezoid integration of the plotted flow against the plotted volume | incremental: the texture adds at most 0.5 mL to the existing plot-grid error (observed 0.25 mL), and essentially none on a 1 ms grid; absolute: up to 2.5 mL, so a 1 mL absolute target is not met (section 6) | incremental: observed at most 0.2 mL added; absolute: up to 3.8 mL (section 6) |
+| Modulation statistics | median RMS 0.8 to 3% (observed about 1.5%); maximum |m| 8%; correlation of samples 5 ms apart above 0.95; autocorrelation after its first zero crossing below 0.75 (observed 95th percentile 0.27, maximum 0.60; a sinusoid gives 1.00) | not applicable |
+| Inspiratory limb | FIVC within 1e-9 L, closure flag unchanged, flow ≤ 0, PIF from the array; final modulation at most 12% (seeds 0 to 9999, including the review's seeds 23 and 9010) | same |
+
+Clinician review (2026-10-22): the project physician approved the visual direction of the prototype (before/after preview) with these amplitudes. This is approval of face plausibility for teaching, not validation and not approval to merge or publish.
+
+Mutation checks during development: removing the anchor correction fails the anchor and plot-read tests; removing the 0.97 PEF ceiling while moving the guard to the peak fails the bit-for-bit and no-new-peak tests.
+
+## 4. The summary plethysmography figure
+
+The summary sheet's plethysmography figure is titled "Specific airway-resistance loop, shutter open". It draws the stored open-shutter record `case.pleth.raw` (section 1.3 of `docs/pleth-dlco-model.md`) with no new model and no resampling: flow in L/s on the vertical axis with expiration upward, and plethysmographic shift volume in mL on the horizontal axis, positive when alveolar gas is compressed. The words "expiration" and "inspiration" mark the halves, and a caption line states the shift-volume sign convention. Every recorded tidal breath is drawn as one continuous record, so the small breath-to-breath differences are those already present in the data (slow variation of tidal volume and timing, smooth noise).
+
+The dashed line is the simulator's estimator, the least-squares line of the shift signal on flow within |flow| ≤ 0.5 L/s. It is labelled as a least-squares fit and is not called sRtot, sR0.5, sReff or any vendor estimator. Those estimators use other points or areas of the loop and diverge from this fit when the loop is open (Kraemer et al., Physiol Rep 2021, PMC8436055: sReff and sGeff by the integral method against the conventional two-point sRaw; that paper's least-squares regression models reference values and is not a loop estimator). sRaw, sGaw = 1/sRaw and Raw = sRaw divided by the reported FRC from plethysmography (FRCpleth) are printed in the table beneath with the estimator and the FRC basis, unchanged.
+
+The caption names the shutter-closed trial chosen by the technologist report, with its thoracic gas volume (TGV) and the reported FRC. Like the other captions, it does not say whether the trial is acceptable, so it cannot answer the staged quality questions. The full shutter-closed plot remains on the details sheet (panel B of `panel-pleth`). No post-bronchodilator plethysmography is simulated, and none is drawn.
+
+Orientation of the reference images supplied for this change: the image of the four estimators (sRawTOT, sRaw0.5, sRawVmax, sRawmid) plots inspiration upward. The simulator keeps expiration upward with compression to the right, the convention of its other figures; flipping both axes leaves the slope sign unchanged. The vendor-style image with flow and oral pressure on two vertical axes superimposes two different quantities and is not reproduced as one resistance loop.
+
+The loop morphology is the existing phenomenological model (a cubic flow dependence and a quadrature opening term of assigned size). It is not a mechanistic model of heterogeneity, pendelluft or tidal expiratory flow limitation. PMC8223795 describes several mechanisms that open the expiratory loop (mechanical heterogeneity, air trapping, recruitment and derecruitment, tidal expiratory flow limitation, the last dominant in COPD at rest) and does not treat a loop shape as diagnostic of a disease.
+
+## 5. Reproducibility contract
+
+The generator version (2) reproduces the case: every value, grade, key and stored array, checked by the case-hash fixtures. The trace rendering (`TRACE_RENDERING_ID`, now `spirometry-texture-v2`) names how the spirometry traces are drawn. It is written as `data-trace-rendering` on the root of every svg that draws maneuver traces, so exported and downloaded figures carry it. It is also stored in `tests/fixtures/trace-rendering-hashes.json` (hashes of the plotted traces of 8 cases, one chosen because the inspiratory cap binds in it) and `tests/fixtures/practice-markup-baseline.json`. A link made before this release reproduces the same numbers, grades and key, but not the same pixels: its traces now carry the texture, and its summary sheet shows the resistance loop in place of the shutter-closed trial. Any later change of the plotted traces must raise `TRACE_TEXTURE_MODEL.version` and rewrite both fixtures. Version 1 existed only on the unmerged review head 5c09ecc. In version 1 the 12% inspiratory cap was applied before the zero-integral correction, and the final modulation reached 14.0% (23 of 10,000 seeds above 12% in the review's sweep). Version 2 applies the cap after the correction. It changes the drawn inspiratory limb in about 0.6% of maneuvers (20 of 3,550 in a 600-case sweep) and nothing else.
+
+The markup fixture was re-baselined once for this change. The markup outside the svg figures was verified byte-identical to ec5f6cd before re-baselining, for all 88 practice states and 96 reference pages: the stripping function was first shown to reproduce every stored ec5f6cd hash on main, and the figure-free hashes on this branch equal main's. That figure-free parity is now a permanent test. The only figures that changed are the spirometry figures (the panel, the two stand-alone figures and the two summary curves) and the summary plethysmography figure. The DLCO figures, the z-score graphics and the details-sheet plethysmography panel are byte-identical.
+
+## 5a. Cost and the trace cache
+
+The texture is computed on a 1 ms grid over the active window, which costs about 17 ms per maneuver in Node on the development machine (0.4 ms before). Every figure of a page asks for the same maneuvers again, so `maneuverTrace` (`src/ui/figures/traces.js`) caches its result. The cache follows this contract:
+
+- The cache is a `WeakMap` keyed by the maneuver object, so entries live only as long as the case.
+- Inputs are mutable, and an entry is used only when a fingerprint of the values of every input the trace reads matches: the trace-rendering identifier, seed, set, index, the curve parameters, FET, FVC, the contents of the faults and of the scenario faults, and the full contents of a supplied inspiratory limb.
+- A maneuver changed after a first call, by replacing a field or by changing an array in place, is computed again and never answered from a stale entry. Version 1 of the cache compared a supplied inspiratory limb by identity, so halving one of its samples in place returned the earlier trace (independent review); the contents are now in the fingerprint, and a regression test changes arrays in place.
+- Results are deep-frozen and shared, and no result shares an array with its inputs.
+
+Equation, quality-challenge and view changes do not enter the trace and reuse the cached arrays. The tests compare every cached result with the uncached computation (`computeManeuverTrace`), and they cover each option, input mutation, new case objects, pre and post, and frozenness. Removing the fingerprint check fails them. The output is byte-identical; the trace fixture is unchanged.
+
+Measured latency on a bounded representative set (seed 11: normal; obstruction and mixed, each with pre and post sets; restriction), Node, development machine:
+
+| | case generation | first render of all figures | rerender of all figures |
+|---|---|---|---|
+| main 9822a77 | 9 to 16 ms | 16 to 36 ms | 16 to 27 ms |
+| this change, with the cache | 10 to 22 ms | 79 to 223 ms | 14 to 25 ms |
+
+In Chromium with the CPU throttled four times (a mobile-class emulation, not a measured phone), the practice page took longer to show the summary figures:
+
+| Case | main 9822a77 | this change |
+|---|---|---|
+| obstruction, seed 11, pre and post, 6 maneuvers | 1424 ms | 2067 ms |
+| obstruction, poor technique, seed 34, 16 maneuvers (the largest found in 120 poor-technique cases) | 1545 ms | 2217 ms |
+
+The time to open page 2 and to switch the reference equation was not longer (141 against 179 ms, and 360 against 450 ms, in the larger case). The remaining cost, about 0.65 s at the first display of a case under that emulation, is a known limitation of this release; no further optimization was made.
+
+## 6. Limitations
+
+- The amplitudes, correlation lengths, caps, guard fractions and quiet end are unverified heuristics. They need face-plausibility review by clinicians against real tracings; no standard prescribes them, and ATS/ERS 2019 gives no noise or irregularity amplitude.
+- The peak and the descent to 0.9 PEF, the anchor neighbourhoods in volume, the last second and the fault-artifact windows are smooth by construction. Real tracings often show irregularity near the peak; in this release that region stays exactly as the curve draws it, so that BEV and PEF are untouched.
+- The guard and anchor constraints leave little room for broad contour variation before the FEV1 time in normal lungs (in seed 7, all anchors fall within the first 1.03 s). Between-person differences of contour, such as a knee in young adults or convexity, are not modeled: every normal loop still has the same basic shape because the curve family's shape depends only on FEV1/FVC. Changing that would change the tabulated FEF25-75 and needs a new generator version.
+- Cardiogenic oscillations in the low-flow tail, sawtooth patterns, coughs not named as faults and other pathological closures are deliberately absent.
+- The inspiratory limb's base shape is a parametric guess (unverified), and its texture is not tied to any measured inspiratory variability.
+- Maneuvers whose faults have long artifact windows (variable effort, leak) are textured only after FEV1 time + 2 s, where flow is low; their visible irregularity is mostly that of the artifact model.
+- Integration of the plotted arrays does not meet a 1 mL absolute target. Trapezoid integration of the plotted flow on the existing plot grid (5 ms to 0.4 s, 10 ms to 1.5 s, 50 ms later, 5 ms in the last 0.12 s) differs from the plotted volume by up to 2.5 mL for maneuvers without faults (13 of 263 above 1 mL in the test sweep) and up to 3.8 mL for maneuvers with fault artifacts (51 of 496). This baseline error predates the texture: it arises in the rise to the peak, which the texture does not touch, and in the cough and glottic-closure artifact shapes. The texture adds at most 0.25 mL to it. Adding 1 ms grid points over the first second and the last 0.12 s brought every maneuver below 0.7 mL in a trial outside the code. That sampling change is deferred for this feature, because it would change sample-dependent fault-artifact amplitudes (the cough amplitude is read from the sampled flow, and the non-negativity scale is a minimum over samples) and would enlarge the figures (about 3.5 times as many points). What this release bounds is non-regression: `tests/trace-texture.test.mjs` requires that the texture add no more than 0.5 mL to the existing error of each maneuver without faults.
+- The resistance figure is limited by the existing loop model, whose bend and opening are assigned rather than derived from mechanics. The least-squares estimator has no published counterpart. Raw uses FRCpleth as its basis, which is misleadingly low with hyperinflation (Kraemer et al. 2021). At the summary size (about 336 by 106 px) the loop is compressed vertically.
+- The first display of a case costs more than before (section 5a: about 0.65 s more under four-times CPU throttling for obstructive cases with pre and post sets); rerenders are not slower.
+- The ERS/ATS 2023 lung-volume standard could not be opened (HTTP 403) and was not read for this change. The Physiol Rep 2021 paper was read through its PubMed Central copy and PMC8223795 through a summarizing fetch, not line by line.

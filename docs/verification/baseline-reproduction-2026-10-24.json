@@ -1,0 +1,16 @@
+{
+  "base": "9822a77",
+  "baselineCheckout": "../PFT_Sim-baseline9822",
+  "node": "24.4.0",
+  "baselineTests": 732,
+  "baselinePassed": 729,
+  "featureTests": 749,
+  "featurePassed": 746,
+  "failureNamesMatchExactly": true,
+  "failures": [
+    "50 cases built with scenario level none are byte-identical to the baseline commit (2ac98e3)",
+    "asking for level none explicitly changes nothing",
+    "numerical identity: every non-resistance value of 2230 cases (220 seeds x 10 archetypes, plus scenarios) is unchanged"
+  ],
+  "note": "Fresh detached baseline reproduction compared with the final full suite, including mobile-nearby-values and qualified KCO/VA prose. The same three failures remain; generator baseline fixtures were not regenerated."
+}

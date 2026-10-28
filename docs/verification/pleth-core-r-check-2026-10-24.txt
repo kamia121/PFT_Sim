@@ -1,0 +1,3 @@
+PASS: 5%/10% boundary construction, matched TLC/RV arithmetic, adult linkage and pediatric smaller-candidate thresholds.
+Matched fixture: FRC=3.05 L; TLC=5.15 L; VC=4.20 L; RV=0.95 L.
+No GLI predictions, z-scores or official calculator outputs are asserted.

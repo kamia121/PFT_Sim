@@ -260,7 +260,8 @@ test('the DLCO footnote and the learner page say that inspired volume and breath
   assert.match(foot, /Inspired volume \(VI\/VC\) and breath-hold time are simulated/);
   assert.doesNotMatch(foot, /VI\/VC and breath-hold time are not simulated/);
   const rows = x.model.sections.find((s) => s.id === 'dlco').tables[0].rows;
-  assert.ok(rows.some((r) => r.id === 'vi-vc') && rows.some((r) => r.id === 'breath-hold'));
+  assert.ok(rows.some((r) => r.id === 'vi-vc') && rows.some((r) => r.id === 'mean-vi'));
+  assert.ok(x.model.sections.find((s) => s.id === 'dlco').tables.find((t) => t.id === 'dlco-replicates').columns.some((c) => c.key === 'hold'), 'individual hold times stay with the maneuvers rather than masquerading as the session mean');
   assert.match(visible(R.renderDlco(x.c, x.interp)), /inspired volume and the breath-hold time are simulated/);
   assert.doesNotMatch(visible(R.renderMethod(1)), /(?:inspired volume|breath-hold)[^;.]*\bnot simulated/);
 });

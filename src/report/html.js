@@ -26,13 +26,16 @@ export function pageRuleCss(model) {
  */
 export function tableHtml(table, { interactive = false } = {}, sectionTitle = null, extra = null) {
   const mx = tableMatrix(table, { unicodeMinus: true });
-  const cols = table.columns;
+  const allCols = table.columns;
+  const mainIndices = allCols.flatMap((c, i) => c.detail ? [] : [i]);
+  const detailIndices = allCols.flatMap((c, i) => c.detail ? [i] : []);
+  const cols = mainIndices.map((i) => allCols[i]);
   const cls = (col) => [col.align === 'left' ? 'l' : 'r', BEST_KEYS.has(col.key) ? 'best' : ''].filter(Boolean).join(' ');
   const groupRow = mx.groups ? `<tr class="grp">${mx.groups.map((g) => `<th colspan="${g.span}" scope="colgroup"${g.label ? '' : ' class="empty"'}>${esc(g.label)}</th>`).join('')}${extra ? '<th class="empty"></th>' : ''}</tr>` : '';
-  const head = `<tr>${mx.head.map((h, i) => `<th scope="col" class="${cls(cols[i])}${h.length <= 9 && !h.includes(" ") ? " nw" : ""}">${labelHtml(h)}</th>`).join('')}${extra ? `<th scope="col" class="zi">${labelHtml(extra.label)}</th>` : ''}</tr>`;
-  const body = mx.body.map((r, ri) => `<tr>${r.map((text, i) => (i === 0
+  const head = `<tr>${mainIndices.map((j) => mx.head[j]).map((h, i) => `<th scope="col" class="${cls(cols[i])}${h.length <= 9 && !h.includes(" ") ? " nw" : ""}">${labelHtml(h)}</th>`).join('')}${extra ? `<th scope="col" class="zi">${labelHtml(extra.label)}</th>` : ''}</tr>`;
+  const body = mx.body.map((r, ri) => `<tr>${mainIndices.map((j) => r[j]).map((text, i) => (i === 0
     ? `<th scope="row" class="l">${labelHtml(text)}</th>`
-    : `<td class="${cls(cols[i])}">${labelHtml(text)}</td>`)).join('')}${extra ? `<td class="zi">${extra.cell(table.rows[ri]) ?? ''}</td>` : ''}</tr>`).join('');
+    : `<td class="${cls(cols[i])}">${labelHtml(text)}</td>`)).join('')}${extra ? `<td class="zi">${extra.cell(table.rows[ri]) ?? ''}</td>` : ''}</tr>${detailIndices.some((j) => r[j]) ? `<tr class="rpt-row-detail"><td class="l" colspan="${cols.length + (extra ? 1 : 0)}">${detailIndices.filter((j) => r[j]).map((j) => `${esc(mx.head[j])}: ${labelHtml(r[j])}`).join('; ')}</td></tr>` : ''}`).join('');
   const button = interactive ? `<button type="button" class="rpt-copy no-print" data-copy-table="${esc(table.id)}">Copy table</button>` : '';
   // A caption that repeats the section heading is dropped; the copy button then sits on the heading line.
   const dup = sectionTitle !== null && table.caption === sectionTitle;

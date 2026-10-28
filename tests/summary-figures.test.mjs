@@ -213,14 +213,14 @@ test('panel-dlco: null without DLCO; markup for every archetype in four palettes
 });
 
 test('panel-dlco: grade, failed criteria and value marks only with showQuality; flag color is text only', () => {
-  const c = make({ seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] });
+  const c = make({ v: 3, seed: 3, archetype: 'obstruction', severity: 2, technique: 'poor', scenarioIds: ['pleth-thermal-drift', 'dlco-valsalva'] });
   const data = panelDlco.dataFor(c);
   const plain = panelDlco.render(data, { palette: PALETTES.white });
-  assert.ok(!/grade|would be rejected|Valsalva/i.test(plain));
+  assert.ok(!/rubric|grade|requires review|Valsalva/i.test(plain));
   const q = panelDlco.render(data, { palette: PALETTES.white, showQuality: true });
   assertWellFormed(q, 'quality');
-  assert.match(q, /Test grade D, would be rejected: Valsalva/);
-  assert.match(q, />Test</);
+  assert.match(q, /Simulator rubric D, requires review: Valsalva/);
+  assert.match(q, />Model</);
   // No filled rectangle other than the background and the two window bands and legend swatches (all in the series colors with opacity).
   for (const m of q.matchAll(/<rect [^>]*fill="(#[0-9A-Fa-f]{6})"([^>]*)>/g)) {
     assert.ok(m[1] === PALETTES.white.background || /fill-opacity/.test(m[2]), 'filled rectangles are the background or translucent window bands');
@@ -252,7 +252,7 @@ test('panel-dlco: best, all and separate views over several tests; selected pick
   assert.ok(!/>Test<\/text>/.test(single), 'no Test column for a single test');
   // Quality mode names the best test by grade; the poor test is grade D and is not chosen as best.
   const q = panelDlco.render(tests, { palette: PALETTES.white, view: 'all', showQuality: true });
-  assert.match(q, /Test 2: Grade D/);
+  assert.match(q, /Test 2: Rubric D/);
 });
 
 test('panel-dlco: title is escaped, height option is honored, width option scales the viewBox', () => {
