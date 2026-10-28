@@ -1,0 +1,20 @@
+✔ corrected adult SVC equality at 150 and 250 mL uses full precision (0.433167ms)
+✔ corrected pediatric smaller candidate thresholds are not the smaller allowed difference (0.077417ms)
+✔ missing same-session FVC requires three independently acceptable VCs (0.517834ms)
+✔ selected FRC+IC pairs and largest retained eligible VC determine the reported subdivisions (0.137667ms)
+✔ 5% and 10% exact boundaries are inclusive, with no invented grade for a discordant pair (0.1325ms)
+✔ FRC and linked SVC counts independently constrain Table 4 grades A through F/U (0.164167ms)
+✔ fallback removes FRC outliers with their linked spirometry, not unrelated IC measurements (0.105625ms)
+✔ unlinked/rejected spirometry yields FRC only; rejected FRC never contributes (0.077584ms)
+✔ tie choices and input limits are transparent engineering rules (0.456125ms)
+✔ component count combinations are classified without a catch-all for unmet repeatability (0.25575ms)
+✔ nonpositive derived RV requires review and is never repaired with a clamp (0.049958ms)
+✔ pair reporting policy is explicit when good FRCs have poorer linked spirometry (0.066708ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33.620709

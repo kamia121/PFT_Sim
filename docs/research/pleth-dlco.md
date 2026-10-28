@@ -240,3 +240,7 @@ Secondary or vendor documents seen as search results:
 - German Atemwegsliga, Diffusionskapazitaet. https://www.atemwegsliga.de/files/eigene-dateien/Lungenfunktion/2024-Vorlagen/3-Diffusionskapazit%C3%A4t.pdf
 - Pulmonary capillary flow during Valsalva and Mueller maneuvers. J Clin Invest. https://www.jci.org/articles/view/106337 (abstract excerpt)
 - Body plethysmography i: standardisation and quality criteria. An Pediatr 2015. https://www.analesdepediatria.org/en-titulo-articulo-S2341287915001271
+
+### 2026-10-24 source-audit correction
+
+The earlier table's statement that inspiration taking ≥4 s is only noted is superseded: t85 must be <4 s and the criterion fails at equality. The source's interim maneuver A–D/F rows overlap and do not define this simulator's catch-all rubric or a session algorithm. The classical small-sample exception is VC <1.0 L with confirmed dead-space clearance; reduced washout at VC <2.0 L is separate. See `../verification/review-corrections-2026-10-24.md` for source locators, implemented corrections and remaining measurement-model gaps. Pleth letters remain FRC-only simulator rubrics, not corrected 2023 overall grades.

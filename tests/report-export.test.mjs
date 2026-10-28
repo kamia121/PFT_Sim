@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allTables } from '../src/report/model.js';
-import { tableMatrix, formatCell } from '../src/report/table.js';
+import { tableMatrix, formatCell, labelHtml } from '../src/report/table.js';
 import { renderReportHtml } from '../src/report/html.js';
 import { toCsv, toCsvWide, toTsv, toClipboardHtml, reportFilename, CSV_COLUMNS, longRows } from '../src/report/export.js';
 import { makeModel, parseCsv, isNumeric, SAMPLE_INPUTS } from './report-helpers.mjs';
@@ -74,7 +74,13 @@ test('TSV, wide CSV, clipboard HTML and the page HTML carry the same numbers as 
       const block = page.slice(page.indexOf(`data-table="${t.id}"`));
       const body = block.slice(block.indexOf('<tbody>'), block.indexOf('</tbody>'));
       const htmlCells = [...body.matchAll(/<td [^>]*>(.*?)<\/td>/g)].map((m) => norm(m[1])).filter(isNumeric);
-      assert.deepEqual(htmlCells, expect, `page HTML ${t.id}`);
+      const mainNumbers = modelNumbers({ ...t, columns: t.columns.filter((c) => !c.detail) }).map((e) => e.text);
+      assert.deepEqual(htmlCells, mainNumbers, `page HTML ${t.id}`);
+      // Long trial qualifications are below the numeric row on the page, while exports keep separate columns.
+      const mx = tableMatrix(t, { unicodeMinus: true });
+      for (const r of mx.body) for (const [i, col] of t.columns.entries()) {
+        if (col.detail && r[i]) assert.ok(body.includes(`${mx.head[i]}: ${labelHtml(r[i])}`), `page detail ${t.id} ${col.key}: ${r[i]}`);
+      }
     }
   }
 });

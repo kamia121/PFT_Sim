@@ -10,7 +10,8 @@ import { selectScenarios, applyScenarios, emptyScenario } from '../scenarios/app
 import { generateManeuvers } from './maneuver.js';
 import { createStream } from './prng.js';
 import { createReference } from '../reference/gli.js';
-import { buildPleth } from './pleth.js';
+import { buildPleth, buildMeasuredPleth } from './pleth.js';
+import { buildDlcoReplicates } from './dlco-replicates.js';
 import { buildDlcoTrace } from './dlco-trace.js';
 import { interpret, LLN_Z } from '../interpret/interpret.js';
 
@@ -69,12 +70,15 @@ export function buildCase(input, datasets) {
   // The scenario forces the fault; for faults the tracing models (incomplete inhalation, Valsalva, Mueller) the tracing alone sets the numbers.
   // The inspired-volume fraction stated in the intake text is the one the tracing uses.
   const traceScenario = plan
-    ? { ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)), ...(plan.merged.dlco.viFraction !== undefined ? { viOverVc: plan.merged.dlco.viFraction } : {}) }
+    ? { incompleteIc: plan.selection.ids.includes('pleth-incomplete-ic'), ids: Object.entries(plan.merged.traceFaults ?? {}).flatMap(([test, faults]) => faults.map((f) => TRACE_IDS[test]?.[f]).filter(Boolean)), ...(plan.merged.dlco.viFraction !== undefined ? { viOverVc: plan.merged.dlco.viFraction } : {}) }
     : null;
   const trueRatioZ = resolveReference('fev1_fvc', { age: d.age, sex: d.sex, heightCm: d.heightCm, group: ANCHOR.group, measured: truth.ratio }, ANCHOR.spirometry).z;
+  // A physical constraint (e.g. a garment) can affect both tests; a bad pleth link cannot.
+  const dlcoModelTlc = d.v >= 3 ? (plan?.merged.volumes.vaFollowsTlc ? volumes?.tlc : truth.tlc) : null;
+  const dlcoModelTlcRatio = d.v >= 3 && volumes && plan?.merged.volumes.vaFollowsTlc ? volumes.tlc / tlcBeforeScenario : 1;
   let pleth = null;
   if (volumes) {
-    pleth = buildPleth({ seed: d.seed, truth: { ...truth, frc: volumes.frc }, volumes, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+    pleth = (d.v >= 3 ? buildMeasuredPleth : buildPleth)({ age: d.age, fvcL: pre.summary.fvc, seed: d.seed, truth: { ...truth, frc: volumes.frc }, volumes, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
     volumes = pleth.suggestedVolumes;
   }
 
@@ -83,13 +87,13 @@ export function buildCase(input, datasets) {
   if (d.panel === 'full') {
     const rng = createStream(d.seed, 'dlco');
     let corrected = truth.dlcoCorrected * Math.exp(0.04 * rng.normal());
-    let va = Math.min(truth.va * Math.exp(0.03 * rng.normal()), 0.99 * volumes.tlc);
+    let va = Math.min(truth.va * Math.exp(0.03 * rng.normal()), 0.99 * (d.v >= 3 ? dlcoModelTlc : volumes.tlc));
     if (!plan) {
       const factor = hbFactor(d.hbGdl, d.sex, d.age);
       const raw = corrected / factor;
       dlco = { raw, hbGdl: d.hbGdl, hbFactor: factor, adjusted: corrected, va, kco: corrected / va };
     } else {
-      ({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: volumes.tlc, tlcRatio: volumes.tlc / tlcBeforeScenario }));
+      ({ corrected, va } = plan.dlcoParts({ corrected, va, tlc: d.v >= 3 ? dlcoModelTlc : volumes.tlc, tlcRatio: d.v >= 3 ? dlcoModelTlcRatio : volumes.tlc / tlcBeforeScenario }));
       // The measured value follows the patient's own hemoglobin and birth sex; the laboratory adjusts with the sex and hemoglobin it has on file.
       const raw = corrected / hbFactor(d.hbGdl, d.sex, d.age);
       const factor = lab.hbGdl === null ? 1 : hbFactor(lab.hbGdl, lab.sex, d.age);
@@ -102,11 +106,18 @@ export function buildCase(input, datasets) {
   // The single-breath tracing is built from the case values. When a technical fault changes the physics (low inspired volume,
   // Valsalva, Mueller, a poor sample) the laboratory reports what the test measured, so the tracing's recomputed values replace them.
   let dlcoTrace = null;
-  if (dlco) {
-    dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ });
+  if (dlco && d.v >= 4) {
+    const forcedVc = [pre, post].filter(Boolean).flatMap((set) => set.maneuvers.filter((_, i) => set.summary.evaluations[i].fvc.usable).map((m) => m.fvc));
+    const vcCandidates = [...forcedVc, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)].filter((v) => Number.isFinite(v) && v > 0);
+    const vcL = vcCandidates.length ? Math.max(...vcCandidates) : null;
+    dlcoTrace = buildDlcoReplicates({ seed: d.seed, truth, dlco, vcL, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });
+    const v = dlcoTrace.session.values;
+    dlco = { ...dlco, raw: v.dlco, adjusted: v.dlco === null ? null : v.dlco * dlco.hbFactor, va: v.vaL, kco: v.kco === null ? null : v.kco * dlco.hbFactor };
+  } else if (dlco) {
+    dlcoTrace = buildDlcoTrace({ seed: d.seed, truth, dlco: { raw: dlco.raw, va: dlco.va }, volumes: d.v >= 3 ? { vc: Math.max(pre.summary.fvc ?? 0, ...pleth.trials.filter((t) => ['acceptable', 'usable'].includes(t.linkAssessment.status)).map((t) => t.link.svcL)) } : volumes, patient: { weightKg: d.weightKg }, technique: d.technique, scenario: traceScenario, ratioZ: trueRatioZ, timingVersion: d.v >= 5 ? 2 : 1 });
     if (dlcoTrace && dlcoTrace.reproducesCase === false && dlcoTrace.values) {
       const scale = dlcoTrace.values.dlcoMlMinMmHg / dlco.raw;
-      const va = Math.min(dlcoTrace.values.vaL, 0.99 * volumes.tlc);
+      const va = Math.min(dlcoTrace.values.vaL, 0.99 * (d.v >= 3 ? dlcoModelTlc : volumes.tlc));
       dlco = { ...dlco, raw: dlcoTrace.values.dlcoMlMinMmHg, adjusted: dlco.adjusted * scale, va, kco: (dlco.adjusted * scale) / va };
     }
   }
@@ -119,7 +130,9 @@ export function buildCase(input, datasets) {
       post: post ? { fev1: post.summary.fev1, fvc: post.summary.fvc } : null,
     },
     volumes,
-    dlco: dlco ? { dlcoAdjusted: dlco.adjusted, va: dlco.va } : null,
+    ...(pleth?.session ? { volumeQuality: { status: pleth.session.status, grade: pleth.grade, warnings: pleth.session.warnings } } : {}),
+    dlco: dlco && Number.isFinite(dlco.adjusted) ? { dlcoAdjusted: dlco.adjusted, va: dlco.va } : null,
+    ...(dlcoTrace?.session ? { dlcoQuality: { status: dlcoTrace.session.status, warnings: dlcoTrace.session.warnings, selectedIds: dlcoTrace.session.selectedIds } } : {}),
     grades: { fev1: pre.summary.grades.fev1, fvc: pre.summary.grades.fvc, postFev1: post?.summary.grades.fev1, postFvc: post?.summary.grades.fvc },
   };
 

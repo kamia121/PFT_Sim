@@ -1,0 +1,21 @@
+✔ v4 reported DLCO/VA use the same retained pool; v3 retains its single trace (20.481209ms)
+✔ qualified single-A session stays separate from representative maneuver acceptability (6.366167ms)
+✔ failed session withholds classification, numbers, and grading rather than reporting a rejected trace (20.013417ms)
+✔ missing same-session VC remains pending and never borrows true VC or VI (4.9115ms)
+✔ repeatable A subset excludes A outliers and all inferior results (1.571333ms)
+✔ other acceptable VA comparator uses largest other value and never self comparison (0.420375ms)
+✔ qualified fallback uses A alone before any B–D; F-only has no output (0.495458ms)
+✔ interim overlapping rows retain matches; unsupported mixed failures have no invented letter (0.099875ms)
+✔ exact timing, VI, sampling and clearance boundaries are source criteria (0.124792ms)
+✔ 2023 frequency boundary bands and actual normal trial above 1.5 Hz are usable (10.84075ms)
+✔ reportable qualified volume results carry a domain-specific concise caution (3.942542ms)
+✔ v3 linked IC precedes expiratory SVC with measured pair amplitudes; legacy is unchanged (4.964542ms)
+✔ HTML, print rules and CSV describe the actual case generator version (25.29675ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.778167

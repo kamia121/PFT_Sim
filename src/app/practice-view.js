@@ -62,7 +62,7 @@ function structuredFieldsets(c, structured, locked, excerpts = {}) {
  */
 export const EXCERPTS = {
   pattern: [['spirometry', ['fvc', 'fev1', 'fev1_fvc'], ['pre', 'lln', 'z']], ['volumes', ['tlc'], ['result', 'lln', 'z']]],
-  severity: [['spirometry', ['fev1'], ['pre', 'z', 'pct']]],
+  severity: [['spirometry', ['fev1'], ['pre', 'z', 'pct']], ['volumes', ['tlc'], ['result', 'z']]],
   // The 2022 rule reads the change as a percentage of the predicted value: the sheet's own change column, computed from the unrounded values
   // (the difference of the two rounded %Pred cells can differ from it by up to a point).
   bronchodilator: [['spirometry', ['fev1', 'fvc'], ['pre', 'pct', 'post', 'postPct', 'change', 'changePctPred'], { pct: 'Pre %Pred', postPct: 'Post %Pred' }]],

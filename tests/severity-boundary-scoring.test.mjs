@@ -42,16 +42,16 @@ test('practice control: away from a cut point the other equation\'s key is still
   assert.ok(n >= 1, 'a case whose keys differ away from a cut point exists');
 });
 
-test('quiz, seed 99 severity 1 (z -1.6486, key mild, fev1-normal accepted): the accepted band earns full credit', () => {
+test('quiz near LLN retains mild and does not accept the obsolete ungraded answer', () => {
   const { items, prep } = build({ seed: 99, archetype: 'obstruction', severity: 1, technique: 'good' });
   assert.ok(Math.abs(prep.a.severity.z + 1.64858037) < 1e-6);
   const item = items.find((i) => i.id === 'severity');
   assert.ok(item, 'the severity item is asked');
   assert.equal(item.key.correct, 'mild');
-  assert.deepEqual(item.key.also, ['fev1-normal']);
+  assert.equal(item.key.also, undefined);
   const r = scoreItem(item, 'fev1-normal');
-  assert.equal(r.score, 1);
-  assert.equal(r.status, 'correct');
+  assert.equal(r.score, 0);
+  assert.equal(r.status, 'incorrect');
   assert.equal(scoreItem(item, 'mild').score, 1);
   // Controls: a band two steps away earns nothing, and the unanswered item earns nothing.
   assert.equal(scoreItem(item, 'severe').score, 0);
@@ -93,7 +93,7 @@ test('the answer key CSV has a separate accepted-at-a-cut-point column with the 
   const opt = (i, id) => { const it = cases[i].items.find((x) => x.id === 'severity'); return lettered(it, def, i).find((o) => o.id === id); };
   // Seed 99: key mild; fev1-normal accepted at the cut point; no other-equation key differs.
   const r99 = row(0).split(',');
-  assert.equal(r99.at(-1), `${opt(0, 'fev1-normal').letter} ${opt(0, 'fev1-normal').label}`);
+  assert.equal(r99.at(-1), '');
   assert.equal(r99.at(-2), '', 'the other-equation column stays empty for it');
   // Seed 164: mild is accepted at the cut point and is also the GLI-2012 key: both columns are filled, independently.
   const r164 = row(1).split(',');

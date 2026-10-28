@@ -1,0 +1,209 @@
+PFT Sim: http://127.0.0.1:5198
+ok   R1: acceptableManeuversPre renders a group for each of its 12 rows
+ok   R1: acceptableManeuversPost renders a group for each of its 16 rows
+ok   R1: representativeLoopOk renders a group for each of its 2 rows
+ok   R1: bdInterpretable renders a group for each of its 2 rows
+ok   R1: one answer per row is held by the form
+ok   R1: stage 2 fixes every row control
+ok   R1: stage 2 keeps every row answer
+ok   R1: the feedback names the one wrong maneuver row and nothing else
+ok   R1: a fully correct map of 16 rows earns full credit
+ok   R1: the loop and bronchodilator pair carry the learner's answers
+ok   R2: the link carries qc, flags and the equation (&eq=GLI2012&qc=1&flags=none)
+ok   R2: the opened page shows the quality challenge on, flags none and GLI-2012
+ok   R2: the opened page withholds grades and acceptability
+ok   R2: flags none: no value is flagged
+ok   R2: the way back to the practice page keeps qc and flags
+ok   item 4: stage 1 in the practice page links with st=null
+ok   item 4: the report page opens at stage 1 and writes the same address
+ok   item 4: stage 1: the technologist statement is withheld
+ok   item 4: stage 1: acceptability is withheld
+ok   item 4: stage 1: no key in the student copy
+ok   item 4: a reload keeps stage 1
+ok   item 4: the way back keeps the challenge and carries no stage
+ok   item 4: changing the stage on the page rewrites the address and the pages
+ok   item 4: back to stage 1 leaves the address short and withholds again
+ok   item 4: stage 2 in the practice page links with st=2
+ok   item 4: the report page opens at stage 2 and writes the same address
+ok   item 4: stage 2: the technologist statement is shown
+ok   item 4: stage 2: acceptability is withheld
+ok   item 4: stage 2: no key in the student copy
+ok   item 4: a reload keeps stage 2
+ok   item 4: the way back keeps the challenge and carries no stage
+ok   item 4: changing the stage on the page rewrites the address and the pages
+ok   item 4: back to stage 1 leaves the address short and withholds again
+ok   item 4: stage 3 in the practice page links with st=3
+ok   item 4: the report page opens at stage 3 and writes the same address
+ok   item 4: stage 3: the technologist statement is shown
+ok   item 4: stage 3: acceptability is shown
+ok   item 4: stage 3: no key in the student copy
+ok   item 4: a reload keeps stage 3
+ok   item 4: the way back keeps the challenge and carries no stage
+ok   item 4: changing the stage on the page rewrites the address and the pages
+ok   item 4: back to stage 1 leaves the address short and withholds again
+ok   item 4: st=9 is a link error that names the stage
+ok   item 4: st=2&st=3 is a link error that names the stage
+ok   item 4: st=abc is a link error that names the stage
+ok   item 4: a stage without qc=1 is a link error
+ok   R5: before the key is released the statement is not offered and not in the page
+ok   R5: key released, toggle off: no statement
+ok   R5: with the toggle on, the whole concise summary (impression first, then every line) is in the report
+ok   R5: the long supporting explanation is not in the printed report
+ok   R5: the sheet's interpretation box points to it
+ok   R5: the concise summary is in the printed PDF, whole, after the summary sheet
+ok   R5: and not cut into the summary sheet
+ok   R5: toggling off removes the statement
+ok   summary: normal: impression and every line are printed (6 lines)
+ok   summary: normal: the first sheet is clear of the footer
+ok   summary: normal: the impression comes first
+ok   summary: obstruction: impression and every line are printed (6 lines)
+ok   summary: obstruction: the first sheet is clear of the footer
+ok   summary: obstruction: the impression comes first
+ok   summary: restriction: impression and every line are printed (5 lines)
+ok   summary: restriction: the first sheet is clear of the footer
+ok   summary: restriction: the impression comes first
+ok   summary: mixed: impression and every line are printed (6 lines)
+ok   summary: mixed: the first sheet is clear of the footer
+ok   summary: mixed: the impression comes first
+ok   summary: low DLCO: impression and every line are printed (5 lines)
+ok   summary: low DLCO: the first sheet is clear of the footer
+ok   summary: low DLCO: the impression comes first
+ok   summary: poor session, heavy notes: impression and every line are printed (12 lines)
+ok   summary: poor session, heavy notes: the first sheet is clear of the footer
+ok   summary: poor session, heavy notes: the impression comes first
+ok   summary: COHb measured: impression and every line are printed (7 lines)
+ok   summary: COHb measured: the first sheet is clear of the footer
+ok   summary: COHb measured: the impression comes first
+ok   R6: page 2 offers Best, Overlay and Separate for the spirometry panel
+ok   R6: more than eight maneuvers are overlaid at first
+ok   R6: Separate redraws the panel
+ok   R6: the control used keeps focus
+ok   R6: the answers survive the redraw
+ok   R6: the scroll position survives
+ok   R6: selecting a single maneuver draws just that one
+ok   R6: Best shows the best maneuver
+ok   R6: quality stays withheld through the view changes (challenge stage 1)
+ok   R9: the details z-score graphic has pre and post rows for FVC, FEV1 and FEV1/FVC
+ok   R6: the Lab report view offers the same controls on screen
+ok   R6: and they act there
+ok   item 3 (practice): three radios
+ok   item 3 (practice): ArrowRight moves to Separate, the same radio node has focus and the group node is untouched
+ok   item 3 (practice): ArrowLeft twice reaches Best on the same node
+ok   item 3 (practice): the focused radio sits in a group labelled "Maneuvers shown as"
+ok   item 3 (practice): repeated arrows keep one node and the plotted figure follows
+ok   item 3 (practice): a chip toggled by the keyboard stays the focused node, now unchecked
+ok   item 3 (practice): scroll position preserved by the redraws (572)
+ok   item 3 (practice): answers preserved
+ok   item 3 (practice): one short announcement after the run of changes ("Spirometry panel: 7 maneuvers, separate.")
+ok   item 3 (lab): three radios
+ok   item 3 (lab): ArrowRight moves to Separate, the same radio node has focus and the group node is untouched
+ok   item 3 (lab): ArrowLeft twice reaches Best on the same node
+ok   item 3 (lab): the focused radio sits in a group labelled "Maneuvers shown as"
+ok   item 3 (lab): repeated arrows keep one node and the plotted figure follows
+ok   item 3 (lab): a chip toggled by the keyboard stays the focused node, now unchecked
+ok   item 3 (lab): scroll position preserved by the redraws (1734)
+ok   item 3 (lab): answers not involved
+ok   item 3 (lab): the summary sheet node is not replaced
+ok   item 3 (lab): the summary sheet was not redrawn or re-fitted
+ok   item 3 (lab): one short announcement after the run of changes ("Spirometry panel: 7 maneuvers, separate.")
+ok   R8: the green area is "not reduced" and the area beyond the ULN is named
+ok   R8: the caption says what within limits means
+ok   R7: Lab report, heavy notes, poor session (floor overflow): identity, tables, comments, closing line and "Page 1" on the first sheet
+ok   R7: Lab report, heavy notes, poor session (floor overflow): no second copy of the summary on the second sheet
+ok   R7: Lab report, heavy notes, poor session (floor overflow): the content fits its sheet (scale 0.95)
+ok   R7: Lab report, heavy notes, poor session (floor overflow): every comment is printed and none touches the footer ()
+ok   R7: Lab report, heavy notes, poor session (floor overflow): the screen hint is not printed
+ok   R7: report page, heavy notes, poor session (floor overflow): first sheet clear of the footer, every comment printed ()
+ok   R7: heavy notes, poor session (floor overflow): both paths carry the same summary content
+ok   R7: Lab report, long reference note: identity, tables, comments, closing line and "Page 1" on the first sheet
+ok   R7: Lab report, long reference note: no second copy of the summary on the second sheet
+ok   R7: Lab report, long reference note: the content fits its sheet (scale 0.95)
+ok   R7: Lab report, long reference note: every comment is printed and none touches the footer ()
+ok   R7: Lab report, long reference note: the screen hint is not printed
+ok   R7: report page, long reference note: first sheet clear of the footer, every comment printed ()
+ok   R7: long reference note: both paths carry the same summary content
+ok   R7: Lab report, post-bronchodilator, poor session: identity, tables, comments, closing line and "Page 1" on the first sheet
+ok   R7: Lab report, post-bronchodilator, poor session: no second copy of the summary on the second sheet
+ok   R7: Lab report, post-bronchodilator, poor session: the content fits its sheet (scale 0.95)
+ok   R7: Lab report, post-bronchodilator, poor session: every comment is printed and none touches the footer ()
+ok   R7: Lab report, post-bronchodilator, poor session: the screen hint is not printed
+ok   R7: report page, post-bronchodilator, poor session: first sheet clear of the footer, every comment printed ()
+ok   R7: post-bronchodilator, poor session: both paths carry the same summary content
+ok   R7: Lab report, obstruction: identity, tables, comments, closing line and "Page 1" on the first sheet
+ok   R7: Lab report, obstruction: no second copy of the summary on the second sheet
+ok   R7: Lab report, obstruction: the content fits its sheet (scale 0.95)
+ok   R7: Lab report, obstruction: every comment is printed and none touches the footer ()
+ok   R7: Lab report, obstruction: the screen hint is not printed
+ok   R7: report page, obstruction: first sheet clear of the footer, every comment printed ()
+ok   R7: obstruction: both paths carry the same summary content
+ok   R7: Lab report, spirometry only: identity, tables, comments, closing line and "Page 1" on the first sheet
+ok   R7: Lab report, spirometry only: no second copy of the summary on the second sheet
+ok   R7: Lab report, spirometry only: the content fits its sheet (scale 1)
+ok   R7: Lab report, spirometry only: every comment is printed and none touches the footer ()
+ok   R7: Lab report, spirometry only: the screen hint is not printed
+ok   R7: report page, spirometry only: first sheet clear of the footer, every comment printed ()
+ok   R7: spirometry only: both paths carry the same summary content
+ok   chromium, report, s=5&a=obstruction&t=: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 10)
+ok   chromium, lab, s=5&a=obstruction&t=: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 10)
+ok   chromium, report, s=20&a=normal&t=poor: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 8)
+ok   chromium, lab, s=20&a=normal&t=poor: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 8)
+ok   chromium, report, s=8&a=bd-discordant&: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 0)
+ok   chromium, lab, s=8&a=bd-discordant&: summary content ends above its footer (1020.0 <= 1028.2, zoom 0.95, moved 0)
+ok   R7: 40 heavy-note cases leave no overflow and never zoom below 0.95
+ok   R3: answer text is rendered at 15.0 and 15.0 px (at least 14)
+ok   R3: radio controls are 22 px square (at least 20)
+ok   R3: each option is a target of 44 px height (at least 40)
+ok   R3: no horizontal overflow, form 294 px wide
+ok   R3: a row group is operable by keyboard (Space, then the arrow key)
+ok   R3: Tab moves to the next row group
+ok   R3: pointer and keyboard answers are held
+ok   R3: the answers survive a resize
+ok   R3: the answers survive a theme change
+ok   R3: the answers survive opening and closing page 2
+ok   R3: sizes hold after the redraws
+ok   Q1: a link without qd opens at the basic (study-level) review
+ok   Q1: the toolbar offers the two levels, with no Varies
+ok   Q1: basic shows one study-level question with three options and no per-maneuver rows
+ok   Q1: the study question is the only quality item
+ok   Q1: stage 1 source holds no explanation and no maneuver, grade, loop or statement item
+ok   Q1: the study question is operable by keyboard
+ok   Q1: the study question fits a 390 px screen (overflow 0, radio 22)
+ok   Q1: stage 2 locks the study answer and keeps it
+ok   Q1: no statement adjudication in the basic review, and the check is available
+ok   Q1: after the statement a level change does not apply to this case, and says so
+ok   Q1: the checked answers include the study-level item
+ok   Q1: the next case uses the chosen advanced level and the address records it
+ok   Q1: the advanced level says what it is
+ok   Q1: reload keeps the advanced level
+ok   Q1: the link to the printable report page carries the level
+ok   Q1: the way back to the practice page keeps the level
+ok   Q1: a change at stage 1 swaps the items and drops qd from the address
+ok   Q1: the change keeps the ordinary interpretation answers and starts the quality items afresh
+ok   Q1: the earlier maneuver answers were cleared and do not return
+ok   Q1: an invalid level opens at basic
+ok   Q1: advanced with the challenge off states that the answers are printed on page 2
+ok   Q2: the key for the short-wait case is limited
+ok   Q2: the cue (the printed wait) is on the page at stage 1 with the challenge on
+ok   Q2: turning the challenge off after the statement discloses everything and drops qc
+ok   Q2: the level can change while the challenge is off
+ok   Q2: turning the challenge back on is refused and announced
+ok   Q2: the case stays open without the challenge, says so on the page, and the address keeps qc off
+ok   Q2: the toolbar keeps the setting for the next case
+ok   Q2: the next case honours the challenge and starts undisclosed
+ok   Q2: a case that began with the challenge off stays without it
+ok   Q3: the basic page does not send the learner to the maneuvers
+ok   Q3: the basic stage-1 note is the study-level wording
+ok   Q3: the check is available at stage 1 with no hint
+ok   Q3: the optional release says that it locks the study answer
+ok   Q3: the release is refused, and says why, while the study answer is empty
+ok   Q3: a direct check scores the study item and shows the quality feedback
+ok   Q3: the release locks the study answer and leaves the interpretation answers open
+ok   Q3: the stage-2 note says what is locked
+ok   Q3: a check after the release works
+ok   Q3: the advanced review keeps its maneuver instruction and its gate
+ok   Q3: switching back to basic ungates the check
+ok   Q3: the disclosure lock holds after a basic release
+ok   Q3: the quiz states its scope
+ok   no console or page errors
+artifacts: /tmp/pft-ci-fixed/interaction
+all interaction checks passed

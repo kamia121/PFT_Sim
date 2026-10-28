@@ -33,6 +33,8 @@ export function dlcoTests(data) {
 
 /** Index of the best test: the lowest grade letter (A to D), the first among equals. */
 export function bestDlcoIndex(tests) {
+  const retained = tests.findIndex((t) => t.selected);
+  if (retained >= 0) return retained;
   let best = 0;
   tests.forEach((t, i) => { if ((t.grade?.grade ?? 'A') < (tests[best].grade?.grade ?? 'A')) best = i; });
   return best;
@@ -112,10 +114,10 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
   }
   // Breath-hold bracket and event markers.
   const by = top + 12;
-  out.push(line(xsT(mk.t30PctS), by, xsT(mk.tSampleMidS), by, { stroke: palette.text, width: 1 }));
-  out.push(line(xsT(mk.t30PctS), by - 4, xsT(mk.t30PctS), by + 4, { stroke: palette.text, width: 1 }));
+  out.push(line(xsT((mk.tBhStartS ?? mk.t30PctS)), by, xsT(mk.tSampleMidS), by, { stroke: palette.text, width: 1 }));
+  out.push(line(xsT((mk.tBhStartS ?? mk.t30PctS)), by - 4, xsT((mk.tBhStartS ?? mk.t30PctS)), by + 4, { stroke: palette.text, width: 1 }));
   out.push(line(xsT(mk.tSampleMidS), by - 4, xsT(mk.tSampleMidS), by + 4, { stroke: palette.text, width: 1 }));
-  out.push(text((xsT(mk.t30PctS) + xsT(mk.tSampleMidS)) / 2, by - 5, `breath-hold ${num(data.breathHold.seconds, 1)} s`, { size: 10, anchor: 'middle', fill: palette.text }));
+  out.push(text((xsT((mk.tBhStartS ?? mk.t30PctS)) + xsT(mk.tSampleMidS)) / 2, by - 5, `breath-hold ${num(data.breathHold.seconds, 1)} s`, { size: 10, anchor: 'middle', fill: palette.text }));
   out.push(line(xsT(mk.tExhaleStartS), top, xsT(mk.tExhaleStartS), top + h, { stroke: palette.mark, width: 1, dash: '4 3', opacity: 0.8 }));
   out.push(text(xsT(mk.tInspStartS) - 2, top + h - 5, 'inspiration', { size: 9, anchor: 'start', fill: palette.axis, rotate: -90 }));
   out.push(text(xsT(mk.tExhaleStartS) - 3, top + h - 5, 'exhalation', { size: 9, anchor: 'start', fill: palette.axis, rotate: -90 }));
@@ -138,8 +140,8 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
     out.push(polyline(bv.volumeL.slice(0, nv).map((x, j) => [xsV(x), ysC(arr[j])]), { stroke, width: 1.8 }));
   }
   const faTr = v.faTracerPct, faCo = v.faCoPct;
-  out.push(text(xsV(vEnd) - 4, ysC(faTr) - 6, `FA,tr ${num(faTr, 3)}%`, { size: 9.5, anchor: 'end', fill: palette.second }));
-  out.push(text(xsV(vEnd) - 4, ysC(faCo) - 6, `FA,CO ${num(faCo, 3)}%`, { size: 9.5, anchor: 'end', fill: palette.measured }));
+  if (Number.isFinite(faTr)) out.push(text(xsV(vEnd) - 4, ysC(faTr) - 6, `FA,tr ${num(faTr, 3)}%`, { size: 9.5, anchor: 'end', fill: palette.second }));
+  if (Number.isFinite(faCo)) out.push(text(xsV(vEnd) - 4, ysC(faCo) - 6, `FA,CO ${num(faCo, 3)}%`, { size: 9.5, anchor: 'end', fill: palette.measured }));
 
   // Caption.
   const cy = top + h + 40 + 12;
@@ -147,8 +149,8 @@ function render(data, { palette = PALETTES.dark, width = 640, height = 360, titl
   out.push(text(14, cy + 14, `VA ${num(v.vaL, 2)} L  ·  DLCO ${num(v.dlcoMlMinMmHg, 1)} mL/min/mmHg  ·  KCO ${num(v.kco, 2)} mL/min/mmHg/L  ·  PB ${data.barometricMmHg} mmHg`, { size: 10, fill: palette.text }));
   if (showQuality && data.grade) {
     const g = data.grade;
-    const reasons = [...g.invalid, ...g.failed, ...g.noted];
-    const s = `Test grade ${g.grade}${g.wouldBeRejected ? ', would be rejected' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
+    const reasons = [...g.invalid, ...g.failed, ...g.noted, ...(g.unknown ?? [])];
+    const s = `${g.origin === 'interim2017' ? 'Interim maneuver row' : 'Simulator rubric'} ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
     out.push(text(14, cy + 28, s.length > 118 ? `${s.slice(0, 115)}...` : s, { size: 10, fill: g.wouldBeRejected ? palette.second : palette.text }));
   }
   out.push(close());

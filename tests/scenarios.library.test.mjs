@@ -87,7 +87,7 @@ test('wording is neutral and factual', () => {
   assert.equal(gender.length, 3);
   // The evidence limits from the research document are stated.
   assert.ok(getScenario('sex-birth-default').caveats.some((c) => /limited to small retrospective series/.test(c.text)));
-  assert.ok(getScenario('sex-birth-default').caveats.some((c) => /no rule for patients on hormone therapy/.test(c.text)));
+  assert.ok(getScenario('sex-birth-default').caveats.some((c) => /appropriate reference equation for transgender patients is unknown/.test(c.text)));
 });
 
 test('decoys are never real caveats; a shared caveat id always carries the same text', () => {

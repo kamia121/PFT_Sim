@@ -1,0 +1,88 @@
+{
+  "inputs": {
+    "v": 2,
+    "seed": 1000,
+    "archetype": "normal",
+    "technique": "good",
+    "severity": 1,
+    "panel": "full"
+  },
+  "node24": {
+    "version": "v24.4.0",
+    "rawHash": "d15104bc7bcbc4cf32299e97b2f6b3f554e0a65698f685d84a3ba4257192d1d4",
+    "testsPassed": 853
+  },
+  "node22": {
+    "version": "v22.23.4",
+    "rawHash": "785a12be7ababfa3eac06eccbe0a9ce6cf476447a8b6e81bd23e96f5d5aa7004",
+    "testsPassed": 853
+  },
+  "ciNode22RawHash": "785a12be7ababfa3eac06eccbe0a9ce6cf476447a8b6e81bd23e96f5d5aa7004",
+  "rawDifferenceCount": 72,
+  "nonNumericDifferenceCount": 0,
+  "maximumAbsoluteNumericDifference": 2.842170943040401e-14,
+  "firstDifferences": [
+    {
+      "path": ".truth.tlc",
+      "a": 3.396874876979536,
+      "b": 3.3968748769795365,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.rv",
+      "a": 1.3682518085294293,
+      "b": 1.3682518085294295,
+      "delta": 2.220446049250313e-16
+    },
+    {
+      "path": ".truth.vc",
+      "a": 2.0286230684501065,
+      "b": 2.028623068450107,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.fvc",
+      "a": 1.9947673352910575,
+      "b": 1.994767335291058,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.fev1",
+      "a": 1.4654979330999045,
+      "b": 1.465497933099905,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.erv",
+      "a": 0.3060589067554205,
+      "b": 0.30605890675542047,
+      "delta": -5.551115123125783e-17
+    },
+    {
+      "path": ".truth.frc",
+      "a": 1.6743107152848498,
+      "b": 1.67431071528485,
+      "delta": 2.220446049250313e-16
+    },
+    {
+      "path": ".truth.ic",
+      "a": 1.722564161694686,
+      "b": 1.7225641616946865,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.va",
+      "a": 3.0915126829045776,
+      "b": 3.091512682904578,
+      "delta": 4.440892098500626e-16
+    },
+    {
+      "path": ".truth.kco",
+      "a": 7.11616068168895,
+      "b": 7.1161606816889496,
+      "delta": -8.881784197001252e-16
+    }
+  ],
+  "testOnlySnapshotDecimalPlaces": 9,
+  "productionRoundingChanged": false
+}

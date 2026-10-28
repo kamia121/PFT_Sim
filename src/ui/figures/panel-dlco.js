@@ -41,11 +41,11 @@ function flagsOf(t) {
     t85: q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value,
     hold: q.breathHoldS < bhLo || q.breathHoldS > bhHi,
     wash: q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9,
-    sample: q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1),
+    sample: q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.0),
   };
 }
 
-const GRADE_TEXT = (g, many) => `${many ? 'Grade' : 'Test grade'} ${g.grade}${g.wouldBeRejected ? ', would be rejected' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}`;
+const GRADE_TEXT = (g, many) => g.origin === 'interim2017' ? `Interim maneuver row ${g.grade}${g.acceptable ? ', acceptable' : ', requires qualification/review'}` : `${many ? 'Rubric' : 'Simulator rubric'} ${g.grade}${g.wouldBeRejected ? ', requires review' : g.grade === 'B' ? ', accepted with a note' : ', acceptable'}`;
 
 /**
  * Gas-against-volume plot for a list of tests.
@@ -171,7 +171,7 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
       parts.push(volumePlot({ x0: cx + 38, y0: cy, w: cw - 52, h: sh, items: [{ ...it, emph: true }], xMax, yMax, palette, small: true }));
       parts.push(text(cx + 38, cy + sh + 44, `Test ${it.k}${it.k === bestK && many ? ' (best)' : ''}`, { size: 10.5, weight: 700, fill: palette.text }));
       const v = it.t.values;
-      parts.push(text(cx + 38, cy + sh + 58, `VA ${num(v.vaL, 2)} L · DLCO ${num(v.dlcoMlMinMmHg, 1)}${showQuality && it.t.grade ? ` · grade ${it.t.grade.grade}` : ''}`, { size: 9.5, fill: palette.text }));
+      parts.push(text(cx + 38, cy + sh + 58, `VA ${num(v.vaL, 2)} L · DLCO ${num(v.dlcoMlMinMmHg, 1)}${showQuality && it.t.grade ? ` · ${it.t.grade.origin === 'interim2017' ? 'interim row' : 'rubric'} ${it.t.grade.grade}` : ''}`, { size: 9.5, fill: palette.text }));
     });
     y += 6 + Math.ceil(items.length / cols) * (sh + 70) - 6;
   }
@@ -189,7 +189,7 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
     { k: 'va', h: ['VA', '(L, BTPS)'], w: 1 },
     { k: 'dlco', h: ['DLCO', '(mL/min/mmHg)'], w: 1.3 },
     { k: 'kco', h: ['KCO', '(mL/min/mmHg/L)'], w: 1.45 },
-    ...(showQuality ? [{ k: 'grade', h: ['Test', 'grade'], w: 0.8 }] : []),
+    ...(showQuality ? [{ k: 'grade', h: [t0.grade?.origin === 'interim2017' ? 'Interim' : 'Model', t0.grade?.origin === 'interim2017' ? 'row' : 'rubric'], w: 0.8 }] : []),
   ];
   const tw = cols.reduce((s, c) => s + c.w, 0), usable = width - 2 * M;
   let acc = M;
@@ -224,7 +224,7 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
       const g = it.t.grade;
       if (!g) continue;
       if (shownLines >= 4) { ry += 13; strip.push(text(M, ry, '...', { size: 9.5, fill: palette.axis })); break; }
-      const reasons = [...g.invalid, ...g.failed, ...g.noted];
+      const reasons = [...g.invalid, ...g.failed, ...g.noted, ...(g.unknown ?? [])];
       const s = `${many ? `Test ${it.k}: ` : ''}${GRADE_TEXT(g, many)}${reasons.length ? `: ${reasons.join('; ')}` : ''}`;
       ry += 14;
       strip.push(text(M, ry, s.length > 112 ? `${s.slice(0, 109)}...` : s, { size: 9.5, fill: g.wouldBeRejected ? palette.second : palette.text }));
@@ -232,7 +232,9 @@ function render(data, { palette = PALETTES.dark, width = 672, height, title, des
     }
   }
   ry += 14;
-  strip.push(text(M, ry, `VA from tracer dilution; DLCO and KCO are before hemoglobin adjustment. Breath-hold from 30% of VI to the sample midpoint. PB ${t0.barometricMmHg} mmHg.`, { size: 9.5, fill: palette.axis }));
+  strip.push(text(M, ry, `VA from tracer dilution; DLCO and KCO before hemoglobin adjustment. PB ${t0.barometricMmHg} mmHg.`, { size: 9.5, fill: palette.axis }));
+  ry += 13;
+  strip.push(text(M, ry, t0.version >= 2 ? 'Timing: back-extrapolated zero + 0.3 inspiratory time to 90% VI; sample time midpoint.' : 'Legacy volume-event timing; not the 2017 breath-hold definition.', { size: 9.5, fill: palette.axis }));
   const H = height ?? Math.ceil(ry + 12);
 
   const desc = description ?? `Single-breath DLCO${mode === 'separate' ? `, ${items.length} test${items.length > 1 ? 's' : ''} on separate plots` : mode === 'all' && items.length > 1 ? `, ${items.length} tests overlaid` : ''}: CO and ${t0.gas.tracer} tracer fractions in percent against expired volume, with the discarded washout to ${num(t0.markers.washout.endL, 2)} L, the alveolar sample from ${num(t0.markers.sample.startL, 2)} to ${num(t0.markers.sample.endL, 2)} L and the dead-space volume ${num(t0.deadSpaceL, 2)} L marked, above a table of inspired volume as a percent of vital capacity, time to 85% of the inspired volume, breath-hold time, washout and sample volumes, VA, DLCO and KCO.`;

@@ -1,0 +1,10 @@
+{
+  "base": "9822a77",
+  "node": "24.4.0",
+  "status": "Recorded before feature edits; existing failures, not an allowlist that changes test exit status",
+  "failures": [
+    {"file":"tests/pleth.test.mjs","name":"numerical identity: every non-resistance value of 2230 cases (220 seeds x 10 archetypes, plus scenarios) is unchanged","cause":"Hash/numerical baseline mismatch; not repaired by this feature"},
+    {"file":"tests/scenario-regression.test.mjs","name":"50 cases built with scenario level none are byte-identical to the baseline commit (2ac98e3)","cause":"Hash baseline mismatch; fixture not regenerated"},
+    {"file":"tests/scenario-regression.test.mjs","name":"asking for level none explicitly changes nothing","cause":"Hash baseline mismatch; fixture not regenerated"}
+  ]
+}

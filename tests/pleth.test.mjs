@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { regressionHash, SNAPSHOT_DECIMAL_PLACES } from '../tools/regression-serialization.mjs';
+import { createHash } from 'node:crypto';
 import { loadDatasets } from '../src/reference/load.js';
 import { ARCHETYPES, TECHNIQUE_LEVELS } from '../src/core/descriptor.js';
 import { buildCase } from '../src/core/case.js';
 import { buildPleth, gradeFrc, repeatableGroup, spreadFraction, obstructionMeasure } from '../src/core/pleth.js';
-import { identityDescriptors, frozenHash } from './helpers/pleth-identity.mjs';
+import { identityDescriptors, frozenHash, frozenView } from './helpers/pleth-identity.mjs';
 
 const ds = await loadDatasets();
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -207,14 +209,27 @@ test('scenario-forced faults in the full set of ids never throw', () => {
   }
 });
 
-test('numerical identity: every non-resistance value of 2230 cases (220 seeds x 10 archetypes, plus scenarios) is unchanged', () => {
-  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/pleth-identity-hashes.json', import.meta.url), 'utf8'));
+test('reviewed v5 snapshot locks all non-resistance values of 2230 cases; historical fixture is preserved', () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/pleth-identity-v5-hashes.json', import.meta.url), 'utf8'));
+  const original=fs.readFileSync(new URL('./fixtures/pleth-identity-hashes.json',import.meta.url));
+  assert.equal(createHash('sha256').update(original).digest('hex'),fixture.originalFixtureSha256);
+  assert.equal(fixture.generatorVersion,5);
+  assert.equal(fixture.numericDecimalPlaces,SNAPSHOT_DECIMAL_PLACES);
   const descriptors = identityDescriptors();
   assert.equal(fixture.n, descriptors.length);
   assert.ok(descriptors.length >= 2200);
   const bad = [];
   descriptors.forEach((d, i) => {
-    if (frozenHash(buildCase(d, ds)) !== fixture.hashes[i]) bad.push(`${d.seed}/${d.archetype}`);
+    if (regressionHash(frozenView(buildCase({...d,v:fixture.generatorVersion}, ds))) !== fixture.hashes[i]) bad.push(`${d.seed}/${d.archetype}`);
   });
   assert.deepEqual(bad.slice(0, 5), [], `${bad.length} cases differ`);
+});
+
+test('non-resistance regression projection detects measurement changes while excluding resistance-only data',()=>{
+ const c=buildCase({v:5,seed:3,archetype:'normal',technique:'good'},ds);
+ const before=frozenHash(c);
+ c.pleth.raw.sRawKpaS+=.001;
+ assert.equal(frozenHash(c),before);
+ c.report.spirometry.fev1+=.000001;
+ assert.notEqual(frozenHash(c),before);
 });

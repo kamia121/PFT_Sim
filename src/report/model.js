@@ -15,6 +15,7 @@
  * acceptability and comments derived from them are included only when `includeGrades` is true (the
  * default, as on a real report); the learner page passes false until answers are checked.
  */
+import { atLeast } from '../core/comparison.js';
 import { PAGE1_COMMENT_CATEGORIES } from '../core/rt-report.js';
 import { bdPctPredDp, bdPctPredQualifier, bdPctBaseText, BD_2005_PCT_BASE, BD_2005_LITERS, BD_PCT_PRED_LABEL, BD_PCT_BASE_LABEL, BD_PCT_PRED_NOTE, BD_PCT_BASE_NOTE } from '../interpret/precision.js';
 import { LLN_Z } from '../interpret/interpret.js';
@@ -122,14 +123,17 @@ function qualitySummary(caseData) {
   const out = [{ test: 'Spirometry', lines: [spirometryGradeLine(caseData).replace(/^Test quality: /, '')] }];
   const p = caseData.pleth;
   if (p) {
-    const lines = [`FRCpleth grade ${p.grade}; ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
+    const lines = [`${p.session ? `Overall lung-volume grade ${p.grade ?? 'unassigned'}; FRC ${p.session.grades.frc}, linked SVC ${p.session.grades.svc ?? 'unknown'}` : `FRCpleth simulator rubric ${p.grade} (FRC only; not an overall ATS/ERS grade)`}; ${p.repeatability?.nAcceptable ?? '?'} of ${p.repeatability?.nTrials ?? '?'} shutter closures acceptable.`];
     for (const f of p.flags ?? []) lines.push(f.text);
     out.push({ test: 'Lung volumes (plethysmography)', lines });
   }
   const g = caseData.dlcoTrace?.grade;
-  if (g) {
-    const lines = [`Single-breath test grade ${g.grade}${g.acceptable ? ' (acceptable)' : ' (would be rejected)'}.`];
-    for (const [label, list] of [['Invalid', g.invalid], ['Failed criterion', g.failed], ['Noted', g.noted]]) for (const x of list ?? []) lines.push(`${label}: ${x}.`);
+  if (caseData.dlcoTrace?.session) {
+    const s = caseData.dlcoTrace.session;
+    out.push({ test: 'DLCO', lines: [`Session ${s.status}; retained maneuvers ${s.selectedIds.join(', ') || 'none'}.`, ...s.warnings] });
+  } else if (g) {
+    const lines = [`Single-breath simulator rubric ${g.grade} (not an ATS/ERS session grade)${g.acceptable ? ' (acceptable)' : ' (requires review)'}.`];
+    for (const [label, list] of [['Invalid', g.invalid], ['Failed criterion', g.failed], ['Noted', g.noted], ['Unconfirmed criterion', g.unknown]]) for (const x of list ?? []) lines.push(`${label}: ${x}.`);
     out.push({ test: 'DLCO', lines });
   }
   return out;
@@ -199,7 +203,7 @@ const DLCO_OBSERVATION = {
 };
 
 /** Observation of one plethysmography trial in the words of a note, or '' when nothing was observed. */
-export const trialObservation = (trial) => (trial?.faults ?? []).map((f) => PLETH_OBSERVATION[f]?.(trial)).filter(Boolean).join('; ');
+export const trialObservation = (trial) => [...(trial?.faults ?? []).map((f) => PLETH_OBSERVATION[f]?.(trial)).filter(Boolean), ...(trial?.link?.notes ?? [])].map((s) => s.replace(/[.\s]+$/, '')).join('; ');
 
 /** Fault observations for each trial and for the single-breath test, as note lines. */
 export function trialAndTestNotes(caseData) {
@@ -260,9 +264,9 @@ function plethRows(pleth) {
   if (!Array.isArray(list) || !list.length) return null;
   const val = (t) => t.frcL ?? t.frc ?? t.frcPleth ?? t.tgv ?? t.value ?? null;
   const hz = (t) => t.panFreqHz ?? t.pantHz ?? t.panHz ?? t.frequencyHz ?? t.hz ?? null;
-  const vals = list.map(val).filter((v) => Number.isFinite(v));
-  // The reported FRC is the mean of the acceptable trials, which the plethysmography model supplies.
-  const mean = Number.isFinite(pleth?.reportedFrcL) ? pleth.reportedFrcL : vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  const vals = list.filter((t) => !pleth?.session || t.selected).map(val).filter((v) => Number.isFinite(v));
+  // V3 uses the exact retained pool; the legacy v2 builder supplies its older mean.
+  const mean = pleth?.session ? pleth.reportedFrcL : Number.isFinite(pleth?.reportedFrcL) ? pleth.reportedFrcL : vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   return { list, val, hz, mean, vals };
 }
 
@@ -410,8 +414,8 @@ export function buildReportModel(caseData, interp, options = {}) {
         const bd = interp?.bd;
         if (bd) {
           const rawL = id === 'fev1' ? bd.dFev1 : bd.dFvc, rawB = bd.pctBase[id];
-          if ((row.changePct >= BD_2005_PCT_BASE) !== (rawB >= BD_2005_PCT_BASE)) row.changePct = `${rawB >= 0 ? '+' : ''}${bdPctBaseText(rawB)}`;
-          if ((row.change >= BD_2005_LITERS) !== (rawL >= BD_2005_LITERS)) row.change = `${rawL < 0 ? '' : '+'}${rawL.toFixed(4)} (${rawL >= BD_2005_LITERS ? 'at or above' : 'below'} 0.200 L)`;
+          if (atLeast(row.changePct, BD_2005_PCT_BASE) !== atLeast(rawB, BD_2005_PCT_BASE)) row.changePct = `${rawB >= 0 ? '+' : ''}${bdPctBaseText(rawB)}`;
+          if (atLeast(row.change, BD_2005_LITERS) !== atLeast(rawL, BD_2005_LITERS)) row.change = `${rawL < 0 ? '' : '+'}${rawL.toFixed(4)} (${atLeast(rawL, BD_2005_LITERS) ? 'at or above' : 'below'} 0.200 L)`;
         }
         const raw = interp?.bd?.pctPred?.[id] ?? (100 * (pv - r.value)) / r.predicted;
         row.changePctPred = round(raw, 1);
@@ -434,6 +438,9 @@ export function buildReportModel(caseData, interp, options = {}) {
     // The value is the set's reported one (the largest among the maneuvers acceptable for FVC, else the usable ones).
     extraRow('fef2575', 'FEF25-75', 'L/s', 2, preSet.summary.fef2575, postSet?.summary.fef2575 ?? null),
   ];
+  if (Number.isFinite(preSet.summary.fivc) || Number.isFinite(postSet?.summary.fivc)) {
+    spRows.push(extraRow('fivc', 'FIVC (recorded post-expiratory)', 'L', 2, preSet.summary.fivc, postSet?.summary.fivc ?? null));
+  }
   const spFootParts = [`Reference values: ${eqName(equation)}${equation === 'GLI2012' ? ` (equation for "${patient.group}")` : ' (group-neutral)'}.`];
   // The change in volume and in percent of baseline are arithmetic on the printed values; the percent of predicted is not.
   if (hasPost) spFootParts.push(BD_PCT_PRED_NOTE, BD_PCT_BASE_NOTE);
@@ -459,12 +466,15 @@ export function buildReportModel(caseData, interp, options = {}) {
       return {
         id: String(i + 1), index: String(i + 1), fvc: round(mv.fvc, 2), fev1: round(mv.fev1, 2), pef: round(mv.pef, 1), fet: round(mv.fet, 1), bev: round(mv.bev, 3),
         ...(includeGrades ? { acceptable: acc.length === 2 ? 'both' : acc.length ? acc[0] : 'neither' } : {}),
-        comment: mv.faults.map((f) => faultWording(f, 'short')).join(', '),
+        comment: [mv.faults.map((f) => faultWording(f, 'short')).join(', '),
+          ...(ev.fivc?.fivcL !== null && Number.isFinite(ev.fivc?.fivcL) ? [`Recorded FIVC ${ev.fivc.fivcL.toFixed(2)} L${includeGrades ? `; FIVC check ${ev.fivc.status}` : ''}`] : [])].filter(Boolean).join('; '),
       };
     });
     const acceptNote = includeGrades ? ' Accept.: variable(s) for which the maneuver meets ATS/ERS 2019 criteria.'
       : options.gradesWithheld === null ? '' : options.gradesWithheld ? ` Acceptability is ${options.gradesWithheld}.` : ' Acceptability is shown after the answers are checked.';
-    return { id, caption, columns: cols, rows, footnote: `BEV: back-extrapolated volume.${acceptNote}` };
+    const fivcMissing = set.summary.evaluations.filter((e) => !e.fivc || e.fivc.status === 'not-assessed').length;
+    const fivcNote = fivcMissing ? ` Post-expiratory FIVC check not assessed in ${fivcMissing} of ${set.maneuvers.length} maneuvers: no confirmed recorded maximal inspiration. Synthetic display limbs are not measurements. Absence alone does not invalidate ordinary spirometry.` : ' Post-expiratory FIVC observations were recorded; the one-sided comparison applies to acceptability, not usability.';
+    return { id, caption, columns: cols, rows, footnote: `BEV: back-extrapolated volume.${acceptNote}${fivcNote}` };
   };
   const spTables = [spTable, maneuverTable(preSet, 'maneuvers-pre', 'Forced maneuvers before bronchodilator')];
   if (hasPost) spTables.push(maneuverTable(postSet, 'maneuvers-post', 'Forced maneuvers after bronchodilator'));
@@ -475,7 +485,7 @@ export function buildReportModel(caseData, interp, options = {}) {
   if (caseData.volumes) {
     const volRow = (id, label, unit, dp) => {
       const r = m[id];
-      const row = { id, index: label, unit, dp, result: round(r?.value, dp), lln: null, uln: null, z: null, pct: null };
+      const row = { id, index: label, unit, dp, result: !r && caseData.pleth?.session ? 'not reportable' : round(r?.value, dp), lln: null, uln: null, z: null, pct: null };
       if (r && r.available !== false) Object.assign(row, { lln: round(r.lln, dp), uln: round(r.uln, dp), z: round(r.z, 2), pct: id === 'rv_tlc' ? null : round(r.percentPredicted, 0) });
       return row;
     };
@@ -491,23 +501,25 @@ export function buildReportModel(caseData, interp, options = {}) {
     const pl = plethRows(caseData.pleth);
     const res = resistanceRows(caseData.pleth);
     rows.push(...res.rows);
-    const volFoot = `Reference values: ${eqName(volEq)}${fallbackText(volMatched)}. Method: plethysmography${pl ? ` (${pl.list.length} FRC determinations)` : ', single determination'}. ULN of the volumes: z = +1.645.${res.rows.length ? ` ${res.footnote}` : ''}`;
+    const volFoot = `Reference values: ${eqName(volEq)}${fallbackText(volMatched)}. Method: plethysmography${pl ? ` (${pl.list.length} FRC determinations)` : ', single determination'}. ULN of the volumes: z = +1.645.${caseData.pleth?.session ? ` Reporting: ${caseData.pleth.session.status}. ${caseData.pleth.session.warnings.join(' ')}` : ''}${res.rows.length ? ` ${res.footnote}` : ''}`;
     const tables = [{ id: 'volumes', caption: 'Lung volumes', columns: cols, rows, footnote: volFoot }];
     if (pl) {
       const pcols = [
         { key: 'index', label: 'Determination', align: 'left' },
         { key: 'frc', label: 'FRCpleth', unit: 'L', dp: 2 },
         { key: 'hz', label: 'Pant frequency', unit: 'Hz', dp: 2 },
-        { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true },
+        ...(caseData.pleth?.session ? [{ key: 'ic', label: 'Linked IC', unit: 'L', dp: 3 }, { key: 'svc', label: 'Linked SVC', unit: 'L', dp: 3 }, ...(includeGrades ? [{ key: 'retained', label: 'FRC retained', align: 'left' }, { key: 'linkedStatus', label: 'Linked quality', align: 'left' }, { key: 'linkedReason', label: 'Link qualification', align: 'left', detail: true }] : [])] : []),
+        { key: 'dev', label: 'Difference from mean', unit: '%', dp: 1, signed: true, detail: Boolean(caseData.pleth?.session) },
         ...(includeGrades ? [{ key: 'acceptable', label: 'Acceptable', align: 'left' }] : []),
       ];
       const prow = pl.list.map((t, i) => ({
         id: String(i + 1), index: String(i + 1), frc: round(pl.val(t), 2), hz: round(pl.hz(t), 2),
+        ...(caseData.pleth?.session ? { ic: round(t.icL, 3), svc: round(t.svcL, 3), ...(includeGrades ? { retained: t.selected ? 'yes' : 'no', linkedStatus: t.linkedStatus, linkedReason: caseData.pleth.trials[i]?.linkAssessment.reason ?? '' } : {}) } : {}),
         dev: pl.mean ? round((100 * (pl.val(t) - pl.mean)) / pl.mean, 1) : null,
         ...(includeGrades ? { acceptable: t.acceptable === undefined ? '' : t.acceptable ? 'yes' : 'no' } : {}),
       }));
-      const spread = pl.vals.length > 1 ? (100 * (Math.max(...pl.vals) - Math.min(...pl.vals))) / pl.mean : null;
-      const bits = [pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `grade ${caseData.pleth.grade}`].filter(Boolean);
+      const spread = caseData.pleth?.session ? caseData.pleth.session.repeatability.fraction === null ? null : 100 * caseData.pleth.session.repeatability.fraction : pl.vals.length > 1 ? (100 * (Math.max(...pl.vals) - Math.min(...pl.vals))) / pl.mean : null;
+      const bits = [caseData.pleth?.session && `Reporting: ${caseData.pleth.session.status}; retained FRC trials ${caseData.pleth.session.selectedIds.join(', ') || 'none'}; ${caseData.pleth.session.warnings.join(' ')}`, pl.mean !== null && `Mean FRCpleth ${pl.mean.toFixed(2)} L`, spread !== null && `repeatability (highest minus lowest, over mean) ${spread.toFixed(1)}%`, includeGrades && caseData.pleth.grade && `${caseData.pleth.session ? 'Overall lung-volume grade' : 'FRC-only simulator rubric'} ${caseData.pleth.grade}`].filter(Boolean);
       tables.push({ id: 'pleth', caption: 'Plethysmography replicate determinations', columns: pcols, rows: prow, footnote: `${bits.join('; ')}.` });
     }
     sections.push({ id: 'volumes', title: 'Lung volumes', tables, figures: [], figureIds: [], notes: [] });
@@ -518,7 +530,7 @@ export function buildReportModel(caseData, interp, options = {}) {
     const dl = caseData.dlco;
     const refRow = (id, label, unit, dp) => {
       const r = m[id];
-      const row = { id, index: label, unit, dp, result: round(r?.value, dp), lln: null, z: null, pct: null };
+      const row = { id, index: label, unit, dp, result: !r && caseData.dlcoTrace?.session ? 'not reportable' : round(r?.value, dp), lln: null, z: null, pct: null };
       if (r && r.available !== false) Object.assign(row, { lln: round(r.lln, dp), z: round(r.z, 2), pct: round(r.percentPredicted, 0) });
       return row;
     };
@@ -543,11 +555,16 @@ export function buildReportModel(caseData, interp, options = {}) {
     const rows = [
       hbOk ? plain('hb', 'Hemoglobin', 'g/dL', 1, dl.hbGdl) : { id: 'hb', index: 'Hemoglobin', unit: 'g/dL', dp: 1, result: 'not available', lln: null, z: null, pct: null },
       ...(hbOk ? [plain('hb-factor', 'Reference multiplier for Hb', '', 3, 1 / f)] : []),
-      hbOk ? { ...onRef(dlRow, 1 / f), result: round(dl.raw, 1) } : dlRow,
+      hbOk ? { ...onRef(dlRow, 1 / f), result: Number.isFinite(dl.raw) ? round(dl.raw, 1) : 'not reportable' } : dlRow,
       refRow('va', 'VA', 'L', 2),
-      hbOk && kcoRow.result !== null ? { ...onRef(kcoRow, 1 / f), result: round(dl.kco / f, 2) } : kcoRow,
-      ...(Number.isFinite(trace?.inspired?.viOverVc) ? [plain('vi-vc', 'VI/VC', '%', 0, 100 * trace.inspired.viOverVc)] : []),
-      ...(Number.isFinite(trace?.breathHold?.seconds) ? [plain('breath-hold', 'Breath-hold time', 's', 1, trace.breathHold.seconds)] : []),
+      hbOk && Number.isFinite(dl.kco) ? { ...onRef(kcoRow, 1 / f), result: round(dl.kco / f, 2) } : kcoRow,
+      ...(trace?.session ? [
+        plain('vc-comparator', 'Largest same-session VC (VI comparator)', 'L', 2, trace.session.vcL),
+        ...(Number.isFinite(trace.session.values.viL) ? [plain('mean-vi', 'Mean retained VI', 'L', 2, trace.session.values.viL), plain('vi-vc', 'Mean VI/VC', '%', 0, 100 * trace.session.values.viL / trace.session.vcL)] : []),
+      ] : [
+        ...(Number.isFinite(trace?.inspired?.viOverVc) ? [plain('vi-vc', 'VI/VC', '%', 0, 100 * trace.inspired.viOverVc)] : []),
+        ...(Number.isFinite(trace?.breathHold?.seconds) ? [plain('breath-hold', 'Breath-hold time', 's', 1, trace.breathHold.seconds)] : []),
+      ]),
     ];
     // Carboxyhemoglobin: the 2017 standard recommends an adjustment for interpretation only when COHb is known to be elevated or is suspected to exceed 2%
     // (endogenous COHb is 1 to 2% in the subjects of the reference equations), and gives it on the predicted value (eq. 37: x (102% - COHb%)). It is shown as a
@@ -572,9 +589,15 @@ export function buildReportModel(caseData, interp, options = {}) {
       `Reference values: ${eqName(tlcoEq)}${fallbackText(tlcoMatched)}. LLN, z-score and %Pred refer to the measured DLCO and KCO against ${hbOk ? `reference values adjusted for the hemoglobin (ATS/ERS 2017, eqs 31 and 32: predicted x 1.7Hb/(c+Hb), with c = 10.22 for males of 15 years and older and 9.38 for females and children; the multiplier is shown)` : 'reference values without hemoglobin adjustment, because no hemoglobin was available'}.`,
       ambient?.pressureMmHg !== undefined ? `Pb: ${ambient.pressureMmHg} mmHg.` : null,
       coHbLine,
-      trace ? 'Inspired volume (VI/VC) and breath-hold time are simulated from the tracing; replicate tests are not simulated.' : 'Replicate tests are not simulated.',
+      trace?.session ? `Inspired volume (VI/VC) and breath-hold time are simulated. Session ${trace.session.status}; ${includeGrades ? `retained maneuvers ${trace.session.selectedIds.join(', ') || 'none'}. ${trace.session.warnings.join(' ')}` : 'interpret any qualified result with caution.'} Reported DLCO and VA are means from the same selected pool; KCO is derived as their quotient. Individual maneuver values are listed separately.` : trace ? 'Inspired volume (VI/VC) and breath-hold time are simulated from the tracing; replicate tests are not simulated.' : 'Replicate tests are not simulated.',
     ].filter(Boolean).join(' ');
-    sections.push({ id: 'dlco', title: 'Diffusing capacity', tables: [{ id: 'dlco', caption: 'Single-breath DLCO', columns: cols, rows, footnote: foot }], figures: [], figureIds: [], notes: [] });
+    const tables = [{ id: 'dlco', caption: 'Single-breath DLCO', columns: cols, rows, footnote: foot }];
+    if (trace?.session) tables.push({ id: 'dlco-replicates', caption: 'Diffusing-capacity maneuvers',
+      columns: [{ key: 'index', label: 'Maneuver', align: 'left' }, { key: 'dlco', label: 'DLCO', unit: 'mL/min/mmHg', dp: 2 }, { key: 'va', label: 'VA', unit: 'L', dp: 3 }, { key: 'vi', label: 'VI/VC', unit: '%', dp: 1 }, { key: 't85', label: 't85', unit: 's', dp: 2 }, { key: 'hold', label: 'Hold', unit: 's', dp: 2 }, { key: 'sample', label: 'Sample end', unit: 's', dp: 2 }, { key: 'observation', label: 'Observation', align: 'left', detail: true }, ...(includeGrades ? [{ key: 'grade', label: 'Interim row', align: 'left' }, { key: 'retained', label: 'Retained', align: 'left' }, { key: 'reason', label: 'Qualification', align: 'left', detail: true }] : [])],
+      rows: trace.tests.map((t) => ({ id: String(t.maneuverId), index: String(t.maneuverId), dlco: round(t.values.dlcoMlMinMmHg, 2), va: round(t.values.vaL, 3), vi: round(100 * t.assessment.viOverVc, 1), t85: round(t.quality.t85S, 2), hold: round(t.quality.breathHoldS, 2), sample: round(t.quality.sampleEndS, 2), observation: t.faults.map((f) => DLCO_OBSERVATION[f.code]).filter(Boolean).join('; '), ...(includeGrades ? { grade: t.assessment.grade ?? 'unclassified', retained: t.selected ? 'yes' : 'no', reason: [...t.assessment.failed, ...t.assessment.unknown].join('; ') } : {}) })),
+      footnote: includeGrades ? `Session ${trace.session.status}; ${trace.session.warnings.join(' ')} Interim maneuver letters are not a session grade. Synthetic waveform assessment remains a teaching model.` : `Session ${trace.session.status}; interpret any qualified result with caution.`,
+    });
+    sections.push({ id: 'dlco', title: 'Diffusing capacity', tables, figures: [], figureIds: [], notes: [] });
   }
 
   // ---------------- figures ----------------
@@ -592,8 +615,8 @@ export function buildReportModel(caseData, interp, options = {}) {
   note.push(equation === 'GLIglobal'
     ? 'Spirometry reference: GLI Global 2022, a group-neutral equation; the reference group on the requisition is not an input.'
     : `Spirometry reference: GLI-2012 equation for the requisition group "${patient.group}".`);
-  const fallbacks = [caseData.volumes && !volMatched && 'GLI-2021 volume', caseData.dlco && !tlcoMatched && 'GLI-2017 TLCO'].filter(Boolean);
-  if (fallbacks.length) note.push(`The ${fallbacks.join(' and ')} equation${fallbacks.length > 1 ? 's were' : ' was'} derived in people of European ancestry, so the reference population may represent the group "${patient.group}" less well; this limits the result, and no ancestry adjustment is applied to volumes or DLCO.`);
+  const referenceDomains = [caseData.volumes && 'GLI-2021 volumes', caseData.dlco && 'GLI-2017 TLCO (corrected 2020)'].filter(Boolean);
+  if (referenceDomains.length) note.push(`${referenceDomains.join(' and ')} use European-ancestry-derived reference populations. This provenance applies to every patient; no race adjustment factor is applied to volumes or DLCO. Population fit remains uncertain.`);
   if (hs && hs.source !== 'measured') note.push(`Height was ${heightSource}; the stated height of ${patient.heightCm} cm is the value used for the predicted values, so they carry added uncertainty.`);
   if (undisclosedSex && scenario?.referenceSex) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations, the laboratory default; the patient did not disclose sex.`);
   else if (scenario?.referenceSex && scenario.referenceSex.used !== scenario.referenceSex.birth) note.push(`Predicted values use ${SEX[scenario.referenceSex.used].toLowerCase()} reference equations; sex assigned at birth is recorded as ${SEX[scenario.referenceSex.birth].toLowerCase()}.${scenario.referenceSex.note ? ` ${scenario.referenceSex.note}` : ''}`);
@@ -615,7 +638,7 @@ export function buildReportModel(caseData, interp, options = {}) {
   const qualityNotes = kindOf('quality');
 
   const model = {
-    meta: { caseCode: code, patientId: patientId(d.seed), marker: SIMULATION_MARKER, generatorVersion: GENERATOR_VERSION, equation, hasPost, includeGrades, figureErrors, caseToken: encodeCase(serializeDescriptor(d)) },
+    meta: { caseCode: code, patientId: patientId(d.seed), marker: SIMULATION_MARKER, generatorVersion: d.v ?? GENERATOR_VERSION, equation, hasPost, includeGrades, figureErrors, caseToken: encodeCase(serializeDescriptor(d)) },
     quality: includeGrades ? qualitySummary(caseData) : null,
     header: { fields },
     sections,
@@ -634,7 +657,7 @@ export function buildReportModel(caseData, interp, options = {}) {
       signatureLabel: 'Simulated interpreting physician (not signed)',
       dateLabel: 'Date',
       disclaimer: SIMULATION_DISCLAIMER,
-      generator: `PFT Sim generator version ${GENERATOR_VERSION}`,
+      generator: `PFT Sim generator version ${d.v ?? GENERATOR_VERSION}`,
       caseCode: code,
       marker: SIMULATION_MARKER,
     },

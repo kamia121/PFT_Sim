@@ -117,7 +117,7 @@ function assertFinalMatchesKey({ c, cmp, interp }, final, label, { caveats = tru
   }
 
   // diffusing capacity
-  if (key.dlco === null) assert.ok(lacks(f, /^dlco:/), tag('no dlco'));
+  if (key.dlco === null || key.dlco === 'unavailable') { assert.ok(lacks(f, /^dlco:/), tag('no reported dlco')); if (key.dlco === 'unavailable') assert.match(final, /DLCO session (?:unavailable|pending)/); }
   else assert.ok(has(f, `dlco:${key.dlco}`, 'dlco:hb-adjusted'), tag('dlco category'));
 
   // quality and confidence
@@ -223,7 +223,7 @@ test('600 random cases: final statements agree with the key, name the caveats an
     if (c.scenario?.height) assert.ok(!text.includes(`${c.scenario.height.trueCm} cm`), `${label}: true height disclosed`);
     for (const d of c.scenario?.decoyCaveats ?? []) assert.ok(!text.includes(d.text) && !text.includes(caveatCore(d.text)), `${label}: decoy caveat stated`);
     if (!interp.bd) assert.ok(!/bronchodilator/i.test(text), `${label}: bronchodilator mentioned without a study: ${text.match(/.{0,80}bronchodilator.{0,80}/i)?.[0]}`);
-    if (interp.pattern === 'prism') assert.match(n.finalStatement, /PRISm/);
+    if (interp.pattern === 'prism') assert.match(n.finalStatement, /preserved-ratio spirometric impairment/);
 
     // limitations section: major first, then minor, no-effect items stated as such
     const lim = n.sections.find((s) => s.id === 'limitations').text;
@@ -439,7 +439,7 @@ const GOLDEN = [
   {
     name: 'obstruction with air trapping and hyperinflation',
     build: () => golden({ fev1: 1.9, fvc: 5.0, volumes: { tlc: 8.8, rv: 3.2, vc: 5.6, frc: 4.6, erv: 1.4, ic: 4.2 } }),
-    final: [/consistent with airflow obstruction/, /of severe severity/, /consistent with hyperinflation/, /consistent with air trapping/],
+    final: [/consistent with airflow obstruction/, /of severe severity/, /possible hyperinflation/, /Gas trapping is one explanation/],
     forbid: [/consistent with restriction/, /diagnos/],
     key: { pattern: 'obstruction', severity: 'severe' },
   },
@@ -462,7 +462,7 @@ const GOLDEN = [
     build: () => golden({ fev1: 3.0, fvc: 3.7, volumes: { tlc: 5.2, rv: 1.5, vc: 3.7, frc: 2.9, erv: 1.4, ic: 2.3 }, dlco: { dlcoAdjusted: 26, va: 4.0 } }),
     final: [/consistent with restriction/, /the KCO is raised/, /incomplete expansion/],
     forbid: [/consistent with mixed/],
-    key: { pattern: 'restriction', severity: null, dlco: 'normal' },
+    key: { pattern: 'restriction', severity: 'mild', dlco: 'normal' },
     sections: { dlco: [/KCO/, /alveolar volume is reduced/] },
   },
   {
@@ -493,7 +493,7 @@ const GOLDEN = [
   {
     name: 'spirometry only: preserved ratio impaired spirometry needs volumes',
     build: () => golden({ fev1: 2.6, fvc: 3.0, volumes: null, dlco: null }),
-    final: [/preserved ratio impaired spirometry \(PRISm\)/, /lung volumes are needed/, /not measured/],
+    final: [/preserved-ratio spirometric impairment/, /lung volumes are needed/, /unavailable/],
     forbid: [/consistent with restriction/, /bronchodilator/],
     key: { pattern: 'prism', severity: null, dlco: null },
     flaws: ['restriction-without-tlc'],
@@ -573,8 +573,8 @@ test('golden: a borderline value is never called clearly abnormal and a flip nam
   assert.ok(n.distractors.some((d) => d.flaw === 'ignores-equation-change' && /the same(?: way)? under both reference equations/.test(d.text)));
 });
 
-test('golden: severity is stated only for obstruction patterns and the statement says when it is not graded', () => {
-  for (const idx of [2, 3, 4]) {
+test('golden: mixed and nonspecific patterns have no unsupported composite severity grade', () => {
+  for (const idx of [2, 3]) {
     const { caseData, cmp, interp } = GOLDEN[idx].build();
     const n = composeNarrative({ caseData, interp, cmp, seed: 4 });
     assert.equal(interp.key.severity, null);

@@ -193,7 +193,7 @@ function volumesFootnote(table) {
 
 function dlcoFootnote(table) {
   const sentences = table.footnote.split(/(?<=\.) (?=[A-Z])/);
-  const keep = sentences.filter((s) => /^Reference values:|^LLN, z-score and %Pred/.test(s)).map((s) => s.replace(/\s*\(Cotes formula[^)]*\)/, ''));
+  const keep = sentences.filter((s) => /^Reference values:|^LLN, z-score and %Pred|^Session /.test(s)).map((s) => s.replace(/\s*\(Cotes formula[^)]*\)/, ''));
   const fn = keep.join(' ');
   return fn || table.footnote;
 }

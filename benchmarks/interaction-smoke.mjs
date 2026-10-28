@@ -547,6 +547,8 @@ try {
     check(new URL(rhref, base).searchParams.get('qd') === 'adv', 'Q1: the link to the printable report page carries the level');
     await page.goto(new URL(rhref, base).href);
     await page.waitForSelector('#rp-back');
+    // #rp-back is in the static markup with href "./"; render() writes the real href before it sets data-ready="1", so wait for that.
+    await page.waitForSelector('body[data-ready="1"]');
     check(new URL(await page.locator('#rp-back').getAttribute('href'), page.url()).searchParams.get('qd') === 'adv', 'Q1: the way back to the practice page keeps the level');
     // Open the practice page again at the basic level: a fresh attempt, answers of the other level do not carry.
     await page.goto(`${base}?${POOR}&qc=1&qd=adv`);

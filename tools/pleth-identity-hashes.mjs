@@ -11,9 +11,4 @@ import { buildCase } from '../src/core/case.js';
 import { GENERATOR_VERSION } from '../src/core/standards.js';
 import { identityDescriptors, frozenHash } from '../tests/helpers/pleth-identity.mjs';
 
-const ds = await loadDatasets();
-const descriptors = identityDescriptors();
-const hashes = descriptors.map((d) => frozenHash(buildCase(d, ds)));
-const text = JSON.stringify({ note: `sha256 of the case with the resistance-dependent pleth fields removed (tests/helpers/pleth-identity.mjs); re-baselined at generator version ${GENERATOR_VERSION} (archetype parameters changed, docs/archetype-changes.md); the original fixture proved that the plethysmography rebuild changed nothing else`, n: descriptors.length, hashes }) + '\n';
-if (process.argv.includes('--write')) await fs.writeFile(new URL('../tests/fixtures/pleth-identity-hashes.json', import.meta.url), text);
-else console.log(`${descriptors.length} cases hashed`);
+throw new Error('Historical identity fixtures are immutable. Use tools/versioned-regression-hashes.mjs for reviewed current-version snapshots.');

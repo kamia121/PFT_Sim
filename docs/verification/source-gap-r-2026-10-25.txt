@@ -1,0 +1,3 @@
+PASS: A-only mean 21; B-D mean 12 excluding F; matched mean VA 5 and derived KCO 4.2; other-VA boundary; separate SI threshold.
+Arithmetic fixtures only; this does not validate waveform recognition, reference equations or official calculator outputs.
+PASS: independent Jones–Meade 10.7-second fixture and analytic nonlinear inspiration tangent/root.

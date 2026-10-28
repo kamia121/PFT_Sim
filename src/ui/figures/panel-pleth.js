@@ -26,6 +26,7 @@
  * Series color encodes the quantity; dash style the relation (measured solid, predicted dashed, limits dotted). Flag color is text only.
  * Sizes assume the default width of 672 px = 7 in: text of 9.5 to 12 px is 7 to 9 pt.
  */
+import plethShutter from './pleth-shutter.js';
 import { PALETTES } from '../palettes.js';
 import { buildPleth, bestTrialIndex, shiftMlPerPa } from '../../core/pleth.js';
 import { open, close, text, line, polyline, rect, scale, niceTicks, num, esc } from './fig-a-kit.js';
@@ -38,7 +39,7 @@ const SZ = { tick: 9.5, label: 10.5, note: 9.5, cap: 11, value: 12 };
 function plethOf(c) {
   if (!c) return null;
   const stored = c.pleth ?? null;
-  if (stored && stored.timeline && stored.raw?.shiftMl) return stored;
+  if (stored?.session || stored && stored.timeline && stored.raw?.shiftMl) return stored;
   if (stored && !c.volumes) return null;
   if (!c.volumes || !c.truth) return null;
   if (cache.has(c)) return cache.get(c);
@@ -51,7 +52,7 @@ function plethOf(c) {
 /** @returns {{ pleth: object, bars: object|null, best: number }|null} null when the case has no plethysmography */
 function dataFor(c, interp) {
   const pleth = plethOf(c);
-  if (!pleth?.trials?.length || !pleth.timeline) return null;
+  if (!pleth?.trials?.length) return null;
   return { pleth, bars: volumeBarsData({ ...c, pleth }, interp ?? c?.interp ?? null), best: bestTrialIndex(pleth) };
 }
 
@@ -88,7 +89,8 @@ const fmtTick = (v) => (Math.abs(v) < 1e-9 ? '0' : Number.isInteger(v) ? String(
 
 function render(data, opts = {}) {
   const { palette = PALETTES.dark, width = 672, height, title, description, showQuality = false, view = 'best', selected } = opts;
-  if (!data?.pleth?.trials?.length || !data.pleth.timeline) return '';
+  if (!data?.pleth?.trials?.length) return '';
+  if (!data.pleth.timeline || !data.pleth.raw) return plethShutter.render(data.pleth, { ...opts, width, title: 'Plethysmography: TLC/RV unavailable', description: data.pleth.session?.warnings.join(' ') ?? 'Complete lung volumes are not reportable.' });
   const P = palette;
   const pl = data.pleth, trials = pl.trials, n = trials.length, raw = pl.raw, box = pl.box, tl = pl.timeline;
   const mlPerPa = shiftMlPerPa(box);
@@ -246,21 +248,22 @@ function render(data, opts = {}) {
   const ax0 = pad + 46, aw = Lw - 46 - 52 - pad;
   const aTrial = tl.trials[focus - 1];
   const lev = aTrial.levels;
+  const plottedFrc = pl.session ? lev.trialFrcL : lev.reportedFrcL;
   const tEnd = aTrial.t[aTrial.t.length - 1];
   const vlo = Math.floor((Math.min(lev.rvL, ...aTrial.v) - 0.25) * 2) / 2, vhi = Math.ceil((Math.max(lev.tlcL, ...aTrial.v) + 0.25) * 2) / 2;
   const aTop = 56, hA = 126;
   const axs = scale(0, tEnd, ax0, ax0 + aw), ays = scale(vlo, vhi, aTop + hA, aTop);
   const aOut = [];
   aOut.push(text(pad, 14, 'A  Volume-time record', { size: SZ.cap, weight: 700, fill: P.text }));
-  aOut.push(text(pad, 26, `trial ${focus} of ${n}; axis anchored at the reported mean FRC`, { size: SZ.note, fill: P.axis }));
+  aOut.push(text(pad, 26, `trial ${focus} of ${n}; ${pl.session ? 'linked measurements, before session selection' : 'axis anchored at the reported mean FRC'}`, { size: SZ.note, fill: P.axis }));
   const segs = aTrial.segments;
   const tc = segs.find((s) => s.id === 'closure');
   // time ticks away from the closure interval, which is expanded on the lane below
   const tTicks = niceTicks(0, tEnd, 8).filter((v) => v <= tEnd + 1e-9 && (v < tc.t0 - 3.5 || v > tc.t1 + 4.5));
   const vTicks = niceTicks(vlo, vhi, 5);
   aOut.push(axes(P, { x0: ax0, y0: aTop, w: aw, h: hA, xs: axs, ys: ays, xTicks: tTicks, yTicks: vTicks, xFmt: fmtTick, yFmt: fmtTick, xLabel: 'Time (s)', xLabelStart: true, yLabel: 'Volume (L)', zero: false }));
-  // reference levels of the reported values
-  for (const y of [lev.tlcL, lev.reportedFrcL, lev.rvL]) aOut.push(line(ax0, ays(y), ax0 + aw, ays(y), { stroke: P.axis, width: 0.9, opacity: 0.6 }));
+  // Reference levels: individual linked measurements for v3, aggregate values for legacy v2.
+  for (const y of [lev.tlcL, (pl.session ? lev.trialFrcL : lev.reportedFrcL), lev.rvL]) aOut.push(line(ax0, ays(y), ax0 + aw, ays(y), { stroke: P.axis, width: 0.9, opacity: 0.6 }));
   // segment boundaries and their labels in two rows above the plot
   const short = { tidal: 'quiet breathing', closure: 'closed', 'open-shutter': 'open', expiration: 'to RV', inspiration: 'to TLC' };
   segs.forEach((sg, i) => {
@@ -276,12 +279,12 @@ function render(data, opts = {}) {
   // ERV and IC read from the end-expiratory level, in the right margin
   const bx = ax0 + aw + 5, lx = bx + 6;
   const br = (y1, y2) => line(bx, y1, bx, y2, { stroke: P.axis, width: 1.2 }) + line(bx - 3, y1, bx + 3, y1, { stroke: P.axis, width: 1.2 }) + line(bx - 3, y2, bx + 3, y2, { stroke: P.axis, width: 1.2 });
-  aOut.push(br(ays(lev.tlcL), ays(lev.reportedFrcL)), br(ays(lev.reportedFrcL), ays(lev.rvL)));
+  aOut.push(br(ays(lev.tlcL), ays(plottedFrc)), br(ays(plottedFrc), ays(lev.rvL)));
   const lab = (y, s, bold) => aOut.push(text(lx, y + 3.3, s, { size: SZ.tick, fill: P.text, weight: bold ? 700 : 400 }));
   lab(ays(lev.tlcL), `TLC ${num(lev.tlcL, 2)}`, true);
-  lab((ays(lev.tlcL) + ays(lev.reportedFrcL)) / 2, `IC ${num(lev.icL, 2)}`);
-  lab(ays(lev.reportedFrcL) - 0.5, `FRC ${num(lev.reportedFrcL, 2)}`, true);
-  lab((ays(lev.reportedFrcL) + ays(lev.rvL)) / 2 + 1, `ERV ${num(lev.ervL, 2)}`);
+  lab((ays(lev.tlcL) + ays(plottedFrc)) / 2, `IC ${num(lev.icL, 2)}`);
+  lab(ays(plottedFrc) - 0.5, `FRC ${num(plottedFrc, 2)}`, true);
+  lab((ays(plottedFrc) + ays(lev.rvL)) / 2 + 1, `ERV ${num(lev.ervL, 2)}`);
   lab(ays(lev.rvL), `RV ${num(lev.rvL, 2)}`, true);
   // mouth-pressure lane on an expanded time scale
   const lane = aTrial.lane;

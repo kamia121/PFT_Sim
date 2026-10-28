@@ -1,0 +1,18 @@
+# Independent base-R arithmetic checks for hand-authored pleth selection fixtures.
+# This checks arithmetic and boundary construction, not an independent complete guideline implementation.
+near <- function(x, y) stopifnot(abs(x - y) < 1e-12)
+spread <- function(x) (max(x) - min(x)) / mean(x)
+near(spread(c(3.9, 4.1)), 0.05)
+near(spread(c(3.8, 4.2)), 0.10)
+stopifnot(spread(c(3.9, 4.1 + 1e-8)) > 0.05)
+stopifnot(spread(c(3.8, 4.2 + 1e-8)) > 0.10)
+frc <- c(3, 3.1); ic <- c(2, 2.2); svc <- c(4, 4.2)
+near(mean(frc), 3.05); near(mean(frc + ic), 5.15)
+near(mean(frc + ic) - max(svc), 0.95)
+near(mean(c(3, 3.02) + c(2, 2)), 5.01)
+near(4 - 0.15, 3.85); near(4 - 0.25, 3.75)
+near(min(2 - 0.1, 2 * 0.9), 1.8)
+near(min(0.5 - 0.2, 0.5 * 0.9), 0.3)
+cat('PASS: 5%/10% boundary construction, matched TLC/RV arithmetic, adult linkage and pediatric smaller-candidate thresholds.\n')
+cat('Matched fixture: FRC=3.05 L; TLC=5.15 L; VC=4.20 L; RV=0.95 L.\n')
+cat('No GLI predictions, z-scores or official calculator outputs are asserted.\n')

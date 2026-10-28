@@ -5,8 +5,9 @@
  * Parity: with the workspace additions taken out (the screen controls, the per-question excerpts and the print-transparent data
  * wrapper), the practice markup of every state in tests/helpers/practice-markup.mjs hashes to what ec5f6cd rendered, and the fixed
  * sheets, the details sheet, the Lab report fallback and the report page are byte-identical to ec5f6cd
- * (tests/fixtures/practice-markup-baseline.json, written by tools/practice-markup-hashes.mjs at that commit). The keys listed under `amended`
- * were re-recorded on 9822a77 for the deliberate page-1 change of the bronchodilator column (Change (% predicted) instead of %Chng).
+ * (tests/fixtures/practice-markup-baseline.json, written by tools/practice-markup-hashes.mjs at that commit).
+ * The figures were re-baselined once for the spirometry trace texture (traceRendering in the fixture): everything outside the svg
+ * figures is still byte-identical to ec5f6cd (the figure-free hashes), and the full hashes include the figures as drawn now.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,54 +19,68 @@ import { SAMPLE_INPUTS, ds } from './report-helpers.mjs';
 import { buildCase } from '../src/core/case.js';
 import { markupCtx, markupStates, MARKUP_CASES, mods } from './helpers/practice-markup.mjs';
 import { referenceMarkup } from './helpers/reference-markup.mjs';
+import { stripWorkspace, withoutFigures } from '../tools/practice-markup-hashes.mjs';
+import { TRACE_RENDERING_ID } from '../src/core/trace-texture.js';
+import { GENERATOR_VERSION } from '../src/core/standards.js';
 
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/practice-markup-baseline.json', import.meta.url), 'utf8'));
+const corrected = JSON.parse(fs.readFileSync(new URL('./fixtures/source-corrected-markup.json', import.meta.url), 'utf8'));
+const bdDisplay = JSON.parse(fs.readFileSync(new URL('./fixtures/bd-display-markup.json', import.meta.url), 'utf8'));
+// Keep both historical and current-main fixtures intact. Only the explicitly scoped BD display snapshots override current main.
+const displayExpected = Object.fromEntries(['practice', 'reference', 'practiceWithoutFigures', 'referenceWithoutFigures']
+  .map((kind) => [kind, { ...corrected[kind], ...bdDisplay[kind] }]));
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const EXCERPT_RE = /<div class="ws-ctx scroll" data-ws-ui>[\s\S]*?<\/table><\/div>/g;
 
-/** The practice markup without the workspace additions. */
-function strip(html) {
-  let out = html.replace(workspaceBarHtml(), '').replace(EXCERPT_RE, '');
-  if (out.includes('<div class="sheet-data">')) {
-    out = out.replace('<div class="sheet-content"><div class="sheet-data">', '<div class="sheet-content">');
-    // The wrapper closes immediately before the comment and interpretation boxes; any one of the adjacent closing tags is it.
-    out = out.replace('</div><div class="sheet-boxes', '<div class="sheet-boxes');
-  }
-  return out;
-}
+/** The practice markup without the workspace additions (shared with the fixture tool, so both strip the same way). */
+const strip = stripWorkspace;
 const sheetOf = (ctx) => mods.summarySheetHtml(ctx.model, { rt: ctx.rt, caseData: ctx.caseData, interp: ctx.interp, equation: ctx.equation, palette: ctx.palette, flags: ctx.flags, showQualityLines: ctx.vis.showQualityLines, narrowZ: true });
 const excerptsIn = (html) => html.match(EXCERPT_RE) ?? [];
 const STATES = markupStates();
 
-test('the fixture was recorded at ec5f6cd and covers every state', () => {
+test('the fixture was recorded at ec5f6cd (figures re-baselined under the current trace rendering) and covers every state', () => {
   assert.equal(baseline.commit, 'ec5f6cd82e39f0b45eac5f0929dae98f1de96d74');
+  assert.equal(baseline.traceRendering, TRACE_RENDERING_ID, 'the figures in the full hashes were drawn under another trace rendering');
+  assert.equal(baseline.generatorVersion, 2, 'historical main fixture stays at its recorded generator');
+  assert.equal(corrected.generatorVersion, GENERATOR_VERSION);
+  assert.equal(corrected.traceRendering, TRACE_RENDERING_ID);
   assert.deepEqual(Object.keys(baseline.practice).sort(), STATES.map((s) => s.key).sort());
 });
 
-test('the hashes re-recorded for the Change (% predicted) column are those of cases with a bronchodilator study, and only those', () => {
-  // The page-1 change column became the change as a percent of predicted (9822a77 + this change); every other hash is still the ec5f6cd one.
-  const withBd = new Set();
-  for (const { key, input, opts } of STATES) if (markupCtx(input, opts).caseData.report.spirometry.post) withBd.add(key);
+test('BD display amendments cover only studies with post-bronchodilator values and never the details sheet', () => {
+  const withBd = new Set(STATES.filter(({ input, opts }) => markupCtx(input, opts).caseData.report.spirometry.post).map(({ key }) => key));
   for (const input of SAMPLE_INPUTS) if (buildCase({ technique: 'fair', ...input }, ds).report.spirometry.post) withBd.add(`${input.archetype}-${input.seed}`);
-  const keys = baseline.amended?.keys ?? [];
-  assert.ok(keys.length > 0 && keys.length < Object.keys(baseline.practice).length + Object.keys(baseline.reference).length);
-  for (const k of keys) assert.ok(withBd.has(k) || k.split('|').some((p) => withBd.has(p)), `${k}: re-recorded without a bronchodilator study`);
-  for (const k of keys) assert.ok(!/^details\|/.test(k), `${k}: page 2 has no change column`);
-});
-
-test('without the workspace additions, the practice markup of every state is the ec5f6cd markup', () => {
-  for (const { key, input, opts } of STATES) {
-    const html = renderPractice(markupCtx(input, opts));
-    assert.ok(html.includes('data-ws-ui'), `${key}: the workspace additions are present`);
-    assert.equal(sha(strip(html)), baseline.practice[key], `${key}: markup differs from ec5f6cd once the additions are removed`);
+  for (const kind of ['practice', 'reference', 'practiceWithoutFigures', 'referenceWithoutFigures']) {
+    const amended = Object.keys(bdDisplay[kind]);
+    assert.ok(amended.length > 0 && amended.length < Object.keys(corrected[kind]).length);
+    for (const key of amended) {
+      assert.ok(key in corrected[kind], `${kind} ${key}: existing snapshot`);
+      assert.ok(withBd.has(key) || key.split('|').some((part) => withBd.has(part)), `${kind} ${key}: has a BD study`);
+      assert.ok(!key.startsWith('details|'), `${key}: page 2 unchanged`);
+      assert.notEqual(bdDisplay[kind][key], corrected[kind][key]);
+    }
   }
 });
 
-test('the fixed and report sheets, the details sheet, the Lab report fallback and the report page are byte-identical to ec5f6cd', () => {
+test('outside figures, source-corrected markup remains fixed independently of trace rendering', () => {
+  for (const { key, input, opts } of STATES) assert.equal(sha(withoutFigures(strip(renderPractice(markupCtx(input, opts))))), displayExpected.practiceWithoutFigures[key], key);
+  for (const [k, v] of Object.entries(referenceMarkup())) assert.equal(sha(withoutFigures(v)), displayExpected.referenceWithoutFigures[k], k);
+});
+
+test('practice markup retains the source-corrected severity and reference notes in every workspace state', () => {
+  for (const { key, input, opts } of STATES) {
+    const html = renderPractice(markupCtx(input, opts));
+    assert.ok(html.includes('data-ws-ui'), `${key}: the workspace additions are present`);
+    assert.equal(sha(strip(html)), displayExpected.practice[key], `${key}: markup differs from the source-corrected snapshot once workspace additions are removed`);
+  }
+});
+
+test('fixed/report/detail sheets retain the source-corrected reference notes and contain no workspace markup', () => {
+
   const now = referenceMarkup();
-  assert.deepEqual(Object.keys(now).sort(), Object.keys(baseline.reference).sort());
+  assert.deepEqual(Object.keys(now).sort(), Object.keys(displayExpected.reference).sort());
   for (const [k, v] of Object.entries(now)) {
-    assert.equal(sha(v), baseline.reference[k], `${k} changed`);
+    assert.equal(sha(v), displayExpected.reference[k], `${k} changed`);
     assert.doesNotMatch(v, /data-ws|sheet-data/, `${k}: no workspace markup outside the practice page`);
   }
 });

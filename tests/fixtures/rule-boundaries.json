@@ -1,0 +1,18 @@
+{
+  "provenance": "Hand-computed mathematical inputs. Implementation-only characterization, not official GLI outputs or primary-source verification.",
+  "labels": [[-1.645001,"low"],[-1.645,"normal"],[1.645,"normal"],[1.645001,"high"]],
+  "severity": [[-2.5,"mild"],[-2.500001,"moderate"],[-4,"moderate"],[-4.000001,"severe"]],
+  "lms": [
+    {"parameters":{"L":0,"M":4,"S":0.2},"measured":4,"z":0},
+    {"parameters":{"L":1,"M":4,"S":0.25},"measured":3,"z":-1},
+    {"parameters":{"L":1,"M":4,"S":0.25},"measured":5,"z":1},
+    {"parameters":{"L":2,"M":4,"S":0.125},"measured":2,"z":-3}
+  ],
+  "bd": [
+    {"pre":2,"post":2.5,"predicted":5,"percentPredicted":10,"percentBaseline":25,"significant2022":false},
+    {"pre":2,"post":2.500001,"predicted":5,"percentPredicted":10.00002,"percentBaseline":25.00005,"significant2022":true},
+    {"pre":2,"post":2.499999,"predicted":5,"percentPredicted":9.99998,"percentBaseline":24.99995,"significant2022":false}
+  ],
+  "cohb": [[2,null],[2.1,0.999],[5,0.97]],
+  "hb": [{"hb":10,"sex":"M","age":15,"predictedMultiplier":0.8407517309594461},{"hb":10,"sex":"F","age":30,"predictedMultiplier":0.8771929824561404}]
+}

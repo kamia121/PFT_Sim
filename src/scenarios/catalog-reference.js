@@ -107,13 +107,13 @@ export const REFERENCE_SCENARIOS = [
     variants: [
       'Sex assigned at birth: {birth}. Gender identity: {identity}. Predicted values calculated with sex assigned at birth, the laboratory default (ATS/ERS 2019).',
       'Registration lists gender identity {identity}; sex assigned at birth {birth}. Operator note: reference values use sex assigned at birth by default.',
-      'Patient was informed that predicted lung size follows sex assigned at birth. Gender identity: {identity}; sex assigned at birth: {birth}; reference sex used: {birth}.',
+      'The laboratory documented sex assigned at birth as its reference input. Gender identity: {identity}; sex assigned at birth: {birth}; reference sex used: {birth}.',
     ],
     weight: 0.6,
     effects: { referenceSex: { use: 'birth', identityDraw: [0, 1] } },
     vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord }),
     caveats: [
-      { id: 'sex-birth-used-default', weight: 'major', text: 'Predicted lung size follows sex assigned at birth in the ATS/ERS 2019 standard, and the operator note states the default used, which here is the birth sex. The standard gives no rule for patients on hormone therapy, for nonbinary patients or for intersex patients, and the effect of gender-affirming hormone therapy on lung size is not established.' },
+      { id: 'sex-birth-used-default', weight: 'major', text: 'The ATS/ERS 2019 standard recommends sex recorded at birth for prediction, and the operator note documents that input. The ERS/ATS 2022 standard states that the appropriate reference equation for transgender patients is unknown; this laboratory default is not individual model validation.' },
       { id: 'sex-evidence-limited', weight: 'minor', text: 'The evidence on which reference equations fit patients on long-term hormone therapy is limited to small retrospective series, and prospective studies are in progress. The sex used can move z-scores across the lower limit of normal without any change in the lungs, so the values under the other sex are shown for contrast.' },
       { id: 'sex-choice-no-change', weight: 'minor', requires: 'sexSame', text: 'Under the other reference sex the pattern and every label of the spirometry, volumes and DLCO are unchanged, so the sex choice does not change the classification here, although the z-scores shift.' },
     ],
@@ -134,7 +134,7 @@ export const REFERENCE_SCENARIOS = [
     effects: { referenceSex: { use: 'identity' } },
     vars: (fx, c) => ({ birth: c.result.birthWord, identity: c.result.identityWord, used: c.result.usedWord }),
     caveats: [
-      { id: 'sex-identity-used-nondefault', weight: 'major', text: 'The reference sex on this report follows gender identity and not the sex assigned at birth that the ATS/ERS 2019 standard names as the default for predicted lung size. Neither entry is an error: the standard gives no rule for patients on hormone therapy, and the effect of gender-affirming hormone therapy on lung size is not established. A complete interpretation states the results under both reference sexes and notes how long any hormone therapy has been taken, because predicted values, z-scores and classification can differ between the two.' },
+      { id: 'sex-identity-used-nondefault', weight: 'major', text: 'The reference sex on this report follows gender identity and not the sex assigned at birth that the ATS/ERS 2019 standard names as the default for predicted lung size. Neither entry is an error: the standard gives no rule for patients on hormone therapy, and the effect of gender-affirming hormone therapy on lung size is not established. Document the input used and relevant developmental or treatment history. Comparing both reference inputs can show sensitivity, but neither is individually validated by that comparison (ERS/ATS 2022).' },
       { id: 'sex-evidence-limited', weight: 'minor', text: 'The evidence on which reference equations fit patients on long-term hormone therapy is limited to small retrospective series, and prospective studies are in progress. The sex used can move z-scores across the lower limit of normal without any change in the lungs, so the values under the other sex are shown for contrast.' },
       { id: 'sex-choice-no-change', weight: 'minor', requires: 'sexSame', text: 'Under the other reference sex the pattern and every label of the spirometry, volumes and DLCO are unchanged, so the sex choice does not change the classification here, although the z-scores shift.' },
     ],

@@ -84,7 +84,7 @@ test('R4: the CSV export prints the same decision quantity', () => {
   const { interp, model } = ctx({ seed: 132, archetype: 'obstruction', technique: 'good', scenarioLevel: 'none' });
   const csv = toCsv(model);
   assert.match(csv, new RegExp(`${interp.bd.pctPred.fev1.toFixed(2)}`), 'two decimals within a rounding step of 10%');
-  assert.doesNotMatch(csv, /"?\+?10\.2"?[,\n]/, 'the value of the rounded volumes is not printed');
+  assert.doesNotMatch(csv.split('\r\n').filter((r) => r.startsWith('bronchodilator,')).join('\n'), /"?\+?10\.2"?[,\n]/, 'the rounded-volume BDR quantity is not printed; unrelated DLCO timing may equal 10.2');
 });
 
 test('R4: the digits of the percent of predicted show which side of 10 the value is on, and only near 10', () => {

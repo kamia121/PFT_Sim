@@ -11,8 +11,9 @@
  * FA,tr and FA,CO,t are the mean of the tracer and CO traces over the alveolar sample window, plotted
  * against expired volume. PB cancels in DLCO; it is carried so that the equations are written out.
  *
- * Breath-hold time is computed in the Jones-Meade form: from the instant 30% of VI has been inspired
- * to the midpoint of the alveolar sample (unverified for the 2017 standard, see docs/research).
+ * Timing v2 uses Graham 2017 Figure 5 / pp14–15: back-extrapolated zero plus
+ * 0.3 of inspiratory time to 90% VI, ending at the midpoint of sample collection time.
+ * Timing v1 preserves the legacy volume-event approximation for generator v2–4.
  *
  * The trace is built forward from the case values: given VA and DLCO it computes the alveolar tracer
  * fraction and the CO decay for the chosen VI, dead space and breath-hold time, draws the expiration,
@@ -23,6 +24,7 @@
  *
  * Random streams used: `dlco-trace-setup` and `dlco-trace-noise`.
  */
+import { atMost } from './comparison.js';
 import { createStream } from './prng.js';
 import { obstructionMeasure, trueRatioZ } from './pleth.js';
 
@@ -35,7 +37,7 @@ export const DLCO_MODEL = {
   breathHoldWindowS: { value: [8, 12], verification: 'secondary' },
   sampleCompleteWithinS: { value: 4.0, verification: 'secondary' },
   washoutVolumeL: { value: [0.75, 1.0], smallVcMin: 0.5, smallVcLimitL: 2.0, verification: 'secondary' },
-  sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.1, verification: 'secondary' }, // the standard allows under 0.5 L for VC under 1 L; the simulator extends this to 1.1 L so that very small lungs can be graded
+  sampleVolumeL: { value: [0.5, 1.0], smallVcAllowanceL: 1.0, verification: 'primary text: VC <1 L with confirmed dead-space clearance' },
   apparatusDeadSpaceL: { value: 0.1, verification: 'unverified' },
   anatomicDeadSpaceMlPerKg: { value: 2.2, verification: 'secondary' },
   phaseIIWidthL: { value: [0.07, 0.13], verification: 'unverified' },
@@ -44,7 +46,7 @@ export const DLCO_MODEL = {
   valsalvaDlcoFall: { value: [0.1, 0.25], verification: 'unverified' },
   muellerDlcoRise: { value: [0.1, 0.25], verification: 'unverified' },
   pressureFlagCmH2O: { value: 8, verification: 'unverified' },
-  gradeRules: { value: 'A all criteria met; B only a noted slow inspiration; C one acceptability criterion failed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },
+  gradeRules: { value: 'A all criteria met; B reserved; C a modeled criterion failed or remains unconfirmed; D invalid (leak, Valsalva, Mueller, VI/VC under 0.85, sample inside the dead-space transition)', verification: 'unverified' },
 };
 
 const STEP_L = 0.01; // expired-volume grid
@@ -79,6 +81,16 @@ function expInverse(frac) {
   return (lo + hi) / 2;
 }
 
+/** Graham 2017 Figure 5 and pp14–15, doi:10.1183/13993003.00016-2016.
+ * Inputs are assessed times, not inspired/expired volume fractions. */
+export function jonesMeadeTiming(timeZeroS, time90S, sampleStartS, sampleEndS) {
+  if (![timeZeroS, time90S, sampleStartS, sampleEndS].every(Number.isFinite)
+      || time90S <= timeZeroS || sampleStartS < time90S || sampleEndS <= sampleStartS) throw new RangeError('Invalid Jones–Meade timing inputs');
+  const startS = timeZeroS + 0.3 * (time90S - timeZeroS);
+  const endS = (sampleStartS + sampleEndS) / 2;
+  return { startS, endS, seconds: endS - startS };
+}
+
 /** Single-breath equations, exported so that tests and callers use the same definitions. */
 export const vaStpdMl = (vaBtpsL, pbMmHg = 760) => vaBtpsL * 1000 * ((pbMmHg - 47) / 760) * (273 / 310);
 export const vaFromTracer = (fiTracer, faTracer, viL, vdL) => (fiTracer / faTracer) * (viL - vdL);
@@ -89,6 +101,7 @@ export const dlcoFromDecay = (vaStpd, tBhSeconds, pbMmHg, fCo0, fCoT) => (vaStpd
  * @param {object} trace a DlcoTrace
  */
 export function analyzeDlcoTrace(trace) {
+  if (trace.quality?.sampleCollectionComplete === false) return { vaL: null, dlco: null, kco: null, faTracer: null, faCo: null, fCo0: null, breathHoldS: null, windowPoints: 0, reason: 'incomplete-sample' };
   const { byVolume: bv, markers: mk, gas } = trace;
   const lo = mk.sample.startL - 1e-9, hi = mk.sample.endL + 1e-9;
   const idx = [];
@@ -98,40 +111,53 @@ export function analyzeDlcoTrace(trace) {
   const fiTr = gas.fiTracerPct / 100, fiCo = gas.fiCoPct / 100;
   const vaBtps = vaFromTracer(fiTr, faTr, trace.inspired.volumeL, trace.deadSpaceL);
   const fCo0 = fiCo * (faTr / fiTr);
-  const tBh = mk.tSampleMidS - mk.t30PctS;
+  const tBh = trace.version >= 2
+    ? jonesMeadeTiming(mk.tZeroS, mk.t90PctS, mk.sample.startS, mk.sample.endS).seconds
+    : mk.tSampleMidS - mk.t30PctS;
   const dlco = dlcoFromDecay(vaStpdMl(vaBtps, trace.barometricMmHg), tBh, trace.barometricMmHg, fCo0, faCo);
   return { vaL: vaBtps, dlco, kco: dlco / vaBtps, faTracer: faTr, faCo, fCo0, breathHoldS: tBh, windowPoints: idx.length };
 }
 
 /**
  * Grade a single test against the acceptability list of docs/research/pleth-dlco.md section 2.1.
- * The A to D letters are the simulator's own grouping (unverified): the standard lists acceptability
- * criteria and does not define these letters.
+ * The A to D letters here are a simulator rubric, not the overlapping interim maneuver rows
+ * in 2017 Table 3 and not a session grade. Replicate selection/reporting is not modeled.
  */
 export function gradeDlcoTest(q) {
-  const failed = [], noted = [], invalid = [];
+  const failed = [], noted = [], invalid = [], unknown = [];
   if (q.leak) invalid.push('leak');
   if (q.valsalva) invalid.push('Valsalva maneuver during the breath-hold');
   if (q.mueller) invalid.push('Mueller maneuver during the breath-hold');
   if (q.viOverVc < DLCO_MODEL.viOverVcMin.alternative) invalid.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 85%`);
-  else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) failed.push(`inspired volume ${(q.viOverVc * 100).toFixed(0)}% of VC, under 90% without a concordant VA`);
+  else if (q.viOverVc < DLCO_MODEL.viOverVcMin.value) {
+    if (!(Number.isFinite(q.vaL) && Number.isFinite(q.largestOtherAcceptableVaL))) unknown.push('low-VI alternative needs VA from another acceptable maneuver');
+    else if (!atMost(Math.abs(q.vaL - q.largestOtherAcceptableVaL), Math.max(0.2, 0.05 * q.largestOtherAcceptableVaL))) failed.push('low-VI alternative VA is outside the permitted agreement');
+  }
   if (q.contamination > 0.03) invalid.push('alveolar sample begins inside the dead-space transition');
   const [bhLo, bhHi] = DLCO_MODEL.breathHoldWindowS.value;
   if (q.breathHoldS < bhLo || q.breathHoldS > bhHi) failed.push(`breath-hold ${q.breathHoldS.toFixed(1)} s, outside 8 to 12 s`);
   if (q.sampleEndS > DLCO_MODEL.sampleCompleteWithinS.value) failed.push(`alveolar sample finished ${q.sampleEndS.toFixed(1)} s after the start of exhalation, over 4 s`);
-  const wr = DLCO_MODEL.washoutVolumeL.value;
-  const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];
-  if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);
-  const sr = DLCO_MODEL.sampleVolumeL.value;
-  if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= 1.1)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);
-  if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) noted.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s (4.0 s limit); noted on the report`);
-  const grade = invalid.length ? 'D' : failed.length ? 'C' : noted.length ? 'B' : 'A';
-  return { grade, acceptable: grade === 'A' || grade === 'B', wouldBeRejected: grade === 'C' || grade === 'D', invalid, failed, noted };
+  // The trace is a classical discrete-sample teaching model. RGA requires its own
+  // demonstrated washout and virtual sample; do not reuse classical bag-volume cutoffs.
+  if (q.samplingMethod === 'rga') {
+    if (q.deadSpaceClearanceConfirmed !== true) unknown.push('RGA washout clearance is unconfirmed');
+    if (q.sampleL < 0.085 || q.sampleL > 0.5) failed.push('RGA virtual sample outside 0.085 to 0.500 L');
+  } else {
+    const wr = DLCO_MODEL.washoutVolumeL.value;
+    const washMin = q.vcL < DLCO_MODEL.washoutVolumeL.smallVcLimitL ? DLCO_MODEL.washoutVolumeL.smallVcMin : wr[0];
+    if (q.washoutL < washMin - 1e-9 || q.washoutL > wr[1] + 1e-9) failed.push(`washout volume ${q.washoutL.toFixed(2)} L outside ${washMin.toFixed(2)} to ${wr[1].toFixed(2)} L`);
+    const sr = DLCO_MODEL.sampleVolumeL.value;
+    if (q.sampleL > sr[1] + 1e-9 || (q.sampleL < sr[0] - 1e-9 && q.vcL >= DLCO_MODEL.sampleVolumeL.smallVcAllowanceL)) failed.push(`sample volume ${q.sampleL.toFixed(2)} L outside 0.5 to 1.0 L`);
+    else if (q.sampleL < sr[0] - 1e-9 && q.deadSpaceClearanceConfirmed !== true) unknown.push('small-VC sample exception needs confirmed dead-space clearance');
+  }
+  if (q.t85S >= DLCO_MODEL.inspiration85PctMaxS.value) failed.push(`85% of the inspired volume took ${q.t85S.toFixed(1)} s; the criterion is strictly less than 4 s`);
+  const grade = invalid.length ? 'D' : failed.length || unknown.length ? 'C' : noted.length ? 'B' : 'A';
+  return { grade, rubric: 'simulator, not ATS/ERS Table 3 or a session grade', acceptable: grade === 'A', wouldBeRejected: grade !== 'A', invalid, failed, noted, unknown };
 }
 
 const FAULTS = {
   'low-vi': { text: 'Incomplete inspiration: inspired volume is low relative to the vital capacity. VA is smaller and DLCO falls less than VA, so KCO rises.', numbers: true },
-  'slow-inspiration': { text: 'Slow inspiration: 85% of the inspired volume takes longer than 4 s, so the start of the breath-hold is ambiguous. Numbers are unchanged in this model; the test is noted.', numbers: false },
+  'slow-inspiration': { text: 'Slow inspiration: 85% of the inspired volume takes longer than 4 s, so the start of the breath-hold is ambiguous. Numbers are unchanged in this model; the inspiration-time criterion fails.', numbers: false },
   'short-hold': { text: 'Breath-hold shorter than 8 s. The Krogh equation corrects for time, so the printed numbers are unchanged in this model; the test fails the hold criterion.', numbers: false },
   'long-hold': { text: 'Breath-hold longer than 12 s. The Krogh equation corrects for time, so the printed numbers are unchanged in this model; the test fails the hold criterion.', numbers: false },
   leak: { text: 'Leak around the mouthpiece: the measured volume falls during the breath-hold and does not return to the starting level. Visual and grading only; no numerical effect is modeled because the direction of the error is not predictable.', numbers: false },
@@ -174,7 +200,7 @@ function pickFaults(d, technique, scenario) {
  * @param {object} [args.scenario] { ids: DLC-01 to DLC-06 force faults; viOverVc: the VI/VC fraction a forced DLC-01 uses }
  * @param {number} [args.ratioZ] true FEV1/FVC z-score if known; otherwise approximated from the truth
  */
-export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ } = {}) {
+export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, technique = 'good', scenario = null, ratioZ, timingVersion = 1, fullPrecisionQuality = false } = {}) {
   if (!dlco || !(dlco.raw > 0) || !(dlco.va > 0)) return null;
   const pb = patient.barometricMmHg ?? scenario?.barometricMmHg ?? 760;
   const gas = { ...DLCO_MODEL.testGas.value };
@@ -229,7 +255,12 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
 
   // Timeline.
   const tIn0 = 1.0;
-  const t30 = tIn0 + inspInverse(0.3) * ti;
+  // For F(x)=6x²−8x³+3x⁴, maximum slope is at x=1/3.
+  // Its tangent intercept is x−F/F′ = 5/48. This is exact for this synthetic curve,
+  // not a claim to have detected time zero in a real recorded maneuver.
+  const timeZeroS = tIn0 + (5 / 48) * ti;
+  const time90S = tIn0 + inspInverse(0.9) * ti;
+  const t30 = timingVersion >= 2 ? timeZeroS + 0.3 * (time90S - timeZeroS) : tIn0 + inspInverse(0.3) * ti;
   const tIe = tIn0 + ti;
   const t85 = inspInverse(0.85) * ti;
   const tBhTarget = has('short-hold') ? 5.0 + 2.4 * d[11] : has('long-hold') ? (scenario?.ids?.includes('DLC-03') ? 14.5 + 1.0 * d[11] : 12.8 + 3.2 * d[11]) : 9.0 + 2.0 * d[11];
@@ -241,7 +272,9 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   let tau = 1.3 + 1.2 * u + 0.4 * d[14];
   const tEndFor = (tauX) => tauX * expInverse((vw + vs) / vHoldEnd);
   if (tEndFor(tau) > 3.6) tau = 3.6 / expInverse((vw + vs) / vHoldEnd);
-  const tMidX = tau * expInverse(vmid / vHoldEnd);
+  const tMidX = timingVersion >= 2
+    ? tau * (expInverse(vw / vHoldEnd) + expInverse((vw + vs) / vHoldEnd)) / 2
+    : tau * expInverse(vmid / vHoldEnd);
   let tExh0 = t30 + tBhTarget - tMidX;
   if (tExh0 < tIe + 0.4) tExh0 = tIe + 0.4;
   const tSampleMid = tExh0 + tMidX;
@@ -264,8 +297,8 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   const plateau = (v) => 1 - sPlateau * (v - vmid);
   const inWin = (v) => v >= vw - 1e-9 && v <= vw + vs + 1e-9;
   const winIdx = vols.map((v, k) => (inWin(v) ? k : -1)).filter((k) => k >= 0);
-  const meanW = mean(winIdx.map((k) => wDead(vols[k])));
-  const meanWG = mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k])));
+  const meanW = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => wDead(vols[k]))) : 0;
+  const meanWG = winIdx.length || timingVersion < 2 ? mean(winIdx.map((k) => (1 - wDead(vols[k])) * plateau(vols[k]))) : 1;
   const solve = !has('early-sample');
   // Amplitude of the alveolar plateau so that the window mean equals the clean alveolar value.
   const ampTr = solve ? (faTrClean - fiTr * meanW) / meanWG : faTrClean;
@@ -316,14 +349,14 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
 
   /** @type {any} */
   const trace = {
-    version: DLCO_MODEL.version,
-    method: 'single-breath diffusing capacity, rapid gas analyzer, tracer CH4',
+    version: timingVersion,
+    method: timingVersion >= 2 ? 'single-breath diffusing capacity, virtual classical sample, tracer CH4; volumes normalized to BTPS' : 'single-breath diffusing capacity, rapid gas analyzer, tracer CH4',
     gas,
     barometricMmHg: pb,
     deadSpaceL: vd,
     deadSpaceTransitionWidthL: round(sigma, 3),
     inspired: { volumeL: round(vi, 4), vcL: round(vcL, 4), viOverVc: round(vi / vcL, 4), inspirationTimeS: round(ti, 2), timeTo85PctS: round(t85, 2) },
-    breathHold: { seconds: round(tBh, 3), holdOnlyS: round(tExh0 - tIe, 3), definition: 'from 30% of the inspired volume to the midpoint of the alveolar sample (Jones-Meade form, unverified for the 2017 standard)' },
+    breathHold: { seconds: round(tBh, 3), holdOnlyS: round(tExh0 - tIe, 3), definition: timingVersion >= 2 ? 'back-extrapolated zero plus 0.3 of inspiratory time to 90% VI, to midpoint of sample collection time (Graham 2017 Figure 5)' : 'legacy approximation: 30% of inspired volume to sample volume midpoint; not the 2017 timing definition' },
     markers: {
       tInspStartS: tIn0, t30PctS: round(t30, 3), tInspEndS: round(tIe, 3), tExhaleStartS: round(tExh0, 3), tSampleMidS: round(tSampleMid, 3),
       exhalationStartVolumeL: round(vHoldEnd, 4),
@@ -344,8 +377,37 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
     unverified: Object.entries(DLCO_MODEL).filter(([, v]) => v.verification === 'unverified').map(([k]) => k),
   };
 
+  if (timingVersion >= 2) {
+    // Keep decision inputs at full precision; figure formatters round display only.
+    const startS = tExh0 + tau * expInverse(vw / vHoldEnd), endS = tExh0 + sampleEndS;
+    const completeSample = vw + vs <= vHoldEnd && endS > startS;
+    const timing = completeSample ? jonesMeadeTiming(timeZeroS, time90S, startS, endS)
+      : { startS: t30, endS: (startS + endS) / 2 };
+    if (!completeSample) {
+      // A leak/very small expiration can terminate before the requested sample ends.
+      // Preserve the attempted trace but never fabricate a completed sample or gas result.
+      trace.values = { vaL: null, dlcoMlMinMmHg: null, kco: null, faTracerPct: null, faCoPct: null, faCo0Pct: null, breathHoldS: null };
+      trace.caseValues = { vaL: dlco.va, dlcoMlMinMmHg: dlco.raw };
+      trace.reproducesCase = false; trace.adjusted = null;
+      trace.breathHold = { ...trace.breathHold, seconds: null };
+      trace.quality = { samplingMethod: 'classical', sampleCollectionComplete: false, visualQualityConfirmed: false,
+        stableBreathHold: !has('leak'), leak: has('leak'), valsalva: has('valsalva'), mueller: has('mueller'),
+        viOverVc: vi/vcL, vcL, t85S: t85, breathHoldS: null, sampleEndS,
+        washoutL: vw, sampleL: vs, deadSpaceClearanceConfirmed: false };
+      trace.grade = { grade: 'unassigned', acceptable: false, wouldBeRejected: true,
+        invalid: ['Expiration ended before the requested sample was collected.'], noted: [] };
+      trace.adjustments.push('Expiration ended before the requested sample was collected; no VA, DLCO or KCO is reported from this attempt.');
+    }
+    trace.markers = { ...trace.markers, tZeroS: timeZeroS, t90PctS: time90S,
+      tBhStartS: timing.startS, tSampleMidS: timing.endS,
+      sample: { ...trace.markers.sample, startS, endS } };
+    delete trace.markers.t30PctS;
+  }
+
+  if (trace.values?.dlcoMlMinMmHg === null) return trace;
+
   const rec = analyzeDlcoTrace(trace);
-  trace.breathHold.seconds = round(rec.breathHoldS, 3); // difference of the rounded markers, so the stored value matches the plotted ones
+  trace.breathHold.seconds = timingVersion >= 2 ? rec.breathHoldS : round(rec.breathHoldS, 3); // difference of the rounded markers, so the stored value matches the plotted ones
   const near = (a, b) => Math.abs(a / b - 1) <= 0.01;
   const reproduces = near(rec.vaL, dlco.va) && near(rec.dlco, dlco.raw);
   trace.values = { vaL: round(rec.vaL, 4), dlcoMlMinMmHg: round(rec.dlco, 4), kco: round(rec.kco, 4), faTracerPct: round(rec.faTracer * 100, 5), faCoPct: round(rec.faCo * 100, 5), faCo0Pct: round(rec.fCo0 * 100, 5), breathHoldS: round(rec.breathHoldS, 3) };
@@ -363,6 +425,9 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
   const volHold = holdIdx.map((j) => V[j]);
   const flagCm = DLCO_MODEL.pressureFlagCmH2O.value;
   trace.quality = {
+    samplingMethod: 'classical',
+    // Clearance is assumed only when this modeled contamination check passes.
+    deadSpaceClearanceConfirmed: contamination <= 0.03,
     viOverVc: trace.inspired.viOverVc,
     t85S: trace.inspired.timeTo85PctS,
     breathHoldS: trace.breathHold.seconds,
@@ -373,6 +438,13 @@ export function buildDlcoTrace({ seed, truth, dlco, volumes, patient = {}, techn
     mueller: pHold.length ? Math.min(...pHold) < -flagCm : false,
     leak: volHold.length ? volHold[0] - volHold[volHold.length - 1] > 0.1 : false,
   };
+  if (fullPrecisionQuality) {
+    trace.values = { ...trace.values, vaL: rec.vaL, dlcoMlMinMmHg: rec.dlco, kco: rec.kco };
+    trace.quality = { ...trace.quality, viOverVc: vi / vcL, t85S: t85, breathHoldS: rec.breathHoldS,
+      sampleEndS, vcL, stableBreathHold: !trace.quality.leak,
+      visualQualityConfirmed: true }; // Explicit synthetic quality assessment, not clinical recognition.
+    trace.inspired.volumeL = vi; trace.inspired.vcL = vcL;
+  }
   trace.grade = gradeDlcoTest(trace.quality);
   return trace;
 }

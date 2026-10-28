@@ -1,0 +1,58 @@
+{
+  "scope": "Read-only investigation of commit 658c63e; no tracked source edits. Timing fixtures are synthetic and use the exact analytic inspiration shape, with stored markers rounded to milliseconds.",
+  "x90": 0.6795394162781816,
+  "backExtrapolatedNormalizedZero": 0.10416666666666667,
+  "rows": [
+    {
+      "input": {
+        "seed": 3,
+        "archetype": "normal",
+        "technique": "good"
+      },
+      "test": 1,
+      "oldStart": 1.733,
+      "sourceStart": 1.7453644777444763,
+      "oldEnd": 11.008,
+      "sourceEnd": 11.006,
+      "oldBh": 9.274999999999999,
+      "sourceBh": 9.260635522255523,
+      "dlcoFromExistingGasRecord": 27.04282058369682,
+      "recomputedSameGasRecordDlco": 27.08476759624135,
+      "roundingNote": "Derived from rounded stored markers; approximate timing illustration, not official GLI output."
+    },
+    {
+      "input": {
+        "seed": 3,
+        "archetype": "normal",
+        "technique": "poor"
+      },
+      "test": 2,
+      "oldStart": 1.674,
+      "sourceStart": 1.6847499880949999,
+      "oldEnd": 10.921,
+      "sourceEnd": 10.918,
+      "oldBh": 9.247,
+      "sourceBh": 9.233250011905,
+      "dlcoFromExistingGasRecord": 27.86633139699135,
+      "recomputedSameGasRecordDlco": 27.9078294312118,
+      "roundingNote": "Derived from rounded stored markers; approximate timing illustration, not official GLI output."
+    },
+    {
+      "input": {
+        "seed": 12,
+        "archetype": "obstruction",
+        "technique": "good"
+      },
+      "test": 1,
+      "oldStart": 1.559,
+      "sourceStart": 1.5682262431523988,
+      "oldEnd": 11.102,
+      "sourceEnd": 11.096499999999999,
+      "oldBh": 9.543000000000001,
+      "sourceBh": 9.5282737568476,
+      "dlcoFromExistingGasRecord": 39.28076452279658,
+      "recomputedSameGasRecordDlco": 39.341474164893,
+      "roundingNote": "Derived from rounded stored markers; approximate timing illustration, not official GLI output."
+    }
+  ]
+}
